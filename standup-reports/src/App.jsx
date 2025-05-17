@@ -112,49 +112,49 @@ function AppContent({ session, userRole }) {
     <div className={isLandingPage ? '' : "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30"}>
       {/* Only show Navbar on internal app pages, not on landing page */}
       {!isLandingPage && <Navbar session={session} />}
-      
-      {/* Main content with padding for fixed navbar */}
+        
+        {/* Main content with padding for fixed navbar */}
       <div className={isLandingPage ? '' : "pt-0"}>
         <AnimatePresence mode="sync" initial={false}>
-          <Routes>
+            <Routes>
             {/* Landing page - always accessible */}
             <Route path="/" element={<LandingPage />} />
             
-            {!session ? (
-              // Unauthenticated routes
-              <>
-                <Route path="/login" element={<AuthPage mode="login" />} />
-                <Route path="/signup" element={<AuthPage mode="signup" />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </>
-            ) : (
-              // Authenticated routes
-              <>
-                <Route path="/dashboard" element={
-                <PageTransition>
-                  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                    <Dashboard />
-                  </div>
-                </PageTransition>
-              } />
-              
-              {/* Manager-specific routes */}
-              {userRole === 'manager' && (
+              {!session ? (
+                // Unauthenticated routes
                 <>
-                  <Route path="/team-management" element={
-                    <PageTransition>
+                  <Route path="/login" element={<AuthPage mode="login" />} />
+                  <Route path="/signup" element={<AuthPage mode="signup" />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+                </>
+              ) : (
+                // Authenticated routes
+                <>
+                  <Route path="/dashboard" element={
+                  <PageTransition>
+                  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                      <Dashboard />
+                    </div>
+                  </PageTransition>
+                } />
+                
+                {/* Manager-specific routes */}
+                {userRole === 'manager' && (
+                  <>
+                    <Route path="/team-management" element={
+                      <PageTransition>
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                        <TeamManagement />
-                      </div>
-                    </PageTransition>
-                  } />
-                  <Route path="/leave-requests" element={
-                    <PageTransition>
+                          <TeamManagement />
+                        </div>
+                      </PageTransition>
+                    } />
+                    <Route path="/leave-requests" element={
+                      <PageTransition>
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                        <ManagerDashboard activeTabDefault="leave-requests" />
-                      </div>
-                    </PageTransition>
-                  } />
+                          <ManagerDashboard activeTabDefault="leave-requests" />
+                        </div>
+                      </PageTransition>
+                    } />
                   <Route path="/manager-dashboard" element={
                     <PageTransition>
                       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
@@ -175,16 +175,16 @@ function AppContent({ session, userRole }) {
                   <PageTransition>
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
                       <ReportEntry />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/leave-calendar" element={
-                  <PageTransition>
+                      </div>
+                    </PageTransition>
+                  } />
+                  <Route path="/leave-calendar" element={
+                    <PageTransition>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                      <LeaveCalendar />
-                    </div>
-                  </PageTransition>
-                } />
+                        <LeaveCalendar />
+                      </div>
+                    </PageTransition>
+                  } />
                 <Route path="/announcements" element={
                   <PageTransition>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
@@ -201,13 +201,13 @@ function AppContent({ session, userRole }) {
                 } />
                 <Route path="/login" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </>
-            )}
-          </Routes>
-        </AnimatePresence>
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </>
+              )}
+            </Routes>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
   );
 }
 

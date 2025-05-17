@@ -230,21 +230,21 @@ const TabButton = ({ active, onClick, icon, children, color }) => (
   </motion.button>
 );
 
-const AchievementDetailModal = ({ isOpen, achievement, onClose }) => {
+const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'details' }) => {
   const [downloading, setDownloading] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [loadingCertificate, setLoadingCertificate] = useState(true);
   const certificateRef = React.useRef(null);
 
   useEffect(() => {
-    // Reset to details tab when opening a new achievement
+    // Reset to default tab when opening a new achievement
     if (isOpen) {
-      setActiveTab('details');
+      setActiveTab(defaultTab);
       setLoadingCertificate(true);
       const timer = setTimeout(() => setLoadingCertificate(false), 500);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, achievement]);
+  }, [isOpen, achievement, defaultTab]);
 
   if (!achievement) return null;
 

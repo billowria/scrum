@@ -42,7 +42,7 @@ const dayVariants = {
   },
   visible: { 
     opacity: 1, 
-    scale: 1,
+    scale: 1, 
     y: 0,
     transition: { 
       type: 'spring', 
@@ -312,8 +312,8 @@ const LeaveCalendarView = ({
                     text-sm font-medium
                     ${selectionState ? '' : (isTodayDate ? 'text-primary-700' : '')}
                   `}>
-                    {format(day, 'd')}
-                  </span>
+                  {format(day, 'd')}
+                </span>
                 </div>
                 
                 {isTodayDate && (
@@ -337,7 +337,7 @@ const LeaveCalendarView = ({
               {/* Leave items */}
               <div className="px-2 mt-1 overflow-hidden">
                 <AnimatePresence>
-                  {usersOnLeave.slice(0, 3).map((leave, i) => (
+                    {usersOnLeave.slice(0, 3).map((leave, i) => (
                     <motion.div 
                       key={`${leave.id}-${i}`} 
                       className={`
@@ -351,11 +351,11 @@ const LeaveCalendarView = ({
                         cursor-pointer hover:brightness-95 transition-all
                       `}
                       variants={leaveItemVariants}
-                      onClick={(e) => {
+                        onClick={(e) => {
                         e.stopPropagation();
-                        handleViewDayDetails(day);
-                      }}
-                    >
+                          handleViewDayDetails(day);
+                        }}
+                      >
                       {leave.status === 'approved' ? (
                         <FiCheckCircle className="mr-1 flex-shrink-0" />
                       ) : leave.status === 'pending' ? (
@@ -365,10 +365,10 @@ const LeaveCalendarView = ({
                       )}
                       <span className="truncate">{leave.users?.name?.split(' ')[0] || 'Unknown'}</span>
                     </motion.div>
-                  ))}
+                    ))}
                 </AnimatePresence>
-                
-                {usersOnLeave.length > 3 && (
+                    
+                    {usersOnLeave.length > 3 && (
                   <motion.div
                     className={`
                       text-xs text-center mt-1 font-medium px-2 py-1 rounded
@@ -380,15 +380,15 @@ const LeaveCalendarView = ({
                     `}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={(e) => {
+                        onClick={(e) => {
                       e.stopPropagation();
-                      handleViewDayDetails(day);
-                    }}
-                  >
+                          handleViewDayDetails(day);
+                        }}
+                      >
                     <FiUsers className="mr-1 inline-block" />
-                    +{usersOnLeave.length - 3} more
+                        +{usersOnLeave.length - 3} more
                   </motion.div>
-                )}
+                    )}
                 
                 {usersOnLeave.length === 0 && !isWeekendDay && (
                   <div className={`text-xs italic ${selectionState ? 'text-white/70' : 'text-gray-400'} mt-1`}>

@@ -94,6 +94,7 @@ const UserAchievements = () => {
   const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'timeline'
+  const [defaultModalTab, setDefaultModalTab] = useState('details');
   const [stats, setStats] = useState({
     total: 0,
     byType: {}
@@ -263,7 +264,17 @@ const UserAchievements = () => {
   // Handle achievement click to show detail modal
   const handleViewAchievement = (achievement) => {
     setSelectedAchievement(achievement);
+    setDefaultModalTab('details');
     setShowDetailModal(true);
+  };
+
+  // Handle certificate download button click
+  const handleDownloadCertificates = () => {
+    if (sortedAchievements.length > 0) {
+      setSelectedAchievement(sortedAchievements[0]);
+      setDefaultModalTab('certificate');
+      setShowDetailModal(true);
+    }
   };
 
   // Award type options for filtering (same as in AchievementsPage)
@@ -324,12 +335,26 @@ const UserAchievements = () => {
           )}
         </div>
         
-        {stats.total > 0 && (
-          <div className="bg-primary-50 px-4 py-3 rounded-lg border border-primary-100 flex flex-col items-center shadow-sm">
-            <span className="text-2xl font-bold text-primary-600">{stats.total}</span>
-            <span className="text-sm text-gray-600">Total Achievements</span>
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
+          {stats.total > 0 && (
+            <div className="bg-primary-50 px-4 py-3 rounded-lg border border-primary-100 flex flex-col items-center shadow-sm">
+              <span className="text-2xl font-bold text-primary-600">{stats.total}</span>
+              <span className="text-sm text-gray-600">Total Achievements</span>
+            </div>
+          )}
+          
+          {stats.total > 0 && (
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors"
+              onClick={handleDownloadCertificates}
+            >
+              <FiDownload className="mr-2" />
+              Download Certificates
+            </motion.button>
+          )}
+        </div>
       </motion.div>
       
       {/* Stats and filtering */}
@@ -592,6 +617,7 @@ const UserAchievements = () => {
       <AchievementDetailModal 
         isOpen={showDetailModal}
         achievement={selectedAchievement}
+        defaultTab={defaultModalTab}
         onClose={() => setShowDetailModal(false)}
       />
     </div>

@@ -50,7 +50,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
     if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
-      setActiveTab(activeTabDefault);
+    setActiveTab(activeTabDefault);
     }
   }, [location.search, activeTabDefault]);
   
@@ -243,7 +243,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         default:
           return 0;
       }
-    });
+  });
   
   return (
     <motion.div
@@ -390,7 +390,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
               <p className="text-sm text-gray-600">
                 Assign team members to specific teams or projects.
               </p>
-            </div>
+                          </div>
             
             <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
               <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
@@ -414,14 +414,14 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <FiCalendar className="text-primary-600" />
-                Leave Requests
+              <FiCalendar className="text-primary-600" />
+              Leave Requests
                 {pendingCount > 0 && (
                   <span className="ml-2 px-2.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
                     {pendingCount} Pending
                   </span>
                 )}
-              </h2>
+            </h2>
               <p className="text-gray-500 mt-1">Manage and approve team leave requests</p>
             </div>
             
@@ -461,17 +461,17 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
+              <select
                       className="w-full border border-gray-300 rounded-md text-sm p-2"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                       <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </div>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
@@ -510,7 +510,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
-                </div>
+          </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -557,21 +557,21 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-medium text-gray-900">{request.users?.name}</h3>
-                              {request.users?.teams && (
+                          {request.users?.teams && (
                                 <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                                  {request.users.teams.name}
-                                </span>
-                              )}
-                            </div>
-                            
+                              {request.users.teams.name}
+                            </span>
+                          )}
+                        </div>
+                        
                             <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <FiCalendar className="text-primary-500" />
-                                <span>
-                                  {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                                </span>
-                              </div>
-                              
+                          <div className="flex items-center gap-1">
+                            <FiCalendar className="text-primary-500" />
+                            <span>
+                              {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                            </span>
+                          </div>
+                          
                               <div className="flex items-center gap-1">
                                 <FiClock className="text-primary-500" />
                                 <span>{days} {days === 1 ? 'day' : 'days'}</span>
@@ -582,10 +582,10 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                               <p className="mt-2 text-sm text-gray-600">
                                 {request.reason}
                               </p>
-                            )}
-                          </div>
+                          )}
                         </div>
-                        
+                      </div>
+                      
                         <div className="flex flex-col items-end gap-2">
                           <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                             isPending 
@@ -594,36 +594,36 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-red-100 text-red-800'
                           }`}>
-                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                          </div>
-                          
+                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                        </div>
+                        
                           <div className="text-xs text-gray-500">
-                            Requested on {format(parseISO(request.created_at), 'MMM dd, yyyy')}
-                          </div>
-                          
-                          {isPending && (
+                          Requested on {format(parseISO(request.created_at), 'MMM dd, yyyy')}
+                        </div>
+                        
+                        {isPending && (
                             <div className="flex gap-2 mt-2">
-                              <motion.button
+                            <motion.button
                                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                                onClick={() => handleLeaveAction(request.id, 'approved')}
+                              onClick={() => handleLeaveAction(request.id, 'approved')}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                              >
+                            >
                                 <FiCheck className="w-4 h-4" />
-                                Approve
-                              </motion.button>
-                              
-                              <motion.button
+                              Approve
+                            </motion.button>
+                            
+                            <motion.button
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                                onClick={() => handleLeaveAction(request.id, 'rejected')}
+                              onClick={() => handleLeaveAction(request.id, 'rejected')}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                              >
+                            >
                                 <FiX className="w-4 h-4" />
-                                Reject
-                              </motion.button>
-                            </div>
-                          )}
+                              Reject
+                            </motion.button>
+                          </div>
+                        )}
                         </div>
                       </div>
                     </div>

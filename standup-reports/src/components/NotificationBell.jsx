@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, createRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiX, FiCalendar, FiCheck, FiX as FiXIcon } from 'react-icons/fi';
+import { FiBell, FiX, FiCalendar, FiCheck, FiX as FiXIcon, FiMessageCircle } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { format, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import AnnouncementModal from './AnnouncementModal';
 
 // Enhanced animation variants
 const bellVariants = {
@@ -113,11 +115,35 @@ const NotificationBell = ({ userRole }) => {
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState(new Set());
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const modalRoot = useRef(document.getElementById('modal-root') || document.body);
   const navigate = useNavigate();
 
+  // Effect to create modal root if it doesn't exist
   useEffect(() => {
-    if (userRole !== 'manager') return;
+    if (!document.getElementById('modal-root')) {
+      const modalRootDiv = document.createElement('div');
+      modalRootDiv.id = 'modal-root';
+      document.body.appendChild(modalRootDiv);
+      modalRoot.current = modalRootDiv;
+    }
+  }, []);
+
+  useEffect(() => {
+    // Get the current user ID on component mount
+    const getCurrentUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data && data.user) {
+        setCurrentUserId(data.user.id);
+      }
+    };
+    
+    getCurrentUser();
     fetchNotifications();
+    
     // Subscribe to new leave requests
     const leaveRequestsSubscription = supabase
       .channel('leave_requests_changes')
@@ -133,39 +159,128 @@ const NotificationBell = ({ userRole }) => {
         }
       )
       .subscribe();
+      
+    // Subscribe to new announcements
+    const announcementsSubscription = supabase
+      .channel('announcements_changes')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'announcements'
+        },
+        (payload) => {
+          console.log('New announcement received!', payload);
+          fetchNotifications();
+        }
+      )
+      .subscribe();
 
     return () => {
       leaveRequestsSubscription.unsubscribe();
+      announcementsSubscription.unsubscribe();
     };
   }, [userRole]);
 
   const fetchNotifications = async () => {
     try {
-      // Fetch pending leave requests
-      const { data: leaveRequests, error: leaveError } = await supabase
-        .from('leave_plans')
+      // Get current user to fetch relevant notifications
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+      
+      // Get user's team information
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('team_id')
+        .eq('id', user.id)
+        .single();
+        
+      if (userError) throw userError;
+      
+      let allNotifications = [];
+      
+      // Fetch pending leave requests (for managers only)
+      if (userRole === 'manager') {
+        const { data: leaveRequests, error: leaveError } = await supabase
+          .from('leave_plans')
+          .select(`
+            id, start_date, end_date, status, created_at,
+            users:user_id (id, name)
+          `)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (leaveError) throw leaveError;
+
+        // Transform leave requests into notifications
+        const leaveNotifications = leaveRequests.map(request => ({
+          id: `leave-${request.id}`,
+          type: 'leave_request',
+          title: 'New Leave Request',
+          message: `${request.users.name} requested leave from ${format(parseISO(request.start_date), 'MMM dd')} to ${format(parseISO(request.end_date), 'MMM dd')}`,
+          created_at: request.created_at,
+          read: false,
+          data: request
+        }));
+        
+        allNotifications = [...leaveNotifications];
+      }
+      
+      // Fetch announcements for user's team
+      const today = new Date().toISOString();
+      
+      // Fetch dismissed announcements for this user
+      const { data: dismissals, error: dismissalError } = await supabase
+        .from('announcement_dismissals')
+        .select('announcement_id')
+        .eq('user_id', user.id);
+        
+      if (dismissalError) throw dismissalError;
+      
+      // Create a Set of dismissed announcement IDs
+      const dismissedAnnouncementIds = new Set(dismissals?.map(d => d.announcement_id) || []);
+      setDismissedAnnouncements(dismissedAnnouncementIds);
+      
+      // Get announcements for user's team that haven't expired and haven't been dismissed
+      const { data: announcements, error: announcementError } = await supabase
+        .from('announcements')
         .select(`
-          id, start_date, end_date, status, created_at,
-          users:user_id (id, name)
+          id, title, content, created_at, expiry_date, created_by,
+          teams:team_id (id, name),
+          manager:created_by (id, name)
         `)
-        .eq('status', 'pending')
+        .eq('team_id', userData.team_id)
+        .gte('expiry_date', today)
         .order('created_at', { ascending: false });
-
-      if (leaveError) throw leaveError;
-
-      // Transform leave requests into notifications
-      const leaveNotifications = leaveRequests.map(request => ({
-        id: `leave-${request.id}`,
-        type: 'leave_request',
-        title: 'New Leave Request',
-        message: `${request.users.name} requested leave from ${format(parseISO(request.start_date), 'MMM dd')} to ${format(parseISO(request.end_date), 'MMM dd')}`,
-        created_at: request.created_at,
-        read: false,
-        data: request
-      }));
-
-      setNotifications(leaveNotifications);
-      setUnreadCount(leaveNotifications.length);
+        
+      if (announcementError) throw announcementError;
+      
+      // Filter out dismissed announcements and transform them
+      const announcementNotifications = announcements
+        .filter(announcement => !dismissedAnnouncementIds.has(announcement.id))
+        .map(announcement => ({
+          id: `announcement-${announcement.id}`,
+          type: 'announcement',
+          title: announcement.title,
+          message: announcement.content.length > 80 
+            ? `${announcement.content.substring(0, 80)}...` 
+            : announcement.content,
+          created_at: announcement.created_at,
+          read: false,
+          data: announcement
+        }));
+        
+      // Add announcements to notifications
+      allNotifications = [...allNotifications, ...announcementNotifications];
+      
+      // Sort all notifications by date (newest first)
+      allNotifications.sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+      
+      setNotifications(allNotifications);
+      setUnreadCount(allNotifications.length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
@@ -174,11 +289,58 @@ const NotificationBell = ({ userRole }) => {
   const handleNotificationClick = (notification) => {
     if (notification.type === 'leave_request') {
       navigate('/manager-dashboard?tab=leave-requests');
+      setShowDropdown(false);
+    } else if (notification.type === 'announcement') {
+      // Open the announcement modal
+      setSelectedAnnouncement(notification.data);
+      setShowAnnouncementModal(true);
+      setShowDropdown(false); // Close the dropdown when opening the modal
     }
-    setShowDropdown(false);
+  };
+
+  const handleAnnouncementDismissal = async (announcementId) => {
+    // After the announcement is dismissed from the modal
+    handleDismiss(`announcement-${announcementId}`);
+    setShowAnnouncementModal(false);
+    setSelectedAnnouncement(null);
   };
 
   const handleDismiss = async (notificationId) => {
+    // Extract the real ID from the notification ID
+    const parts = notificationId.split('-');
+    const type = parts[0];
+    const id = parts[1];
+    
+    if (type === 'announcement') {
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) return;
+        
+        // Record dismissal in database
+        const { error } = await supabase
+          .from('announcement_dismissals')
+          .insert({
+            user_id: user.id,
+            announcement_id: id,
+            dismissed_at: new Date().toISOString()
+          });
+          
+        if (error) throw error;
+        
+        // Update local state
+        setDismissedAnnouncements(prev => {
+          const updated = new Set(prev);
+          updated.add(id);
+          return updated;
+        });
+      } catch (error) {
+        console.error('Error dismissing announcement:', error);
+      }
+    }
+    
+    // Remove from notification list
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
@@ -246,6 +408,8 @@ const NotificationBell = ({ userRole }) => {
                           <div className="mt-1">
                             {notification.type === 'leave_request' ? (
                               <FiCalendar className="w-5 h-5 text-primary-500" />
+                            ) : notification.type === 'announcement' ? (
+                              <FiMessageCircle className="w-5 h-5 text-primary-500" />
                             ) : (
                               <FiBell className="w-5 h-5 text-primary-500" />
                             )}
@@ -293,6 +457,23 @@ const NotificationBell = ({ userRole }) => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Render the announcement modal using a portal to escape any layout constraints */}
+      {selectedAnnouncement && showAnnouncementModal && (
+        createPortal(
+          <AnnouncementModal
+            announcement={selectedAnnouncement}
+            isOpen={showAnnouncementModal}
+            onClose={() => {
+              setShowAnnouncementModal(false);
+              setSelectedAnnouncement(null);
+            }}
+            onDismiss={handleAnnouncementDismissal}
+            userId={currentUserId}
+          />,
+          modalRoot.current
+        )
+      )}
     </div>
   );
 };

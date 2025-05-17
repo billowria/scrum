@@ -438,8 +438,8 @@ export default function ReportEntry() {
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
           <FiClipboard className="text-primary-500" />
-          {existingReport ? 'Update Your Daily Report' : 'Submit Daily Report'}
-        </motion.h1>
+        {existingReport ? 'Update Your Daily Report' : 'Submit Daily Report'}
+      </motion.h1>
         <motion.p 
           className="text-gray-500 max-w-2xl mx-auto"
           initial={{ opacity: 0 }}
@@ -500,19 +500,19 @@ export default function ReportEntry() {
             
             <div className="bg-white rounded-md shadow-sm flex-1 flex relative">
               <FiCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="date"
-                id="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+            <input
+              type="date"
+              id="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
                 className="w-full px-10 py-2 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm font-medium"
-                max={new Date().toISOString().split('T')[0]} // Limit to today or earlier
-              />
+              max={new Date().toISOString().split('T')[0]} // Limit to today or earlier
+            />
             </div>
           </div>
-        </motion.div>
-        
-        {selectedTeam && (
+          </motion.div>
+          
+          {selectedTeam && (
           <motion.div 
             variants={itemVariants} 
             className="mb-4 flex justify-center"
@@ -525,8 +525,8 @@ export default function ReportEntry() {
               <FiUsers />
               <span>Team: {teams.find(team => team.id === selectedTeam)?.name || 'Assigned Team'}</span>
             </motion.div>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
         
         <AnimatePresence mode="wait">
           {currentStep === 0 && (
@@ -545,8 +545,8 @@ export default function ReportEntry() {
                 <div className="flex justify-between items-end">
                   <label htmlFor="yesterday" className="block text-base font-medium text-gray-700 flex items-center">
                     <FiStar className="mr-2 text-primary-400" />
-                    What did you accomplish yesterday?
-                  </label>
+            What did you accomplish yesterday?
+          </label>
                   <span className="text-xs text-gray-400">{yesterday.length} characters</span>
                 </div>
               </motion.div>
@@ -557,20 +557,20 @@ export default function ReportEntry() {
                 variants={inputFocusVariants}
                 className="relative"
               >
-                <textarea
+          <textarea
                   ref={yesterdayRef}
-                  id="yesterday"
-                  value={yesterday}
-                  onChange={(e) => setYesterday(e.target.value)}
+            id="yesterday"
+            value={yesterday}
+            onChange={(e) => setYesterday(e.target.value)}
                   onKeyDown={handleKeyDown}
                   rows="5"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
                   placeholder="List your completed tasks from yesterday... (Shift+Enter to continue)"
-                  required
-                />
+            required
+          />
                 <div className="absolute inset-0 pointer-events-none rounded-lg border-2 border-primary-500 opacity-0 focus-within:opacity-20 transition-opacity"></div>
-              </motion.div>
-              
+        </motion.div>
+        
               <div className="mt-2 text-xs text-primary-600 flex items-center">
                 <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -596,8 +596,8 @@ export default function ReportEntry() {
                 <div className="flex justify-between items-end">
                   <label htmlFor="today" className="block text-base font-medium text-gray-700 flex items-center">
                     <FiStar className="mr-2 text-primary-400" />
-                    What will you work on today?
-                  </label>
+            What will you work on today?
+          </label>
                   <span className="text-xs text-gray-400">{today.length} characters</span>
                 </div>
               </motion.div>
@@ -608,20 +608,20 @@ export default function ReportEntry() {
                 variants={inputFocusVariants}
                 className="relative"
               >
-                <textarea
+          <textarea
                   ref={todayRef}
-                  id="today"
-                  value={today}
-                  onChange={(e) => setToday(e.target.value)}
+            id="today"
+            value={today}
+            onChange={(e) => setToday(e.target.value)}
                   onKeyDown={handleKeyDown}
                   rows="5"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
                   placeholder="List your planned tasks for today... (Shift+Enter to continue)"
-                  required
-                />
+            required
+          />
                 <div className="absolute inset-0 pointer-events-none rounded-lg border-2 border-primary-500 opacity-0 focus-within:opacity-20 transition-opacity"></div>
-              </motion.div>
-              
+        </motion.div>
+        
               <div className="mt-2 text-xs text-primary-600 flex items-center">
                 <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -647,8 +647,8 @@ export default function ReportEntry() {
                 <div className="flex justify-between items-end">
                   <label htmlFor="blockers" className="block text-base font-medium text-gray-700 flex items-center">
                     <FiStar className="mr-2 text-primary-400" />
-                    Any blockers or impediments?
-                  </label>
+            Any blockers or impediments?
+          </label>
                   <span className="text-xs text-gray-400">{blockers.length} characters</span>
                 </div>
               </motion.div>
@@ -659,16 +659,16 @@ export default function ReportEntry() {
                 variants={inputFocusVariants}
                 className="relative"
               >
-                <textarea
+          <textarea
                   ref={blockersRef}
-                  id="blockers"
-                  value={blockers}
-                  onChange={(e) => setBlockers(e.target.value)}
+            id="blockers"
+            value={blockers}
+            onChange={(e) => setBlockers(e.target.value)}
                   onKeyDown={handleKeyDown}
                   rows="5"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm"
                   placeholder="Describe any blockers or issues preventing your progress (leave empty if none)... (Shift+Enter to submit)"
-                />
+          />
                 <div className="absolute inset-0 pointer-events-none rounded-lg border-2 border-primary-500 opacity-0 focus-within:opacity-20 transition-opacity"></div>
               </motion.div>
               
@@ -678,7 +678,7 @@ export default function ReportEntry() {
                 </svg>
                 <span>Pro tip: Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift</kbd> + <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to submit your report</span>
               </div>
-            </motion.div>
+        </motion.div>
           )}
         </AnimatePresence>
         

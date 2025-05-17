@@ -433,12 +433,12 @@ export default function Dashboard() {
   };
 
   return (
-    <motion.div 
+      <motion.div 
       className="max-w-6xl mx-auto"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
       {/* Dashboard Header */}
       <motion.div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6" variants={itemVariants}>
         <div>
@@ -450,15 +450,15 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <motion.button
+            <motion.button
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-1"
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={handleNewReport}
+              onClick={handleNewReport}
           >
             <FiPlus />
             New Report
-          </motion.button>
+            </motion.button>
           <motion.button
             className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
             variants={buttonVariants}
@@ -489,22 +489,22 @@ export default function Dashboard() {
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               style={{ width: '50%', height: '100%', opacity: 0.15 }}
             />
-            <motion.button
+          <motion.button
               className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'list' ? 'text-primary-600 font-medium' : ''}`}
               whileHover="hover"
               whileTap="tap"
               onClick={() => setViewMode('list')}
             >
               <FiList />
-            </motion.button>
-            <motion.button
+          </motion.button>
+          <motion.button
               className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'carousel' ? 'text-primary-600 font-medium' : ''}`}
               whileHover="hover"
               whileTap="tap"
               onClick={() => setViewMode('carousel')}
             >
               <FiGrid />
-            </motion.button>
+          </motion.button>
           </div>
         </div>
       </motion.div>
@@ -583,8 +583,8 @@ export default function Dashboard() {
                     >
                       <FiChevronDown className="h-4 w-4 text-gray-400" />
                     </motion.div>
-                  </div>
                 </div>
+              </div>
               </motion.div>
             </div>
             <motion.div 
@@ -608,309 +608,496 @@ export default function Dashboard() {
       </AnimatePresence>
       {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
       <div className="grid grid-cols-1 gap-6">
-        <div>
+        
           <motion.div 
             variants={itemVariants} 
-            className="mb-6 bg-white p-6 rounded-xl shadow-lg border border-gray-100"
+            className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-xl border border-indigo-100 dark:border-indigo-900/20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileHover={{ 
+              boxShadow: "0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.05)",
+              y: -3, 
+              transition: { type: "spring", stiffness: 400, damping: 15 }
+            }}
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                <FiFileText className="mr-3 text-primary-500" /> Daily Standup Reports
-              </h2>
-              
-              <div className="flex items-center gap-3 mt-4 md:mt-0">
-                <div className="relative overflow-hidden border border-gray-300 rounded-lg flex items-center">
+            {/* Glass overlay decorative elements */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-emerald-400/10 rounded-full blur-3xl"></div>
+            
+            {/* Header */}
+            <div className="relative p-6 md:p-8 border-b border-indigo-100/50 bg-white/50 backdrop-blur-sm">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <motion.h2 
+                  className="text-2xl font-bold text-gray-800 flex items-center gap-3"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg shadow-md text-white">
+                    <FiFileText className="h-5 w-5" />
+                  </div>
+                  <span className="bg-gradient-to-r from-gray-900 to-indigo-700 bg-clip-text text-transparent">
+                    Daily Standup Reports
+                  </span>
+                </motion.h2>
+                
+                <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
+                  {/* View mode switcher - redesigned */}
                   <motion.div 
-                    className="absolute top-0 bottom-0 left-0 right-0 bg-primary-500 rounded-md"
-                    variants={switchVariants}
-                    animate={viewMode === 'carousel' ? 'list' : 'grid'}
-                    initial={false}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    style={{ width: '50%', height: '100%', opacity: 0.15 }}
-                  />
-                  <motion.button
-                    className={`p-2.5 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'list' ? 'text-primary-600 font-medium' : ''}`}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={() => setViewMode('list')}
+                    className="relative overflow-hidden border border-indigo-200 rounded-full flex items-center p-1 bg-white shadow-sm"
+                    whileHover={{ scale: 1.02 }}
                   >
-                    <FiList />
+                    <motion.div 
+                      className="absolute top-1 bottom-1 rounded-full bg-indigo-100"
+                      variants={switchVariants}
+                      animate={viewMode === 'carousel' ? 'list' : 'grid'}
+                      initial={false}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      style={{ width: '48%', height: '85%', left: viewMode === 'list' ? '1%' : '51%' }}
+                    />
+                    <motion.button
+                      className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                        viewMode === 'list' 
+                          ? 'text-indigo-700' 
+                          : 'text-gray-600'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setViewMode('list')}
+                    >
+                      <FiList className={viewMode === 'list' ? 'text-indigo-600' : 'text-gray-500'} />
+                      <span>List</span>
+                    </motion.button>
+                    <motion.button
+                      className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                        viewMode === 'carousel' 
+                          ? 'text-indigo-700' 
+                          : 'text-gray-600'
+                      }`}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setViewMode('carousel')}
+                    >
+                      <FiGrid className={viewMode === 'carousel' ? 'text-indigo-600' : 'text-gray-500'} />
+                      <span>Cards</span>
+                    </motion.button>
+                  </motion.div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex gap-2">
+                    {viewMode === 'carousel' && filteredReports.length > 0 && (
+                      <motion.button
+                        className="p-2.5 rounded-full border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 shadow-sm transition-colors flex items-center justify-center"
+                        whileHover={{ scale: 1.05, rotate: 5 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={openFullscreenModal}
+                      >
+                        <FiMaximize />
+                      </motion.button>
+                    )}
+                    
+                    <motion.button
+                      className="p-2.5 rounded-full border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors flex items-center justify-center"
+                      whileHover={{ scale: 1.05, rotate: -5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleNewReport}
+                    >
+                      <FiPlus />
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Date navigation bar */}
+            <motion.div 
+              className="relative p-5 bg-gradient-to-r from-indigo-50 to-slate-50"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex flex-wrap justify-between items-center gap-4">
+                <div className="flex items-center space-x-3">
+                  <motion.button 
+                    onClick={() => setDate(subDays(new Date(date), 1).toISOString().split('T')[0])}
+                    className="p-2 hover:bg-indigo-100 rounded-full text-indigo-600 transition-colors shadow-sm bg-white border border-indigo-100"
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <FiChevronLeft />
                   </motion.button>
-                  <motion.button
-                    className={`p-2.5 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'carousel' ? 'text-primary-600 font-medium' : ''}`}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={() => setViewMode('carousel')}
+                  
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-400 to-primary-400 rounded-lg blur opacity-20 group-hover:opacity-50 transition-opacity"></div>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="relative bg-white border border-indigo-200 rounded-lg py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary-300 focus:border-primary-500 shadow-sm transition-all outline-none cursor-pointer"
+                    />
+                  </div>
+                  
+                  <motion.button 
+                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                    className="px-4 py-2 rounded-lg shadow-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium text-sm flex items-center gap-1.5"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                   >
-                    <FiGrid />
+                    <FiCalendar className="h-3.5 w-3.5" />
+                    Today
                   </motion.button>
                 </div>
                 
-                {viewMode === 'carousel' && filteredReports.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center text-sm">
+                    <span className="text-gray-500">Showing</span>
+                    <span className="mx-1.5 text-indigo-700 font-medium">{filteredReports.length}</span>
+                    <span className="text-gray-500">reports</span>
+                  </div>
+                  
                   <motion.button
-                    className="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={openFullscreenModal}
+                    onClick={handleRefresh}
                   >
-                    <FiMaximize />
+                    <FiRefreshCw className="h-3.5 w-3.5" />
+                    <span>Refresh</span>
                   </motion.button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg mb-6">
-              <div className="flex items-center space-x-3">
-                <button 
-                  onClick={() => setDate(subDays(new Date(date), 1).toISOString().split('T')[0])}
-                  className="p-2 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
-                >
-                  <FiChevronLeft />
-                </button>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-all"
-                />
-                <button 
-                  onClick={() => setDate(new Date().toISOString().split('T')[0])}
-                  className="px-3 py-1.5 rounded-md text-sm bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors font-medium"
-                >
-                  Today
-                </button>
-              </div>
-              <motion.button
-                onClick={handleRefresh}
-                className="p-2 hover:bg-gray-200 rounded-full text-gray-600 transition-colors flex items-center gap-2"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                animate={refreshing ? { rotate: 360 } : {}}
-                transition={refreshing ? { duration: 0.8, ease: "linear" } : {}}
-              >
-                <FiRefreshCw className={refreshing ? "text-primary-600" : ""} />
-                <span className="text-sm hidden md:inline">Refresh</span>
-              </motion.button>
-            </div>
-
-            {/* View mode specific content */}
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600"></div>
-              </div>
-            ) : error ? (
-              <motion.div 
-                className="bg-red-50 text-red-600 p-6 rounded-lg text-center my-8"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <p className="font-medium">{error}</p>
-              </motion.div>
-            ) : filteredReports.length === 0 ? (
-              <motion.div 
-                className="bg-gray-50 p-12 rounded-lg text-center my-8"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="h-20 w-20 mx-auto mb-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                  <FiClock className="h-10 w-10" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">No reports found</h3>
-                <p className="text-gray-600 max-w-md mx-auto text-lg">
-                  {isToday(date) 
-                    ? "No one has submitted a standup report for today yet."
-                    : "No standup reports were submitted for this date."}
-                </p>
-              </motion.div>
-            ) : viewMode === 'carousel' ? (
-              <div className="w-full">
-                <div 
-                  className="relative w-full overflow-hidden rounded-xl bg-white border border-gray-200 shadow-md mb-6"
-                  style={{ minHeight: '320px' }}
-                  ref={carouselRef}
+              </div>
+            </motion.div>
+            
+            {/* Reports Content */}
+            <div className="p-4 md:p-6 bg-white/90 backdrop-blur-sm min-h-[300px]">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <div className="w-16 h-16 relative">
+                    <div className="absolute inset-0 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+                    <div className="absolute inset-4 rounded-full border-t-2 border-emerald-500 animate-spin animate-delay-300"></div>
+                    <div className="absolute inset-8 rounded-full border-t-2 border-amber-500 animate-spin animate-delay-500"></div>
+                  </div>
+                  <p className="mt-4 text-gray-500 animate-pulse">Loading reports...</p>
+                </div>
+              ) : filteredReports.length === 0 ? (
+                <motion.div 
+                  className="flex flex-col items-center justify-center py-16 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
-                  <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                  <div className="w-20 h-20 mb-4 text-gray-300">
+                    <FiFileText className="w-full h-full" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No reports found</h3>
+                  <p className="text-gray-500 max-w-md mb-6">
+                    {isToday(date) ? 
+                      "No standup reports have been submitted for today yet." : 
+                      `No standup reports were found for ${formatDate(date)}.`}
+                  </p>
+                  <motion.button
+                    onClick={handleNewReport}
+                    className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiPlus className="h-4 w-4" />
+                    Add Your Report
+                  </motion.button>
+                </motion.div>
+              ) : viewMode === 'carousel' ? (
+                <div className="relative">
+                  <AnimatePresence mode="wait">
                     <motion.div
                       key={currentReportIndex}
-                      custom={slideDirection}
-                      initial={(direction) => ({
-                        x: direction === 'right' ? '100%' : '-100%',
-                        opacity: 0
-                      })}
-                      animate={{
-                        x: 0,
-                        opacity: 1
-                      }}
-                      exit={(direction) => ({
-                        x: direction === 'right' ? '-100%' : '100%',
-                        opacity: 0
-                      })}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 30,
-                        mass: 0.8
-                      }}
-                      className="absolute inset-0 p-6 transform-gpu will-change-transform"
-                      onDragStart={handleDragStart}
-                      onDragEnd={handleDragEnd}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                      className="relative"
                     >
-                      {/* Current report content */}
-                      {filteredReports[currentReportIndex] && (
-                        <div className="h-full flex flex-col">
-                          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200">
-                            <div className="h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-2xl shadow-sm">
-                              {filteredReports[currentReportIndex].users?.name?.charAt(0) || '?'}
-                            </div>
+                      <div className="bg-gradient-to-b from-indigo-50/50 to-transparent rounded-xl overflow-hidden p-5 shadow-sm">
+                        <div className="flex flex-col md:flex-row gap-4 items-start mb-6">
+                          <div className="flex items-center gap-3">
+                            {filteredReports[currentReportIndex].users?.image_url ? (
+                              <img
+                                src={filteredReports[currentReportIndex].users.image_url}
+                                alt={filteredReports[currentReportIndex].users?.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-semibold text-lg border-2 border-white shadow-md">
+                                {filteredReports[currentReportIndex].users?.name?.charAt(0) || "U"}
+                              </div>
+                            )}
                             <div>
-                              <h3 className="text-2xl font-bold text-gray-900">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
-                              <div className="text-gray-500 flex items-center gap-2">
-                                <span>{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
-                                <span>&bull;</span>
-                                <span className="flex items-center">
-                                  <FiClock className="mr-1" />
+                              <h3 className="font-semibold text-gray-900">
+                                {filteredReports[currentReportIndex].users?.name || "Unknown User"}
+                              </h3>
+                              <div className="text-sm text-gray-500 flex items-center gap-1.5">
+                                <FiClock className="h-3 w-3" />
+                                <span>
                                   {filteredReports[currentReportIndex].created_at 
-                                    ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a') 
-                                    : ''}
+                                    ? format(new Date(filteredReports[currentReportIndex].created_at), "MMM d, h:mm a") 
+                                    : "Unknown time"}
                                 </span>
                               </div>
                             </div>
                           </div>
                           
-                          <div className="grid md:grid-cols-3 gap-6 flex-1">
-                            <div className="bg-primary-50 rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
-                              <h4 className="font-semibold text-primary-700 mb-3 flex items-center text-lg border-b border-primary-100 pb-2">
-                                <span className="h-7 w-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-2 text-sm font-bold">1</span>
-                                Yesterday
-                              </h4>
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
-                                {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update provided</span>}
-                              </div>
-                            </div>
+                          <div className="ml-auto flex flex-wrap gap-2 items-center">
+                            {filteredReports[currentReportIndex].users?.teams?.name && (
+                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
+                                <FiUsers className="mr-1 h-3 w-3" />
+                                {filteredReports[currentReportIndex].users.teams.name}
+                              </span>
+                            )}
                             
-                            <div className="bg-green-50 rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
-                              <h4 className="font-semibold text-green-700 mb-3 flex items-center text-lg border-b border-green-100 pb-2">
-                                <span className="h-7 w-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center mr-2 text-sm font-bold">2</span>
-                                Today
-                              </h4>
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
-                                {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update provided</span>}
-                              </div>
-                            </div>
-                            
-                            <div className={`rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border ${filteredReports[currentReportIndex].blockers ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'}`}>
-                              <h4 className={`font-semibold mb-3 flex items-center text-lg pb-2 border-b ${filteredReports[currentReportIndex].blockers ? 'text-red-700 border-red-100' : 'text-gray-700 border-gray-200'}`}>
-                                <span className={`h-7 w-7 rounded-full flex items-center justify-center mr-2 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
-                                Blockers
-                              </h4>
-                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
-                                {filteredReports[currentReportIndex].blockers || <span className="italic text-gray-400">No blockers reported</span>}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Navigation indicator */}
-                          <div className="flex items-center justify-center mt-6 gap-1.5">
-                            {filteredReports.map((_, idx) => (
-                              <div 
-                                key={idx} 
-                                className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer hover:scale-110 ${idx === currentReportIndex ? 'bg-primary-500 w-8' : 'bg-gray-300 hover:bg-gray-400'}`}
-                                onClick={() => setCurrentReportIndex(idx)}
-                              />
-                            ))}
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
+                              filteredReports[currentReportIndex].blockers 
+                                ? "bg-amber-100 text-amber-700" 
+                                : "bg-emerald-100 text-emerald-700"
+                            }`}>
+                              {filteredReports[currentReportIndex].blockers 
+                                ? <FiAlertCircle className="mr-1 h-3 w-3" /> 
+                                : <FiCheckCircle className="mr-1 h-3 w-3" />}
+                              {filteredReports[currentReportIndex].blockers 
+                                ? "Has Blockers" 
+                                : "No Blockers"}
+                            </span>
                           </div>
                         </div>
-                      )}
+                        
+                        <div className="grid md:grid-cols-3 gap-6 flex-1">
+                          <motion.div 
+                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                            whileHover={{ scale: 1.02, y: -3 }}
+                          >
+                            <div className="bg-indigo-600 text-white px-5 py-3">
+                              <h4 className="font-medium flex items-center text-lg">
+                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">1</span>
+                                Yesterday
+                              </h4>
+                            </div>
+                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[210px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
+                                {filteredReports[currentReportIndex].yesterday || 
+                                  <span className="italic text-gray-400 flex items-center gap-2">
+                                    <FiInfo className="h-4 w-4" />
+                                    No update provided
+                                  </span>
+                                }
+                              </div>
+                            </div>
+                          </motion.div>
+                          
+                          <motion.div 
+                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                            whileHover={{ scale: 1.02, y: -3 }}
+                          >
+                            <div className="bg-emerald-600 text-white px-5 py-3">
+                              <h4 className="font-medium flex items-center text-lg">
+                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">2</span>
+                                Today
+                              </h4>
+                            </div>
+                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[210px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
+                                {filteredReports[currentReportIndex].today || 
+                                  <span className="italic text-gray-400 flex items-center gap-2">
+                                    <FiInfo className="h-4 w-4" />
+                                    No update provided
+                                  </span>
+                                }
+                              </div>
+                            </div>
+                          </motion.div>
+                          
+                          <motion.div 
+                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                            whileHover={{ scale: 1.02, y: -3 }}
+                          >
+                            <div className={`px-5 py-3 text-white ${filteredReports[currentReportIndex].blockers ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                              <h4 className="font-medium flex items-center text-lg">
+                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">3</span>
+                                Blockers
+                              </h4>
+                            </div>
+                            <div className={`p-5 h-[210px] flex flex-col transition-colors ${
+                              filteredReports[currentReportIndex].blockers 
+                                ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50' 
+                                : 'bg-gradient-to-br from-blue-50 to-blue-100/50 group-hover:from-blue-100 group-hover:to-blue-50'
+                            }`}>
+                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm ${
+                                filteredReports[currentReportIndex].blockers ? 'text-amber-900' : 'text-blue-900'
+                              }`}>
+                                {filteredReports[currentReportIndex].blockers || 
+                                  <span className="italic text-gray-400 flex items-center gap-2">
+                                    <FiCheckCircle className="h-4 w-4 text-emerald-500" />
+                                    No blockers reported
+                                  </span>
+                                }
+                              </div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </div>
                     </motion.div>
                   </AnimatePresence>
                   
-                  {/* Left/Right Buttons for Navigation */}
-                  {filteredReports.length > 1 && (
-                    <>
-                      <button 
-                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-md hover:shadow-lg ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
-                        onClick={prevReport}
-                        disabled={currentReportIndex === 0}
-                      >
-                        <FiChevronLeft size={24} />
-                      </button>
-                      <button 
-                        className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-md hover:shadow-lg ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
-                        onClick={nextReport}
-                        disabled={currentReportIndex === filteredReports.length - 1}
-                      >
-                        <FiChevronRight size={24} />
-                      </button>
-                    </>
-                  )}
-                </div>
-                
-                {/* Counter */}
-                {filteredReports.length > 0 && (
-                  <div className="text-center text-sm font-medium text-gray-500 flex items-center justify-center gap-4 py-2">
-                    <span className="bg-primary-50 text-primary-700 px-3 py-1 rounded-full">
-                      Report {currentReportIndex + 1} of {filteredReports.length}
-                    </span>
-                    {filteredReports.length > 1 && (
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="text-gray-400">Pro tip:</span>
-                        <span>Use arrow keys or swipe to navigate</span>
-                      </div>
-                    )}
+                  {/* Navigation controls */}
+                  <div className="flex justify-between mt-6">
+                    <motion.button 
+                      onClick={prevReport}
+                      disabled={filteredReports.length <= 1}
+                      className={`p-3 rounded-full shadow-md flex items-center justify-center ${
+                        filteredReports.length <= 1 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
+                      } transition-all`}
+                      whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
+                      whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
+                    >
+                      <FiChevronLeft className="h-5 w-5" />
+                    </motion.button>
+                    
+                    <div className="flex items-center justify-center">
+                      <span className="text-sm text-gray-600">
+                        {filteredReports.length > 0 ? `${currentReportIndex + 1} of ${filteredReports.length}` : '0 of 0'}
+                      </span>
+                    </div>
+                    
+                    <motion.button 
+                      onClick={nextReport}
+                      disabled={filteredReports.length <= 1}
+                      className={`p-3 rounded-full shadow-md flex items-center justify-center ${
+                        filteredReports.length <= 1 
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                          : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
+                      } transition-all`}
+                      whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
+                      whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
+                    >
+                      <FiChevronRight className="h-5 w-5" />
+                    </motion.button>
                   </div>
-                )}
-              </div>
-            ) : (
-              // List View
-              <div className="space-y-5 pb-4">
-                {filteredReports.map((report, idx) => (
-                  <motion.div
-                    key={report.id}
-                    className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-primary-50/30 shadow-sm hover:shadow-md transition-all flex flex-col gap-3"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  >
-                    <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                      <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg shadow-sm">
-                        {report.users?.name?.charAt(0) || '?'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-900 text-lg">{report.users?.name || 'Unknown User'}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-2">
-                          <span>{report.date}</span>
-                          <span>&bull;</span>
-                          <span>{report.users?.teams?.name || 'Unassigned'}</span>
+                </div>
+              ) : (
+                // List view
+                <motion.div 
+                  className="flex flex-col space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {filteredReports.map((report) => (
+                    <motion.div 
+                      key={report.id} 
+                      className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 overflow-hidden"
+                      variants={itemVariants}
+                      whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          {report.users?.image_url ? (
+                            <img
+                              src={report.users.image_url}
+                              alt={report.users?.name}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
+                              {report.users?.name?.charAt(0) || "U"}
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-medium text-gray-900">{report.users?.name || "Unknown User"}</h3>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <FiClock className="h-3 w-3" />
+                              <span>{report.created_at ? format(new Date(report.created_at), "MMM d, h:mm a") : "Unknown time"}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 items-center">
+                          {report.users?.teams?.name && (
+                            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
+                              <FiUsers className="mr-1 h-3 w-3" />
+                              {report.users.teams.name}
+                            </span>
+                          )}
+                          
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
+                            report.blockers 
+                              ? "bg-amber-100 text-amber-700" 
+                              : "bg-emerald-100 text-emerald-700"
+                          }`}>
+                            {report.blockers 
+                              ? <FiAlertCircle className="mr-1 h-3 w-3" /> 
+                              : <FiCheckCircle className="mr-1 h-3 w-3" />}
+                            {report.blockers 
+                              ? "Has Blockers" 
+                              : "No Blockers"}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-400 flex items-center gap-1 bg-gray-50 px-2.5 py-1.5 rounded-full">
-                        <FiClock />
-                        {report.created_at ? format(parseISO(report.created_at), 'h:mm a') : ''}
+                      
+                      <div className="grid sm:grid-cols-3 gap-3">
+                        <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
+                          <span className="font-medium text-indigo-700 block mb-1.5 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-indigo-200 flex items-center justify-center text-xs font-bold text-indigo-700">1</span>
+                            Yesterday:
+                          </span>
+                          <span className="text-gray-700 break-words text-sm">
+                            {report.yesterday || <span className="italic text-gray-400">No update</span>}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
+                          <span className="font-medium text-emerald-700 block mb-1.5 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-emerald-200 flex items-center justify-center text-xs font-bold text-emerald-700">2</span>
+                            Today:
+                          </span>
+                          <span className="text-gray-700 break-words text-sm">
+                            {report.today || <span className="italic text-gray-400">No update</span>}
+                          </span>
+                        </div>
+                        
+                        <div className={`rounded-lg p-3 hover:bg-opacity-70 transition-colors ${
+                          report.blockers 
+                            ? 'bg-amber-50 border border-amber-100 hover:bg-amber-100/50' 
+                            : 'bg-blue-50 border border-blue-100 hover:bg-blue-100/50'
+                        }`}> 
+                          <span className={`font-medium block mb-1.5 flex items-center gap-1.5 ${
+                            report.blockers ? 'text-amber-700' : 'text-blue-700'
+                          }`}>
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                              report.blockers ? 'bg-amber-200 text-amber-700' : 'bg-blue-200 text-blue-700'
+                            }`}>
+                              3
+                            </span>
+                            Blockers:
+                          </span>
+                          <span className={`break-words text-sm ${
+                            report.blockers ? 'text-amber-700' : 'text-blue-700'
+                          }`}>
+                            {report.blockers || 
+                              <span className="italic text-emerald-600 flex items-center gap-1">
+                                <FiCheckCircle className="h-3 w-3" />
+                                No blockers
+                              </span>
+                            }
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col md:flex-row gap-3">
-                      <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                        <span className="font-medium text-gray-700 block mb-1.5">Yesterday:</span>
-                        <span className="text-gray-700 break-words text-sm">{report.yesterday || <span className="italic text-gray-400">No update</span>}</span>
-                      </div>
-                      <div className="flex-1 bg-green-50 rounded-lg p-3 border border-green-100">
-                        <span className="font-medium text-green-700 block mb-1.5">Today:</span>
-                        <span className="text-gray-700 break-words text-sm">{report.today || <span className="italic text-gray-400">No update</span>}</span>
-                      </div>
-                      <div className={`flex-1 rounded-lg p-3 ${report.blockers ? 'bg-red-50 border border-red-100' : 'bg-gray-50 border border-gray-100'}`}> 
-                        <span className={`font-medium block mb-1.5 ${report.blockers ? 'text-red-700' : 'text-gray-700'}`}>Blockers:</span>
-                        <span className={`break-words text-sm ${report.blockers ? 'text-red-700' : 'text-green-700'}`}>{report.blockers || <span className="italic text-gray-400">No blockers</span>}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
           </motion.div>
-        </div>
-        
+                    
         {/* Missing Reports Widget */}
         <div className="w-full max-w-4xl mx-auto mb-10">
           <motion.div 
@@ -986,7 +1173,7 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </div>
-
+      
       {/* Fullscreen Modal */}
       <AnimatePresence>
         {showFullscreenModal && (

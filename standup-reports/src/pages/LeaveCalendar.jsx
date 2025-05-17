@@ -536,10 +536,10 @@ export default function LeaveCalendar() {
              leave.status !== 'rejected' && 
              leave.users && currentUser && 
              leave.users.id === currentUser.id;
-    });
-    
-    return (
-      <motion.div
+  });
+  
+  return (
+    <motion.div 
         key={dateStr}
         whileHover={{ scale: 1.05, zIndex: 10 }}
         whileTap={{ scale: 0.95 }}
@@ -600,19 +600,19 @@ export default function LeaveCalendar() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Page header */}
-      <motion.div 
+          <motion.div 
         className="mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-      >
+          >
         <h1 className="text-3xl font-bold font-display mb-2 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
           Team Leave Calendar
         </h1>
         <p className="text-gray-600">
           Manage leave requests and view team availability
         </p>
-      </motion.div>
+          </motion.div>
       
       {/* Calendar controls */}
       <motion.div 
@@ -646,7 +646,7 @@ export default function LeaveCalendar() {
             <FiChevronRight size={24} />
           </motion.button>
           
-          <motion.button
+          <motion.button 
             className="ml-2 px-3 py-1.5 text-sm bg-primary-50 text-primary-600 rounded-md hover:bg-primary-100 flex items-center transition-colors"
             onClick={() => setCurrentMonth(new Date())}
             variants={overlayButtonVariants}
@@ -751,7 +751,7 @@ export default function LeaveCalendar() {
                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                     <div key={day} className="text-center p-2 font-medium text-gray-500 bg-gray-50 rounded-md">
                       {day}
-                    </div>
+            </div>
                   ))}
                 </motion.div>
                 
@@ -783,24 +783,24 @@ export default function LeaveCalendar() {
               currentMonth={currentMonth}
             />
           </motion.div>
-        )}
+          )}
         
         {/* Analytics View */}
         {activeTab === 'analytics' && (
-          <motion.div
+        <motion.div
             key="analytics"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-          >
+        >
             <TeamAvailabilityAnalytics 
               teamAvailability={teamAvailability}
               users={users}
-              leaveData={leaveData}
-              currentMonth={currentMonth}
-            />
-          </motion.div>
+            leaveData={leaveData} 
+            currentMonth={currentMonth} 
+          />
+        </motion.div>
         )}
       </AnimatePresence>
       
@@ -845,7 +845,7 @@ export default function LeaveCalendar() {
                 </motion.button>
               )}
             </div>
-          </div>
+      </div>
         </motion.div>
       )}
       
@@ -928,18 +928,18 @@ export default function LeaveCalendar() {
             </div>
             
             <div className="p-6">
-              <LeaveRequestForm
-                isOpen={showLeaveForm}
-                selectedDates={selectedDates}
-                setSelectedDates={setSelectedDates}
+      <LeaveRequestForm 
+        isOpen={showLeaveForm}
+        selectedDates={selectedDates}
+        setSelectedDates={setSelectedDates}
                 onSuccess={() => {
                   setShowLeaveForm(false);
                   handleLeaveRequestSuccess();
                 }}
                 onClose={() => setShowLeaveForm(false)}
-              />
+      />
             </div>
-          </motion.div>
+    </motion.div>
         </div>
       )}
       

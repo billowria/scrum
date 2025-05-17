@@ -400,20 +400,20 @@ export default function TeamAssignment() {
       {/* Team Assignment Modal */}
       <AnimatePresence>
         {showAssignModal && (
-          <motion.div
+            <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowAssignModal(false)}
-          >
-            <motion.div 
-              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAssignModal(false)}
             >
+              <motion.div
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              >
               <h3 className="text-lg font-medium text-gray-900 mb-4">Assign Team</h3>
               
               {selectedUser && (
@@ -431,18 +431,18 @@ export default function TeamAssignment() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Team
                 </label>
-                <select
+                    <select
                   className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  value={selectedTeam || ''}
-                  onChange={(e) => setSelectedTeam(e.target.value)}
-                >
-                  <option value="">Select a team</option>
-                  {teams.map(team => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
-              </div>
-              
+                      value={selectedTeam || ''}
+                      onChange={(e) => setSelectedTeam(e.target.value)}
+                    >
+                      <option value="">Select a team</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   type="button"
@@ -499,16 +499,16 @@ export default function TeamAssignment() {
               </div>
               
               <div className="mt-6 flex justify-end space-x-3">
-                <motion.button
+                    <motion.button
                   type="button"
                   className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   onClick={() => setShowAddTeamModal(false)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
                   type="button"
                   className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   onClick={handleAddTeam}
@@ -517,10 +517,10 @@ export default function TeamAssignment() {
                   whileTap={{ scale: 0.95 }}
                 >
                   {addingTeam ? 'Adding...' : 'Add Team'}
-                </motion.button>
-              </div>
+                    </motion.button>
+                  </div>
             </motion.div>
-          </div>
+                </div>
         )}
       </AnimatePresence>
       
@@ -564,7 +564,7 @@ export default function TeamAssignment() {
                 ))}
               </div>
             </div>
-          </motion.div>
+            </motion.div>
         )}
       </AnimatePresence>
     </motion.div>
