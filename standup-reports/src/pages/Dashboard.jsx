@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { format, isToday, parseISO, subDays } from 'date-fns';
+import { useNavigate, Link } from 'react-router-dom';
+import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '../supabaseClient';
 
 // Icons
-import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize } from 'react-icons/fi';
+import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown } from 'react-icons/fi';
+
+// Components
+import AnnouncementModal from '../components/AnnouncementModal';
+import NotificationBell from '../components/NotificationBell';
+import Announcements from '../components/Announcements';
+import TeamAvailabilityAnalytics from '../components/TeamAvailabilityAnalytics';
+import LeaveRequestForm from '../components/LeaveRequestForm';
+import TeamHealthIndicator from '../components/TeamHealthIndicator';
 
 // Animation variants
 const containerVariants = {
@@ -29,7 +37,46 @@ const itemVariants = {
 
 const filterVariants = {
   hidden: { opacity: 0, x: -20 },
-  visible: { opacity: 1, x: 0, transition: { delay: 0.2 } }
+  visible: { opacity: 1, x: 0, transition: { delay: 0.2 } },
+  active: {
+    scale: 1.05,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+    transition: { type: 'spring', stiffness: 300, damping: 20 }
+  }
+};
+
+const buttonVariants = {
+  hover: { scale: 1.05, transition: { type: 'spring', stiffness: 400, damping: 10 } },
+  tap: { scale: 0.95 },
+  active: { backgroundColor: '#4F46E5', color: '#ffffff' }
+};
+
+const switchVariants = {
+  list: { x: 0 },
+  grid: { x: '100%' }
+};
+
+const dropdownVariants = {
+  hidden: { opacity: 0, y: -10, scaleY: 0.8, transformOrigin: "top" },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scaleY: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 500, 
+      damping: 30,
+      staggerChildren: 0.05,
+      delayChildren: 0.02
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -10, 
+    scaleY: 0.8,
+    transition: { duration: 0.2 } 
+  }
 };
 
 export default function Dashboard() {
@@ -45,6 +92,15 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState('carousel'); 
   const [showFullscreenModal, setShowFullscreenModal] = useState(false);
   
+  // User state
+  const [userId, setUserId] = useState(null);
+  const [userTeamId, setUserTeamId] = useState(null);
+  
+  // Missing reports state
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [missingReports, setMissingReports] = useState([]);
+  const [loadingMissing, setLoadingMissing] = useState(false);
+  
   // Animation controls
   const cardControls = useAnimation();
   const navigate = useNavigate();
@@ -53,7 +109,53 @@ export default function Dashboard() {
   const reportRefs = useRef([]);
   const carouselRef = useRef(null);
 
+  const [slideDirection, setSlideDirection] = useState('right');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
+  const [dragEnd, setDragEnd] = useState(0);
+
+  const [activeFilter, setActiveFilter] = useState(false);
+
+  // Add new state variables for team interaction features
+  const [showTeamAvailabilityWidget, setShowTeamAvailabilityWidget] = useState(true);
+  const [showQuickLeaveRequest, setShowQuickLeaveRequest] = useState(false);
+  const [leaveRequestSuccess, setLeaveRequestSuccess] = useState(false);
+  const [teamMetrics, setTeamMetrics] = useState({
+    collaboration: 0,
+    velocity: 0,
+    quality: 0,
+    happiness: 0
+  });
+  const [showAnnouncementsList, setShowAnnouncementsList] = useState(true);
+  const [teamAvailability, setTeamAvailability] = useState({});
+  const [leaveData, setLeaveData] = useState([]);
+
   useEffect(() => {
+    // Get current user information including their team
+    const getUserInfo = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        setUserId(user.id);
+        
+        // Get user's team information
+        const { data, error } = await supabase
+          .from('users')
+          .select('team_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setUserTeamId(data.team_id);
+          fetchTeamMembers(data.team_id);
+        }
+      } catch (error) {
+        console.error('Error getting user info:', error);
+      }
+    };
+    
+    getUserInfo();
     fetchReports(date);
     fetchTeams();
     
@@ -137,6 +239,12 @@ export default function Dashboard() {
       if (error) throw error;
 
       setReports(data || []);
+      
+      // If today's date is selected, update missing reports
+      if (date === new Date().toISOString().split('T')[0] && userTeamId) {
+        identifyMissingReports(data || [], userTeamId);
+      }
+      
       // Reset refs array to match new reports length
       reportRefs.current = Array(data?.length || 0).fill().map((_, i) => reportRefs.current[i] || null);
     } catch (error) {
@@ -147,38 +255,156 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTeamMembers = async (teamId) => {
+    if (!teamId) return;
+    
+    setLoadingMissing(true);
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .eq('team_id', teamId);
+        
+      if (error) throw error;
+      
+      setTeamMembers(data || []);
+      
+      // If reports are already loaded, identify missing reports
+      if (reports.length > 0 && date === new Date().toISOString().split('T')[0]) {
+        identifyMissingReports(reports, teamId);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+    } finally {
+      setLoadingMissing(false);
+    }
+  };
+
+  // This function is used for fetching team members when team is selected in filter
+  const fetchTeamMembersForStatus = async (teamId) => {
+    if (!teamId || teamId === 'all') return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .eq('team_id', teamId)
+        .order('name', { ascending: true });
+        
+      if (error) throw error;
+      
+      setTeamMembers(data || []);
+      
+    } catch (error) {
+      console.error('Error fetching team members for status:', error);
+    }
+  };
+  
+  // Effect to fetch team members when team filter changes
+  useEffect(() => {
+    if (selectedTeam !== 'all') {
+      fetchTeamMembersForStatus(selectedTeam);
+    }
+  }, [selectedTeam]);
+  
+  // Update missing reports when team members data changes
+  useEffect(() => {
+    if (teamMembers.length > 0 && date === new Date().toISOString().split('T')[0]) {
+      identifyMissingReports(reports, userTeamId);
+    }
+  }, [teamMembers, reports, userTeamId, date]);
+  
+  // Utility function to check if a team member has submitted a report
+  const hasSubmittedReport = (userId) => {
+    return reports.some(report => report.users?.id === userId);
+  };
+  
+  const identifyMissingReports = (reportsList, teamId) => {
+    // Only run for today's date
+    if (date !== new Date().toISOString().split('T')[0]) return;
+    
+    // Get IDs of users who have submitted reports
+    const submittedUserIds = reportsList.map(report => report.users?.id).filter(Boolean);
+    
+    // Make sure we have team members loaded
+    if (teamMembers.length === 0) {
+      console.log("No team members loaded yet");
+      return;
+    }
+    
+    // Filter team members who haven't submitted reports
+    const missing = teamMembers.filter(
+      member => !submittedUserIds.includes(member.id)
+    );
+    
+    console.log("Team members:", teamMembers.length);
+    console.log("Submitted IDs:", submittedUserIds);
+    console.log("Missing reports:", missing.length);
+    
+    setMissingReports(missing);
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchReports(date);
+    
+    // If today's date is selected, also refresh team members data
+    if (date === new Date().toISOString().split('T')[0] && userTeamId) {
+      await fetchTeamMembers(userTeamId);
+    }
+    
     setTimeout(() => setRefreshing(false), 600); // Add a small delay for animation
     setCurrentReportIndex(0); // Reset to first report after refresh
   };
   
-  // Direction state for animations
-  const [slideDirection, setSlideDirection] = useState('right');
+  const handleDragStart = (e) => {
+    setDragStart(e.clientX);
+  };
+
+  const handleDragEnd = (e) => {
+    setDragEnd(e.clientX);
+    const dragDistance = dragStart - dragEnd;
+    
+    if (Math.abs(dragDistance) > 50) { // Minimum drag distance to trigger slide
+      if (dragDistance > 0 && currentReportIndex < filteredReports.length - 1) {
+        nextReport();
+      } else if (dragDistance < 0 && currentReportIndex > 0) {
+        prevReport();
+      }
+    }
+  };
 
   const nextReport = () => {
-    if (currentReportIndex < filteredReports.length - 1) {
+    if (currentReportIndex < filteredReports.length - 1 && !isAnimating) {
+      setIsAnimating(true);
       setSlideDirection('right');
       setCurrentReportIndex(prev => prev + 1);
+      setTimeout(() => setIsAnimating(false), 400);
     }
   };
   
   const prevReport = () => {
-    if (currentReportIndex > 0) {
+    if (currentReportIndex > 0 && !isAnimating) {
+      setIsAnimating(true);
       setSlideDirection('left');
       setCurrentReportIndex(prev => prev - 1);
+      setTimeout(() => setIsAnimating(false), 400);
     }
   };
   
   // Toggle fullscreen modal
   const openFullscreenModal = () => {
     setShowFullscreenModal(true);
+    // Lock body scroll when fullscreen modal is open
+    document.body.style.overflow = 'hidden';
   };
   
   // Close fullscreen modal
   const closeFullscreenModal = () => {
     setShowFullscreenModal(false);
+    // Restore body scroll when fullscreen modal is closed
+    document.body.style.overflow = 'auto';
   };
   
   const toggleViewMode = () => {
@@ -207,120 +433,99 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-container">
-      <motion.div 
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <motion.div variants={itemVariants}>
-          <h1 className="text-3xl font-bold font-display bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
-            {isToday(date) ? "Today's Standup Reports" : "Standup Reports"}
+    <motion.div 
+      className="max-w-6xl mx-auto"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* Dashboard Header */}
+      <motion.div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6" variants={itemVariants}>
+        <div>
+          <h1 className="text-3xl font-bold font-display mb-2 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
+            Team Dashboard
           </h1>
-          <p className="text-gray-500 flex items-center mt-1">
-            <FiCalendar className="mr-1" /> {formatDate(date)}
+          <p className="text-gray-500">
+            Your team's collaborative workspace
           </p>
-        </motion.div>
-        
-        <div className="flex items-center gap-2">
-          <motion.div
-            className="relative"
-            variants={itemVariants}
-          >
-            <motion.button
-              onClick={handleNewReport}
-              className="group p-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-all duration-500 flex items-center gap-2"
-              whileHover={{ 
-                width: 'auto', 
-                paddingRight: '1rem',
-                transition: { 
-                  duration: 0.5,
-                  ease: 'easeOut'
-                }
-              }}
-              initial={{ width: '2.5rem' }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiPlus className="h-5 w-5 flex-shrink-0" />
-              <motion.span 
-                className="overflow-hidden whitespace-nowrap flex-shrink-0"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 0, opacity: 0 }}
-                whileHover={{ 
-                  width: 'auto', 
-                  opacity: 1,
-                  transition: { 
-                    width: { duration: 0.5, ease: 'easeOut' },
-                    opacity: { duration: 0.3, delay: 0.2 }
-                  }
-                }}
-              >
-                Submit Report
-              </motion.span>
-            </motion.button>
-          </motion.div>
-          
+        </div>
+        <div className="flex gap-2">
           <motion.button
-            variants={itemVariants}
-            onClick={toggleViewMode}
-            className={`px-3 py-2 rounded-lg flex items-center gap-2 ${viewMode === 'carousel' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-700'}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            title={viewMode === 'carousel' ? 'Switch to list view' : 'Switch to carousel view'}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-1"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleNewReport}
           >
-            {viewMode === 'carousel' ? (
-              <>
-                <FiGrid className="h-4 w-4" />
-                <span className="text-sm font-medium">Carousel View</span>
-              </>
-            ) : (
-              <>
-                <FiList className="h-4 w-4" />
-                <span className="text-sm font-medium">List View</span>
-              </>
+            <FiPlus />
+            New Report
+          </motion.button>
+          <motion.button
+            className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+            animate={activeFilter ? "active" : ""}
+            onClick={() => {
+              setShowFilters(!showFilters);
+              setActiveFilter(!activeFilter);
+            }}
+          >
+            <FiFilter className={showFilters ? "text-primary-600" : ""} />
+            {activeFilter && (
+              <motion.span 
+                className="absolute -top-1 -right-1 bg-primary-500 rounded-full w-2 h-2"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 500 }}
+              />
             )}
           </motion.button>
-          
-          <motion.button
-            variants={itemVariants}
-            onClick={handleRefresh}
-            className="p-2 rounded-full text-primary-600 hover:bg-primary-50 transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={refreshing}
-          >
-            <FiRefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-          </motion.button>
-          
-          <motion.button
-            variants={itemVariants}
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-full transition-colors ${
-              showFilters 
-                ? 'bg-primary-100 text-primary-700' 
-                : 'text-primary-600 hover:bg-primary-50'
-            }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiFilter className="h-5 w-5" />
-          </motion.button>
+          <div className="relative overflow-hidden border border-gray-300 rounded-lg flex items-center">
+            <motion.div 
+              className="absolute top-0 bottom-0 left-0 right-0 bg-primary-500 rounded-md"
+              variants={switchVariants}
+              animate={viewMode === 'carousel' ? 'list' : 'grid'}
+              initial={false}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              style={{ width: '50%', height: '100%', opacity: 0.15 }}
+            />
+            <motion.button
+              className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'list' ? 'text-primary-600 font-medium' : ''}`}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => setViewMode('list')}
+            >
+              <FiList />
+            </motion.button>
+            <motion.button
+              className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'carousel' ? 'text-primary-600 font-medium' : ''}`}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => setViewMode('carousel')}
+            >
+              <FiGrid />
+            </motion.button>
+          </div>
         </div>
       </motion.div>
-
       {/* Filters */}
       <AnimatePresence>
         {showFilters && (
           <motion.div 
             className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-4 mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: -20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex-1">
+              <motion.div 
+                className="flex-1"
+                variants={filterVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="active"
+              >
                 <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
                   Date
                 </label>
@@ -328,18 +533,28 @@ export default function Dashboard() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FiCalendar className="h-4 w-4 text-gray-400" />
                   </div>
-                  <input
+                  <motion.input
                     type="date"
                     id="date-filter"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      handleRefresh();
+                    }}
                     className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm"
                     max={new Date().toISOString().split('T')[0]}
+                    whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
                   />
                 </div>
-              </div>
-              
-              <div className="flex-1">
+              </motion.div>
+              <motion.div 
+                className="flex-1"
+                variants={filterVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="active"
+                transition={{ delay: 0.1 }}
+              >
                 <label htmlFor="team-filter" className="block text-sm font-medium text-gray-700 mb-1">
                   Team
                 </label>
@@ -347,11 +562,12 @@ export default function Dashboard() {
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FiUsers className="h-4 w-4 text-gray-400" />
                   </div>
-                  <select
+                  <motion.select
                     id="team-filter"
                     value={selectedTeam}
                     onChange={(e) => setSelectedTeam(e.target.value)}
-                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm"
+                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm appearance-none"
+                    whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
                   >
                     <option value="all">All Teams</option>
                     {teams.map((team) => (
@@ -359,542 +575,563 @@ export default function Dashboard() {
                         {team.name}
                       </option>
                     ))}
-                  </select>
+                  </motion.select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <motion.div
+                      animate={{ rotate: showFilters ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <FiChevronDown className="h-4 w-4 text-gray-400" />
+                    </motion.div>
+                  </div>
                 </div>
+              </motion.div>
+            </div>
+            <motion.div 
+              className="mt-4 flex justify-end"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <motion.button
+                className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleRefresh}
+              >
+                <FiRefreshCw className="mr-1 h-3 w-3" />
+                Refresh Results
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <motion.div 
+            variants={itemVariants} 
+            className="mb-6 bg-white p-6 rounded-xl shadow-lg border border-gray-100"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-4 border-b border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                <FiFileText className="mr-3 text-primary-500" /> Daily Standup Reports
+              </h2>
+              
+              <div className="flex items-center gap-3 mt-4 md:mt-0">
+                <div className="relative overflow-hidden border border-gray-300 rounded-lg flex items-center">
+                  <motion.div 
+                    className="absolute top-0 bottom-0 left-0 right-0 bg-primary-500 rounded-md"
+                    variants={switchVariants}
+                    animate={viewMode === 'carousel' ? 'list' : 'grid'}
+                    initial={false}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{ width: '50%', height: '100%', opacity: 0.15 }}
+                  />
+                  <motion.button
+                    className={`p-2.5 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'list' ? 'text-primary-600 font-medium' : ''}`}
+                    whileHover="hover"
+                    whileTap="tap"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <FiList />
+                  </motion.button>
+                  <motion.button
+                    className={`p-2.5 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'carousel' ? 'text-primary-600 font-medium' : ''}`}
+                    whileHover="hover"
+                    whileTap="tap"
+                    onClick={() => setViewMode('carousel')}
+                  >
+                    <FiGrid />
+                  </motion.button>
+                </div>
+                
+                {viewMode === 'carousel' && filteredReports.length > 0 && (
+                  <motion.button
+                    className="p-2.5 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={openFullscreenModal}
+                  >
+                    <FiMaximize />
+                  </motion.button>
+                )}
               </div>
+            </div>
+
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg mb-6">
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => setDate(subDays(new Date(date), 1).toISOString().split('T')[0])}
+                  className="p-2 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                >
+                  <FiChevronLeft />
+                </button>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary-300 focus:border-primary-500 transition-all"
+                />
+                <button 
+                  onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                  className="px-3 py-1.5 rounded-md text-sm bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors font-medium"
+                >
+                  Today
+                </button>
+              </div>
+              <motion.button
+                onClick={handleRefresh}
+                className="p-2 hover:bg-gray-200 rounded-full text-gray-600 transition-colors flex items-center gap-2"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                animate={refreshing ? { rotate: 360 } : {}}
+                transition={refreshing ? { duration: 0.8, ease: "linear" } : {}}
+              >
+                <FiRefreshCw className={refreshing ? "text-primary-600" : ""} />
+                <span className="text-sm hidden md:inline">Refresh</span>
+              </motion.button>
+            </div>
+
+            {/* View mode specific content */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600"></div>
+              </div>
+            ) : error ? (
+              <motion.div 
+                className="bg-red-50 text-red-600 p-6 rounded-lg text-center my-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="font-medium">{error}</p>
+              </motion.div>
+            ) : filteredReports.length === 0 ? (
+              <motion.div 
+                className="bg-gray-50 p-12 rounded-lg text-center my-8"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="h-20 w-20 mx-auto mb-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                  <FiClock className="h-10 w-10" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-3">No reports found</h3>
+                <p className="text-gray-600 max-w-md mx-auto text-lg">
+                  {isToday(date) 
+                    ? "No one has submitted a standup report for today yet."
+                    : "No standup reports were submitted for this date."}
+                </p>
+              </motion.div>
+            ) : viewMode === 'carousel' ? (
+              <div className="w-full">
+                <div 
+                  className="relative w-full overflow-hidden rounded-xl bg-white border border-gray-200 shadow-md mb-6"
+                  style={{ minHeight: '320px' }}
+                  ref={carouselRef}
+                >
+                  <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                    <motion.div
+                      key={currentReportIndex}
+                      custom={slideDirection}
+                      initial={(direction) => ({
+                        x: direction === 'right' ? '100%' : '-100%',
+                        opacity: 0
+                      })}
+                      animate={{
+                        x: 0,
+                        opacity: 1
+                      }}
+                      exit={(direction) => ({
+                        x: direction === 'right' ? '-100%' : '100%',
+                        opacity: 0
+                      })}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 30,
+                        mass: 0.8
+                      }}
+                      className="absolute inset-0 p-6 transform-gpu will-change-transform"
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    >
+                      {/* Current report content */}
+                      {filteredReports[currentReportIndex] && (
+                        <div className="h-full flex flex-col">
+                          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200">
+                            <div className="h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-2xl shadow-sm">
+                              {filteredReports[currentReportIndex].users?.name?.charAt(0) || '?'}
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-bold text-gray-900">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
+                              <div className="text-gray-500 flex items-center gap-2">
+                                <span>{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
+                                <span>&bull;</span>
+                                <span className="flex items-center">
+                                  <FiClock className="mr-1" />
+                                  {filteredReports[currentReportIndex].created_at 
+                                    ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a') 
+                                    : ''}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="grid md:grid-cols-3 gap-6 flex-1">
+                            <div className="bg-primary-50 rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
+                              <h4 className="font-semibold text-primary-700 mb-3 flex items-center text-lg border-b border-primary-100 pb-2">
+                                <span className="h-7 w-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-2 text-sm font-bold">1</span>
+                                Yesterday
+                              </h4>
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
+                                {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update provided</span>}
+                              </div>
+                            </div>
+                            
+                            <div className="bg-green-50 rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
+                              <h4 className="font-semibold text-green-700 mb-3 flex items-center text-lg border-b border-green-100 pb-2">
+                                <span className="h-7 w-7 rounded-full bg-green-100 text-green-700 flex items-center justify-center mr-2 text-sm font-bold">2</span>
+                                Today
+                              </h4>
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
+                                {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update provided</span>}
+                              </div>
+                            </div>
+                            
+                            <div className={`rounded-xl p-5 shadow-sm h-[250px] flex flex-col hover:shadow-md transition-all duration-300 border ${filteredReports[currentReportIndex].blockers ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'}`}>
+                              <h4 className={`font-semibold mb-3 flex items-center text-lg pb-2 border-b ${filteredReports[currentReportIndex].blockers ? 'text-red-700 border-red-100' : 'text-gray-700 border-gray-200'}`}>
+                                <span className={`h-7 w-7 rounded-full flex items-center justify-center mr-2 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
+                                Blockers
+                              </h4>
+                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
+                                {filteredReports[currentReportIndex].blockers || <span className="italic text-gray-400">No blockers reported</span>}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Navigation indicator */}
+                          <div className="flex items-center justify-center mt-6 gap-1.5">
+                            {filteredReports.map((_, idx) => (
+                              <div 
+                                key={idx} 
+                                className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer hover:scale-110 ${idx === currentReportIndex ? 'bg-primary-500 w-8' : 'bg-gray-300 hover:bg-gray-400'}`}
+                                onClick={() => setCurrentReportIndex(idx)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                  
+                  {/* Left/Right Buttons for Navigation */}
+                  {filteredReports.length > 1 && (
+                    <>
+                      <button 
+                        className={`absolute left-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-md hover:shadow-lg ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
+                        onClick={prevReport}
+                        disabled={currentReportIndex === 0}
+                      >
+                        <FiChevronLeft size={24} />
+                      </button>
+                      <button 
+                        className={`absolute right-4 top-1/2 transform -translate-y-1/2 p-3 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-md hover:shadow-lg ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
+                        onClick={nextReport}
+                        disabled={currentReportIndex === filteredReports.length - 1}
+                      >
+                        <FiChevronRight size={24} />
+                      </button>
+                    </>
+                  )}
+                </div>
+                
+                {/* Counter */}
+                {filteredReports.length > 0 && (
+                  <div className="text-center text-sm font-medium text-gray-500 flex items-center justify-center gap-4 py-2">
+                    <span className="bg-primary-50 text-primary-700 px-3 py-1 rounded-full">
+                      Report {currentReportIndex + 1} of {filteredReports.length}
+                    </span>
+                    {filteredReports.length > 1 && (
+                      <div className="flex items-center gap-1 text-xs">
+                        <span className="text-gray-400">Pro tip:</span>
+                        <span>Use arrow keys or swipe to navigate</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // List View
+              <div className="space-y-5 pb-4">
+                {filteredReports.map((report, idx) => (
+                  <motion.div
+                    key={report.id}
+                    className="border border-gray-200 rounded-xl p-5 bg-gradient-to-br from-white to-primary-50/30 shadow-sm hover:shadow-md transition-all flex flex-col gap-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  >
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                      <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-lg shadow-sm">
+                        {report.users?.name?.charAt(0) || '?'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 text-lg">{report.users?.name || 'Unknown User'}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                          <span>{report.date}</span>
+                          <span>&bull;</span>
+                          <span>{report.users?.teams?.name || 'Unassigned'}</span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 flex items-center gap-1 bg-gray-50 px-2.5 py-1.5 rounded-full">
+                        <FiClock />
+                        {report.created_at ? format(parseISO(report.created_at), 'h:mm a') : ''}
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <span className="font-medium text-gray-700 block mb-1.5">Yesterday:</span>
+                        <span className="text-gray-700 break-words text-sm">{report.yesterday || <span className="italic text-gray-400">No update</span>}</span>
+                      </div>
+                      <div className="flex-1 bg-green-50 rounded-lg p-3 border border-green-100">
+                        <span className="font-medium text-green-700 block mb-1.5">Today:</span>
+                        <span className="text-gray-700 break-words text-sm">{report.today || <span className="italic text-gray-400">No update</span>}</span>
+                      </div>
+                      <div className={`flex-1 rounded-lg p-3 ${report.blockers ? 'bg-red-50 border border-red-100' : 'bg-gray-50 border border-gray-100'}`}> 
+                        <span className={`font-medium block mb-1.5 ${report.blockers ? 'text-red-700' : 'text-gray-700'}`}>Blockers:</span>
+                        <span className={`break-words text-sm ${report.blockers ? 'text-red-700' : 'text-green-700'}`}>{report.blockers || <span className="italic text-gray-400">No blockers</span>}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+        
+        {/* Missing Reports Widget */}
+        <div className="w-full max-w-4xl mx-auto mb-10">
+          <motion.div 
+            variants={itemVariants} 
+            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200"
+            whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <h2 className="text-xl font-bold flex items-center text-gray-800">
+                <FiAlertCircle className="mr-3 text-primary-500" />
+                Missing Reports Today
+              </h2>
+              <p className="text-gray-500 text-sm mt-1">Team members who haven't submitted their daily report yet</p>
+            </div>
+            
+            <div className="p-6 max-h-[400px] overflow-y-auto">
+              {isToday(date) ? (
+                <>
+                  {loadingMissing ? (
+                    <div className="flex justify-center py-8">
+                      <motion.div 
+                        className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                    </div>
+                  ) : missingReports.length === 0 ? (
+                    <div className="text-center p-6 bg-green-50 rounded-xl text-green-700 border border-green-100">
+                      <FiCheckCircle className="mx-auto mb-3 h-8 w-8" />
+                      <p className="font-bold text-xl mb-2">All Caught Up!</p>
+                      <p className="text-green-600">Everyone on the team has submitted their reports for today.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-yellow-600 mb-4 bg-yellow-50 p-2 rounded-lg inline-flex items-center">
+                        <FiAlertCircle className="mr-2" /> {missingReports.length} team member{missingReports.length > 1 ? 's' : ''} still need to submit their report.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {missingReports.map(member => (
+                          <div key={member.id} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 transition-colors border border-gray-200">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-medium mr-3 shadow-sm">
+                                {member.name.charAt(0)}
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-800 block">{member.name}</span>
+                                <span className="text-xs text-gray-500">{member.role || 'Team Member'}</span>
+                              </div>
+                            </div>
+                            <span className="text-sm text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">Pending</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
+                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mx-auto mb-4">
+                    <FiCalendar className="h-8 w-8" />
+                  </div>
+                  <p className="text-lg mb-3">Missing reports are only available for today.</p>
+                  <button 
+                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                    className="mt-2 px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
+                  >
+                    Switch to Today
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Fullscreen Modal */}
+      <AnimatePresence>
+        {showFullscreenModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/95 z-50 p-6 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeFullscreenModal}
+          >
+            <motion.button
+              className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={closeFullscreenModal}
+            >
+              <FiX className="h-6 w-6" />
+            </motion.button>
+            
+            <div 
+              className="w-full max-w-5xl mx-auto" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              {filteredReports.length > 0 && (
+                <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl">
+                  <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                    <motion.div
+                      key={currentReportIndex}
+                      custom={slideDirection}
+                      initial={(direction) => ({
+                        x: direction === 'right' ? '100%' : '-100%',
+                        opacity: 0
+                      })}
+                      animate={{
+                        x: 0,
+                        opacity: 1
+                      }}
+                      exit={(direction) => ({
+                        x: direction === 'right' ? '-100%' : '100%',
+                        opacity: 0
+                      })}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 30,
+                        mass: 0.8
+                      }}
+                      className="p-8"
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    >
+                      {/* Current report content */}
+                      <div className="flex items-center gap-5 mb-8 pb-5 border-b border-gray-200">
+                        <div className="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-3xl shadow-md">
+                          {filteredReports[currentReportIndex].users?.name?.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <h3 className="text-3xl font-bold text-gray-900 mb-1">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
+                          <div className="text-gray-500 flex items-center gap-3 text-lg">
+                            <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
+                            <span>&bull;</span>
+                            <span className="flex items-center">
+                              <FiClock className="mr-1.5" />
+                              {filteredReports[currentReportIndex].created_at 
+                                ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a') 
+                                : ''}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-auto text-sm bg-primary-50 text-primary-700 rounded-full px-4 py-1 border border-primary-100">
+                          Report {currentReportIndex + 1} of {filteredReports.length}
+                        </div>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-3 gap-8">
+                        <div className="bg-primary-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
+                          <h4 className="font-semibold text-primary-700 mb-4 flex items-center text-xl border-b border-primary-100 pb-3">
+                            <span className="h-8 w-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-3 text-sm font-bold">1</span>
+                            Yesterday
+                          </h4>
+                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
+                            {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update provided</span>}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-green-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
+                          <h4 className="font-semibold text-green-700 mb-4 flex items-center text-xl border-b border-green-100 pb-3">
+                            <span className="h-8 w-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center mr-3 text-sm font-bold">2</span>
+                            Today
+                          </h4>
+                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
+                            {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update provided</span>}
+                          </div>
+                        </div>
+                        
+                        <div className={`rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border ${filteredReports[currentReportIndex].blockers ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'}`}>
+                          <h4 className={`font-semibold mb-4 flex items-center text-xl pb-3 border-b ${filteredReports[currentReportIndex].blockers ? 'text-red-700 border-red-100' : 'text-gray-700 border-gray-200'}`}>
+                            <span className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
+                            Blockers
+                          </h4>
+                          <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
+                            {filteredReports[currentReportIndex].blockers || <span className="italic text-gray-400">No blockers reported</span>}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Navigation indicator */}
+                      <div className="flex items-center justify-center mt-8 gap-2">
+                        {filteredReports.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`h-3 rounded-full transition-all cursor-pointer hover:scale-110 ${idx === currentReportIndex ? 'bg-primary-500 w-8' : 'bg-gray-300 w-3 hover:bg-gray-400'}`}
+                            onClick={() => setCurrentReportIndex(idx)}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                  
+                  {/* Left/Right Buttons for Navigation */}
+                  {filteredReports.length > 1 && (
+                    <>
+                      <button 
+                        className={`absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-lg hover:shadow-xl ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
+                        onClick={prevReport}
+                        disabled={currentReportIndex === 0}
+                      >
+                        <FiChevronLeft size={28} />
+                      </button>
+                      <button 
+                        className={`absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-lg hover:shadow-xl ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
+                        onClick={nextReport}
+                        disabled={currentReportIndex === filteredReports.length - 1}
+                      >
+                        <FiChevronRight size={28} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Reports */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="relative">
-            <div className="h-12 w-12 rounded-full border-4 border-primary-200 border-t-primary-600 animate-spin"></div>
-            <div className="mt-4 text-center text-primary-700 font-medium">Loading reports...</div>
-          </div>
-        </div>
-      ) : error ? (
-        <motion.div 
-          className="bg-red-50 text-red-600 p-6 rounded-lg shadow-sm border border-red-100 mb-4"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex-1">
-            <FiAlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
-            <div>{error}</div>
-          </div>
-        </motion.div>
-      ) : filteredReports.length === 0 ? (
-        <motion.div 
-          className="bg-gradient-to-br from-yellow-50 to-amber-50 p-8 rounded-xl shadow-sm border border-yellow-100 text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        >
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 text-yellow-600 mb-4">
-            <FiClock className="h-8 w-8" />
-          </div>
-          <h3 className="text-xl font-bold text-yellow-800 mb-2">No reports submitted yet</h3>
-          <p className="text-yellow-700 max-w-md mx-auto">
-            {isToday(date) 
-              ? 'Be the first to submit your daily standup report for today!' 
-              : 'No standup reports were submitted for this date.'}
-          </p>
-        </motion.div>
-      ) : viewMode === 'carousel' && filteredReports.length > 0 ? (
-        <div className="relative max-w-5xl mx-auto py-6">
-          {/* Report counter and fullscreen button */}
-          <div className="absolute top-4 right-4 z-10 flex items-center gap-4">
-            <div className="text-sm font-medium bg-gray-100 px-4 py-2 rounded-full shadow-sm">
-              Report {currentReportIndex + 1} of {filteredReports.length}
-            </div>
-            <motion.button
-              onClick={openFullscreenModal}
-              className="p-2 rounded-full bg-primary-100 shadow-md text-primary-700 hover:bg-primary-200 flex items-center gap-2 px-3 py-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiMaximize className="h-4 w-4" />
-              <span className="text-sm font-medium">Fullscreen</span>
-            </motion.button>
-          </div>
-          
-          {/* Left navigation button */}
-          <motion.button
-            onClick={prevReport}
-            className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-4 rounded-full shadow-lg ${
-              currentReportIndex > 0 ? 'bg-white text-primary-700 opacity-80 hover:opacity-100' : 'bg-gray-200 text-gray-400 opacity-50'
-            }`}
-            whileHover={currentReportIndex > 0 ? { scale: 1.1, opacity: 1 } : {}}
-            whileTap={currentReportIndex > 0 ? { scale: 0.9 } : {}}
-            disabled={currentReportIndex === 0}
-            style={{ display: filteredReports.length <= 1 ? 'none' : 'flex' }}
-          >
-            <FiChevronLeft className="h-6 w-6" />
-          </motion.button>
-          
-          {/* Right navigation button */}
-          <motion.button
-            onClick={nextReport}
-            className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-4 rounded-full shadow-lg ${
-              currentReportIndex < filteredReports.length - 1 ? 'bg-white text-primary-700 opacity-80 hover:opacity-100' : 'bg-gray-200 text-gray-400 opacity-50'
-            }`}
-            whileHover={currentReportIndex < filteredReports.length - 1 ? { scale: 1.1, opacity: 1 } : {}}
-            whileTap={currentReportIndex < filteredReports.length - 1 ? { scale: 0.9 } : {}}
-            disabled={currentReportIndex === filteredReports.length - 1}
-            style={{ display: filteredReports.length <= 1 ? 'none' : 'flex' }}
-          >
-            <FiChevronRight className="h-6 w-6" />
-          </motion.button>
-          
-          {/* Carousel container with overflow hidden */}
-          <div className="overflow-hidden relative h-full" style={{ padding: showFullscreenModal ? '1rem' : '0' }}>
-            {/* Animated carousel wrapper */}
-            <AnimatePresence initial={false} custom={slideDirection} mode="wait">
-              <motion.div
-                key={currentReportIndex}
-                custom={slideDirection}
-                initial={(direction) => ({
-                  x: direction === 'right' ? 300 : -300,
-                  opacity: 0,
-                  scale: 0.9
-                })}
-                animate={{
-                  x: 0,
-                  opacity: 1,
-                  scale: 1
-                }}
-                exit={(direction) => ({
-                  x: direction === 'right' ? -300 : 300,
-                  opacity: 0,
-                  scale: 0.9
-                })}
-                transition={{
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 1
-                }}
-                className={`bg-white rounded-xl shadow-xl border border-gray-200 mb-6 transform-gpu ${showFullscreenModal ? 'w-full' : ''}`}
-                style={{ maxHeight: showFullscreenModal ? 'calc(100vh - 12rem)' : 'auto', overflow: 'auto' }}
-              >
-                {filteredReports[currentReportIndex] && (
-                  <>
-                    {/* Report header */}
-                    <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-8 py-6 flex justify-between items-start">
-                      <div className="flex items-center">
-                        <div className="h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-4 shadow-sm">
-                          <FiUser className="h-8 w-8" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-2xl text-gray-900 mb-1">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
-                          <div className="flex items-center text-sm text-gray-500">
-                            <FiUsers className="h-4 w-4 mr-1.5" />
-                            <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
-                            <span className="mx-2">&bull;</span>
-                            <FiClock className="h-4 w-4 mr-1.5" />
-                            <span>{new Date(filteredReports[currentReportIndex].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {filteredReports[currentReportIndex].blockers ? (
-                        <div className="flex items-center text-sm font-medium text-red-600 bg-red-50 px-4 py-2 rounded-full shadow-sm">
-                          <FiAlertCircle className="h-4 w-4 mr-2" />
-                          Has blockers
-                        </div>
-                      ) : (
-                        <div className="flex items-center text-sm font-medium text-green-600 bg-green-50 px-4 py-2 rounded-full shadow-sm">
-                          <FiCheckCircle className="h-4 w-4 mr-2" />
-                          No blockers
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Report content */}
-                    <div className="p-8">
-                      <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-3">
-                        <motion.div 
-                          className="p-6 bg-gray-50 rounded-xl shadow-sm"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1, duration: 0.4 }}
-                        >
-                          <h4 className="font-semibold text-lg text-gray-900 flex items-center mb-4">
-                            <span className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-3 text-xs font-bold shadow-sm">1</span>
-                            Yesterday
-                          </h4>
-                          <div className="text-gray-700 text-sm whitespace-pre-line min-h-[150px]">
-                            {filteredReports[currentReportIndex].yesterday || 'No update provided'}
-                          </div>
-                        </motion.div>
-                        
-                        <motion.div 
-                          className="p-6 bg-gray-50 rounded-xl shadow-sm"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2, duration: 0.4 }}
-                        >
-                          <h4 className="font-semibold text-lg text-gray-900 flex items-center mb-4">
-                            <span className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-3 text-xs font-bold shadow-sm">2</span>
-                            Today
-                          </h4>
-                          <div className="text-gray-700 text-sm whitespace-pre-line min-h-[150px]">
-                            {filteredReports[currentReportIndex].today || 'No update provided'}
-                          </div>
-                        </motion.div>
-                        
-                        <motion.div 
-                          className={filteredReports[currentReportIndex].blockers ? 
-                            "p-6 bg-red-50 rounded-xl shadow-sm border border-red-100" : 
-                            "p-6 bg-green-50 rounded-xl shadow-sm border border-green-100"}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.3, duration: 0.4 }}
-                        >
-                          <h4 className="font-semibold text-lg text-gray-900 flex items-center mb-4">
-                            <span className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-3 text-xs font-bold shadow-sm">3</span>
-                            Blockers
-                          </h4>
-                          <div className={filteredReports[currentReportIndex].blockers ? "text-red-700 text-sm whitespace-pre-line min-h-[150px]" : "text-green-700 text-sm whitespace-pre-line min-h-[150px]"}>
-                            {filteredReports[currentReportIndex].blockers || 'No blockers reported'}
-                          </div>
-                        </motion.div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-          
-          {/* Pagination dots */}
-          {!showFullscreenModal && (
-            <div className="flex justify-center gap-2 mt-8">
-              {filteredReports.map((_, index) => (
-                <motion.button 
-                  key={index} 
-                  className={`h-3 rounded-full transition-all ${index === currentReportIndex ? 'w-10 bg-primary-500' : 'w-3 bg-gray-300'}`}
-                  onClick={() => {
-                    setSlideDirection(index > currentReportIndex ? 'right' : 'left');
-                    setCurrentReportIndex(index);
-                  }}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  aria-label={`Go to report ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
-          
-
-        </div>
-      ) : viewMode === 'carousel' ? (
-        <motion.div 
-          className="bg-gradient-to-br from-yellow-50 to-amber-50 p-8 rounded-xl shadow-sm border border-yellow-100 text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        >
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 text-yellow-600 mb-4">
-            <FiClock className="h-8 w-8" />
-          </div>
-          <h3 className="text-xl font-bold text-yellow-800 mb-2">No reports to display</h3>
-          <p className="text-yellow-700 max-w-md mx-auto">
-            {isToday(date) 
-              ? 'Be the first to submit your daily standup report for today!' 
-              : 'No standup reports were submitted for this date.'}
-          </p>
-        </motion.div>
-      ) : (
-        <motion.div 
-          className="grid gap-6"
-          initial="hidden"
-          animate="visible"
-          variants={containerVariants}
-        >
-          {filteredReports.map((report, index) => (
-            <motion.div 
-              key={report.id} 
-              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-card hover:shadow-card-hover border border-gray-100 overflow-hidden transition-all duration-300 opacity-0"
-              variants={itemVariants}
-              ref={el => reportRefs.current[index] = el}
-            >
-              <React.Fragment>
-                <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-6 py-4 flex justify-between items-start">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-3">
-                      <FiUser className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">{report.users?.name || 'Unknown User'}</h3>
-                      <div className="text-xs text-gray-500 flex items-center">
-                        <FiClock className="h-3 w-3 mr-1" />
-                        <span>{new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {report.blockers ? (
-                  <div className="flex items-center text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                    <FiAlertCircle className="h-3 w-3 mr-1" />
-                    Has blockers
-                  </div>
-                ) : (
-                  <div className="flex items-center text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    <FiCheckCircle className="h-3 w-3 mr-1" />
-                    No blockers
-                  </div>
-                )}
-                
-                <div className="p-6">
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-900 flex items-center">
-                        <span className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 mr-2 text-xs">1</span>
-                        Yesterday
-                      </h4>
-                      <div className="bg-gray-50 rounded-lg p-3 text-gray-700 text-sm whitespace-pre-line min-h-[80px]">
-                        {report.yesterday || 'No update provided'}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-900 flex items-center">
-                        <span className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 mr-2 text-xs">2</span>
-                        Today
-                      </h4>
-                      <div className="bg-gray-50 rounded-lg p-3 text-gray-700 text-sm whitespace-pre-line min-h-[80px]">
-                        {report.today || 'No update provided'}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-gray-900 flex items-center">
-                        <span className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 mr-2 text-xs">3</span>
-                        Blockers
-                      </h4>
-                      {report.blockers ? (
-                        <div className="bg-red-50 rounded-lg p-3 text-red-700 text-sm whitespace-pre-line min-h-[80px] border border-red-100">
-                          {report.blockers}
-                        </div>
-                      ) : (
-                        <div className="bg-green-50 rounded-lg p-3 text-green-700 text-sm whitespace-pre-line min-h-[80px] border border-green-100">
-                          No blockers reported
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </React.Fragment>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-      
-      {/* Fullscreen Modal */}
-      {showFullscreenModal && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center overflow-auto" onClick={closeFullscreenModal}>
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-4">
-          <div className="text-sm font-medium bg-white/20 text-white px-4 py-2 rounded-full shadow-sm">
-            Report {currentReportIndex + 1} of {filteredReports.length}
-          </div>
-          <motion.button
-            onClick={closeFullscreenModal}
-            className="p-2 rounded-full bg-white shadow-md text-gray-700 hover:bg-gray-100 flex items-center gap-2 px-3 py-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiMinimize className="h-4 w-4" />
-            <span className="text-sm font-medium">Exit Fullscreen</span>
-          </motion.button>
-        </div>
-        
-        {/* Modal Content - Prevent click propagation to avoid closing when clicking inside */}
-        <div className="w-[95%] max-w-7xl mx-auto" onClick={(e) => e.stopPropagation()}>
-          {/* Left navigation button */}
-          <motion.button
-            onClick={() => {
-              if (currentReportIndex > 0) {
-                setSlideDirection('left');
-                setCurrentReportIndex(prev => prev - 1);
-              }
-            }}
-            className={`absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-5 rounded-full shadow-lg ${
-              currentReportIndex > 0 ? 'bg-white text-primary-700 opacity-90 hover:opacity-100' : 'bg-gray-200 text-gray-400 opacity-50'
-            }`}
-            whileHover={currentReportIndex > 0 ? { scale: 1.1, opacity: 1 } : {}}
-            whileTap={currentReportIndex > 0 ? { scale: 0.9 } : {}}
-            disabled={currentReportIndex === 0}
-            style={{ display: filteredReports.length <= 1 ? 'none' : 'flex' }}
-          >
-            <FiChevronLeft className="h-8 w-8" />
-          </motion.button>
-          
-          {/* Right navigation button */}
-          <motion.button
-            onClick={() => {
-              if (currentReportIndex < filteredReports.length - 1) {
-                setSlideDirection('right');
-                setCurrentReportIndex(prev => prev + 1);
-              }
-            }}
-            className={`absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-5 rounded-full shadow-lg ${
-              currentReportIndex < filteredReports.length - 1 ? 'bg-white text-primary-700 opacity-90 hover:opacity-100' : 'bg-gray-200 text-gray-400 opacity-50'
-            }`}
-            whileHover={currentReportIndex < filteredReports.length - 1 ? { scale: 1.1, opacity: 1 } : {}}
-            whileTap={currentReportIndex < filteredReports.length - 1 ? { scale: 0.9 } : {}}
-            disabled={currentReportIndex === filteredReports.length - 1}
-            style={{ display: filteredReports.length <= 1 ? 'none' : 'flex' }}
-          >
-            <FiChevronRight className="h-8 w-8" />
-          </motion.button>
-          
-          {/* Animated carousel wrapper */}
-          <AnimatePresence initial={false} custom={slideDirection} mode="wait">
-            <motion.div
-              key={currentReportIndex}
-              custom={slideDirection}
-              initial={(direction) => ({
-                x: direction === 'right' ? 300 : -300,
-                opacity: 0,
-                scale: 0.9
-              })}
-              animate={{
-                x: 0,
-                opacity: 1,
-                scale: 1
-              }}
-              exit={(direction) => ({
-                x: direction === 'right' ? -300 : 300,
-                opacity: 0,
-                scale: 0.9
-              })}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 30,
-                mass: 1
-              }}
-              className="bg-white rounded-xl shadow-xl border border-gray-200 transform-gpu"
-            >
-              {filteredReports[currentReportIndex] && (
-                <>
-                  {/* Report header */}
-                  <div className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white px-10 py-8 flex justify-between items-start">
-                    <div className="flex items-center">
-                      <div className="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-6 shadow-sm">
-                        <FiUser className="h-10 w-10" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-3xl text-gray-900 mb-2">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
-                        <div className="flex items-center text-base text-gray-500">
-                          <FiUsers className="h-5 w-5 mr-2" />
-                          <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
-                          <span className="mx-3">&bull;</span>
-                          <FiClock className="h-5 w-5 mr-2" />
-                          <span>{new Date(filteredReports[currentReportIndex].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {filteredReports[currentReportIndex].blockers ? (
-                      <div className="flex items-center text-base font-medium text-red-600 bg-red-50 px-5 py-3 rounded-full shadow-sm">
-                        <FiAlertCircle className="h-5 w-5 mr-2" />
-                        Has blockers
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-base font-medium text-green-600 bg-green-50 px-5 py-3 rounded-full shadow-sm">
-                        <FiCheckCircle className="h-5 w-5 mr-2" />
-                        No blockers
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Report content */}
-                  <div className="p-10">
-                    <div className="grid gap-10 grid-cols-3">
-                      <motion.div 
-                        className="p-8 bg-gray-50 rounded-xl shadow-sm"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1, duration: 0.4 }}
-                      >
-                        <h4 className="font-semibold text-xl text-gray-900 flex items-center mb-6">
-                          <span className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-4 text-sm font-bold shadow-sm">1</span>
-                          Yesterday
-                        </h4>
-                        <div className="text-gray-700 text-lg whitespace-pre-line min-h-[200px]">
-                          {filteredReports[currentReportIndex].yesterday || 'No update provided'}
-                        </div>
-                      </motion.div>
-                      
-                      <motion.div 
-                        className="p-8 bg-gray-50 rounded-xl shadow-sm"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 0.4 }}
-                      >
-                        <h4 className="font-semibold text-xl text-gray-900 flex items-center mb-6">
-                          <span className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-4 text-sm font-bold shadow-sm">2</span>
-                          Today
-                        </h4>
-                        <div className="text-gray-700 text-lg whitespace-pre-line min-h-[200px]">
-                          {filteredReports[currentReportIndex].today || 'No update provided'}
-                        </div>
-                      </motion.div>
-                      
-                      <motion.div 
-                        className={filteredReports[currentReportIndex].blockers ? 
-                          "p-8 bg-red-50 rounded-xl shadow-sm border border-red-100" : 
-                          "p-8 bg-green-50 rounded-xl shadow-sm border border-green-100"}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.4 }}
-                      >
-                        <h4 className="font-semibold text-xl text-gray-900 flex items-center mb-6">
-                          <span className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-4 text-sm font-bold shadow-sm">3</span>
-                          Blockers
-                        </h4>
-                        <div className={filteredReports[currentReportIndex].blockers ? "text-red-700 text-lg whitespace-pre-line min-h-[200px]" : "text-green-700 text-lg whitespace-pre-line min-h-[200px]"}>
-                          {filteredReports[currentReportIndex].blockers || 'No blockers reported'}
-                        </div>
-                      </motion.div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </AnimatePresence>
-          
-          {/* Pagination dots */}
-          <div className="flex justify-center gap-2 mt-8">
-            {filteredReports.map((_, index) => (
-              <motion.button 
-                key={index} 
-                className={`h-3 rounded-full transition-all ${index === currentReportIndex ? 'w-12 bg-white' : 'w-3 bg-gray-500'}`}
-                onClick={() => {
-                  setSlideDirection(index > currentReportIndex ? 'right' : 'left');
-                  setCurrentReportIndex(index);
-                }}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label={`Go to report ${index + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* ESC key hint */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/30 px-4 py-2 rounded-full">
-          Press ESC to exit fullscreen
-        </div>
-      </div>
-    )}
-    </div>
+    </motion.div>
   );
 }

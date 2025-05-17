@@ -23,6 +23,11 @@ const itemVariants = {
   }
 };
 
+const inputFocusVariants = {
+  rest: { scale: 1, borderColor: 'rgba(209, 213, 219, 1)' },
+  focus: { scale: 1.01, borderColor: 'rgba(79, 70, 229, 1)' }
+};
+
 export default function TeamAssignment() {
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -34,6 +39,12 @@ export default function TeamAssignment() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [teamFilter, setTeamFilter] = useState('all');
+  
+  // Add new team state
+  const [showAddTeamModal, setShowAddTeamModal] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [addingTeam, setAddingTeam] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   
   useEffect(() => {
     fetchCurrentUser();
@@ -152,6 +163,45 @@ export default function TeamAssignment() {
     }
   };
   
+  const handleAddTeam = async () => {
+    if (!newTeamName.trim()) {
+      setMessage({ type: 'error', text: 'Team name is required' });
+      return;
+    }
+    
+    setAddingTeam(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .insert([{ 
+          name: newTeamName.trim()
+        }])
+        .select();
+      
+      if (error) throw error;
+      
+      // Success animation
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setShowAddTeamModal(false);
+        setNewTeamName('');
+        handleRefresh();
+      }, 1500);
+      
+      setMessage({ type: 'success', text: 'Team added successfully' });
+      
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      console.error('Error adding team:', error.message);
+      setMessage({ type: 'error', text: `Error: ${error.message}` });
+    } finally {
+      setAddingTeam(false);
+    }
+  };
+  
   const filteredUsers = teamFilter === 'all' 
     ? users 
     : teamFilter === 'unassigned' 
@@ -205,6 +255,17 @@ export default function TeamAssignment() {
           </h2>
           
           <div className="flex items-center gap-2">
+            {/* Add New Team button */}
+            <motion.button
+              onClick={() => setShowAddTeamModal(true)}
+              className="px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-1"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <FiUsers size={16} />
+              <span>Add New Team</span>
+            </motion.button>
+            
             <div className="relative">
               <select
                 className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
@@ -339,75 +400,171 @@ export default function TeamAssignment() {
       {/* Team Assignment Modal */}
       <AnimatePresence>
         {showAssignModal && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/50 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAssignModal(false)}
-            />
-            
-            <motion.div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowAssignModal(false)}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
             >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="bg-primary-600 text-white p-4">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <FiUsers />
-                    Assign Team to {selectedUser?.name}
-                  </h3>
-                </div>
-                
-                <div className="p-6">
-                  <div className="mb-6">
-                    <label className="block text-gray-700 mb-2 font-medium">Select Team</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      value={selectedTeam || ''}
-                      onChange={(e) => setSelectedTeam(e.target.value)}
-                    >
-                      <option value="">Select a team</option>
-                      {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <motion.button
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
-                      onClick={() => setShowAssignModal(false)}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      Cancel
-                    </motion.button>
-                    
-                    <motion.button
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                      onClick={handleAssignTeam}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      disabled={!selectedTeam}
-                    >
-                      Assign Team
-                    </motion.button>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Assign Team</h3>
+              
+              {selectedUser && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    User
+                  </label>
+                  <div className="p-3 bg-gray-50 rounded-md">
+                    {selectedUser.name}
                   </div>
                 </div>
-              </motion.div>
+              )}
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Team
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  value={selectedTeam || ''}
+                  onChange={(e) => setSelectedTeam(e.target.value)}
+                >
+                  <option value="">Select a team</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  onClick={() => setShowAssignModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  onClick={handleAssignTeam}
+                >
+                  Assign
+                </button>
+              </div>
             </motion.div>
-          </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Add New Team Modal */}
+      <AnimatePresence>
+        {showAddTeamModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 px-4">
+            <motion.div 
+              className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <h2 className="text-lg font-semibold mb-4">Add New Team</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="team-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Team Name <span className="text-red-500">*</span>
+                  </label>
+                  <motion.input
+                    id="team-name"
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                    value={newTeamName}
+                    onChange={(e) => setNewTeamName(e.target.value)}
+                    placeholder="Enter team name"
+                    variants={inputFocusVariants}
+                    initial="rest"
+                    whileFocus="focus"
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end space-x-3">
+                <motion.button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  onClick={() => setShowAddTeamModal(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  type="button"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  onClick={handleAddTeam}
+                  disabled={addingTeam || !newTeamName.trim()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {addingTeam ? 'Adding...' : 'Add Team'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      
+      {/* Success Animation */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div 
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="relative">
+              <motion.div 
+                className="bg-white rounded-full p-8 shadow-lg"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
+                <FiCheck className="h-16 w-16 text-green-500" />
+              </motion.div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute rounded-full"
+                    style={{ 
+                      backgroundColor: ['#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#bae6fd'][i % 5],
+                      width: Math.random() * 8 + 4,
+                      height: Math.random() * 8 + 4,
+                    }}
+                    initial={{ x: 0, y: 0, opacity: 1 }}
+                    animate={{
+                      x: Math.random() * 200 - 100,
+                      y: Math.random() * 200 - 100,
+                      opacity: 0,
+                      scale: 0
+                    }}
+                    transition={{ duration: 1 + Math.random() * 0.5, ease: 'easeOut' }}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

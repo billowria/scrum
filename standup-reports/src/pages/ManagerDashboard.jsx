@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { format, parseISO } from 'date-fns';
-import { FiUsers, FiUserPlus, FiCalendar, FiCheck, FiX, FiEdit, FiInfo, FiFilter, FiRefreshCw } from 'react-icons/fi';
+import { format, parseISO, differenceInDays } from 'date-fns';
+import { FiUsers, FiUserPlus, FiCalendar, FiCheck, FiX, FiEdit, FiInfo, FiFilter, FiRefreshCw, FiClock, FiBell } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 
 // Animation variants
 const containerVariants = {
@@ -33,13 +34,26 @@ const tabVariants = {
   }
 };
 
+// Import components
+import LeavePastRecords from '../components/LeavePastRecords';
+import AnnouncementManager from '../components/AnnouncementManager';
+
 export default function ManagerDashboard({ activeTabDefault = 'team-management' }) {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState(activeTabDefault);
   
-  // Update activeTab when activeTabDefault changes
+  // Get tab from URL query parameters
   useEffect(() => {
-    setActiveTab(activeTabDefault);
-  }, [activeTabDefault]);
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    
+    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else {
+      setActiveTab(activeTabDefault);
+    }
+  }, [location.search, activeTabDefault]);
+  
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -49,14 +63,40 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [message, setMessage] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('date'); // date, status, team
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all'); // all, pending, approved, rejected
+  const [teamFilter, setTeamFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState({ start: null, end: null });
   
   useEffect(() => {
     fetchTeams();
     fetchUsers();
     fetchLeaveRequests();
+    
+    // Set up real-time subscription for leave requests
+    const leaveRequestsSubscription = supabase
+      .channel('leave_requests_changes')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'leave_plans' 
+        }, 
+        (payload) => {
+          console.log('Change received!', payload);
+          fetchLeaveRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      leaveRequestsSubscription.unsubscribe();
+    };
   }, [refreshTrigger]);
   
   const fetchTeams = async () => {
@@ -98,10 +138,15 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         .select(`
           id, start_date, end_date, reason, status, created_at,
           users:user_id (id, name, team_id, teams:team_id(id, name))
-        `);
+        `)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       setLeaveRequests(data || []);
+      
+      // Update pending count
+      const pending = data?.filter(request => request.status === 'pending') || [];
+      setPendingCount(pending.length);
     } catch (error) {
       console.error('Error fetching leave requests:', error.message);
     }
@@ -163,11 +208,42 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
     }
   };
   
-  // Filter leave requests based on status
-  const filteredLeaveRequests = leaveRequests.filter(request => {
-    if (statusFilter === 'all') return true;
-    return request.status === statusFilter;
-  });
+  // Enhanced filtering and sorting
+  const filteredLeaveRequests = leaveRequests
+    .filter(request => {
+      // Status filter
+      if (statusFilter !== 'all' && request.status !== statusFilter) return false;
+      
+      // Team filter
+      if (teamFilter !== 'all' && request.users?.teams?.id !== teamFilter) return false;
+      
+      // Search query
+      if (searchQuery && !request.users?.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      
+      // Date range filter
+      if (dateRangeFilter.start && dateRangeFilter.end) {
+        const requestStart = parseISO(request.start_date);
+        const requestEnd = parseISO(request.end_date);
+        const filterStart = parseISO(dateRangeFilter.start);
+        const filterEnd = parseISO(dateRangeFilter.end);
+        
+        if (requestStart < filterStart || requestEnd > filterEnd) return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'status':
+          return a.status.localeCompare(b.status);
+        case 'team':
+          return (a.users?.teams?.name || '').localeCompare(b.users?.teams?.name || '');
+        default:
+          return 0;
+      }
+    });
   
   return (
     <motion.div
@@ -200,12 +276,12 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       
       {/* Tabs */}
       <motion.div 
-        className="flex border-b border-gray-200 mb-6"
+        className="flex border-b border-gray-200 mb-6 overflow-x-auto"
         variants={itemVariants}
       >
-        <motion.button
-          className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'team-management' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
-          onClick={() => setActiveTab('team-management')}
+        <motion.a
+          href="/team-management"
+          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'team-management' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
           variants={tabVariants}
           animate={activeTab === 'team-management' ? 'active' : 'inactive'}
           whileHover={{ scale: 1.03 }}
@@ -213,10 +289,10 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         >
           <FiUsers />
           Team Management
-        </motion.button>
+        </motion.a>
         
         <motion.button
-          className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'leave-requests' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
+          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'leave-requests' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
           onClick={() => setActiveTab('leave-requests')}
           variants={tabVariants}
           animate={activeTab === 'leave-requests' ? 'active' : 'inactive'}
@@ -225,6 +301,30 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         >
           <FiCalendar />
           Leave Requests
+        </motion.button>
+        
+        <motion.button
+          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'leave-history' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
+          onClick={() => setActiveTab('leave-history')}
+          variants={tabVariants}
+          animate={activeTab === 'leave-history' ? 'active' : 'inactive'}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <FiClock />
+          Leave History
+        </motion.button>
+        
+        <motion.button
+          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'announcements' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
+          onClick={() => setActiveTab('announcements')}
+          variants={tabVariants}
+          animate={activeTab === 'announcements' ? 'active' : 'inactive'}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          <FiBell />
+          Announcements
         </motion.button>
       </motion.div>
       
@@ -253,96 +353,55 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <FiUsers className="text-primary-600" />
-              Team Members
+              Workforce Management
             </h2>
             
-            <motion.button
+            <motion.a
+              href="/team-management"
               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-2"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                setSelectedUser(null);
-                setSelectedTeam(null);
-                setShowUserModal(true);
-              }}
             >
-              <FiUserPlus />
-              Assign Team
-            </motion.button>
+              <FiUsers />
+              Manage Workforce
+            </motion.a>
           </div>
           
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+          <p className="text-gray-600 mb-6">
+            Click the button above to access the Workforce Management interface where you can:
+          </p>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
+                <FiUsers className="text-primary-500" />
+                Staff Oversight
+              </h3>
+              <p className="text-sm text-gray-600">
+                View and manage team members in your organization.
+              </p>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
-                            {user.name?.charAt(0) || '?'}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.teams ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {user.teams.name}
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                            Not Assigned
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.role === 'manager' ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                            Manager
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            Member
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          className="text-primary-600 hover:text-primary-900 mr-3"
-                          onClick={() => {
-                            setSelectedUser(user.id);
-                            setSelectedTeam(user.teams?.id || null);
-                            setShowUserModal(true);
-                          }}
-                        >
-                          <FiEdit />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
+                <FiUsers className="text-primary-500" />
+                Team Assignment
+              </h3>
+              <p className="text-sm text-gray-600">
+                Assign team members to specific teams or projects.
+              </p>
             </div>
-          )}
+            
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
+                <FiUsers className="text-primary-500" />
+                Manager Delegation
+              </h3>
+              <p className="text-sm text-gray-600">
+                Assign managers to oversee specific team members.
+              </p>
+            </div>
+          </div>
         </motion.div>
       )}
       
@@ -352,35 +411,119 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
           className="bg-white rounded-xl shadow-lg p-6"
           variants={itemVariants}
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <FiCalendar className="text-primary-600" />
-              Leave Requests
-            </h2>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <FiCalendar className="text-primary-600" />
+                Leave Requests
+                {pendingCount > 0 && (
+                  <span className="ml-2 px-2.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                    {pendingCount} Pending
+                  </span>
+                )}
+              </h2>
+              <p className="text-gray-500 mt-1">Manage and approve team leave requests</p>
+            </div>
             
-            <div className="flex items-center gap-2">
-              <div className="text-sm text-gray-500">Filter:</div>
-              <select
-                className="border border-gray-300 rounded-md text-sm p-1"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+            <div className="flex flex-wrap gap-2">
+              <motion.button
+                className="px-4 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors flex items-center gap-2"
+                onClick={() => setShowFilters(!showFilters)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
-                <option value="all">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+                <FiFilter />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </motion.button>
+              
+              <motion.button
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                onClick={handleRefresh}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+                Refresh
+              </motion.button>
             </div>
           </div>
+          
+          {/* Enhanced Filters */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md text-sm p-2"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <option value="all">All Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md text-sm p-2"
+                      value={teamFilter}
+                      onChange={(e) => setTeamFilter(e.target.value)}
+                    >
+                      <option value="all">All Teams</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md text-sm p-2"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="date">Date</option>
+                      <option value="status">Status</option>
+                      <option value="team">Team</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      className="w-full border border-gray-300 rounded-md text-sm p-2"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
             </div>
           ) : filteredLeaveRequests.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
               <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p>No leave requests found</p>
+              <p className="text-gray-500 text-lg">No leave requests found</p>
+              <p className="text-gray-400 mt-2">Try adjusting your filters or check back later</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -388,78 +531,100 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                 const startDate = parseISO(request.start_date);
                 const endDate = parseISO(request.end_date);
                 const isPending = request.status === 'pending';
+                const days = differenceInDays(endDate, startDate) + 1;
                 
                 return (
                   <motion.div
                     key={request.id}
-                    className={`border rounded-lg p-4 ${isPending ? 'border-yellow-200 bg-yellow-50' : request.status === 'approved' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+                    className={`border rounded-lg overflow-hidden ${
+                      isPending 
+                        ? 'border-yellow-200 bg-yellow-50' 
+                        : request.status === 'approved' 
+                          ? 'border-green-200 bg-green-50' 
+                          : 'border-red-200 bg-red-50'
+                    }`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
+                    <div className="p-4">
+                      <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div className="flex items-start gap-4">
+                          <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-lg font-medium">
                             {request.users?.name?.charAt(0) || '?'}
                           </div>
-                          <span className="font-medium">{request.users?.name}</span>
-                          {request.users?.teams && (
-                            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
-                              {request.users.teams.name}
-                            </span>
-                          )}
+                          
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium text-gray-900">{request.users?.name}</h3>
+                              {request.users?.teams && (
+                                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                                  {request.users.teams.name}
+                                </span>
+                              )}
+                            </div>
+                            
+                            <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <FiCalendar className="text-primary-500" />
+                                <span>
+                                  {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-1">
+                                <FiClock className="text-primary-500" />
+                                <span>{days} {days === 1 ? 'day' : 'days'}</span>
+                              </div>
+                            </div>
+                            
+                            {request.reason && (
+                              <p className="mt-2 text-sm text-gray-600">
+                                {request.reason}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         
-                        <div className="ml-10 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <FiCalendar className="text-primary-500" />
-                            <span>
-                              {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                            </span>
+                        <div className="flex flex-col items-end gap-2">
+                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            isPending 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : request.status === 'approved' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                          }`}>
+                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                           </div>
                           
-                          {request.reason && (
-                            <div className="flex items-start gap-1 mt-1">
-                              <FiInfo className="text-primary-500 mt-0.5" />
-                              <span>{request.reason}</span>
+                          <div className="text-xs text-gray-500">
+                            Requested on {format(parseISO(request.created_at), 'MMM dd, yyyy')}
+                          </div>
+                          
+                          {isPending && (
+                            <div className="flex gap-2 mt-2">
+                              <motion.button
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                                onClick={() => handleLeaveAction(request.id, 'approved')}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <FiCheck className="w-4 h-4" />
+                                Approve
+                              </motion.button>
+                              
+                              <motion.button
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                                onClick={() => handleLeaveAction(request.id, 'rejected')}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <FiX className="w-4 h-4" />
+                                Reject
+                              </motion.button>
                             </div>
                           )}
                         </div>
-                      </div>
-                      
-                      <div className="flex flex-col items-end">
-                        <div className={`px-2 py-1 rounded-full text-xs font-medium ${isPending ? 'bg-yellow-100 text-yellow-800' : request.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </div>
-                        
-                        <div className="text-xs text-gray-500 mt-1">
-                          Requested on {format(parseISO(request.created_at), 'MMM dd, yyyy')}
-                        </div>
-                        
-                        {isPending && (
-                          <div className="mt-4 flex gap-2">
-                            <motion.button
-                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm flex items-center gap-1"
-                              onClick={() => handleLeaveAction(request.id, 'approved')}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <FiCheck className="w-3 h-3" />
-                              Approve
-                            </motion.button>
-                            
-                            <motion.button
-                              className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm flex items-center gap-1"
-                              onClick={() => handleLeaveAction(request.id, 'rejected')}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <FiX className="w-3 h-3" />
-                              Reject
-                            </motion.button>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -468,6 +633,16 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
             </div>
           )}
         </motion.div>
+      )}
+      
+      {/* Leave History Tab */}
+      {activeTab === 'leave-history' && (
+        <LeavePastRecords />
+      )}
+      
+      {/* Announcements Tab */}
+      {activeTab === 'announcements' && (
+        <AnnouncementManager />
       )}
       
       {/* Team Assignment Modal */}

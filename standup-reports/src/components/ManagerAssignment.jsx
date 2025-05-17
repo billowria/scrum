@@ -29,6 +29,8 @@ export default function ManagerAssignment() {
   const [currentUser, setCurrentUser] = useState(null);
   const [message, setMessage] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [actionType, setActionType] = useState('');
   
   useEffect(() => {
     fetchCurrentUser();
@@ -92,8 +94,15 @@ export default function ManagerAssignment() {
       
       if (error) throw error;
       
+      // Show success animation
+      setActionType('assign');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        handleRefresh();
+      }, 1500);
+      
       setMessage({ type: 'success', text: 'Successfully assigned as manager' });
-      handleRefresh();
       
       // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
@@ -112,8 +121,15 @@ export default function ManagerAssignment() {
       
       if (error) throw error;
       
+      // Show success animation
+      setActionType('remove');
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        handleRefresh();
+      }, 1500);
+      
       setMessage({ type: 'success', text: 'Successfully removed as manager' });
-      handleRefresh();
       
       // Clear message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
@@ -177,6 +193,52 @@ export default function ManagerAssignment() {
             exit={{ opacity: 0, height: 0 }}
           >
             {message.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Success Animation */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div 
+            className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="relative">
+              <motion.div 
+                className="bg-white rounded-full p-8 shadow-lg"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
+                <FiCheck className="h-16 w-16 text-green-500" />
+              </motion.div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute rounded-full"
+                    style={{ 
+                      backgroundColor: actionType === 'assign' 
+                        ? ['#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#bae6fd'][i % 5]
+                        : ['#a7f3d0', '#6ee7b7', '#34d399', '#10b981', '#059669'][i % 5],
+                      width: Math.random() * 8 + 4,
+                      height: Math.random() * 8 + 4,
+                    }}
+                    initial={{ x: 0, y: 0, opacity: 1 }}
+                    animate={{
+                      x: Math.random() * 200 - 100,
+                      y: Math.random() * 200 - 100,
+                      opacity: 0,
+                      scale: 0
+                    }}
+                    transition={{ duration: 1 + Math.random() * 0.5, ease: 'easeOut' }}
+                  />
+                ))}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

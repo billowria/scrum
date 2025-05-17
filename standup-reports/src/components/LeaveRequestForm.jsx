@@ -35,7 +35,7 @@ const overlayVariants = {
 };
 
 const LeaveRequestForm = ({ 
-  isOpen, 
+  isOpen = true, 
   onClose, 
   selectedDates,
   setSelectedDates,
@@ -91,9 +91,10 @@ const LeaveRequestForm = ({
       setTimeout(() => {
         setSuccess(false);
         setReason('');
-        setSelectedDates({ start: null, end: null });
+        if (setSelectedDates) {
+          setSelectedDates({ start: null, end: null });
+        }
         onSuccess();
-        onClose();
       }, 1500);
       
     } catch (error) {
@@ -206,8 +207,16 @@ const LeaveRequestForm = ({
                   </div>
                 )}
                 
-                {/* Submit button */}
-                <div className="flex justify-end">
+                {/* Actions */}
+                <div className="flex justify-between">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all"
+                    onClick={onClose}
+                  >
+                    Cancel
+                  </button>
+                  
                   <motion.button
                     type="submit"
                     className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-2 disabled:opacity-50"
