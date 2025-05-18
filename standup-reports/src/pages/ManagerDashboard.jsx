@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../supabaseClient';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { FiUsers, FiUserPlus, FiCalendar, FiCheck, FiX, FiEdit, FiInfo, FiFilter, FiRefreshCw, FiClock, FiBell } from 'react-icons/fi';
-import { useLocation } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
+  FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell } from 'react-icons/fi';
+
+// Components
+import LeavePastRecords from '../components/LeavePastRecords';
+import AnnouncementManager from '../components/AnnouncementManager';
 
 // Animation variants
 const containerVariants = {
@@ -18,25 +23,30 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: {
+  visible: (i) => ({
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 24 }
-  }
+    transition: { 
+      delay: i * 0.05,
+      type: 'spring', 
+      stiffness: 300, 
+      damping: 24 
+    }
+  })
 };
 
 const tabVariants = {
-  inactive: { opacity: 0.7 },
+  inactive: { 
+    color: "#6B7280", 
+    backgroundColor: "transparent",
+    boxShadow: "none"
+  },
   active: { 
-    opacity: 1, 
-    scale: 1.05,
-    transition: { type: 'spring', stiffness: 300, damping: 30 }
+    color: "#4F46E5", 
+    backgroundColor: "#EEF2FF",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
   }
 };
-
-// Import components
-import LeavePastRecords from '../components/LeavePastRecords';
-import AnnouncementManager from '../components/AnnouncementManager';
 
 export default function ManagerDashboard({ activeTabDefault = 'team-management' }) {
   const location = useLocation();
@@ -245,6 +255,28 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       }
   });
   
+  // Leave type badge color helper
+  const getLeaveTypeBadgeClass = (type) => {
+    switch (type) {
+      case 'sick':
+        return 'bg-blue-100 border-blue-200 text-blue-700';
+      case 'personal':
+        return 'bg-indigo-100 border-indigo-200 text-indigo-700';
+      case 'family':
+        return 'bg-purple-100 border-purple-200 text-purple-700';
+      case 'other':
+        return 'bg-gray-100 border-gray-200 text-gray-700';
+      case 'vacation':
+      default:
+        return 'bg-teal-100 border-teal-200 text-teal-700';
+    }
+  };
+
+  // Get formatted leave type
+  const getFormattedLeaveType = (type) => {
+    return 'Vacation'; // Default to Vacation for all leave requests since the leave_type column doesn't exist
+  };
+  
   return (
     <motion.div
       className="max-w-7xl mx-auto"
@@ -407,114 +439,132 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       
       {/* Leave Requests Tab */}
       {activeTab === 'leave-requests' && (
-        <motion.div 
+        <motion.div
           className="bg-white rounded-xl shadow-lg p-6"
-          variants={itemVariants}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
               <FiCalendar className="text-primary-600" />
               Leave Requests
-                {pendingCount > 0 && (
-                  <span className="ml-2 px-2.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-                    {pendingCount} Pending
-                  </span>
-                )}
             </h2>
-              <p className="text-gray-500 mt-1">Manage and approve team leave requests</p>
-            </div>
             
-            <div className="flex flex-wrap gap-2">
-              <motion.button
-                className="px-4 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors flex items-center gap-2"
-                onClick={() => setShowFilters(!showFilters)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <FiFilter />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </motion.button>
+            <div className="flex items-center gap-3">
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    statusFilter === 'all' 
+                      ? 'bg-white shadow-sm text-primary-700'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  onClick={() => setStatusFilter('all')}
+                >
+                  All
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    statusFilter === 'pending' 
+                      ? 'bg-white shadow-sm text-primary-700'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  onClick={() => setStatusFilter('pending')}
+                >
+                  Pending
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    statusFilter === 'approved' 
+                      ? 'bg-white shadow-sm text-primary-700'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  onClick={() => setStatusFilter('approved')}
+                >
+                  Approved
+                </button>
+                <button
+                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                    statusFilter === 'rejected' 
+                      ? 'bg-white shadow-sm text-primary-700'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                  onClick={() => setStatusFilter('rejected')}
+                >
+                  Rejected
+                </button>
+              </div>
               
               <motion.button
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors"
                 onClick={handleRefresh}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Refresh"
               >
-                <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-                Refresh
+                <FiRefreshCw />
               </motion.button>
             </div>
           </div>
           
-          {/* Enhanced Filters */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                      className="w-full border border-gray-300 rounded-md text-sm p-2"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                      <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+          {/* Stats Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-4 border border-blue-100 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-700">Total Requests</p>
+                  <p className="text-2xl font-bold text-blue-800">{leaveRequests.length}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                  <FiCalendar size={20} />
+                </div>
+              </div>
             </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md text-sm p-2"
-                      value={teamFilter}
-                      onChange={(e) => setTeamFilter(e.target.value)}
-                    >
-                      <option value="all">All Teams</option>
-                      {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md text-sm p-2"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value="date">Date</option>
-                      <option value="status">Status</option>
-                      <option value="team">Team</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                    <input
-                      type="text"
-                      placeholder="Search by name..."
-                      className="w-full border border-gray-300 rounded-md text-sm p-2"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
+            
+            <div className="bg-gradient-to-br from-yellow-50 to-white rounded-lg p-4 border border-yellow-100 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-700">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-800">
+                    {leaveRequests.filter(r => r.status === 'pending').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                  <FiClock size={20} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-50 to-white rounded-lg p-4 border border-green-100 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-700">Approved</p>
+                  <p className="text-2xl font-bold text-green-800">
+                    {leaveRequests.filter(r => r.status === 'approved').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                  <FiCheck size={20} />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-red-50 to-white rounded-lg p-4 border border-red-100 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-700">Rejected</p>
+                  <p className="text-2xl font-bold text-red-800">
+                    {leaveRequests.filter(r => r.status === 'rejected').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                  <FiX size={20} />
+                </div>
+              </div>
+            </div>
           </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
           
+          {/* Table of Requests */}
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
@@ -523,113 +573,127 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500 text-lg">No leave requests found</p>
-              <p className="text-gray-400 mt-2">Try adjusting your filters or check back later</p>
+              <p className="text-gray-400 mt-2">Try a different filter or check back later</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredLeaveRequests.map((request) => {
-                const startDate = parseISO(request.start_date);
-                const endDate = parseISO(request.end_date);
-                const isPending = request.status === 'pending';
-                const days = differenceInDays(endDate, startDate) + 1;
-                
-                return (
-                  <motion.div
-                    key={request.id}
-                    className={`border rounded-lg overflow-hidden ${
-                      isPending 
-                        ? 'border-yellow-200 bg-yellow-50' 
-                        : request.status === 'approved' 
-                          ? 'border-green-200 bg-green-50' 
-                          : 'border-red-200 bg-red-50'
-                    }`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="p-4">
-                      <div className="flex flex-col md:flex-row justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 text-lg font-medium">
-                            {request.users?.name?.charAt(0) || '?'}
-                          </div>
-                          
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-gray-900">{request.users?.name}</h3>
-                          {request.users?.teams && (
-                                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                              {request.users.teams.name}
-                            </span>
-                          )}
-                        </div>
-                        
-                            <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            <FiCalendar className="text-primary-500" />
-                            <span>
-                              {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                            </span>
-                          </div>
-                          
-                              <div className="flex items-center gap-1">
-                                <FiClock className="text-primary-500" />
-                                <span>{days} {days === 1 ? 'day' : 'days'}</span>
-                              </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredLeaveRequests.map((request, index) => {
+                    const startDate = parseISO(request.start_date);
+                    const endDate = parseISO(request.end_date);
+                    const isPending = request.status === 'pending';
+                    const days = differenceInDays(endDate, startDate) + 1;
+                    
+                    return (
+                      <motion.tr
+                        key={request.id}
+                        className="hover:bg-gray-50 transition-colors"
+                        custom={index}
+                        variants={itemVariants}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
+                              {request.users?.name?.charAt(0) || '?'}
                             </div>
-                            
-                            {request.reason && (
-                              <p className="mt-2 text-sm text-gray-600">
-                                {request.reason}
-                              </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                        <div className="flex flex-col items-end gap-2">
-                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            isPending 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : request.status === 'approved' 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                          }`}>
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </div>
-                        
-                          <div className="text-xs text-gray-500">
-                          Requested on {format(parseISO(request.created_at), 'MMM dd, yyyy')}
-                        </div>
-                        
-                        {isPending && (
-                            <div className="flex gap-2 mt-2">
-                            <motion.button
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                              onClick={() => handleLeaveAction(request.id, 'approved')}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <FiCheck className="w-4 h-4" />
-                              Approve
-                            </motion.button>
-                            
-                            <motion.button
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                              onClick={() => handleLeaveAction(request.id, 'rejected')}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <FiX className="w-4 h-4" />
-                              Reject
-                            </motion.button>
+                            <div className="ml-2">
+                              <div className="text-sm font-medium text-gray-900">{request.users?.name || 'Unknown'}</div>
+                            </div>
                           </div>
-                        )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="text-sm text-gray-900">{request.users?.teams?.name || 'No Team'}</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {days} {days === 1 ? 'day' : 'days'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full border ${getLeaveTypeBadgeClass('vacation')}`}>
+                            {getFormattedLeaveType()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
+                            isPending 
+                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                              : request.status === 'approved' 
+                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                          }`}>
+                            {request.status === 'approved' ? (
+                              <>
+                                <FiCheck className="mr-1" />
+                                Approved
+                              </>
+                            ) : request.status === 'rejected' ? (
+                              <>
+                                <FiX className="mr-1" />
+                                Rejected
+                              </>
+                            ) : (
+                              <>
+                                <FiClock className="mr-1" />
+                                Pending
+                              </>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-gray-900 max-w-xs truncate">
+                            {request.reason || '-'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {isPending ? (
+                            <div className="flex gap-2">
+                              <motion.button
+                                className="p-1.5 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                onClick={() => handleLeaveAction(request.id, 'approved')}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                title="Approve"
+                              >
+                                <FiCheck />
+                              </motion.button>
+                              
+                              <motion.button
+                                className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                                onClick={() => handleLeaveAction(request.id, 'rejected')}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                title="Reject"
+                              >
+                                <FiX />
+                              </motion.button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">
+                              {format(parseISO(request.created_at), 'MMM dd, yyyy')}
+                            </span>
+                          )}
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </motion.div>

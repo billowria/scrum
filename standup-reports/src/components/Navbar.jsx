@@ -9,7 +9,7 @@ import Announcements from './Announcements';
 import AnnouncementModal from './AnnouncementModal';
 
 // Icons
-import { FiHome, FiFileText, FiClock, FiLogOut, FiMenu, FiX, FiUser, FiCalendar, FiChevronDown, FiUsers, FiCheckSquare, FiActivity, FiBell, FiAward } from 'react-icons/fi';
+import { FiHome, FiFileText, FiClock, FiLogOut, FiMenu, FiX, FiUser, FiCalendar, FiChevronDown, FiUsers, FiCheckSquare, FiActivity, FiBell, FiAward, FiBriefcase } from 'react-icons/fi';
 
 // Enhanced Animation variants
 const navItemVariants = {
@@ -193,6 +193,9 @@ export default function Navbar({ session }) {
     // will automatically update its count by re-fetching
   };
 
+  // Add a check for director role
+  const isDirector = userProfile?.role === 'director';
+
   return (
     <>
       <motion.nav 
@@ -264,6 +267,53 @@ export default function Navbar({ session }) {
                   <NavLink to="/dashboard" isActive={isActive('/dashboard')} icon={<FiHome />} text="Dashboard" />
                   <NavLink to="/leave-calendar" isActive={isActive('/leave-calendar')} icon={<FiCalendar />} text="Leave Calendar" />
                   <NavLink to="/achievements" isActive={isActive('/achievements')} icon={<FiAward />} text="Achievements" />
+                  
+                  {/* Add the department management link for directors */}
+                  {isDirector && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5, type: 'spring', stiffness: 400 }}
+                    >
+                      <Link to="/department-management">
+                        <motion.div
+                          className="relative px-4 py-2 rounded-lg overflow-hidden group"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          {/* Background gradient with animation */}
+                          <motion.div 
+                            className="absolute inset-0 bg-gradient-to-r from-violet-600 to-purple-600"
+                            animate={{ 
+                              backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                            }}
+                            transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                          />
+                          
+                          {/* Pulsing effect */}
+                          <motion.div 
+                            className="absolute inset-0 bg-white opacity-0"
+                            animate={{ 
+                              opacity: [0, 0.1, 0],
+                              scale: [1, 1.05, 1]
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                          
+                          {/* Button content */}
+                          <div className="relative flex items-center space-x-2 text-white font-medium">
+                            <motion.div
+                              animate={{ rotate: [0, 5, 0, -5, 0] }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            >
+                              <FiBriefcase className="w-4 h-4" />
+                            </motion.div>
+                            <span>Department Management</span>
+                          </div>
+                        </motion.div>
+                      </Link>
+                    </motion.div>
+                  )}
                   
                   {userProfile?.role === 'manager' && (
                     <motion.div 

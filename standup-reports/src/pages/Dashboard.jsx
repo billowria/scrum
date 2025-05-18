@@ -439,183 +439,16 @@ export default function Dashboard() {
         animate="visible"
         variants={containerVariants}
       >
-      {/* Dashboard Header */}
-      <motion.div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6" variants={itemVariants}>
-        <div>
-          <h1 className="text-3xl font-bold font-display mb-2 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
-            Team Dashboard
-          </h1>
-          <p className="text-gray-500">
-            Your team's collaborative workspace
-          </p>
-        </div>
-        <div className="flex gap-2">
-            <motion.button
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-1"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-              onClick={handleNewReport}
-          >
-            <FiPlus />
-            New Report
-            </motion.button>
-          <motion.button
-            className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            animate={activeFilter ? "active" : ""}
-            onClick={() => {
-              setShowFilters(!showFilters);
-              setActiveFilter(!activeFilter);
-            }}
-          >
-            <FiFilter className={showFilters ? "text-primary-600" : ""} />
-            {activeFilter && (
-              <motion.span 
-                className="absolute -top-1 -right-1 bg-primary-500 rounded-full w-2 h-2"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 500 }}
-              />
-            )}
-          </motion.button>
-          <div className="relative overflow-hidden border border-gray-300 rounded-lg flex items-center">
-            <motion.div 
-              className="absolute top-0 bottom-0 left-0 right-0 bg-primary-500 rounded-md"
-              variants={switchVariants}
-              animate={viewMode === 'carousel' ? 'list' : 'grid'}
-              initial={false}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              style={{ width: '50%', height: '100%', opacity: 0.15 }}
-            />
-          <motion.button
-              className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'list' ? 'text-primary-600 font-medium' : ''}`}
-              whileHover="hover"
-              whileTap="tap"
-              onClick={() => setViewMode('list')}
-            >
-              <FiList />
-          </motion.button>
-          <motion.button
-              className={`p-2 z-10 relative text-gray-600 hover:text-primary-600 transition-colors ${viewMode === 'carousel' ? 'text-primary-600 font-medium' : ''}`}
-              whileHover="hover"
-              whileTap="tap"
-              onClick={() => setViewMode('carousel')}
-            >
-              <FiGrid />
-          </motion.button>
-          </div>
-        </div>
-      </motion.div>
-      {/* Filters */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div 
-            className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-4 mb-6"
-            initial={{ opacity: 0, y: -20, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -20, height: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <motion.div 
-                className="flex-1"
-                variants={filterVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="active"
-              >
-                <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiCalendar className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <motion.input
-                    type="date"
-                    id="date-filter"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      handleRefresh();
-                    }}
-                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm"
-                    max={new Date().toISOString().split('T')[0]}
-                    whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
-                  />
-                </div>
-              </motion.div>
-              <motion.div 
-                className="flex-1"
-                variants={filterVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="active"
-                transition={{ delay: 0.1 }}
-              >
-                <label htmlFor="team-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                  Team
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUsers className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <motion.select
-                    id="team-filter"
-                    value={selectedTeam}
-                    onChange={(e) => setSelectedTeam(e.target.value)}
-                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm appearance-none"
-                    whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
-                  >
-                    <option value="all">All Teams</option>
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </motion.select>
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <motion.div
-                      animate={{ rotate: showFilters ? 180 : 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <FiChevronDown className="h-4 w-4 text-gray-400" />
-                    </motion.div>
-                </div>
-              </div>
-              </motion.div>
-            </div>
-            <motion.div 
-              className="mt-4 flex justify-end"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <motion.button
-                className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleRefresh}
-              >
-                <FiRefreshCw className="mr-1 h-3 w-3" />
-                Refresh Results
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
       {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
       <div className="grid grid-cols-1 gap-6">
         
-          <motion.div 
-            variants={itemVariants} 
+          <motion.div
+            variants={itemVariants}
             className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-xl border border-indigo-100 dark:border-indigo-900/20"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            whileHover={{ 
+              whileHover={{ 
               boxShadow: "0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.05)",
               y: -3, 
               transition: { type: "spring", stiffness: 400, damping: 15 }
@@ -643,6 +476,29 @@ export default function Dashboard() {
                 </motion.h2>
                 
                 <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
+                  {/* Filter button moved here from top section */}
+                  <motion.button
+                    className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                    animate={activeFilter ? "active" : ""}
+                    onClick={() => {
+                      setShowFilters(!showFilters);
+                      setActiveFilter(!activeFilter);
+                    }}
+                  >
+                    <FiFilter className={showFilters ? "text-primary-600" : ""} />
+                    {activeFilter && (
+                      <motion.span 
+                        className="absolute -top-1 -right-1 bg-primary-500 rounded-full w-2 h-2"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500 }}
+                      />
+                    )}
+            </motion.button>
+                  
                   {/* View mode switcher - redesigned */}
                   <motion.div 
                     className="relative overflow-hidden border border-indigo-200 rounded-full flex items-center p-1 bg-white shadow-sm"
@@ -656,26 +512,26 @@ export default function Dashboard() {
                       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                       style={{ width: '48%', height: '85%', left: viewMode === 'list' ? '1%' : '51%' }}
                     />
-                    <motion.button
+          <motion.button
                       className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
                         viewMode === 'list' 
                           ? 'text-indigo-700' 
                           : 'text-gray-600'
                       }`}
-                      whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setViewMode('list')}
                     >
                       <FiList className={viewMode === 'list' ? 'text-indigo-600' : 'text-gray-500'} />
                       <span>List</span>
-                    </motion.button>
-                    <motion.button
+          </motion.button>
+          <motion.button
                       className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
                         viewMode === 'carousel' 
                           ? 'text-indigo-700' 
                           : 'text-gray-600'
                       }`}
-                      whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setViewMode('carousel')}
                     >
@@ -690,31 +546,130 @@ export default function Dashboard() {
                       <motion.button
                         className="p-2.5 rounded-full border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 shadow-sm transition-colors flex items-center justify-center"
                         whileHover={{ scale: 1.05, rotate: 5 }}
-                        whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.95 }}
                         onClick={openFullscreenModal}
-                      >
+          >
                         <FiMaximize />
-                      </motion.button>
+          </motion.button>
                     )}
-                    
-                    <motion.button
+          
+          <motion.button
                       className="p-2.5 rounded-full border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors flex items-center justify-center"
                       whileHover={{ scale: 1.05, rotate: -5 }}
-                      whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.95 }}
                       onClick={handleNewReport}
-                    >
+          >
                       <FiPlus />
-                    </motion.button>
-                  </div>
+          </motion.button>
+        </div>
                 </div>
               </div>
             </div>
-            
+
+            {/* Filters - moved inside the container */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+                  className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-4 mx-6 mt-4"
+                  initial={{ opacity: 0, y: -20, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -20, height: 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <motion.div 
+                      className="flex-1"
+                      variants={filterVariants}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover="active"
+                    >
+                <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiCalendar className="h-4 w-4 text-gray-400" />
+                  </div>
+                        <motion.input
+                    type="date"
+                    id="date-filter"
+                    value={date}
+                          onChange={(e) => {
+                            setDate(e.target.value);
+                            handleRefresh();
+                          }}
+                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm"
+                    max={new Date().toISOString().split('T')[0]}
+                          whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
+                  />
+                </div>
+                    </motion.div>
+                    <motion.div 
+                      className="flex-1"
+                      variants={filterVariants}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover="active"
+                      transition={{ delay: 0.1 }}
+                    >
+                <label htmlFor="team-filter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Team
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiUsers className="h-4 w-4 text-gray-400" />
+                  </div>
+                        <motion.select
+                    id="team-filter"
+                    value={selectedTeam}
+                    onChange={(e) => setSelectedTeam(e.target.value)}
+                          className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm appearance-none"
+                          whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
+                  >
+                    <option value="all">All Teams</option>
+                    {teams.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                      </option>
+                    ))}
+                        </motion.select>
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                          <motion.div
+                            animate={{ rotate: showFilters ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <FiChevronDown className="h-4 w-4 text-gray-400" />
+                          </motion.div>
+                </div>
+              </div>
+                    </motion.div>
+            </div>
+                  <motion.div 
+                    className="mt-4 flex justify-end"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <motion.button
+                      className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleRefresh}
+                    >
+                      <FiRefreshCw className="mr-1 h-3 w-3" />
+                      Refresh Results
+                    </motion.button>
+                  </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
             {/* Date navigation bar */}
-            <motion.div 
+        <motion.div 
               className="relative p-5 bg-gradient-to-r from-indigo-50 to-slate-50"
               initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <div className="flex flex-wrap justify-between items-center gap-4">
@@ -736,7 +691,7 @@ export default function Dashboard() {
                       onChange={(e) => setDate(e.target.value)}
                       className="relative bg-white border border-indigo-200 rounded-lg py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary-300 focus:border-primary-500 shadow-sm transition-all outline-none cursor-pointer"
                     />
-                  </div>
+          </div>
                   
                   <motion.button 
                     onClick={() => setDate(new Date().toISOString().split('T')[0])}
@@ -747,25 +702,25 @@ export default function Dashboard() {
                     <FiCalendar className="h-3.5 w-3.5" />
                     Today
                   </motion.button>
-                </div>
+          </div>
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center text-sm">
                     <span className="text-gray-500">Showing</span>
                     <span className="mx-1.5 text-indigo-700 font-medium">{filteredReports.length}</span>
                     <span className="text-gray-500">reports</span>
-                  </div>
+            </div>
                   
-                  <motion.button
+            <motion.button
                     className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
                     onClick={handleRefresh}
-                  >
+            >
                     <FiRefreshCw className="h-3.5 w-3.5" />
                     <span>Refresh</span>
-                  </motion.button>
-                </div>
+            </motion.button>
+          </div>
               </div>
             </motion.div>
             
@@ -796,7 +751,7 @@ export default function Dashboard() {
                       "No standup reports have been submitted for today yet." : 
                       `No standup reports were found for ${formatDate(date)}.`}
                   </p>
-                  <motion.button
+          <motion.button
                     onClick={handleNewReport}
                     className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-medium flex items-center gap-2"
                     whileHover={{ scale: 1.05 }}
@@ -804,13 +759,13 @@ export default function Dashboard() {
                   >
                     <FiPlus className="h-4 w-4" />
                     Add Your Report
-                  </motion.button>
+          </motion.button>
                 </motion.div>
               ) : viewMode === 'carousel' ? (
                 <div className="relative">
                   <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentReportIndex}
+              <motion.div
+                key={currentReportIndex}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
@@ -829,9 +784,9 @@ export default function Dashboard() {
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-semibold text-lg border-2 border-white shadow-md">
                                 {filteredReports[currentReportIndex].users?.name?.charAt(0) || "U"}
-                              </div>
+                        </div>
                             )}
-                            <div>
+                        <div>
                               <h3 className="font-semibold text-gray-900">
                                 {filteredReports[currentReportIndex].users?.name || "Unknown User"}
                               </h3>
@@ -842,10 +797,10 @@ export default function Dashboard() {
                                     ? format(new Date(filteredReports[currentReportIndex].created_at), "MMM d, h:mm a") 
                                     : "Unknown time"}
                                 </span>
-                              </div>
-                            </div>
                           </div>
-                          
+                        </div>
+                      </div>
+                      
                           <div className="ml-auto flex flex-wrap gap-2 items-center">
                             {filteredReports[currentReportIndex].users?.teams?.name && (
                               <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
@@ -867,18 +822,18 @@ export default function Dashboard() {
                                 : "No Blockers"}
                             </span>
                           </div>
-                        </div>
-                        
+                    </div>
+                    
                         <div className="grid md:grid-cols-3 gap-6 flex-1">
-                          <motion.div 
+                        <motion.div 
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
                             <div className="bg-indigo-600 text-white px-5 py-3">
                               <h4 className="font-medium flex items-center text-lg">
                                 <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">1</span>
-                                Yesterday
-                              </h4>
+                            Yesterday
+                          </h4>
                             </div>
                             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[210px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
                               <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
@@ -889,18 +844,18 @@ export default function Dashboard() {
                                   </span>
                                 }
                               </div>
-                            </div>
-                          </motion.div>
-                          
-                          <motion.div 
+                          </div>
+                        </motion.div>
+                        
+                        <motion.div 
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
                             <div className="bg-emerald-600 text-white px-5 py-3">
                               <h4 className="font-medium flex items-center text-lg">
                                 <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">2</span>
-                                Today
-                              </h4>
+                            Today
+                          </h4>
                             </div>
                             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[210px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
                               <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
@@ -911,18 +866,18 @@ export default function Dashboard() {
                                   </span>
                                 }
                               </div>
-                            </div>
-                          </motion.div>
-                          
-                          <motion.div 
+                          </div>
+                        </motion.div>
+                        
+                        <motion.div 
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
                             <div className={`px-5 py-3 text-white ${filteredReports[currentReportIndex].blockers ? 'bg-amber-600' : 'bg-blue-600'}`}>
                               <h4 className="font-medium flex items-center text-lg">
                                 <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">3</span>
-                                Blockers
-                              </h4>
+                            Blockers
+                          </h4>
                             </div>
                             <div className={`p-5 h-[210px] flex flex-col transition-colors ${
                               filteredReports[currentReportIndex].blockers 
@@ -939,16 +894,16 @@ export default function Dashboard() {
                                   </span>
                                 }
                               </div>
-                            </div>
-                          </motion.div>
-                        </div>
+                          </div>
+                        </motion.div>
                       </div>
-                    </motion.div>
-                  </AnimatePresence>
+                    </div>
+              </motion.div>
+            </AnimatePresence>
                   
                   {/* Navigation controls */}
                   <div className="flex justify-between mt-6">
-                    <motion.button 
+                <motion.button 
                       onClick={prevReport}
                       disabled={filteredReports.length <= 1}
                       className={`p-3 rounded-full shadow-md flex items-center justify-center ${
@@ -966,7 +921,7 @@ export default function Dashboard() {
                       <span className="text-sm text-gray-600">
                         {filteredReports.length > 0 ? `${currentReportIndex + 1} of ${filteredReports.length}` : '0 of 0'}
                       </span>
-                    </div>
+        </div>
                     
                     <motion.button 
                       onClick={nextReport}
@@ -981,21 +936,21 @@ export default function Dashboard() {
                     >
                       <FiChevronRight className="h-5 w-5" />
                     </motion.button>
-                  </div>
+          </div>
                 </div>
               ) : (
                 // List view
-                <motion.div 
+        <motion.div 
                   className="flex flex-col space-y-4"
                   variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
+          initial="hidden"
+          animate="visible"
+        >
                   {filteredReports.map((report) => (
-                    <motion.div 
-                      key={report.id} 
+            <motion.div 
+              key={report.id} 
                       className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 overflow-hidden"
-                      variants={itemVariants}
+              variants={itemVariants}
                       whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
@@ -1009,17 +964,17 @@ export default function Dashboard() {
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
                               {report.users?.name?.charAt(0) || "U"}
-                            </div>
+                    </div>
                           )}
-                          <div>
+                    <div>
                             <h3 className="font-medium text-gray-900">{report.users?.name || "Unknown User"}</h3>
                             <div className="text-xs text-gray-500 flex items-center gap-1">
                               <FiClock className="h-3 w-3" />
                               <span>{report.created_at ? format(new Date(report.created_at), "MMM d, h:mm a") : "Unknown time"}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
+                    </div>
+                  </div>
+                </div>
+                
                         <div className="flex flex-wrap gap-2 items-center">
                           {report.users?.teams?.name && (
                             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
@@ -1040,8 +995,8 @@ export default function Dashboard() {
                               ? "Has Blockers" 
                               : "No Blockers"}
                           </span>
-                        </div>
-                      </div>
+                  </div>
+                  </div>
                       
                       <div className="grid sm:grid-cols-3 gap-3">
                         <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
@@ -1052,7 +1007,7 @@ export default function Dashboard() {
                           <span className="text-gray-700 break-words text-sm">
                             {report.yesterday || <span className="italic text-gray-400">No update</span>}
                           </span>
-                        </div>
+                      </div>
                         
                         <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
                           <span className="font-medium text-emerald-700 block mb-1.5 flex items-center gap-1.5">
@@ -1062,8 +1017,8 @@ export default function Dashboard() {
                           <span className="text-gray-700 break-words text-sm">
                             {report.today || <span className="italic text-gray-400">No update</span>}
                           </span>
-                        </div>
-                        
+                    </div>
+                    
                         <div className={`rounded-lg p-3 hover:bg-opacity-70 transition-colors ${
                           report.blockers 
                             ? 'bg-amber-50 border border-amber-100 hover:bg-amber-100/50' 
@@ -1089,8 +1044,8 @@ export default function Dashboard() {
                               </span>
                             }
                           </span>
-                        </div>
                       </div>
+                    </div>
                     </motion.div>
                   ))}
                 </motion.div>
@@ -1098,85 +1053,163 @@ export default function Dashboard() {
             </div>
           </motion.div>
                     
-        {/* Missing Reports Widget */}
-        <div className="w-full max-w-4xl mx-auto mb-10">
+        {/* Missing Reports Widget - Redesigned to be more compact and professional */}
+        <motion.div 
+          className="w-full max-w-5xl mx-auto mb-10"
+          variants={itemVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <motion.div 
             variants={itemVariants} 
-            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200"
-            whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
+            className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+            whileHover={{ boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(79, 70, 229, 0.1)" }}
             transition={{ duration: 0.3 }}
           >
-            <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-              <h2 className="text-xl font-bold flex items-center text-gray-800">
-                <FiAlertCircle className="mr-3 text-primary-500" />
-                Missing Reports Today
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">Team members who haven't submitted their daily report yet</p>
-            </div>
-            
-            <div className="p-6 max-h-[400px] overflow-y-auto">
-              {isToday(date) ? (
-                <>
-                  {loadingMissing ? (
-                    <div className="flex justify-center py-8">
-                      <motion.div 
-                        className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
+              <div className="flex items-center">
+                <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
+                  <FiAlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                    Missing Reports Today
+                  </h2>
+                  <p className="text-gray-500 text-sm">Team members who haven't submitted their daily standup</p>
+                </div>
+              </div>
+              
+              {isToday(date) && !loadingMissing && (
+                <div className="flex items-center mt-2 sm:mt-0">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex items-center px-3 py-1.5 mr-2">
+                    <div className="text-center mr-3 pr-3 border-r border-gray-200">
+                      <div className="text-xs text-gray-500">Total</div>
+                      <div className="font-bold text-lg text-indigo-700">{teamMembers.length}</div>
                     </div>
-                  ) : missingReports.length === 0 ? (
-                    <div className="text-center p-6 bg-green-50 rounded-xl text-green-700 border border-green-100">
-                      <FiCheckCircle className="mx-auto mb-3 h-8 w-8" />
-                      <p className="font-bold text-xl mb-2">All Caught Up!</p>
-                      <p className="text-green-600">Everyone on the team has submitted their reports for today.</p>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500">Missing</div>
+                      <div className="font-bold text-lg text-indigo-700">{missingReports.length}</div>
                     </div>
-                  ) : (
-                    <>
-                      <p className="text-sm text-yellow-600 mb-4 bg-yellow-50 p-2 rounded-lg inline-flex items-center">
-                        <FiAlertCircle className="mr-2" /> {missingReports.length} team member{missingReports.length > 1 ? 's' : ''} still need to submit their report.
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {missingReports.map(member => (
-                          <div key={member.id} className="p-4 bg-gray-50 rounded-xl flex items-center justify-between hover:bg-gray-100 transition-colors border border-gray-200">
-                            <div className="flex items-center">
-                              <div className="h-10 w-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-medium mr-3 shadow-sm">
-                                {member.name.charAt(0)}
-                              </div>
-                              <div>
-                                <span className="font-medium text-gray-800 block">{member.name}</span>
-                                <span className="text-xs text-gray-500">{member.role || 'Team Member'}</span>
-                              </div>
-                            </div>
-                            <span className="text-sm text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">Pending</span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mx-auto mb-4">
-                    <FiCalendar className="h-8 w-8" />
                   </div>
-                  <p className="text-lg mb-3">Missing reports are only available for today.</p>
-                  <button 
-                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
-                    className="mt-2 px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
+                  
+                  <button
+                    onClick={handleRefresh}
+                    className="p-2 rounded-lg border border-gray-200 bg-white text-indigo-600 hover:bg-indigo-50 transition-colors shadow-sm"
+                    title="Refresh status"
                   >
-                    Switch to Today
+                    <FiRefreshCw className={refreshing ? "animate-spin" : ""} />
                   </button>
                 </div>
               )}
             </div>
+            
+            <div className="relative">
+              {isToday(date) ? (
+                <>
+                  {loadingMissing ? (
+                    <div className="flex justify-center items-center py-10">
+                      <div className="relative">
+                        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <div className="w-8 h-8 absolute top-2 left-2 border-4 border-indigo-100 border-b-indigo-400 rounded-full animate-spin"></div>
+                      </div>
+                      <p className="ml-4 text-gray-500 font-medium">Loading team status...</p>
+                    </div>
+                  ) : missingReports.length === 0 ? (
+                    <div className="p-6 mx-6 my-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100 overflow-hidden relative">
+                      <div className="absolute -right-8 -top-8 w-32 h-32 bg-green-100 rounded-full opacity-30"></div>
+                      <div className="flex items-center">
+                        <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                          <FiCheckCircle className="h-8 w-8" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-xl text-green-700 mb-1">All Caught Up!</h3>
+                          <p className="text-green-600">Everyone on the team has submitted their reports for today.</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-5">
+                      <div className="flex flex-wrap justify-between items-center mb-4">
+                        <p className="text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-1.5 rounded-full inline-flex items-center">
+                          <FiAlertCircle className="mr-1 h-4 w-4" /> 
+                          {missingReports.length} {missingReports.length === 1 ? 'person' : 'people'} still need to submit a report
+                        </p>
+                        
+                        {missingReports.length > 0 && (
+                          <div className="mt-2 sm:mt-0 flex">
+                            <div className="text-xs bg-indigo-50 text-indigo-700 rounded-lg px-3 py-1.5 mr-2 flex items-center">
+                              <span className="inline-block w-2 h-2 rounded-full bg-indigo-600 mr-1"></span>
+                              <span>Last updated: {format(new Date(), 'h:mm a')}</span>
+                            </div>
+                            
+                            <button
+                              onClick={() => handleNewReport()}
+                              className="text-xs bg-indigo-600 text-white rounded-lg px-3 py-1.5 flex items-center hover:bg-indigo-700 transition-colors"
+                            >
+                              <FiPlus className="mr-1 h-3 w-3" />
+                              Add Report
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {missingReports.map((member, index) => (
+                          <motion.div 
+                            key={member.id} 
+                            className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all flex items-center"
+                            variants={itemVariants}
+                            custom={index}
+                            initial="hidden"
+                            animate="visible"
+                            whileHover={{ y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
+                          >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-lg shadow-sm mr-3">
+                              {member.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-800 truncate">{member.name}</p>
+                              <p className="text-xs text-gray-500">{member.role || 'Team Member'}</p>
+                            </div>
+                            <div className="ml-auto">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                <span className="w-1.5 h-1.5 mr-1 bg-amber-500 rounded-full animate-pulse"></span>
+                                Pending
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-center py-12 px-6 bg-gray-50">
+                  <div className="text-center max-w-md">
+                    <div className="mx-auto w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                      <FiCalendar className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-700 mb-2">Historical View</h3>
+                    <p className="text-gray-500 mb-4">Missing reports are only available for the current date.</p>
+                    <motion.button 
+                      onClick={() => setDate(new Date().toISOString().split('T')[0])}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm font-medium"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Switch to Today
+                    </motion.button>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
       
       {/* Fullscreen Modal */}
       <AnimatePresence>
-        {showFullscreenModal && (
+      {showFullscreenModal && (
           <motion.div
             className="fixed inset-0 bg-black/95 z-50 p-6 flex items-center justify-center"
             initial={{ opacity: 0 }}
@@ -1184,41 +1217,41 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             onClick={closeFullscreenModal}
           >
-            <motion.button
+          <motion.button
               className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={closeFullscreenModal}
             >
               <FiX className="h-6 w-6" />
-            </motion.button>
-            
+          </motion.button>
+          
             <div 
               className="w-full max-w-5xl mx-auto" 
               onClick={(e) => e.stopPropagation()}
             >
               {filteredReports.length > 0 && (
                 <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl">
-                  <AnimatePresence initial={false} custom={slideDirection} mode="wait">
-                    <motion.div
-                      key={currentReportIndex}
-                      custom={slideDirection}
-                      initial={(direction) => ({
+          <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+            <motion.div
+              key={currentReportIndex}
+              custom={slideDirection}
+              initial={(direction) => ({
                         x: direction === 'right' ? '100%' : '-100%',
                         opacity: 0
-                      })}
-                      animate={{
-                        x: 0,
+              })}
+              animate={{
+                x: 0,
                         opacity: 1
-                      }}
-                      exit={(direction) => ({
+              }}
+              exit={(direction) => ({
                         x: direction === 'right' ? '-100%' : '100%',
                         opacity: 0
-                      })}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 30,
+              })}
+              transition={{
+                type: 'spring',
+                stiffness: 300,
+                damping: 30,
                         mass: 0.8
                       }}
                       className="p-8"
@@ -1229,11 +1262,11 @@ export default function Dashboard() {
                       <div className="flex items-center gap-5 mb-8 pb-5 border-b border-gray-200">
                         <div className="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-3xl shadow-md">
                           {filteredReports[currentReportIndex].users?.name?.charAt(0) || '?'}
-                        </div>
-                        <div>
+                      </div>
+                      <div>
                           <h3 className="text-3xl font-bold text-gray-900 mb-1">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
                           <div className="text-gray-500 flex items-center gap-3 text-lg">
-                            <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
+                          <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
                             <span>&bull;</span>
                             <span className="flex items-center">
                               <FiClock className="mr-1.5" />
@@ -1241,45 +1274,45 @@ export default function Dashboard() {
                                 ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a') 
                                 : ''}
                             </span>
-                          </div>
-                        </div>
-                        
+                      </div>
+                    </div>
+                    
                         <div className="ml-auto text-sm bg-primary-50 text-primary-700 rounded-full px-4 py-1 border border-primary-100">
                           Report {currentReportIndex + 1} of {filteredReports.length}
-                        </div>
                       </div>
-                      
+                  </div>
+                  
                       <div className="grid md:grid-cols-3 gap-8">
                         <div className="bg-primary-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
                           <h4 className="font-semibold text-primary-700 mb-4 flex items-center text-xl border-b border-primary-100 pb-3">
                             <span className="h-8 w-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center mr-3 text-sm font-bold">1</span>
-                            Yesterday
-                          </h4>
+                          Yesterday
+                        </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
                             {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update provided</span>}
-                          </div>
+                        </div>
                         </div>
                         
                         <div className="bg-green-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
                           <h4 className="font-semibold text-green-700 mb-4 flex items-center text-xl border-b border-green-100 pb-3">
                             <span className="h-8 w-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center mr-3 text-sm font-bold">2</span>
-                            Today
-                          </h4>
+                          Today
+                        </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
                             {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update provided</span>}
-                          </div>
+                        </div>
                         </div>
                         
                         <div className={`rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border ${filteredReports[currentReportIndex].blockers ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'}`}>
                           <h4 className={`font-semibold mb-4 flex items-center text-xl pb-3 border-b ${filteredReports[currentReportIndex].blockers ? 'text-red-700 border-red-100' : 'text-gray-700 border-gray-200'}`}>
                             <span className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
-                            Blockers
-                          </h4>
+                          Blockers
+                        </h4>
                           <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
                             {filteredReports[currentReportIndex].blockers || <span className="italic text-gray-400">No blockers reported</span>}
-                          </div>
                         </div>
-                      </div>
+                    </div>
+                  </div>
                       
                       {/* Navigation indicator */}
                       <div className="flex items-center justify-center mt-8 gap-2">
@@ -1288,9 +1321,9 @@ export default function Dashboard() {
                             key={idx} 
                             className={`h-3 rounded-full transition-all cursor-pointer hover:scale-110 ${idx === currentReportIndex ? 'bg-primary-500 w-8' : 'bg-gray-300 w-3 hover:bg-gray-400'}`}
                             onClick={() => setCurrentReportIndex(idx)}
-                          />
-                        ))}
-                      </div>
+              />
+            ))}
+          </div>
                     </motion.div>
                   </AnimatePresence>
                   
@@ -1313,9 +1346,9 @@ export default function Dashboard() {
                       </button>
                     </>
                   )}
-                </div>
-              )}
-            </div>
+      </div>
+    )}
+    </div>
           </motion.div>
         )}
       </AnimatePresence>

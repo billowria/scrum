@@ -18,6 +18,7 @@ import TeamManagement from './pages/TeamManagement';
 import AchievementsPage from './pages/AchievementsPage';
 import LandingPage from './pages/LandingPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
+import DepartmentManagement from './pages/DepartmentManagement';
 
 // Animation variants
 const pageVariants = {
@@ -201,6 +202,7 @@ function AppContent({ session, userRole }) {
                 } />
                 <Route path="/login" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/department-management" element={<DepartmentManagement />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </>
               )}

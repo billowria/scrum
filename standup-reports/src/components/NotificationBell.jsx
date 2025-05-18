@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, createRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiX, FiCalendar, FiCheck, FiX as FiXIcon, FiMessageCircle } from 'react-icons/fi';
+import { FiBell, FiX, FiCalendar, FiCheck, FiX as FiXIcon, FiMessageCircle, FiClock, FiInfo } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import AnnouncementModal from './AnnouncementModal';
@@ -119,6 +119,7 @@ const NotificationBell = ({ userRole }) => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [processingLeaveRequest, setProcessingLeaveRequest] = useState(null);
   const modalRoot = useRef(document.getElementById('modal-root') || document.body);
   const navigate = useNavigate();
 
@@ -206,7 +207,7 @@ const NotificationBell = ({ userRole }) => {
           .from('leave_plans')
           .select(`
             id, start_date, end_date, status, created_at,
-            users:user_id (id, name)
+            users:user_id (id, name, teams:team_id(id, name))
           `)
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
@@ -214,15 +215,22 @@ const NotificationBell = ({ userRole }) => {
         if (leaveError) throw leaveError;
 
         // Transform leave requests into notifications
-        const leaveNotifications = leaveRequests.map(request => ({
-          id: `leave-${request.id}`,
-          type: 'leave_request',
-          title: 'New Leave Request',
-          message: `${request.users.name} requested leave from ${format(parseISO(request.start_date), 'MMM dd')} to ${format(parseISO(request.end_date), 'MMM dd')}`,
-          created_at: request.created_at,
-          read: false,
-          data: request
-        }));
+        const leaveNotifications = leaveRequests.map(request => {
+          // Format the leave days count
+          const startDate = parseISO(request.start_date);
+          const endDate = parseISO(request.end_date);
+          const days = differenceInDays(endDate, startDate) + 1;
+          
+          return {
+            id: `leave-${request.id}`,
+            type: 'leave_request',
+            title: 'Leave Request',
+            message: `${request.users.name} requested ${days} ${days === 1 ? 'day' : 'days'} off (${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')})`,
+            created_at: request.created_at,
+            read: false,
+            data: request
+          };
+        });
         
         allNotifications = [...leaveNotifications];
       }
@@ -344,22 +352,47 @@ const NotificationBell = ({ userRole }) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
+  
+  const handleLeaveAction = async (leaveId, action) => {
+    setProcessingLeaveRequest(leaveId);
+    try {
+      // Update leave request status in database
+      const { error } = await supabase
+        .from('leave_plans')
+        .update({ status: action })
+        .eq('id', leaveId);
+        
+      if (error) throw error;
+      
+      // Remove from notifications
+      handleDismiss(`leave-${leaveId}`);
+      
+      // Show toast or other feedback (you could add this)
+      console.log(`Leave request ${action}`);
+    } catch (error) {
+      console.error(`Error ${action} leave request:`, error);
+    } finally {
+      setProcessingLeaveRequest(null);
+    }
+  };
 
   return (
     <div className="relative">
       <motion.button
         className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
         onClick={() => setShowDropdown(!showDropdown)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover="hover"
+        whileTap="tap"
+        variants={bellVariants}
+        animate={unreadCount > 0 ? "ring" : "idle"}
       >
         <FiBell className="w-6 h-6" />
         {unreadCount > 0 && (
           <motion.div
             className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            initial="hidden"
+            animate={unreadCount > 0 ? "pulse" : "hidden"}
+            variants={dotVariants}
           >
             {unreadCount}
           </motion.div>
@@ -378,81 +411,172 @@ const NotificationBell = ({ userRole }) => {
             />
             
             <motion.div
-              className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
+              variants={dropdownVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
-              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white">
+              <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white flex justify-between items-center">
                 <h3 className="font-semibold text-gray-800">Notifications</h3>
+                {notifications.length > 0 && (
+                  <button
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                      setNotifications([]);
+                      setUnreadCount(0);
+                    }}
+                  >
+                    Clear all
+                  </button>
+                )}
               </div>
 
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    No new notifications
+                    <FiBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p>No new notifications</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {notifications.map((notification) => (
+                    {notifications.map((notification, index) => (
                       <motion.div
                         key={notification.id}
-                        className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => handleNotificationClick(notification)}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
+                        custom={index}
+                        variants={notificationItemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        whileHover="hover"
+                        className="relative"
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1">
-                            {notification.type === 'leave_request' ? (
-                              <FiCalendar className="w-5 h-5 text-primary-500" />
-                            ) : notification.type === 'announcement' ? (
-                              <FiMessageCircle className="w-5 h-5 text-primary-500" />
-                            ) : (
-                              <FiBell className="w-5 h-5 text-primary-500" />
-                            )}
+                        {notification.type === 'leave_request' ? (
+                          <div className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1">
+                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
+                                  <FiCalendar className="w-5 h-5" />
+                                </div>
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between">
+                                  <p className="font-medium text-gray-900">{notification.title}</p>
+                                  <button
+                                    className="p-1 text-gray-400 hover:text-gray-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDismiss(notification.id);
+                                    }}
+                                  >
+                                    <FiX className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                
+                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                  {notification.data.users?.teams?.name && (
+                                    <span className="px-2 py-0.5 bg-gray-100 text-xs font-medium rounded-full text-gray-600">
+                                      {notification.data.users.teams.name}
+                                    </span>
+                                  )}
+                                  <span className="text-xs text-gray-400">
+                                    {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
+                                  </span>
+                                </div>
+                                
+                                {/* Action buttons for managers */}
+                                <div className="flex gap-2 mt-3">
+                                  <motion.button
+                                    className="px-3 py-1.5 rounded-md bg-green-100 text-green-700 text-xs font-medium flex items-center gap-1 hover:bg-green-200 transition-colors disabled:opacity-50"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLeaveAction(notification.data.id, 'approved');
+                                    }}
+                                    disabled={processingLeaveRequest === notification.data.id}
+                                  >
+                                    {processingLeaveRequest === notification.data.id ? (
+                                      <div className="w-3 h-3 border-t-2 border-green-700 rounded-full animate-spin mr-1" />
+                                    ) : (
+                                      <FiCheck className="w-3 h-3" />
+                                    )}
+                                    Approve
+                                  </motion.button>
+                                  
+                                  <motion.button
+                                    className="px-3 py-1.5 rounded-md bg-red-100 text-red-700 text-xs font-medium flex items-center gap-1 hover:bg-red-200 transition-colors disabled:opacity-50"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLeaveAction(notification.data.id, 'rejected');
+                                    }}
+                                    disabled={processingLeaveRequest === notification.data.id}
+                                  >
+                                    {processingLeaveRequest === notification.data.id ? (
+                                      <div className="w-3 h-3 border-t-2 border-red-700 rounded-full animate-spin mr-1" />
+                                    ) : (
+                                      <FiX className="w-3 h-3" />
+                                    )}
+                                    Reject
+                                  </motion.button>
+                                  
+                                  <motion.button
+                                    className="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium flex items-center gap-1 hover:bg-gray-200 transition-colors ml-auto"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleNotificationClick(notification)}
+                                  >
+                                    Details
+                                  </motion.button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900">{notification.title}</p>
-                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
-                            </p>
-                          </div>
-                          
-                          <button
-                            className="p-1 text-gray-400 hover:text-gray-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDismiss(notification.id);
-                            }}
+                        ) : (
+                          <div 
+                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                            onClick={() => handleNotificationClick(notification)}
                           >
-                            <FiX className="w-4 h-4" />
-                          </button>
-                        </div>
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1">
+                                {notification.type === 'announcement' ? (
+                                  <FiMessageCircle className="w-5 h-5 text-primary-500" />
+                                ) : (
+                                  <FiBell className="w-5 h-5 text-primary-500" />
+                                )}
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between">
+                                  <p className="font-medium text-gray-900">{notification.title}</p>
+                                  <button
+                                    className="p-1 text-gray-400 hover:text-gray-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDismiss(notification.id);
+                                    }}
+                                  >
+                                    <FiX className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     ))}
                   </div>
                 )}
               </div>
-
-              {notifications.length > 0 && (
-                <div className="p-3 bg-gray-50 border-t border-gray-200">
-                  <button
-                    className="w-full text-sm text-gray-600 hover:text-gray-900"
-                    onClick={() => {
-                      setNotifications([]);
-                      setUnreadCount(0);
-                      setShowDropdown(false);
-                    }}
-                  >
-                    Clear all notifications
-                  </button>
-                </div>
-              )}
             </motion.div>
           </>
         )}
