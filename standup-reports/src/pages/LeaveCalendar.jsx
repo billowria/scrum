@@ -270,6 +270,75 @@ const UsersOnLeaveModal = ({ isOpen, onClose, date, users }) => {
   );
 };
 
+// Add this new component for showing available users
+const AvailableUsersModal = ({ isOpen, onClose, users }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <AnimatePresence>
+      <motion.div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div 
+          className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-primary-600 text-white p-4 flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center">
+              <FiUserCheck className="mr-2" /> 
+              Available Team Members Today
+            </h3>
+            <button 
+              className="text-white/80 hover:text-white p-1 rounded-full hover:bg-primary-700"
+              onClick={onClose}
+            >
+              <FiX />
+            </button>
+          </div>
+          
+          <div className="p-4 max-h-80 overflow-y-auto">
+            {users.length > 0 ? (
+              <div className="space-y-3">
+                {users.map((user, index) => (
+                  <motion.div 
+                    key={user.id}
+                    className="p-3 bg-gray-50 rounded-lg flex items-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-medium text-lg mr-3">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-800">{user.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {user.team?.name || 'No team assigned'}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No team members available today
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 export default function LeaveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [leaveData, setLeaveData] = useState([]);
@@ -290,10 +359,8 @@ export default function LeaveCalendar() {
   // New stats for enhanced dashboard
   const [stats, setStats] = useState({
     totalTeamMembers: 0,
-    onLeaveToday: 0,
-    upcomingLeaves: 0,
-    totalLeaveThisMonth: 0,
-    rejectedRequests: 0
+    membersOnLeave: 0,
+    membersAvailable: 0
   });
   
   // Announcement modal state
@@ -312,6 +379,12 @@ export default function LeaveCalendar() {
   // Animation controls
   const controls = useAnimation();
   
+  // Add this new state for showing available users
+  const [showAvailableModal, setShowAvailableModal] = useState(false);
+  const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [onLeaveUsers, setOnLeaveUsers] = useState([]);
+  
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
@@ -328,48 +401,85 @@ export default function LeaveCalendar() {
   
   // Calculate team availability whenever leave data changes
   useEffect(() => {
-    if (leaveData.length > 0 && users.length > 0) {
-      calculateTeamAvailability();
-      calculateStats();
-    }
+    const doCalculations = async () => {
+      if (leaveData.length > 0 && users.length > 0) {
+        calculateTeamAvailability();
+        const newStats = await calculateStats();
+        if (newStats) {
+          setStats(newStats);
+        }
+      }
+    };
+    doCalculations();
   }, [leaveData, users]);
   
-  // Calculate stats for dashboard
-  const calculateStats = () => {
-    const today = new Date();
-    const todayStr = format(today, 'yyyy-MM-dd');
-    
-    // Count team members on leave today
-    const onLeaveToday = leaveData.filter(leave => {
-      const start = parseISO(leave.start_date);
-      const end = parseISO(leave.end_date);
-      return today >= start && today <= end && leave.status === 'approved';
-    }).length;
-    
-    // Count upcoming leaves (next 14 days)
-    const upcoming = leaveData.filter(leave => {
-      const start = parseISO(leave.start_date);
-      const twoWeeksFromNow = new Date();
-      twoWeeksFromNow.setDate(today.getDate() + 14);
-      return start > today && start <= twoWeeksFromNow && leave.status === 'approved';
-    }).length;
-    
-    // Count total leaves this month
-    const totalThisMonth = leaveData.filter(leave => 
-      isSameMonth(parseISO(leave.start_date), currentMonth) || 
-      isSameMonth(parseISO(leave.end_date), currentMonth)
-    ).length;
-    
-    // Count rejected requests
-    const rejected = leaveData.filter(leave => leave.status === 'rejected').length;
-    
-    setStats({
-      totalTeamMembers: users.length,
-      onLeaveToday,
-      upcomingLeaves: upcoming,
-      totalLeaveThisMonth: totalThisMonth,
-      rejectedRequests: rejected
-    });
+  // Update the calculateStats function to set available and on-leave users
+  const calculateStats = async () => {
+    try {
+      const today = new Date();
+      const { data: leaveData, error: leaveError } = await supabase
+        .from('leave_plans')
+        .select(`
+          id,
+          start_date,
+          end_date,
+          users:user_id (
+            id,
+            name,
+            teams:team_id (
+              id,
+              name
+            )
+          )
+        `)
+        .eq('status', 'approved');
+
+      if (leaveError) throw leaveError;
+
+      // Get all users
+      const { data: allUsers, error: usersError } = await supabase
+        .from('users')
+        .select(`
+          id,
+          name,
+          team:team_id (
+            id,
+            name
+          )
+        `);
+
+      if (usersError) throw usersError;
+
+      // Filter users on leave today
+      const usersOnLeave = leaveData
+        .filter(leave => {
+          const startDate = new Date(leave.start_date);
+          const endDate = new Date(leave.end_date);
+          return today >= startDate && today <= endDate;
+        })
+        .map(leave => leave.users);
+
+      const onLeaveIds = usersOnLeave.map(user => user.id);
+      
+      // Filter available users (not on leave)
+      const availableUsers = allUsers.filter(user => !onLeaveIds.includes(user.id));
+
+      setAvailableUsers(availableUsers);
+      setOnLeaveUsers(usersOnLeave);
+
+      return {
+        totalTeamMembers: allUsers.length,
+        membersOnLeave: usersOnLeave.length,
+        membersAvailable: availableUsers.length
+      };
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+      return {
+        totalTeamMembers: 0,
+        membersOnLeave: 0,
+        membersAvailable: 0
+      };
+    }
   };
   
   const calculateTeamAvailability = () => {
@@ -772,31 +882,45 @@ export default function LeaveCalendar() {
       
       {/* Stats cards */}
       <motion.div 
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <StatCard 
-          icon={<FiUsers size={20} />}
-          title="Team Members Available Today" 
-          value={stats.totalTeamMembers - stats.onLeaveToday} 
-          color="green"
-          index={0}
-        />
-        
-        <StatCard 
-          icon={<FiUserCheck size={20} />}
-          title="On Leave Today" 
-          value={stats.onLeaveToday} 
-          color="blue"
-          index={1}
-        />
+        <motion.div
+          onClick={() => setShowAvailableModal(true)}
+          className="cursor-pointer"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <StatCard
+            icon={<FiUserCheck size={24} />}
+            title="Team Members Available Today"
+            value={stats.membersAvailable}
+            color="green"
+            index={0}
+          />
+        </motion.div>
+
+        <motion.div
+          onClick={() => stats.membersOnLeave > 0 && setShowOnLeaveModal(true)}
+          className={stats.membersOnLeave > 0 ? "cursor-pointer" : "cursor-default"}
+          whileHover={{ scale: stats.membersOnLeave > 0 ? 1.02 : 1 }}
+          whileTap={{ scale: stats.membersOnLeave > 0 ? 0.98 : 1 }}
+        >
+          <StatCard
+            icon={<FiUsers size={24} />}
+            title="On Leave Today"
+            value={stats.membersOnLeave}
+            color="yellow"
+            index={1}
+          />
+        </motion.div>
         
         <StatCard 
           icon={<FiClock size={20} />}
           title="Upcoming Leaves" 
-          value={stats.upcomingLeaves} 
+          value={stats.upcomingLeaves || 0} 
           color="yellow"
           index={2}
         />
@@ -804,7 +928,7 @@ export default function LeaveCalendar() {
         <StatCard 
           icon={<FiCalendar size={20} />}
           title="Total This Month" 
-          value={stats.totalLeaveThisMonth} 
+          value={stats.totalLeaveThisMonth || 0} 
           color="indigo"
           index={3}
         />
@@ -1426,6 +1550,20 @@ export default function LeaveCalendar() {
           )}
         </motion.button>
       )}
+      
+      {/* Render the modals */}
+      <AvailableUsersModal
+        isOpen={showAvailableModal}
+        onClose={() => setShowAvailableModal(false)}
+        users={availableUsers}
+      />
+      
+      <UsersOnLeaveModal
+        isOpen={showOnLeaveModal}
+        onClose={() => setShowOnLeaveModal(false)}
+        date={new Date()}
+        users={onLeaveUsers}
+      />
       
       {/* Add custom scrollbar styles */}
       <style jsx>{`

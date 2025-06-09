@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { FiGrid, FiInfo, FiRefreshCw,FiUnlink, FiBriefcase, FiUsers, FiCheck, FiX, FiLink, FiUnlink } from 'react-icons/fi';
+import { FiGrid, FiInfo, FiRefreshCw, FiBriefcase, FiUsers, FiCheck, FiX, FiLink } from 'react-icons/fi';
+import { MdLinkOff } from 'react-icons/md';
 
 // Animation variants
 const containerVariants = {
@@ -361,7 +362,7 @@ export default function DepartmentTeamAssignment() {
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      {team.department ? <FiUnlink size={16} /> : <FiLink size={16} />}
+                      {team.department ? <FiLink size={16} /> : <FiLink size={16} />}
                     </motion.button>
                   </div>
                 </div>
@@ -390,7 +391,7 @@ export default function DepartmentTeamAssignment() {
                     >
                       {team.department ? (
                         <>
-                          <FiUnlink className="mr-1.5" />
+                          <FiLink className="mr-1.5" />
                           Change Department
                         </>
                       ) : (

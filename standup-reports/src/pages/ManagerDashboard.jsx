@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
-  FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell } from 'react-icons/fi';
+  FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 // Components
 import LeavePastRecords from '../components/LeavePastRecords';
@@ -82,6 +82,10 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
   const [statusFilter, setStatusFilter] = useState('all'); // all, pending, approved, rejected
   const [teamFilter, setTeamFilter] = useState('all');
   const [dateRangeFilter, setDateRangeFilter] = useState({ start: null, end: null });
+  const [userFilter, setUserFilter] = useState('all');
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   useEffect(() => {
     fetchTeams();
@@ -143,7 +147,18 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
   
   const fetchLeaveRequests = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      let managedTeamIds = [];
+
+      if (user) {
+        const { data: currentUser } = await supabase.from('users').select('role').eq('id', user.id).single();
+
+        if (currentUser.role === 'manager') {
+            const { data: teamsData } = await supabase.rpc('get_managed_team_ids', { manager_id_param: user.id });
+            managedTeamIds = teamsData.map(t => t.team_id);
+        }
+
+        let query = supabase
         .from('leave_plans')
         .select(`
           id, start_date, end_date, reason, status, created_at,
@@ -151,12 +166,17 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         `)
         .order('created_at', { ascending: false });
       
+        if (currentUser.role === 'manager' && managedTeamIds.length > 0) {
+          query = query.filter('users.team_id', 'in', `(${managedTeamIds.join(',')})`);
+        }
+        
+        const { data, error } = await query;
       if (error) throw error;
-      setLeaveRequests(data || []);
       
-      // Update pending count
+        setLeaveRequests(data || []);
       const pending = data?.filter(request => request.status === 'pending') || [];
       setPendingCount(pending.length);
+      }
     } catch (error) {
       console.error('Error fetching leave requests:', error.message);
     }
@@ -224,8 +244,11 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       // Status filter
       if (statusFilter !== 'all' && request.status !== statusFilter) return false;
       
-      // Team filter
-      if (teamFilter !== 'all' && request.users?.teams?.id !== teamFilter) return false;
+      // User filter for leave history
+      if (activeTab === 'leave-history' && userFilter !== 'all' && request.users?.id !== userFilter) return false;
+      
+      // Team filter for leave requests
+      if (activeTab === 'leave-requests' && teamFilter !== 'all' && request.users?.teams?.id !== teamFilter) return false;
       
       // Search query
       if (searchQuery && !request.users?.name?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -241,19 +264,65 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       }
       
       return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return new Date(b.created_at) - new Date(a.created_at);
-        case 'status':
-          return a.status.localeCompare(b.status);
-        case 'team':
-          return (a.users?.teams?.name || '').localeCompare(b.users?.teams?.name || '');
-        default:
-          return 0;
-      }
-  });
+    });
+  
+  // Pagination logic
+  const paginatedLeaveRequests = filteredLeaveRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredLeaveRequests.length / itemsPerPage);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Add this to your JSX where you render the leave history
+  const renderPagination = () => (
+    <div className="flex justify-center items-center gap-2 mt-4 mb-8">
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`p-2 rounded-lg ${
+          currentPage === 1
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-primary-600 hover:bg-primary-50'
+        }`}
+      >
+        <FiChevronLeft size={20} />
+      </button>
+      
+      <div className="flex items-center gap-1">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`px-3 py-1 rounded-md ${
+              currentPage === page
+                ? 'bg-primary-600 text-white'
+                : 'text-gray-600 hover:bg-primary-50'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+      </div>
+      
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`p-2 rounded-lg ${
+          currentPage === totalPages
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-primary-600 hover:bg-primary-50'
+        }`}
+      >
+        <FiChevronRight size={20} />
+      </button>
+    </div>
+  );
   
   // Leave type badge color helper
   const getLeaveTypeBadgeClass = (type) => {
@@ -590,7 +659,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLeaveRequests.map((request, index) => {
+                  {paginatedLeaveRequests.map((request, index) => {
                     const startDate = parseISO(request.start_date);
                     const endDate = parseISO(request.end_date);
                     const isPending = request.status === 'pending';
@@ -701,7 +770,141 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       
       {/* Leave History Tab */}
       {activeTab === 'leave-history' && (
-        <LeavePastRecords />
+        <motion.div 
+          className="bg-white rounded-xl shadow-lg p-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <FiClock className="text-primary-600" />
+              Leave History
+            </h2>
+            <motion.button
+              className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors flex items-center gap-2"
+              onClick={handleRefresh}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Refresh"
+            >
+              <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+              Refresh Data
+            </motion.button>
+          </div>
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by User</label>
+              <select 
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="all">All Users</option>
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>{user.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
+              <input 
+                type="text"
+                placeholder="e.g., John Doe"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+              <div className="flex bg-gray-200 rounded-lg p-1">
+                {['all', 'approved', 'rejected', 'pending'].map(status => (
+                    <button
+                        key={status}
+                        className={`w-full px-3 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${
+                            statusFilter === status
+                                ? 'bg-white shadow-sm text-primary-700'
+                                : 'text-gray-600 hover:bg-white'
+                        }`}
+                        onClick={() => setStatusFilter(status)}
+                    >
+                        {status}
+                    </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Summary Counts */}
+          <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border">
+            Showing <strong>{filteredLeaveRequests.length}</strong> leave records.
+          </div>
+
+          {/* Leave List */}
+          {loading ? (
+             <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+          ) : paginatedLeaveRequests.length > 0 ? (
+            <div className="space-y-3">
+                {paginatedLeaveRequests.map((request, index) => {
+                    const startDate = parseISO(request.start_date);
+                    const endDate = parseISO(request.end_date);
+                    const days = differenceInDays(endDate, startDate) + 1;
+                    const status = request.status || 'pending';
+                    const statusStyles = {
+                        approved: 'bg-green-100 text-green-800',
+                        rejected: 'bg-red-100 text-red-800',
+                        pending: 'bg-yellow-100 text-yellow-800',
+                    };
+
+                    return (
+                        <motion.div 
+                          key={request.id} 
+                          className="bg-white p-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-primary-300 transition-all flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                          variants={itemVariants}
+                          custom={index}
+                        >
+                            <div className="flex items-center gap-3 flex-1">
+                                <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold flex-shrink-0">
+                                    {request.users?.name?.charAt(0) || '?'}
+                                </div>
+                                <div className="flex-grow">
+                                    <div className="font-semibold text-gray-900">{request.users?.name}</div>
+                                    <div className="text-sm text-gray-500">{request.users?.teams?.name || 'No Team'}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-gray-700 flex-1">
+                                <FiCalendar className="text-gray-400" />
+                                <div>
+                                    <span className="font-medium">{format(startDate, 'MMM dd, yyyy')}</span> to <span className="font-medium">{format(endDate, 'MMM dd, yyyy')}</span>
+                                </div>
+                            </div>
+                            <div className="text-sm font-medium text-gray-800 flex-1">
+                                {days} {days === 1 ? 'day' : 'days'} of leave
+                            </div>
+                           <div className="flex-1 text-right">
+                             <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${statusStyles[status]}`}>
+                               {status.charAt(0).toUpperCase() + status.slice(1)}
+                             </span>
+                           </div>
+                        </motion.div>
+                    );
+                })}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-gray-50 rounded-lg border">
+                <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-600 text-lg font-medium">No Leave History Found</p>
+                <p className="text-gray-500 mt-1">Try adjusting the filters or check back later.</p>
+            </div>
+          )}
+          
+          {totalPages > 1 && renderPagination()}
+        </motion.div>
       )}
       
       {/* Announcements Tab */}
@@ -801,3 +1004,4 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
     </motion.div>
   );
 }
+

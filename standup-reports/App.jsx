@@ -12,6 +12,7 @@ import TeamManagement from './pages/TeamManagement';
 import AuthPage from './pages/AuthPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
         <Route path="user-achievements/:userId" element={<UserAchievements />} />
         <Route path="history" element={<History />} />
         <Route path="team" element={<TeamManagement />} />
+        <Route path="admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
       </Route>
     </Routes>
   );
