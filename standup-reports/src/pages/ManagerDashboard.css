@@ -1,0 +1,14 @@
+/* ManagerDashboard custom styles */
+
+.manager-dashboard-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.manager-content {
+  width: 100%;
+  min-height: 100vh;
+  background: #f9fafb; /* Tailwind gray-50 */
+  padding: 1.5rem; /* Add some padding to the content area */
+}

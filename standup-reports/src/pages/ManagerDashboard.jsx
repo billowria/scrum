@@ -9,6 +9,9 @@ import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX,
 // Components
 import LeavePastRecords from '../components/LeavePastRecords';
 import AnnouncementManager from '../components/AnnouncementManager';
+import TeamManagement from './TeamManagement';
+import FloatingNav from '../components/FloatingNav';
+import './ManagerDashboard.css';
 
 // Animation variants
 const containerVariants = {
@@ -35,32 +38,86 @@ const itemVariants = {
   })
 };
 
-const tabVariants = {
-  inactive: { 
-    color: "#6B7280", 
-    backgroundColor: "transparent",
-    boxShadow: "none"
+const tabContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.07,
+      delayChildren: 0.2,
+    },
   },
-  active: { 
-    color: "#4F46E5", 
-    backgroundColor: "#EEF2FF",
-    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-  }
+};
+
+const tabItemVariant = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 300, damping: 20 },
+  },
+};
+
+const tabContent = {
+  hidden: { opacity: 0, y: 10, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1],
+      delay: 0.1,
+    },
+  },
+};
+
+const badgeVariants = {
+  initial: { scale: 0, opacity: 0 },
+  animate: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 600,
+      damping: 15,
+    },
+  },
+  pulse: {
+    scale: [1, 1.1, 1],
+    boxShadow: [
+      '0 0 0 0px rgba(255, 255, 255, 0.4)',
+      '0 0 0 5px rgba(255, 255, 255, 0)',
+      '0 0 0 0px rgba(255, 255, 255, 0)',
+    ],
+    transition: {
+      duration: 1.8,
+      ease: 'easeInOut',
+      repeat: Infinity,
+      repeatDelay: 0.3,
+    },
+  },
 };
 
 export default function ManagerDashboard({ activeTabDefault = 'team-management' }) {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(activeTabDefault);
+  const [activeSubTab, setActiveSubTab] = useState('staff-oversight');
   
   // Get tab from URL query parameters
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabParam = searchParams.get('tab');
-    
+    const subtabParam = searchParams.get('subtab');
+
     if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
-    setActiveTab(activeTabDefault);
+      setActiveTab(activeTabDefault);
+    }
+
+    if (subtabParam && ['staff-oversight', 'team-assignment', 'manager-delegation'].includes(subtabParam)) {
+      setActiveSubTab(subtabParam);
     }
   }, [location.search, activeTabDefault]);
   
@@ -77,6 +134,29 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // date, status, team
   const [searchQuery, setSearchQuery] = useState('');
+
+  const tabs = [
+    {
+      id: 'team-management',
+      label: 'Team Management',
+      icon: <FiUsers />,
+    },
+    {
+      id: 'leave-requests',
+      label: 'Leave Requests',
+      icon: <FiClipboard />,
+    },
+    {
+      id: 'leave-history',
+      label: 'Leave History',
+      icon: <FiClock />,
+    },
+    {
+      id: 'announcements',
+      label: 'Announcements',
+      icon: <FiBell />,
+    },
+  ];
   
   // Filter states
   const [statusFilter, setStatusFilter] = useState('all'); // all, pending, approved, rejected
@@ -343,16 +423,21 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
 
   // Get formatted leave type
   const getFormattedLeaveType = (type) => {
+    // Since the leave_type column doesn't exist in the leave_requests table,
+    // we'll just return a default value.
+    // In a real scenario, you would map the type to a display-friendly string.
     return 'Vacation'; // Default to Vacation for all leave requests since the leave_type column doesn't exist
   };
-  
+
   return (
-    <motion.div
-      className="max-w-7xl mx-auto"
+    <motion.div 
+      className="manager-dashboard-container"
+      variants={containerVariants}
       initial="hidden"
       animate="visible"
-      variants={containerVariants}
     >
+      <FloatingNav tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="manager-content">
       <motion.h1 
         className="text-3xl font-bold font-display mb-6 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent"
         variants={itemVariants}
@@ -375,60 +460,6 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         )}
       </AnimatePresence>
       
-      {/* Tabs */}
-      <motion.div 
-        className="flex border-b border-gray-200 mb-6 overflow-x-auto"
-        variants={itemVariants}
-      >
-        <motion.a
-          href="/team-management"
-          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'team-management' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
-          variants={tabVariants}
-          animate={activeTab === 'team-management' ? 'active' : 'inactive'}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <FiUsers />
-          Team Management
-        </motion.a>
-        
-        <motion.button
-          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'leave-requests' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
-          onClick={() => setActiveTab('leave-requests')}
-          variants={tabVariants}
-          animate={activeTab === 'leave-requests' ? 'active' : 'inactive'}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <FiCalendar />
-          Leave Requests
-        </motion.button>
-        
-        <motion.button
-          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'leave-history' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
-          onClick={() => setActiveTab('leave-history')}
-          variants={tabVariants}
-          animate={activeTab === 'leave-history' ? 'active' : 'inactive'}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <FiClock />
-          Leave History
-        </motion.button>
-        
-        <motion.button
-          className={`py-3 px-4 font-medium flex items-center gap-2 whitespace-nowrap ${activeTab === 'announcements' ? 'text-primary-600 border-b-2 border-primary-500' : 'text-gray-600 hover:text-gray-900'}`}
-          onClick={() => setActiveTab('announcements')}
-          variants={tabVariants}
-          animate={activeTab === 'announcements' ? 'active' : 'inactive'}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          <FiBell />
-          Announcements
-        </motion.button>
-      </motion.div>
-      
       {/* Refresh button */}
       <motion.div 
         className="flex justify-end mb-4"
@@ -437,74 +468,13 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
         <motion.button
           className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary-600 transition-colors"
           onClick={handleRefresh}
-          whileHover={{ rotate: 180 }}
-          transition={{ duration: 0.5 }}
-          disabled={loading}
-        >
-          <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-        </motion.button>
-      </motion.div>
-      
-      {/* Team Management Tab */}
-      {activeTab === 'team-management' && (
-        <motion.div 
-          className="bg-white rounded-xl shadow-lg p-6"
           variants={itemVariants}
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <FiUsers className="text-primary-600" />
-              Workforce Management
-            </h2>
-            
-            <motion.a
-              href="/team-management"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all flex items-center gap-2"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              <FiUsers />
-              Manage Workforce
-            </motion.a>
-          </div>
-          
-          <p className="text-gray-600 mb-6">
-            Click the button above to access the Workforce Management interface where you can:
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
-                <FiUsers className="text-primary-500" />
-                Staff Oversight
-              </h3>
-              <p className="text-sm text-gray-600">
-                View and manage team members in your organization.
-              </p>
-            </div>
-            
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
-                <FiUsers className="text-primary-500" />
-                Team Assignment
-              </h3>
-              <p className="text-sm text-gray-600">
-                Assign team members to specific teams or projects.
-              </p>
-                          </div>
-            
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-medium text-primary-700 mb-2 flex items-center gap-2">
-                <FiUsers className="text-primary-500" />
-                Manager Delegation
-              </h3>
-              <p className="text-sm text-gray-600">
-                Assign managers to oversee specific team members.
-              </p>
-            </div>
-          </div>
+          </motion.button>
         </motion.div>
-      )}
+
+      {/* Team Management Tab */}
+      {activeTab === 'team-management' && <TeamManagement activeSubTab={activeSubTab} />}
       
       {/* Leave Requests Tab */}
       {activeTab === 'leave-requests' && (
@@ -915,6 +885,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       {/* Team Assignment Modal */}
       <AnimatePresence>
         {showUserModal && (
+
           <>
             <motion.div
               className="fixed inset-0 bg-black/50 z-40"
@@ -1001,7 +972,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
           </>
         )}
       </AnimatePresence>
+    </div> {/* close manager-content */}
     </motion.div>
   );
 }
-

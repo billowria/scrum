@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUsers, FiUserCheck, FiUserPlus, FiChevronDown } from 'react-icons/fi';
+import { FiUsers, FiUserCheck, FiUserPlus } from 'react-icons/fi';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ManagerAssignment from '../components/ManagerAssignment';
 import TeamAssignment from '../components/TeamAssignment';
 import ManagerDelegation from '../components/ManagerDelegation';
+
 
 // Animation variants
 const containerVariants = {
@@ -12,9 +13,9 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const itemVariants = {
@@ -22,39 +23,23 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 24 }
-  }
+    transition: { type: 'spring', stiffness: 300, damping: 24 },
+  },
 };
 
-export default function TeamManagement() {
-  const [activeTab, setActiveTab] = useState('staff-oversight');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const location = useLocation();
+export default function TeamManagement({ activeSubTab = 'staff-oversight' }) {
   const navigate = useNavigate();
-  
-  // Handle URL parameters for tab selection
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const tabParam = searchParams.get('tab');
-    
-    if (tabParam && ['staff-oversight', 'team-assignment', 'manager-delegation'].includes(tabParam)) {
-      setActiveTab(tabParam);
-    }
-  }, [location]);
-  
-  // Update URL when tab changes
+
   const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    navigate(`/team-management?tab=${tabId}`, { replace: true });
-    setDropdownOpen(false);
+    navigate(`/manager-dashboard?tab=team-management&subtab=${tabId}`, { replace: true });
   };
-  
+
   const tabs = [
     { id: 'staff-oversight', label: 'Staff Oversight', icon: <FiUsers /> },
     { id: 'team-assignment', label: 'Team Assignment', icon: <FiUserPlus /> },
-    { id: 'manager-delegation', label: 'Manager Delegation', icon: <FiUserCheck /> }
+    { id: 'manager-delegation', label: 'Manager Delegation', icon: <FiUserCheck /> },
   ];
-  
+
   return (
     <motion.div
       className="space-y-6"
@@ -72,77 +57,32 @@ export default function TeamManagement() {
             Manage your team members, assignments, and delegations.
           </p>
         </div>
-        
-        {/* Mobile dropdown for tabs */}
-        <div className="relative md:hidden">
+      </motion.div>
+
+            <div className="relative bg-gray-100 p-1.5 rounded-xl flex items-center justify-center shadow-inner">
+        {tabs.map(tab => (
           <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            key={tab.id}
+            onClick={() => handleTabChange(tab.id)}
+            className={`relative z-10 flex items-center gap-2 py-2.5 px-6 rounded-lg transition-colors duration-300 text-sm font-medium ${activeSubTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-800'}`}
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <span className="flex items-center">
-              {tabs.find(tab => tab.id === activeTab)?.icon}
-              <span className="ml-2">{tabs.find(tab => tab.id === activeTab)?.label}</span>
-            </span>
-            <FiChevronDown className={`ml-2 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
-          
-          <AnimatePresence>
-            {dropdownOpen && (
+            {activeSubTab === tab.id && (
               <motion.div
-                className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="py-1">
-                  {tabs.map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`flex items-center w-full px-4 py-2 text-sm ${
-                        activeTab === tab.id
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {tab.icon}
-                      <span className="ml-2">{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
+                layoutId="active-pill"
+                className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-md"
+                transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              />
             )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-      
-      {/* Desktop tabs */}
-      <motion.div variants={itemVariants} className="hidden md:block">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`
-                  whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center
-                  ${activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-                `}
-              >
-                {tab.icon}
-                <span className="ml-2">{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </motion.div>
-      
+            <span className="relative">{tab.icon}</span>
+            <span className="relative">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
       <motion.div variants={itemVariants}>
         <AnimatePresence mode="wait">
-          {activeTab === 'staff-oversight' && (
+          {activeSubTab === 'staff-oversight' && (
             <motion.div
               key="staff-overview"
               initial={{ opacity: 0 }}
@@ -159,8 +99,8 @@ export default function TeamManagement() {
               </div>
             </motion.div>
           )}
-          
-          {activeTab === 'team-assignment' && (
+
+          {activeSubTab === 'team-assignment' && (
             <motion.div
               key="team-assignment"
               initial={{ opacity: 0 }}
@@ -173,13 +113,12 @@ export default function TeamManagement() {
                 <p className="text-gray-600 mb-4">
                   Assign team members to specific teams or projects.
                 </p>
-                {/* We'll add the team assignment component here */}
                 <TeamAssignment />
               </div>
             </motion.div>
           )}
-          
-          {activeTab === 'manager-delegation' && (
+
+          {activeSubTab === 'manager-delegation' && (
             <motion.div
               key="manager-delegation"
               initial={{ opacity: 0 }}
@@ -192,7 +131,6 @@ export default function TeamManagement() {
                 <p className="text-gray-600 mb-4">
                   Assign managers to oversee specific team members.
                 </p>
-                {/* We'll add the manager delegation component here */}
                 <ManagerDelegation />
               </div>
             </motion.div>

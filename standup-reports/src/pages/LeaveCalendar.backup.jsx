@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
@@ -8,7 +8,6 @@ import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight,
 import LeaveCalendarView from '../components/LeaveCalendarView';
 import LeaveRequestForm from '../components/LeaveRequestForm';
 import LeaveSummary from '../components/LeaveSummary';
-import FloatingNav from '../components/FloatingNav';
 import AnnouncementModal from '../components/AnnouncementModal';
 import TeamAvailabilityAnalytics from '../components/TeamAvailabilityAnalytics';
 import TeamLeaveOverview from '../components/TeamLeaveOverview';
@@ -169,32 +168,33 @@ const StatCard = ({ icon, title, value, color, index }) => (
   </motion.div>
 );
 
-const TabButton = ({ active, onClick, icon, children }) => (
-  <motion.button
-    className={`flex items-center justify-center py-3 px-4 text-sm font-medium relative rounded-t-lg ${
-      active 
-        ? 'bg-white text-primary-700 shadow-sm' 
-        : 'text-gray-600 hover:bg-gray-100'
-    }`}
-    onClick={onClick}
-    variants={tabVariants}
-    animate={active ? 'active' : 'inactive'}
-    initial={false}
-  >
-    <span className="mr-2">{icon}</span>
-    {children}
-    {active && (
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600"
-        layoutId="underline"
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      />
-    )}
-  </motion.button>
-);
-
-// New GlassmorphicTabs component for a modern, pill-style navigation
-
+const AnimatedTabs = ({ tabs, activeTab, setActiveTab }) => {
+  return (
+    <div className="relative flex items-center justify-center bg-gray-100 p-1.5 rounded-full">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          className={`${activeTab === tab.id ? "" : "hover:text-gray-600"} relative rounded-full px-4 py-2 text-sm font-medium text-gray-800 transition focus-visible:outline-2`}
+          style={{ WebkitTapHighlightColor: "transparent" }}
+        >
+          {activeTab === tab.id && (
+            <motion.span
+              layoutId="bubble"
+              className="absolute inset-0 z-10 bg-white shadow-md"
+              style={{ borderRadius: 9999 }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            />
+          )}
+          <span className="relative z-20 flex items-center">
+            {tab.icon}
+            <span className="ml-2">{tab.label}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
 
 // Add UsersOnLeaveModal component within the LeaveCalendar.jsx file
 const UsersOnLeaveModal = ({ isOpen, onClose, date, users }) => {
@@ -282,70 +282,98 @@ const AvailableUsersModal = ({ isOpen, onClose, users }) => {
   
   return (
     <AnimatePresence>
-    <motion.div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
       <motion.div 
-        className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        onClick={e => e.stopPropagation()}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
       >
-        <div className="bg-primary-600 text-white p-4 flex items-center justify-between">
-          <h3 className="text-lg font-medium flex items-center">
-            <FiUserCheck className="mr-2" /> 
-            Available Team Members Today
-          </h3>
-          <button 
-            className="text-white/80 hover:text-white p-1 rounded-full hover:bg-primary-700"
-            onClick={onClose}
-          >
-            <FiX />
-          </button>
-        </div>
-        
-        <div className="p-4 max-h-80 overflow-y-auto">
-          {users.length > 0 ? (
-            <div className="space-y-3">
-              {users.map((user, index) => (
-                <motion.div 
-                  key={user.id}
-                  className="p-3 bg-gray-50 rounded-lg flex items-center"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-medium text-lg mr-3">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-800">{user.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {user.team?.name || 'No team assigned'}
+        <motion.div 
+          className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-primary-600 text-white p-4 flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center">
+              <FiUserCheck className="mr-2" /> 
+              Available Team Members Today
+            </h3>
+            <button 
+              className="text-white/80 hover:text-white p-1 rounded-full hover:bg-primary-700"
+              onClick={onClose}
+            >
+              <FiX />
+            </button>
+          </div>
+          
+          <div className="p-4 max-h-80 overflow-y-auto">
+            {users.length > 0 ? (
+              <div className="space-y-3">
+                {users.map((user, index) => (
+                  <motion.div 
+                    key={user.id}
+                    className="p-3 bg-gray-50 rounded-lg flex items-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-medium text-lg mr-3">
+                      {user.name.charAt(0).toUpperCase()}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No team members available today
-            </div>
-          )}
-        </div>
+                    <div>
+                      <div className="font-medium text-gray-800">{user.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {user.team?.name || 'No team assigned'}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No team members available today
+              </div>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  </AnimatePresence>
+    </AnimatePresence>
   );
 };
 
-export default function LeaveCalendar() {
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+          <h2 className="font-bold">Something went wrong.</h2>
+          <p>Please refresh the page or try again later.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function LeaveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [leaveData, setLeaveData] = useState([]);
   const [users, setUsers] = useState([]);
@@ -357,14 +385,7 @@ export default function LeaveCalendar() {
   const [monthDirection, setMonthDirection] = useState(0);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [teamAvailability, setTeamAvailability] = useState({});
-  const [activeTab, setActiveTab] = useState('calendar');
-
-  const tabs = [
-    { id: 'calendar', label: 'Calendar View', icon: <FiCalendar /> },
-    { id: 'team', label: 'Team Overview', icon: <FiUsers /> },
-    { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
-    { id: 'requests', label: 'My Requests', icon: <FiClock /> },
-  ]; // 'calendar', 'analytics', or 'team'
+  const [activeView, setActiveView] = useState('calendar'); // 'calendar', 'analytics', or 'team'
   
   // Current user info
   const [currentUser, setCurrentUser] = useState(null);
@@ -1010,9 +1031,26 @@ export default function LeaveCalendar() {
         </motion.button>
       </motion.div>
       
-      {/* Tabs with enhanced styling */}
-      {/* New Floating Nav with Gluey Animation */}
-      <FloatingNav tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+      {/* Animated tabs */}
+      <div className="flex justify-center mb-8">
+        <AnimatedTabs 
+          tabs={[
+            { id: 'calendar', label: 'Calendar', icon: <FiCalendar/> },
+            { id: 'team', label: 'Overview', icon: <FiUsers/> },
+            { id: 'analytics', label: 'Analytics', icon: <FiBarChart2/> },
+            { id: 'requests', label: 'My Requests', icon: <FiClock/> },
+          ]}
+          activeTab={activeView}
+          setActiveTab={setActiveView}
+        />
+        <TabButton 
+          active={activeTab === 'requests'} 
+          onClick={() => setActiveTab('requests')} 
+          icon={<FiClock className="text-primary-500" />}
+        >
+          My Requests
+        </TabButton>
+      </div>
       
       {/* Enhanced Legend with animations */}
       {activeTab === 'calendar' && (
@@ -1570,3 +1608,13 @@ export default function LeaveCalendar() {
     </div>
   );
 }
+
+ / /   W r a p   t h e   c o m p o n e n t   w i t h   E r r o r B o u n d a r y 
+ e x p o r t   d e f a u l t   f u n c t i o n   L e a v e C a l e n d a r W i t h B o u n d a r y ( )   { 
+     r e t u r n   ( 
+         < E r r o r B o u n d a r y > 
+             < L e a v e C a l e n d a r   / > 
+         < / E r r o r B o u n d a r y > 
+     ) ; 
+ }  
+ 
