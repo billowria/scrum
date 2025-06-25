@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
-  FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+  FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
+  FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar } from 'react-icons/fi';
+import { TbHistory } from 'react-icons/tb';
+import History from './History';
 
 // Components
 import LeavePastRecords from '../components/LeavePastRecords';
@@ -99,10 +102,199 @@ const badgeVariants = {
   },
 };
 
-export default function ManagerDashboard({ activeTabDefault = 'team-management' }) {
+// Beautiful Tab Header Component
+const TabHeader = ({ 
+  title, 
+  subtitle, 
+  description, 
+  icon: Icon, 
+  gradient, 
+  stats = [], 
+  features = [],
+  accentColor = "blue" 
+}) => {
+  const colorClasses = {
+    blue: {
+      gradient: "from-blue-600 via-purple-600 to-indigo-600",
+      accent: "from-blue-500 to-purple-500",
+      text: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200"
+    },
+    green: {
+      gradient: "from-green-600 via-emerald-600 to-teal-600",
+      accent: "from-green-500 to-emerald-500",
+      text: "text-green-600",
+      bg: "bg-green-50",
+      border: "border-green-200"
+    },
+    purple: {
+      gradient: "from-purple-600 via-pink-600 to-indigo-600",
+      accent: "from-purple-500 to-pink-500",
+      text: "text-purple-600",
+      bg: "bg-purple-50",
+      border: "border-purple-200"
+    },
+    orange: {
+      gradient: "from-orange-600 via-red-600 to-pink-600",
+      accent: "from-orange-500 to-red-500",
+      text: "text-orange-600",
+      bg: "bg-orange-50",
+      border: "border-orange-200"
+    },
+    indigo: {
+      gradient: "from-indigo-600 via-blue-600 to-purple-600",
+      accent: "from-indigo-500 to-blue-500",
+      text: "text-indigo-600",
+      bg: "bg-indigo-50",
+      border: "border-indigo-200"
+    }
+  };
+
+  const colors = colorClasses[accentColor];
+
+  return (
+    <motion.div
+      className="relative overflow-hidden rounded-2xl mb-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        <div className={`absolute inset-0 bg-gradient-to-r ${colors.gradient} opacity-90`} />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
+      </div>
+
+      <div className="relative p-8 lg:p-12">
+        {/* Header Content */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          {/* Left Section */}
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-4">
+              <motion.div 
+                className={`w-16 h-16 ${colors.bg} rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm`}
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Icon className={`w-8 h-8 ${colors.text}`} />
+              </motion.div>
+              <div>
+                <motion.h1 
+                  className="text-3xl lg:text-4xl font-bold text-white mb-2"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  {title}
+                </motion.h1>
+                <motion.p 
+                  className="text-xl text-white/90 font-medium"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  {subtitle}
+                </motion.p>
+              </div>
+            </div>
+
+            <motion.p 
+              className="text-white/80 text-lg leading-relaxed max-w-2xl mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              {description}
+            </motion.p>
+
+            {/* Features */}
+            {features.length > 0 && (
+              <motion.div 
+                className="flex flex-wrap gap-3 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={index}
+                    className={`px-4 py-2 ${colors.bg} ${colors.border} rounded-full text-sm font-medium ${colors.text} backdrop-blur-sm`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    {feature}
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Section - Stats */}
+          {stats.length > 0 && (
+            <motion.div 
+              className="lg:w-80"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className="grid grid-cols-2 gap-4">
+                {stats.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                  >
+                    <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                    <div className="text-white/80 text-sm">{stat.label}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Floating Elements */}
+        <motion.div
+          className="absolute top-4 right-4 w-2 h-2 bg-white/60 rounded-full"
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.6, 1, 0.6]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-8 left-8 w-1 h-1 bg-white/40 rounded-full"
+          animate={{ 
+            scale: [1, 2, 1],
+            opacity: [0.4, 0.8, 0.4]
+          }}
+          transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+        />
+      </div>
+    </motion.div>
+  );
+};
+
+export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(activeTabDefault);
   const [activeSubTab, setActiveSubTab] = useState('staff-oversight');
+  
+  // Refs for scroll functionality
+  const teamManagementRef = useRef(null);
+  const leaveRequestsRef = useRef(null);
+  const leaveHistoryRef = useRef(null);
+  const announcementsRef = useRef(null);
+  const reportHistoryRef = useRef(null);
   
   // Get tab from URL query parameters
   useEffect(() => {
@@ -110,7 +302,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
     const tabParam = searchParams.get('tab');
     const subtabParam = searchParams.get('subtab');
 
-    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements'].includes(tabParam)) {
+    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setActiveTab(activeTabDefault);
@@ -155,6 +347,11 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
       id: 'announcements',
       label: 'Announcements',
       icon: <FiBell />,
+    },
+    {
+      id: 'report-history',
+      label: 'Report History',
+      icon: <TbHistory />,
     },
   ];
   
@@ -429,550 +626,375 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
     return 'Vacation'; // Default to Vacation for all leave requests since the leave_type column doesn't exist
   };
 
+  // Scroll to tab function
+  const scrollToTab = (tabId) => {
+    const refs = {
+      'team-management': teamManagementRef,
+      'leave-requests': leaveRequestsRef,
+      'leave-history': leaveHistoryRef,
+      'announcements': announcementsRef,
+      'report-history': reportHistoryRef
+    };
+
+    const ref = refs[tabId];
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
   return (
-    <motion.div 
-      className="manager-dashboard-container"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <FloatingNav tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-      <div className="manager-content">
-      <motion.h1 
-        className="text-3xl font-bold font-display mb-6 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent"
-        variants={itemVariants}
-      >
-        Manager Dashboard
-      </motion.h1>
-      
-      {/* Success/error message */}
-      <AnimatePresence>
-        {message && (
-          <motion.div 
-            className={`mb-4 p-4 rounded-lg flex items-center ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            {message.type === 'success' ? <FiCheck className="mr-2" /> : <FiX className="mr-2" />}
-            {message.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Refresh button */}
-      <motion.div 
-        className="flex justify-end mb-4"
-        variants={itemVariants}
-      >
-        <motion.button
-          className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary-600 transition-colors"
-          onClick={handleRefresh}
-          variants={itemVariants}
-        >
-          </motion.button>
-        </motion.div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Floating Navigation */}
+      <FloatingNav 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        context="manager-dashboard"
+        onTabClick={scrollToTab}
+      />
 
-      {/* Team Management Tab */}
-      {activeTab === 'team-management' && <TeamManagement activeSubTab={activeSubTab} />}
-      
-      {/* Leave Requests Tab */}
-      {activeTab === 'leave-requests' && (
+      <AnimatePresence mode="wait">
         <motion.div
-          className="bg-white rounded-xl shadow-lg p-6"
-          variants={containerVariants}
+          key={activeTab}
+          variants={tabContent}
           initial="hidden"
           animate="visible"
+          exit="hidden"
+          className="max-w-7xl mx-auto"
         >
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <FiCalendar className="text-primary-600" />
-              Leave Requests
-            </h2>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                    statusFilter === 'all' 
-                      ? 'bg-white shadow-sm text-primary-700'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  onClick={() => setStatusFilter('all')}
-                >
-                  All
-                </button>
-                <button
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                    statusFilter === 'pending' 
-                      ? 'bg-white shadow-sm text-primary-700'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  onClick={() => setStatusFilter('pending')}
-                >
-                  Pending
-                </button>
-                <button
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                    statusFilter === 'approved' 
-                      ? 'bg-white shadow-sm text-primary-700'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  onClick={() => setStatusFilter('approved')}
-                >
-                  Approved
-                </button>
-                <button
-                  className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                    statusFilter === 'rejected' 
-                      ? 'bg-white shadow-sm text-primary-700'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                  onClick={() => setStatusFilter('rejected')}
-                >
-                  Rejected
-                </button>
-              </div>
-              
-              <motion.button
-                className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors"
-                onClick={handleRefresh}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Refresh"
-              >
-                <FiRefreshCw />
-              </motion.button>
-            </div>
-          </div>
-          
-          {/* Stats Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg p-4 border border-blue-100 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-700">Total Requests</p>
-                  <p className="text-2xl font-bold text-blue-800">{leaveRequests.length}</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  <FiCalendar size={20} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-yellow-50 to-white rounded-lg p-4 border border-yellow-100 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-yellow-700">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-800">
-                    {leaveRequests.filter(r => r.status === 'pending').length}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
-                  <FiClock size={20} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-green-50 to-white rounded-lg p-4 border border-green-100 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-700">Approved</p>
-                  <p className="text-2xl font-bold text-green-800">
-                    {leaveRequests.filter(r => r.status === 'approved').length}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                  <FiCheck size={20} />
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-red-50 to-white rounded-lg p-4 border border-red-100 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-red-700">Rejected</p>
-                  <p className="text-2xl font-bold text-red-800">
-                    {leaveRequests.filter(r => r.status === 'rejected').length}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                  <FiX size={20} />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Table of Requests */}
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-            </div>
-          ) : filteredLeaveRequests.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500 text-lg">No leave requests found</p>
-              <p className="text-gray-400 mt-2">Try a different filter or check back later</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedLeaveRequests.map((request, index) => {
-                    const startDate = parseISO(request.start_date);
-                    const endDate = parseISO(request.end_date);
-                    const isPending = request.status === 'pending';
-                    const days = differenceInDays(endDate, startDate) + 1;
-                    
-                    return (
-                      <motion.tr
-                        key={request.id}
-                        className="hover:bg-gray-50 transition-colors"
-                        custom={index}
-                        variants={itemVariants}
-                      >
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
-                              {request.users?.name?.charAt(0) || '?'}
-                            </div>
-                            <div className="ml-2">
-                              <div className="text-sm font-medium text-gray-900">{request.users?.name || 'Unknown'}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="text-sm text-gray-900">{request.users?.teams?.name || 'No Team'}</span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {days} {days === 1 ? 'day' : 'days'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full border ${getLeaveTypeBadgeClass('vacation')}`}>
-                            {getFormattedLeaveType()}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
-                            isPending 
-                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
-                              : request.status === 'approved' 
-                                ? 'bg-green-100 text-green-800 border border-green-200' 
-                                : 'bg-red-100 text-red-800 border border-red-200'
-                          }`}>
-                            {request.status === 'approved' ? (
-                              <>
-                                <FiCheck className="mr-1" />
-                                Approved
-                              </>
-                            ) : request.status === 'rejected' ? (
-                              <>
-                                <FiX className="mr-1" />
-                                Rejected
-                              </>
-                            ) : (
-                              <>
-                                <FiClock className="mr-1" />
-                                Pending
-                              </>
-                            )}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm text-gray-900 max-w-xs truncate">
-                            {request.reason || '-'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          {isPending ? (
-                            <div className="flex gap-2">
-                              <motion.button
-                                className="p-1.5 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                onClick={() => handleLeaveAction(request.id, 'approved')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                title="Approve"
-                              >
-                                <FiCheck />
-                              </motion.button>
-                              
-                              <motion.button
-                                className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
-                                onClick={() => handleLeaveAction(request.id, 'rejected')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                title="Reject"
-                              >
-                                <FiX />
-                              </motion.button>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-500">
-                              {format(parseISO(request.created_at), 'MMM dd, yyyy')}
-                            </span>
-                          )}
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </motion.div>
-      )}
-      
-      {/* Leave History Tab */}
-      {activeTab === 'leave-history' && (
-        <motion.div 
-          className="bg-white rounded-xl shadow-lg p-6"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <FiClock className="text-primary-600" />
-              Leave History
-            </h2>
-            <motion.button
-              className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors flex items-center gap-2"
-              onClick={handleRefresh}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="Refresh"
-            >
-              <FiRefreshCw className={loading ? 'animate-spin' : ''} />
-              Refresh Data
-            </motion.button>
-          </div>
-
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by User</label>
-              <select 
-                value={userFilter}
-                onChange={(e) => setUserFilter(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="all">All Users</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
-              <input 
-                type="text"
-                placeholder="e.g., John Doe"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+          {/* Team Management Tab */}
+          {activeTab === 'team-management' && (
+            <div ref={teamManagementRef}>
+              <TabHeader
+                title="Team Management"
+                subtitle="Lead & Organize Your Team"
+                description="Comprehensive team oversight with member assignments, role management, and performance tracking. Manage team structures, delegate responsibilities, and monitor team dynamics."
+                icon={FiUsers}
+                accentColor="blue"
+                features={[
+                  "Staff Oversight",
+                  "Team Assignment", 
+                  "Manager Delegation",
+                  "Role Management"
+                ]}
+                stats={[
+                  { value: teams.length, label: "Teams" },
+                  { value: users.length, label: "Members" },
+                  { value: users.filter(u => u.role === 'manager').length, label: "Managers" },
+                  { value: users.filter(u => u.role === 'member').length, label: "Members" }
+                ]}
               />
-            </div>
-            <div className="lg:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
-              <div className="flex bg-gray-200 rounded-lg p-1">
-                {['all', 'approved', 'rejected', 'pending'].map(status => (
-                    <button
-                        key={status}
-                        className={`w-full px-3 py-1.5 rounded-md text-sm font-medium transition-colors capitalize ${
-                            statusFilter === status
-                                ? 'bg-white shadow-sm text-primary-700'
-                                : 'text-gray-600 hover:bg-white'
-                        }`}
-                        onClick={() => setStatusFilter(status)}
-                    >
-                        {status}
-                    </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Summary Counts */}
-          <div className="mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border">
-            Showing <strong>{filteredLeaveRequests.length}</strong> leave records.
-          </div>
-
-          {/* Leave List */}
-          {loading ? (
-             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-            </div>
-          ) : paginatedLeaveRequests.length > 0 ? (
-            <div className="space-y-3">
-                {paginatedLeaveRequests.map((request, index) => {
-                    const startDate = parseISO(request.start_date);
-                    const endDate = parseISO(request.end_date);
-                    const days = differenceInDays(endDate, startDate) + 1;
-                    const status = request.status || 'pending';
-                    const statusStyles = {
-                        approved: 'bg-green-100 text-green-800',
-                        rejected: 'bg-red-100 text-red-800',
-                        pending: 'bg-yellow-100 text-yellow-800',
-                    };
-
-                    return (
-                        <motion.div 
-                          key={request.id} 
-                          className="bg-white p-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-primary-300 transition-all flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                          variants={itemVariants}
-                          custom={index}
-                        >
-                            <div className="flex items-center gap-3 flex-1">
-                                <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold flex-shrink-0">
-                                    {request.users?.name?.charAt(0) || '?'}
-                                </div>
-                                <div className="flex-grow">
-                                    <div className="font-semibold text-gray-900">{request.users?.name}</div>
-                                    <div className="text-sm text-gray-500">{request.users?.teams?.name || 'No Team'}</div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-700 flex-1">
-                                <FiCalendar className="text-gray-400" />
-                                <div>
-                                    <span className="font-medium">{format(startDate, 'MMM dd, yyyy')}</span> to <span className="font-medium">{format(endDate, 'MMM dd, yyyy')}</span>
-                                </div>
-                            </div>
-                            <div className="text-sm font-medium text-gray-800 flex-1">
-                                {days} {days === 1 ? 'day' : 'days'} of leave
-                            </div>
-                           <div className="flex-1 text-right">
-                             <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${statusStyles[status]}`}>
-                               {status.charAt(0).toUpperCase() + status.slice(1)}
-                             </span>
-                           </div>
-                        </motion.div>
-                    );
-                })}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-gray-50 rounded-lg border">
-                <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-600 text-lg font-medium">No Leave History Found</p>
-                <p className="text-gray-500 mt-1">Try adjusting the filters or check back later.</p>
+              <TeamManagement activeSubTab={activeSubTab} setActiveSubTab={setActiveSubTab} />
             </div>
           )}
-          
-          {totalPages > 1 && renderPagination()}
-        </motion.div>
-      )}
-      
-      {/* Announcements Tab */}
-      {activeTab === 'announcements' && (
-        <AnnouncementManager />
-      )}
-      
-      {/* Team Assignment Modal */}
-      <AnimatePresence>
-        {showUserModal && (
 
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/50 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowUserModal(false)}
-            />
-            
-            <motion.div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
+          {/* Leave Requests Tab */}
+          {activeTab === 'leave-requests' && (
+            <div ref={leaveRequestsRef}>
+              <TabHeader
+                title="Leave Requests"
+                subtitle="Approve & Manage Time Off"
+                description="Review and approve employee leave requests with comprehensive filtering and status management. Track pending approvals, manage team availability, and maintain leave policies."
+                icon={FiClipboard}
+                accentColor="green"
+                features={[
+                  "Request Approval",
+                  "Status Management",
+                  "Team Filtering",
+                  "Quick Actions"
+                ]}
+                stats={[
+                  { value: leaveRequests.length, label: "Total Requests" },
+                  { value: leaveRequests.filter(r => r.status === 'pending').length, label: "Pending" },
+                  { value: leaveRequests.filter(r => r.status === 'approved').length, label: "Approved" },
+                  { value: leaveRequests.filter(r => r.status === 'rejected').length, label: "Rejected" }
+                ]}
+              />
               <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-xl shadow-lg p-6"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
               >
-                <div className="bg-primary-600 text-white p-4">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <FiUsers />
-                    {selectedUser ? 'Update Team Assignment' : 'Assign Team to User'}
-                  </h3>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <FiCalendar className="text-primary-600" />
+                    Leave Requests
+                  </h2>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button
+                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          statusFilter === 'all' 
+                            ? 'bg-white shadow-sm text-primary-700'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                        onClick={() => setStatusFilter('all')}
+                      >
+                        All
+                      </button>
+                      <button
+                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          statusFilter === 'pending' 
+                            ? 'bg-white shadow-sm text-primary-700'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                        onClick={() => setStatusFilter('pending')}
+                      >
+                        Pending
+                      </button>
+                      <button
+                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          statusFilter === 'approved' 
+                            ? 'bg-white shadow-sm text-primary-700'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                        onClick={() => setStatusFilter('approved')}
+                      >
+                        Approved
+                      </button>
+                      <button
+                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                          statusFilter === 'rejected' 
+                            ? 'bg-white shadow-sm text-primary-700'
+                            : 'text-gray-600 hover:text-gray-800'
+                        }`}
+                        onClick={() => setStatusFilter('rejected')}
+                      >
+                        Rejected
+                      </button>
+                    </div>
+                    
+                    <motion.button
+                      className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors"
+                      onClick={handleRefresh}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Refresh"
+                    >
+                      <FiRefreshCw />
+                    </motion.button>
+                  </div>
                 </div>
                 
-                <div className="p-6">
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium">Select User</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      value={selectedUser || ''}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                      disabled={!!selectedUser}
-                    >
-                      <option value="">Select a user</option>
-                      {users.map(user => (
-                        <option key={user.id} value={user.id}>{user.name}</option>
-                      ))}
-                    </select>
+                {/* Table of Requests */}
+                {loading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
                   </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-gray-700 mb-2 font-medium">Select Team</label>
-                    <select
-                      className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                      value={selectedTeam || ''}
-                      onChange={(e) => setSelectedTeam(e.target.value)}
-                    >
-                      <option value="">Select a team</option>
-                      {teams.map(team => (
-                        <option key={team.id} value={team.id}>{team.name}</option>
-                      ))}
-                    </select>
+                ) : filteredLeaveRequests.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-500 text-lg">No leave requests found</p>
+                    <p className="text-gray-400 mt-2">Try a different filter or check back later</p>
                   </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <motion.button
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
-                      onClick={() => setShowUserModal(false)}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      Cancel
-                    </motion.button>
-                    
-                    <motion.button
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                      onClick={handleAssignTeam}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      disabled={!selectedUser || !selectedTeam}
-                    >
-                      {selectedUser ? 'Update Assignment' : 'Assign Team'}
-                    </motion.button>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {paginatedLeaveRequests.map((request, index) => {
+                          const startDate = parseISO(request.start_date);
+                          const endDate = parseISO(request.end_date);
+                          const isPending = request.status === 'pending';
+                          const days = differenceInDays(endDate, startDate) + 1;
+                          
+                          return (
+                            <motion.tr
+                              key={request.id}
+                              className="hover:bg-gray-50 transition-colors"
+                              custom={index}
+                              variants={itemVariants}
+                            >
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
+                                    {request.users?.name?.charAt(0) || '?'}
+                                  </div>
+                                  <div className="ml-2">
+                                    <div className="text-sm font-medium text-gray-900">{request.users?.name || 'Unknown'}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className="text-sm text-gray-900">{request.users?.teams?.name || 'No Team'}</span>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {days} {days === 1 ? 'day' : 'days'}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full border ${getLeaveTypeBadgeClass('vacation')}`}>
+                                  {getFormattedLeaveType()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
+                                  isPending 
+                                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                                    : request.status === 'approved' 
+                                      ? 'bg-green-100 text-green-800 border border-green-200' 
+                                      : 'bg-red-100 text-red-800 border border-red-200'
+                                }`}>
+                                  {request.status === 'approved' ? (
+                                    <>
+                                      <FiCheck className="mr-1" />
+                                      Approved
+                                    </>
+                                  ) : request.status === 'rejected' ? (
+                                    <>
+                                      <FiX className="mr-1" />
+                                      Rejected
+                                    </>
+                                  ) : (
+                                    <>
+                                      <FiClock className="mr-1" />
+                                      Pending
+                                    </>
+                                  )}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <p className="text-sm text-gray-900 max-w-xs truncate">
+                                  {request.reason || '-'}
+                                </p>
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                {isPending ? (
+                                  <div className="flex gap-2">
+                                    <motion.button
+                                      className="p-1.5 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                      onClick={() => handleLeaveAction(request.id, 'approved')}
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      title="Approve"
+                                    >
+                                      <FiCheck />
+                                    </motion.button>
+                                    
+                                    <motion.button
+                                      className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                                      onClick={() => handleLeaveAction(request.id, 'rejected')}
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      title="Reject"
+                                    >
+                                      <FiX />
+                                    </motion.button>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">
+                                    {format(parseISO(request.created_at), 'MMM dd, yyyy')}
+                                  </span>
+                                )}
+                              </td>
+                            </motion.tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
+                )}
               </motion.div>
-            </motion.div>
-          </>
-        )}
+            </div>
+          )}
+
+          {/* Leave History Tab */}
+          {activeTab === 'leave-history' && (
+            <div ref={leaveHistoryRef}>
+              <TabHeader
+                title="Leave History"
+                subtitle="Track Past Time Off Records"
+                description="Comprehensive historical view of all approved and completed leave requests. Analyze patterns, track team availability, and maintain detailed records for reporting and compliance."
+                icon={FiClock}
+                accentColor="purple"
+                features={[
+                  "Historical Records",
+                  "Pattern Analysis",
+                  "Team Availability",
+                  "Compliance Tracking"
+                ]}
+                stats={[
+                  { value: leaveRequests.filter(r => r.status === 'approved').length, label: "Approved" },
+                  { value: leaveRequests.filter(r => r.status === 'rejected').length, label: "Rejected" },
+                  { value: teams.length, label: "Teams" },
+                  { value: users.length, label: "Employees" }
+                ]}
+              />
+              <LeavePastRecords />
+            </div>
+          )}
+
+          {/* Announcements Tab */}
+          {activeTab === 'announcements' && (
+            <div ref={announcementsRef}>
+              <TabHeader
+                title="Announcements"
+                subtitle="Communicate with Your Team"
+                description="Create and manage team announcements, important updates, and company communications. Schedule posts, target specific teams, and track engagement with your messages."
+                icon={FiBell}
+                accentColor="orange"
+                features={[
+                  "Team Communication",
+                  "Scheduled Posts",
+                  "Targeted Messages",
+                  "Engagement Tracking"
+                ]}
+                stats={[
+                  { value: "Active", label: "Status" },
+                  { value: teams.length, label: "Teams" },
+                  { value: users.length, label: "Recipients" },
+                  { value: "Real-time", label: "Updates" }
+                ]}
+              />
+              <AnnouncementManager />
+            </div>
+          )}
+
+          {/* Report History Tab */}
+          {activeTab === 'report-history' && (
+            <div ref={reportHistoryRef}>
+              <TabHeader
+                title="Report History"
+                subtitle="Analytics & Performance Insights"
+                description="Access comprehensive reports and analytics on team performance, leave patterns, and operational metrics. Generate insights, track trends, and make data-driven decisions."
+                icon={TbHistory}
+                accentColor="indigo"
+                features={[
+                  "Performance Analytics",
+                  "Trend Analysis",
+                  "Data Export",
+                  "Custom Reports"
+                ]}
+                stats={[
+                  { value: "24/7", label: "Availability" },
+                  { value: "Real-time", label: "Data" },
+                  { value: "Multiple", label: "Formats" },
+                  { value: "Secure", label: "Access" }
+                ]}
+              />
+              <History />
+            </div>
+          )}
+        </motion.div>
       </AnimatePresence>
-    </div> {/* close manager-content */}
-    </motion.div>
+    </div>
   );
 }

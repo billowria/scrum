@@ -425,8 +425,8 @@ const AchievementsPage = () => {
         <div className="border-b border-gray-200">
           <div className="p-2 flex">
             <motion.button
-              className={`flex-1 py-2 px-4 text-sm font-medium rounded-lg ${
-                activeTab === 'team' ? 'text-purple-700 bg-purple-50' : 'text-gray-600 bg-white'
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-lg relative overflow-hidden ${
+                activeTab === 'team' ? 'text-purple-700 bg-purple-50 border-2 border-transparent team-tab-gradient' : 'text-gray-600 bg-white'
               }`}
               onClick={() => setActiveTab('team')}
               variants={tabVariants}
@@ -438,6 +438,9 @@ const AchievementsPage = () => {
                 <FiUsers className="mr-2" />
                 Team Achievements
               </div>
+              {activeTab === 'team' && (
+                <div className="text-xs text-gray-500 mt-1 font-normal">Recognizing outstanding contributions across the team.</div>
+              )}
             </motion.button>
             <motion.button
               className={`flex-1 py-2 px-4 text-sm font-medium rounded-lg ${
@@ -605,13 +608,13 @@ const AchievementsPage = () => {
               {sortedAchievements.map((achievement) => (
                 <motion.div 
                   key={achievement.id}
-                  className="relative"
+                  className="relative team-achievement-card"
                   variants={itemVariants}
                   layoutId={`achievement-${achievement.id}`}
                   onClick={() => handleViewAchievement(achievement)}
                 >
                   <motion.div 
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden cursor-pointer h-[150px] flex flex-col"
+                    className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden cursor-pointer h-[150px] flex flex-col ${activeTab === 'team' ? 'team-card-gradient-border' : ''}`}
                     whileHover={{ 
                       y: -3, 
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
@@ -629,8 +632,7 @@ const AchievementsPage = () => {
                         achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
                         achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
                         'bg-gradient-to-br from-primary-500 to-primary-600'
-                      }`}></div>
-                      
+                      }`} />
                       {/* Main content */}
                       <div className="p-4 flex-1 flex flex-col justify-between overflow-hidden">
                         <div className="flex items-start">
@@ -644,7 +646,7 @@ const AchievementsPage = () => {
                             achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
                             achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
                             'bg-gradient-to-br from-primary-500 to-primary-600'
-                          } text-white flex items-center justify-center mr-3`}>
+                          } text-white flex items-center justify-center mr-3 relative`}>
                             {achievement.award_type === 'recognition' ? <FiStar /> : 
                              achievement.award_type === 'performance' ? <FiTrendingUp /> : 
                              achievement.award_type === 'teamwork' ? <FiUsers /> :
@@ -652,8 +654,13 @@ const AchievementsPage = () => {
                              achievement.award_type === 'certificate' ? <FiCheckCircle /> :
                              achievement.award_type === 'technical' ? <FiCode /> :
                              <FiAward />}
+                            {/* Team badge for team achievements */}
+                            {activeTab === 'team' && (
+                              <span className="absolute -bottom-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full p-1 shadow-md flex items-center justify-center" style={{ fontSize: '0.7rem' }}>
+                                <FiUsers />
+                              </span>
+                            )}
                           </div>
-                          
                           {/* Achievement details */}
                           <div className="flex-1 overflow-hidden">
                             <div className="flex items-center justify-between mb-1">
@@ -664,17 +671,14 @@ const AchievementsPage = () => {
                                 </span>
                               )}
                             </div>
-                            
                             <p className="text-sm text-gray-600 line-clamp-2 mb-2">{achievement.description}</p>
                           </div>
                         </div>
-                        
                         <div className="flex items-center justify-between text-xs text-gray-500 mt-auto">
                           <span className="flex items-center">
                             <FiCalendar className="mr-1" size={12} />
                             {achievement.awarded_at ? format(parseISO(achievement.awarded_at), 'MMM d, yyyy') : 'No date'}
                           </span>
-                          
                           <span className="flex items-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
                             <FiUser className="mr-1 shrink-0" size={12} />
                             <span className="truncate">{achievement.users?.name || 'Team'}</span>
@@ -683,7 +687,6 @@ const AchievementsPage = () => {
                       </div>
                     </div>
                   </motion.div>
-                  
                   {/* "New" indicator with animation */}
                   {isNewAchievement(achievement) && (
                     <motion.div 

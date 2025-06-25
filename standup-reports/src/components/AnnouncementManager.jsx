@@ -352,163 +352,146 @@ export default function AnnouncementManager() {
       {/* Create/Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <>
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Animated background blobs */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+              <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-primary-400 via-indigo-400 to-blue-300 opacity-30 blur-2xl rounded-full animate-pulse" />
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tr from-blue-400 via-indigo-300 to-primary-300 opacity-20 blur-2xl rounded-full animate-pulse delay-2000" />
+            </div>
             <motion.div
-              className="fixed inset-0 bg-black/50 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => resetForm()}
-            />
-            
-            <motion.div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md mx-auto overflow-hidden border border-white/30 z-10 p-0"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <motion.div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                onClick={(e) => e.stopPropagation()}
+              {/* Floating close button */}
+              <motion.button
+                className="absolute top-3 right-3 bg-white/60 backdrop-blur-lg rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all z-20"
+                onClick={resetForm}
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <div className="bg-primary-600 text-white p-4">
-                  <h3 className="text-xl font-semibold flex items-center gap-2">
-                    <FiBell />
-                    {editingId ? 'Update Announcement' : 'Create Announcement'}
-                  </h3>
-                </div>
-                
-                <div className="p-6">
-                  {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center">
-                      <FiAlertCircle className="mr-2 flex-shrink-0" />
-                      {error}
-                    </div>
-                  )}
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium" htmlFor="title">
-                      Announcement Title
-                    </label>
-                    <motion.div
-                      initial={{ scale: 1 }}
-                      whileFocus={{ scale: 1.01 }}
-                      className="relative"
-                    >
-                      <FiMessageCircle className="absolute left-3 top-3 text-gray-400" />
-                      <input
-                        id="title"
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        placeholder="Brief, attention-grabbing title"
-                        required
-                      />
-                    </motion.div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium" htmlFor="content">
-                      Announcement Content
-                    </label>
-                    <motion.div
-                      initial={{ scale: 1 }}
-                      whileFocus={{ scale: 1.01 }}
-                      className="relative"
-                    >
-                      <textarea
-                        id="content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        placeholder="Provide detailed information about the announcement"
-                        rows={4}
-                        required
-                      />
-                    </motion.div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium" htmlFor="team">
-                      Select Team
-                    </label>
-                    <motion.div
-                      initial={{ scale: 1 }}
-                      whileFocus={{ scale: 1.01 }}
-                      className="relative"
-                    >
-                      <FiUsers className="absolute left-3 top-3 text-gray-400" />
-                      <select
-                        id="team"
-                        value={selectedTeam || ''}
-                        onChange={(e) => setSelectedTeam(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        required
-                      >
-                        <option value="">Select a team</option>
-                        {teams.map(team => (
-                          <option key={team.id} value={team.id}>{team.name}</option>
-                        ))}
-                      </select>
-                    </motion.div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-gray-700 mb-2 font-medium" htmlFor="expiry">
-                      Expiry Date
-                    </label>
-                    <motion.div
-                      initial={{ scale: 1 }}
-                      whileFocus={{ scale: 1.01 }}
-                      className="relative"
-                    >
-                      <FiCalendar className="absolute left-3 top-3 text-gray-400" />
-                      <input
-                        id="expiry"
-                        type="date"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                        className="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                        required
-                      />
-                    </motion.div>
-                    <p className="text-xs text-gray-500 mt-1 pl-1">
-                      <FiInfo className="inline mr-1" />
-                      The announcement will disappear automatically after this date
-                    </p>
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <motion.button
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
-                      onClick={resetForm}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      Cancel
-                    </motion.button>
-                    
-                    <motion.button
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1"
-                      onClick={handleCreateAnnouncement}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      disabled={!title || !content || !selectedTeam || !expiryDate}
-                    >
-                      <FiSend />
-                      {editingId ? 'Update' : 'Publish'}
-                    </motion.button>
+                <FiX className="w-5 h-5 text-primary-700" />
+              </motion.button>
+              {/* Floating icon header */}
+              <div className="flex flex-col items-center pt-7 pb-2 px-6 relative">
+                <div className="relative mb-2">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 via-indigo-500 to-blue-400 flex items-center justify-center shadow-xl ring-4 ring-white/60">
+                    <FiBell className="w-8 h-8 text-white drop-shadow-lg" />
                   </div>
                 </div>
-              </motion.div>
+                <h3 className="text-xl font-extrabold text-primary-900 text-center tracking-tight mb-1">{editingId ? 'Update Announcement' : 'Create Announcement'}</h3>
+                <p className="text-xs text-primary-500 text-center mb-2">Share important updates with your team</p>
+              </div>
+              <form className="px-6 pb-6 pt-2 flex flex-col gap-4" onSubmit={handleCreateAnnouncement}>
+                {error && (
+                  <div className="mb-2 p-2 bg-red-50 text-red-700 rounded-lg text-xs flex items-center">
+                    <FiAlertCircle className="mr-2 flex-shrink-0" />
+                    {error}
+                  </div>
+                )}
+                {/* Title Field */}
+                <div className="relative group">
+                  <label htmlFor="title" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Title</label>
+                  <div className="relative">
+                    <FiMessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
+                    <input
+                      id="title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 font-bold shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 pl-10 transition-all"
+                      placeholder="Announcement title"
+                      required
+                    />
+                  </div>
+                </div>
+                {/* Content Field */}
+                <div className="relative group">
+                  <label htmlFor="content" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Content</label>
+                  <div className="relative">
+                    <textarea
+                      id="content"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all"
+                      placeholder="Provide detailed information about the announcement"
+                      rows={4}
+                      required
+                    />
+                  </div>
+                </div>
+                {/* Team Select */}
+                <div className="relative group">
+                  <label htmlFor="team" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Select Team</label>
+                  <div className="relative">
+                    <FiUsers className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
+                    <select
+                      id="team"
+                      value={selectedTeam || ''}
+                      onChange={(e) => setSelectedTeam(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 pl-10 transition-all"
+                      required
+                    >
+                      <option value="">Select a team</option>
+                      {teams.map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {/* Expiry Date */}
+                <div className="relative group">
+                  <label htmlFor="expiry" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Expiry Date</label>
+                  <div className="relative">
+                    <FiCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
+                    <input
+                      id="expiry"
+                      type="date"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(e.target.value)}
+                      min={format(new Date(), 'yyyy-MM-dd')}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 pl-10 transition-all"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 pl-1 flex items-center">
+                    <FiInfo className="inline mr-1" />
+                    The announcement will disappear automatically after this date
+                  </p>
+                </div>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 mt-2">
+                  <motion.button
+                    type="button"
+                    className="w-full py-3 bg-white/70 text-primary-700 rounded-2xl font-bold shadow hover:bg-primary-50 transition-all border border-primary-100"
+                    onClick={resetForm}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    type="submit"
+                    className="w-full py-3 bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 text-white rounded-2xl font-extrabold shadow-xl hover:from-primary-700 hover:to-blue-700 flex items-center justify-center gap-2 text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    disabled={!title || !content || !selectedTeam || !expiryDate}
+                  >
+                    <FiSend className="mr-2" />
+                    {editingId ? 'Update' : 'Publish'}
+                  </motion.button>
+                </div>
+              </form>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </motion.div>

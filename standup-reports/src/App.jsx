@@ -19,6 +19,7 @@ import AchievementsPage from './pages/AchievementsPage';
 import LandingPage from './pages/LandingPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
 import DepartmentManagement from './pages/DepartmentManagement';
+import TasksPage from './pages/TasksPage';
 
 // Animation variants
 const pageVariants = {
@@ -197,6 +198,13 @@ function AppContent({ session, userRole }) {
                   <PageTransition>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
                       <AchievementsPage />
+                    </div>
+                  </PageTransition>
+                } />
+                <Route path="/tasks" element={
+                  <PageTransition>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                      <TasksPage />
                     </div>
                   </PageTransition>
                 } />

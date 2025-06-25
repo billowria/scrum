@@ -27,11 +27,9 @@ const itemVariants = {
   },
 };
 
-export default function TeamManagement({ activeSubTab = 'staff-oversight' }) {
-  const navigate = useNavigate();
-
+export default function TeamManagement({ activeSubTab = 'staff-oversight', setActiveSubTab }) {
   const handleTabChange = (tabId) => {
-    navigate(`/manager-dashboard?tab=team-management&subtab=${tabId}`, { replace: true });
+    if (setActiveSubTab) setActiveSubTab(tabId);
   };
 
   const tabs = [

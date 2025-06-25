@@ -45,6 +45,7 @@ export default function AnnouncementModal({
   contained = false // New prop to make the modal contained within its parent
 }) {
   if (!announcement || !isOpen) return null;
+  const [showContent, setShowContent] = React.useState(true);
   
   const handleDismiss = async () => {
     try {
@@ -56,13 +57,8 @@ export default function AnnouncementModal({
           announcement_id: announcement.id,
           dismissed_at: new Date().toISOString()
         });
-      
       if (error) throw error;
-      
-      // Notify parent component
       if (onDismiss) onDismiss(announcement.id);
-      
-      // Close the modal
       onClose();
     } catch (error) {
       console.error('Error dismissing announcement:', error.message);
@@ -80,99 +76,74 @@ export default function AnnouncementModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
+        <motion.div
+          className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {/* Animated background blobs */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-primary-400 via-indigo-400 to-blue-300 opacity-30 blur-2xl rounded-full animate-pulse" />
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tr from-blue-400 via-indigo-300 to-primary-300 opacity-20 blur-2xl rounded-full animate-pulse delay-2000" />
+          </div>
           <motion.div 
-            className={`${backdropPositionClass} inset-0 bg-black/40 ${backdropZIndex} backdrop-blur-sm`}
-            variants={backdropVariants}
+            className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md mx-auto overflow-hidden border border-white/30 z-10 p-0"
+            variants={modalVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            onClick={onClose}
-          />
-          
-          {/* Modal Container - Always use fixed positioning for fullscreen */}
-          <div className={`${modalPositionClass} inset-0 flex items-center justify-center ${modalZIndex} px-4 py-12 md:py-20 overflow-y-auto`}>
-            <div className="w-full max-w-2xl mx-auto my-auto">
-              <motion.div 
-                className="bg-white rounded-xl shadow-2xl w-full overflow-hidden flex flex-col"
-                variants={modalVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-5 flex justify-between items-center shrink-0">
-                  <div className="flex items-center">
-                    <div className="bg-white/20 rounded-full p-2 mr-3">
-                      <FiBell className="text-white h-6 w-6" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-white">{announcement.title}</h2>
-                  </div>
-                  <motion.button
-                    className="text-white/80 hover:text-white p-1"
-                    onClick={onClose}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <FiX className="h-6 w-6" />
-                  </motion.button>
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Floating close button */}
+            <motion.button
+              className="absolute top-3 right-3 bg-white/60 backdrop-blur-lg rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all z-20"
+              onClick={onClose}
+              whileHover={{ scale: 1.15, rotate: 90 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiX className="w-5 h-5 text-primary-700" />
+            </motion.button>
+            {/* Floating icon header */}
+            <div className="flex flex-col items-center pt-7 pb-2 px-6 relative">
+              <div className="relative mb-2">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 via-indigo-500 to-blue-400 flex items-center justify-center shadow-xl ring-4 ring-white/60">
+                  <FiBell className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
-                
-                {/* Content - Add overflow handling to this section */}
-                <div className="p-6 overflow-y-auto max-h-[calc(70vh-100px)]">
-                  <div className="mb-6">
-                    <div className="text-gray-700 whitespace-pre-line text-base leading-relaxed">
-                      {announcement.content}
-                    </div>
-                  </div>
-                  
-                  {/* Metadata */}
-                  <div className="bg-gray-50 -mx-6 px-6 py-4 mt-6 border-t border-gray-100">
-                    <div className="flex flex-wrap justify-between gap-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiMessageCircle className="mr-2 text-primary-500" />
-                        From: {announcement.manager?.name || 'Your Manager'}
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiCalendar className="mr-2 text-primary-500" />
-                        Posted: {format(parseISO(announcement.created_at), 'MMM dd, yyyy')}
-                      </div>
-                      
-                      <div className="flex items-center text-sm text-gray-600">
-                        <FiClock className="mr-2 text-primary-500" />
-                        Expires: {format(parseISO(announcement.expiry_date), 'MMM dd, yyyy')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Actions */}
-                <div className="px-6 py-3 bg-white border-t border-gray-100 flex justify-end shrink-0">
-                  <motion.button
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 mr-2"
-                    onClick={onClose}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Close
-                  </motion.button>
-                  
-                  <motion.button
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                    onClick={handleDismiss}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Dismiss
-                  </motion.button>
-                </div>
-              </motion.div>
+              </div>
+              <h3 className="text-xl font-extrabold text-primary-900 text-center tracking-tight mb-1">{announcement.title}</h3>
+              <p className="text-xs text-primary-500 text-center mb-2">Announcement</p>
             </div>
-          </div>
-        </>
+            {/* Content */}
+            <div className="px-6 pb-2 max-h-48 overflow-y-auto text-primary-800 whitespace-pre-line text-sm leading-relaxed text-center">
+              {announcement.content}
+            </div>
+            {/* Metadata chips */}
+            <div className="flex flex-wrap justify-center gap-2 px-6 pb-2">
+              <div className="flex items-center gap-1 bg-primary-50 text-primary-700 px-2 py-1 rounded-full text-xs font-semibold">
+                <FiMessageCircle className="text-primary-400" />
+                {announcement.manager?.name || 'Your Manager'}
+              </div>
+              <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">
+                <FiCalendar className="text-blue-400" />
+                {format(parseISO(announcement.created_at), 'MMM dd, yyyy')}
+              </div>
+              <div className="flex items-center gap-1 bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold">
+                <FiClock className="text-yellow-400" />
+                Expires: {format(parseISO(announcement.expiry_date), 'MMM dd, yyyy')}
+              </div>
+            </div>
+            {/* Action Button */}
+            <motion.button
+              className="mt-2 w-full py-3 bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 text-white rounded-2xl font-extrabold shadow-xl hover:from-primary-700 hover:to-blue-700 flex items-center justify-center gap-2 text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleDismiss}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <FiBell className="mr-2" /> Dismiss
+            </motion.button>
+          </motion.div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -9,7 +9,7 @@ import Announcements from './Announcements';
 import AnnouncementModal from './AnnouncementModal';
 
 // Icons
-import { FiHome, FiFileText, FiClock, FiLogOut, FiMenu, FiX, FiUser, FiCalendar, FiChevronDown, FiUsers, FiCheckSquare, FiActivity, FiBell, FiAward, FiBriefcase } from 'react-icons/fi';
+import { FiHome, FiFileText, FiClock, FiLogOut, FiMenu, FiX, FiUser, FiCalendar, FiChevronDown, FiUsers, FiCheckSquare, FiActivity, FiBell, FiAward, FiBriefcase, FiList } from 'react-icons/fi';
 
 // Enhanced Animation variants
 const navItemVariants = {
@@ -128,7 +128,7 @@ export default function Navbar({ session }) {
       if (session?.user?.id) {
         const { data, error } = await supabase
           .from('users')
-          .select('name, role, team_id, teams(name)')
+          .select('name, role, team_id, avatar_url, teams(name)')
           .eq('id', session.user.id)
           .single();
 
@@ -267,6 +267,7 @@ export default function Navbar({ session }) {
                   <NavLink to="/dashboard" isActive={isActive('/dashboard')} icon={<FiHome />} text="Dashboard" />
                   <NavLink to="/leave-calendar" isActive={isActive('/leave-calendar')} icon={<FiCalendar />} text="Leave Calendar" />
                   <NavLink to="/achievements" isActive={isActive('/achievements')} icon={<FiAward />} text="Achievements" />
+                  <NavLink to="/tasks" isActive={isActive('/tasks')} icon={<FiList />} text="Tasks" />
                   
                   {/* Add the department management link for directors */}
                   {isDirector && (
@@ -381,7 +382,15 @@ export default function Navbar({ session }) {
                           whileHover="hover"
                         >
                           <div className="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center text-white overflow-hidden">
-                            {userProfile?.name?.charAt(0) || 'U'}
+                            {userProfile?.avatar_url ? (
+                              <img
+                                src={userProfile.avatar_url}
+                                alt={userProfile?.name || 'User'}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              userProfile?.name?.charAt(0) || 'U'
+                            )}
                           </div>
                           <div className="hidden lg:block">
                             <span className="text-sm">{userProfile?.name?.split(' ')[0] || 'Profile'}</span>
@@ -566,9 +575,24 @@ export default function Navbar({ session }) {
             <div className="px-3 pt-3 pb-4 space-y-1.5">
               {session ? (
                 <>
-                  <MobileNavLink to="/dashboard" isActive={isActive('/dashboard')} icon={<FiHome />} text="Dashboard" />
-                  <MobileNavLink to="/leave-calendar" isActive={isActive('/leave-calendar')} icon={<FiCalendar />} text="Leave Calendar" />
-                  <MobileNavLink to="/achievements" isActive={isActive('/achievements')} icon={<FiAward />} text="Achievements" />
+                  <Link 
+                    to="/dashboard" 
+                    className={`block px-3 py-2 text-base font-medium rounded-md transition-colors ${isActive('/dashboard') ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}
+                  >
+                    <div className="flex items-center">
+                      <FiHome className="mr-3 h-5 w-5" />
+                      Dashboard
+                    </div>
+                  </Link>
+                  <Link 
+                    to="/tasks" 
+                    className={`block px-3 py-2 text-base font-medium rounded-md transition-colors ${isActive('/tasks') ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}
+                  >
+                    <div className="flex items-center">
+                      <FiList className="mr-3 h-5 w-5" />
+                      Tasks
+                    </div>
+                  </Link>
                   
                   {/* Manager-specific links for mobile */}
                   {userProfile?.role === 'manager' && (
