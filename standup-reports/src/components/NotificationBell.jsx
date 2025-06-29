@@ -346,6 +346,17 @@ const NotificationBell = ({ userRole }) => {
       } catch (error) {
         console.error('Error dismissing announcement:', error);
       }
+    } else if (type === 'leave') {
+      // Dismissing a leave request: set status to 'rejected' so it doesn't reappear
+      try {
+        const { error } = await supabase
+          .from('leave_plans')
+          .update({ status: 'rejected' })
+          .eq('id', id);
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error dismissing leave request:', error);
+      }
     }
     
     // Remove from notification list
@@ -576,6 +587,16 @@ const NotificationBell = ({ userRole }) => {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Footer link to full page */}
+              <div className="border-t border-gray-200">
+                <button
+                  className="w-full text-center px-4 py-3 text-primary-600 font-semibold hover:bg-gray-50 transition-colors"
+                  onClick={() => { navigate('/notifications'); setShowDropdown(false); }}
+                >
+                  Go to Notification Page
+                </button>
               </div>
             </motion.div>
           </>

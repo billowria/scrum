@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, en
 import { supabase } from '../supabaseClient';
 
 // Icons
-import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown,FiBell } from 'react-icons/fi';
+import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -14,6 +14,7 @@ import Announcements from '../components/Announcements';
 import TeamAvailabilityAnalytics from '../components/TeamAvailabilityAnalytics';
 import LeaveRequestForm from '../components/LeaveRequestForm';
 import TeamHealthIndicator from '../components/TeamHealthIndicator';
+import UserListModal from '../components/UserListModal';
 
 // Animation variants
 const containerVariants = {
@@ -280,7 +281,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, role')
+        .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
         .eq('team_id', teamId);
         
       if (error) throw error;
@@ -306,7 +307,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, role')
+        .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
         .eq('team_id', teamId)
         .order('name', { ascending: true });
         
@@ -454,30 +455,42 @@ export default function Dashboard() {
   const fetchOnLeaveCount = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { count, error } = await supabase
-        .from('leave_requests')
+      const { data, error, count } = await supabase
+        .from('leave_plans')
         .select('*', { count: 'exact' })
         .eq('status', 'approved')
         .lte('start_date', today)
         .gte('end_date', today);
 
-      if (!error) setOnLeaveCount(count || 0);
-    } catch (err) {
-      console.error('Error fetching on-leave count:', err);
+      if (error) throw error;
+      setOnLeaveCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching on-leave count:', error.message);
     }
   };
 
   // Fetch announcements count
   const fetchAnnouncementsCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from('announcements')
-        .select('*', { count: 'exact' })
-        .eq('is_read', false);
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setAnnouncementsCount(0);
 
-      if (!error) setAnnouncementsCount(count || 0);
-    } catch (err) {
-      console.error('Error fetching announcements count:', err);
+      // Fetch all announcements for user's team
+      const { data: announcements, error: annError } = await supabase
+        .from('announcements')
+        .select(`id, team_id, expiry_date, announcement_reads:announcement_reads!announcement_reads_announcement_id_fkey(user_id, read)`)
+        .gte('expiry_date', new Date().toISOString());
+      if (annError) throw annError;
+
+      // Only count announcements that are not read by this user
+      const unreadCount = (announcements || []).filter(a => {
+        const readEntry = (a.announcement_reads || []).find(r => r.user_id === user.id);
+        return !readEntry || !readEntry.read;
+      }).length;
+      setAnnouncementsCount(unreadCount);
+    } catch (error) {
+      console.error('Error fetching announcements count:', error.message);
     }
   };
 
@@ -490,7 +503,7 @@ export default function Dashboard() {
 
   // Function to scroll to missing reports section
   const scrollToMissingReports = () => {
-    const element = document.getElementById('missing-reports-section');
+    const element = document.getElementById('missing-reports-header');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
@@ -501,127 +514,174 @@ export default function Dashboard() {
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
-        .from('leave_requests')
-        .select('*, users(name)')
+        .from('leave_plans')
+        .select(`
+          id,
+          users:user_id (id, name, avatar_url, role)
+        `)
         .eq('status', 'approved')
         .lte('start_date', today)
         .gte('end_date', today);
 
-      if (!error) setOnLeaveMembers(data || []);
-    } catch (err) {
-      console.error('Error fetching on-leave members:', err);
+      if (error) {
+        console.error('Error fetching on-leave members:', error);
+        throw error;
+      }
+      
+      setOnLeaveMembers(data.map(item => item.users).filter(Boolean));
+    } catch (error) {
+      console.error('Error in fetchOnLeaveMembers:', error);
     }
   };
 
-  // New DashboardHeader component
+  // Combined Mega Header component (Dashboard stats + Missing Reports summary)
   const DashboardHeader = () => (
-    <div className="grid grid-cols-3 gap-6 mb-8">
-      {/* Missing Reports Card */}
-      <motion.div 
-        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-        variants={statCardVariants}
-        custom={0}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={scrollToMissingReports}
-      >
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-lg bg-yellow-100 text-yellow-700 mr-4">
-            <FiAlertCircle size={24} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">Missing Reports</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{missingReports.length}</p>
-          </div>
-        </div>
-        <p className="text-sm text-gray-500">Team members pending reports</p>
-      </motion.div>
-
-      {/* On Leave Card */}
-      <motion.div 
-        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-        variants={statCardVariants}
-        custom={1}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setShowOnLeaveModal(true)}
-      >
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-lg bg-blue-100 text-blue-700 mr-4">
-            <FiUser size={24} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">On Leave</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{onLeaveCount}</p>
-          </div>
-        </div>
-        <p className="text-sm text-gray-500">Team members on leave today</p>
-      </motion.div>
-
-      {/* Announcements Card */}
-      <motion.div 
-        className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
-        variants={statCardVariants}
-        custom={2}
-      >
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-lg bg-green-100 text-green-700 mr-4">
-            <FiBell size={24} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-700">Announcements</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{announcementsCount}</p>
-          </div>
-        </div>
-        <p className="text-sm text-gray-500">New announcements</p>
-      </motion.div>
-    </div>
-  );
-
-  // Define UserModal component
-  const UserModal = ({ show, onClose, title, users }) => (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
+    <div className="space-y-8 mb-8">
+      {/* Top Statistic Cards */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* Missing Reports Card */}
+        <motion.div 
+          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          variants={statCardVariants}
+          custom={0}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={scrollToMissingReports}
         >
-          <motion.div 
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-            initial={{ y: 20 }}
-            animate={{ y: 0 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-              <button 
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700"
+          <div className="flex items-center mb-4">
+            <div className="p-3 rounded-lg bg-yellow-100 text-yellow-700 mr-4">
+              <FiAlertCircle size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700">Missing Reports</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{missingReports.length}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">Team members pending reports</p>
+        </motion.div>
+
+        {/* On Leave Card */}
+        <motion.div 
+          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          variants={statCardVariants}
+          custom={1}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowOnLeaveModal(true)}
+        >
+          <div className="flex items-center mb-4">
+            <div className="p-3 rounded-lg bg-blue-100 text-blue-700 mr-4">
+              <FiUser size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700">On Leave</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{onLeaveCount}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">Team members on leave today</p>
+        </motion.div>
+
+        {/* Announcements Card */}
+        <motion.div 
+          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
+          variants={statCardVariants}
+          custom={2}
+        >
+          <div className="flex items-center mb-4">
+            <div className="p-3 rounded-lg bg-green-100 text-green-700 mr-4">
+              <FiBell size={24} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700">Announcements</h3>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{announcementsCount}</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">New announcements</p>
+        </motion.div>
+      </div>
+
+      {/* Integrated Missing Reports Summary */}
+      <motion.div
+        id="missing-reports-header"
+        className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+        variants={statCardVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
+              <FiAlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800 flex items-center">
+                Missing Reports Today
+              </h2>
+              <p className="text-gray-500 text-sm">Standup submissions pending</p>
+            </div>
+          </div>
+
+          {isToday(date) && !loadingMissing && (
+            <div className="flex items-center mt-2 sm:mt-0">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex items-center px-3 py-1.5 mr-2">
+                <div className="text-center mr-3 pr-3 border-r border-gray-200">
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="font-bold text-lg text-indigo-700">{teamMembers.length}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500">Missing</div>
+                  <div className="font-bold text-lg text-indigo-700">{missingReports.length}</div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRefresh}
+                className="text-xs bg-indigo-600 text-white rounded-lg px-3 py-1.5 flex items-center hover:bg-indigo-700 transition-colors"
               >
-                <FiX size={24} />
+                <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
+                <span className="ml-1">Refresh</span>
               </button>
             </div>
-            <div className="max-h-80 overflow-y-auto">
-              {users.length > 0 ? (
-                <ul className="space-y-2">
-                  {users.map((user, index) => (
-                    <li key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <FiUser className="text-blue-500" />
-                      <span>{user.users?.name || 'Unknown User'}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500 text-center py-4">No data available</p>
-              )}
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          )}
+        </div>
+
+        {/* Condensed list of missing members (3x3 grid, fixed height, scrollable if more than 9) */}
+        {isToday(date) && missingReports.length > 0 && (
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto" style={{ minHeight: '12rem' }}>
+            {missingReports.map((member, index) => (
+              <motion.div
+                key={member.id}
+                className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center"
+                variants={itemVariants}
+                custom={index}
+                initial="hidden"
+                animate="visible"
+              >
+                {member.avatar_url ? (
+                  <img
+                    src={member.avatar_url}
+                    alt={member.name}
+                    className="w-9 h-9 rounded-full object-cover shadow mr-3 border-2 border-indigo-100"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow mr-3">
+                    {member.name.charAt(0)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-800 truncate">{member.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{member.teams?.name || 'No Team'}</p>
+                </div>
+                <FiAlertCircle className="text-amber-500 ml-2" />
+              </motion.div>
+            ))}
+            {missingReports.length > 9 && (
+              <div className="col-span-3 text-center text-xs text-gray-400 mt-2">Scroll for more...</div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    </div>
   );
 
   return (
@@ -1079,13 +1139,11 @@ export default function Dashboard() {
                                 ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50' 
                                 : 'bg-gradient-to-br from-blue-50 to-blue-100/50 group-hover:from-blue-100 group-hover:to-blue-50'
                             }`}>
-                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm ${
-                                filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'
-                              }`}>
+                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'}`}>
                                 {filteredReports[currentReportIndex].blockers || 
-                                  <span className="italic text-gray-400 flex items-center gap-2">
-                                    <FiCheckCircle className="h-4 w-4 text-emerald-500" />
-                                    No blockers reported
+                                  <span className="italic text-emerald-600 flex items-center gap-1">
+                                    <FiCheckCircle className="h-3 w-3" />
+                                    No blockers
                                   </span>
                                 }
                               </div>
@@ -1160,7 +1218,7 @@ export default function Dashboard() {
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
                               {report.users?.name?.charAt(0) || "U"}
                     </div>
-                          )}
+                            )}
                     <div>
                             <h3 className="font-medium text-gray-900">{report.users?.name || "Unknown User"}</h3>
                             <div className="text-xs text-gray-500 flex items-center gap-1">
@@ -1251,7 +1309,7 @@ export default function Dashboard() {
         {/* Missing Reports Widget - Redesigned to be more compact and professional */}
         <motion.div 
           id="missing-reports-section"
-          className="w-full max-w-5xl mx-auto mb-10"
+          className="w-full max-w-5xl mx-auto mb-10 hidden"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
@@ -1351,28 +1409,30 @@ export default function Dashboard() {
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {missingReports.map((member, index) => (
-                          <motion.div 
-                            key={member.id} 
-                            className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all flex items-center"
+                          <motion.div
+                            key={member.id}
+                            className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center"
                             variants={itemVariants}
                             custom={index}
                             initial="hidden"
                             animate="visible"
-                            whileHover={{ y: -2, boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)" }}
                           >
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-lg shadow-sm mr-3">
-                              {member.name.charAt(0)}
-                            </div>
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt={member.name}
+                                className="w-9 h-9 rounded-full object-cover shadow mr-3 border-2 border-indigo-100"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow mr-3">
+                                {member.name.charAt(0)}
+                              </div>
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-800 truncate">{member.name}</p>
-                              <p className="text-xs text-gray-500">{member.role || 'Team Member'}</p>
+                              <p className="text-xs text-gray-500 truncate">{member.teams?.name || 'No Team'}</p>
                             </div>
-                            <div className="ml-auto">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                                <span className="w-1.5 h-1.5 mr-1 bg-amber-500 rounded-full animate-pulse"></span>
-                                Pending
-                              </span>
-                            </div>
+                            <FiAlertCircle className="text-amber-500 ml-2" />
                           </motion.div>
                         ))}
                       </div>
@@ -1485,7 +1545,7 @@ export default function Dashboard() {
                           Yesterday
                         </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
-                            {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update provided</span>}
+                            {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update</span>}
                         </div>
                         </div>
                         
@@ -1495,7 +1555,7 @@ export default function Dashboard() {
                           Today
                         </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
-                            {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update provided</span>}
+                            {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update</span>}
                         </div>
                         </div>
                         
@@ -1505,8 +1565,11 @@ export default function Dashboard() {
                           Blockers
                         </h4>
                           <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
-                            {filteredReports[currentReportIndex].blockers || <span className="italic text-gray-400">No blockers reported</span>}
-                        </div>
+                            {filteredReports[currentReportIndex].blockers || <span className="italic text-emerald-600 flex items-center gap-1">
+                              <FiCheckCircle className="h-3 w-3" />
+                              No blockers
+                            </span>}
+                          </div>
                     </div>
                   </div>
                       
@@ -1548,22 +1611,16 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Replace old modal with new UserListModal */}
+      <UserListModal
+        isOpen={showOnLeaveModal}
+        onClose={() => setShowOnLeaveModal(false)}
+        title="Team Members on Leave Today"
+        subtitle={format(new Date(), 'MMMM d, yyyy')}
+        users={onLeaveMembers}
+        type="onLeave"
+      />
     </motion.div>
   );
-
-  // Add modals
-  <>
-    <UserModal
-      show={showMissingModal}
-      onClose={() => setShowMissingModal(false)}
-      title="Members with Missing Reports"
-      users={missingReports}
-    />
-    <UserModal
-      show={showOnLeaveModal}
-      onClose={() => setShowOnLeaveModal(false)}
-      title="Members on Leave Today"
-      users={onLeaveMembers}
-    />
-  </>
 }

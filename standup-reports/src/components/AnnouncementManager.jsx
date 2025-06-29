@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, addDays, isBefore } from 'date-fns';
 import { FiBell, FiCalendar, FiClock, FiEdit, FiTrash2, FiPlus, FiMessageCircle, FiSend, FiX, FiAlertCircle, FiCheckCircle, FiInfo, FiUsers } from 'react-icons/fi';
@@ -24,7 +24,7 @@ const itemVariants = {
   }
 };
 
-export default function AnnouncementManager() {
+const AnnouncementManager = forwardRef(function AnnouncementManager(props, ref) {
   const [announcements, setAnnouncements] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,66 +93,47 @@ export default function AnnouncementManager() {
     }
   };
   
-  const handleCreateAnnouncement = async () => {
+  const handleCreateAnnouncement = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    
     if (!title.trim() || !content.trim() || !selectedTeam || !expiryDate) {
       setError('Please fill out all fields');
       return;
     }
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      setLoading(true);
       
-      if (!user) {
-        throw new Error('User not authenticated');
+      const { data, error } = await supabase.rpc('manage_announcement', {
+        p_title: title,
+        p_content: content,
+        p_team_id: selectedTeam,
+        p_expiry_date: expiryDate,
+        p_announcement_id: editingId || null
+      });
+
+      if (error) {
+        throw error;
       }
+
+      // Clear form and close
+      setTitle('');
+      setContent('');
+      setSelectedTeam('');
+      setExpiryDate('');
+      setError(null);
+      setShowModal(false);
       
-      // Format the expiry date to include time at end of day
-      const formattedExpiryDate = new Date(expiryDate);
-      formattedExpiryDate.setHours(23, 59, 59, 999);
-      
-      if (editingId) {
-        // Update existing announcement
-        const { error } = await supabase
-          .from('announcements')
-          .update({
-            title,
-            content,
-            team_id: selectedTeam,
-            expiry_date: formattedExpiryDate.toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingId);
-        
-        if (error) throw error;
-        
-        setSuccess('Announcement updated successfully');
-      } else {
-        // Create new announcement
-        const { error } = await supabase
-          .from('announcements')
-          .insert({
-            title,
-            content,
-            team_id: selectedTeam,
-            created_by: user.id,
-            expiry_date: formattedExpiryDate.toISOString(),
-            created_at: new Date().toISOString()
-          });
-        
-        if (error) throw error;
-        
-        setSuccess('Announcement created successfully');
-      }
-      
-      // Reset form and close modal
-      resetForm();
+      // Trigger refresh of announcements list
       fetchAnnouncements();
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      console.error('Error creating announcement:', error.message);
-      setError(`Error: ${error.message}`);
+      console.error('Error creating/updating announcement:', error);
+      setError(error.message || 'Failed to create/update announcement');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -197,7 +178,12 @@ export default function AnnouncementManager() {
     setShowModal(false);
     setError(null);
   };
-  
+
+  useImperativeHandle(ref, () => ({
+    openModal: () => setShowModal(true),
+    closeModal: () => setShowModal(false)
+  }));
+
   return (
     <motion.div
       className="max-w-7xl mx-auto"
@@ -496,4 +482,6 @@ export default function AnnouncementManager() {
       </AnimatePresence>
     </motion.div>
   );
-} 
+});
+
+export default AnnouncementManager; 

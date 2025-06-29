@@ -12,6 +12,7 @@ import FloatingNav from '../components/FloatingNav';
 import AnnouncementModal from '../components/AnnouncementModal';
 import TeamAvailabilityAnalytics from '../components/TeamAvailabilityAnalytics';
 import TeamLeaveOverview from '../components/TeamLeaveOverview';
+import UserListModal from '../components/UserListModal';
 
 // Professional color palette
 const colors = {
@@ -292,11 +293,13 @@ const CompactTabHeader = ({
                   {quickStats.map((stat, index) => (
                     <motion.div
                       key={index}
-                      className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20"
+                      onClick={stat.onClick}
+                      className={`flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20 ${stat.onClick ? 'cursor-pointer' : ''}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4 + index * 0.1 }}
-                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileHover={stat.onClick ? { scale: 1.05, y: -2 } : {}}
+                      whileTap={stat.onClick ? { scale: 0.98 } : {}}
                     >
                       <span className="text-white/70 text-sm font-medium">{stat.label}:</span>
                       <span className="text-white font-bold text-lg">{stat.value}</span>
@@ -434,168 +437,29 @@ const TabButton = ({ active, onClick, icon, children }) => (
   </motion.button>
 );
 
-// Add UsersOnLeaveModal component within the LeaveCalendar.jsx file
-const UsersOnLeaveModal = ({ isOpen, onClose, date, users }) => {
-  if (!isOpen || !date || !users || users.length === 0) return null;
-  
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <motion.div 
-            className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="bg-primary-600 text-white p-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium flex items-center">
-                <FiUsers className="mr-2" /> 
-                Team Members on Leave: {format(date, 'MMMM d, yyyy')}
-              </h3>
-              <button 
-                className="text-white/80 hover:text-white p-1 rounded-full hover:bg-primary-700"
-                onClick={onClose}
-              >
-                <FiX />
-              </button>
-            </div>
-            
-            <div className="p-4 max-h-80 overflow-y-auto">
-              {users.length > 0 ? (
-                <div className="space-y-3">
-                  {users.map((user, index) => (
-                    <motion.div 
-                      key={user.id || index}
-                      className="p-3 bg-gray-50 rounded-lg flex items-center"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-medium text-lg mr-3">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-800">{user.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {user.team_id ? `Team ID: ${user.team_id}` : 'No team assigned'}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center p-6 text-gray-500">
-                  No team members on leave for this day.
-                </div>
-              )}
-            </div>
-            
-            <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-              <button 
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                onClick={onClose}
-              >
-                Close
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
-
-// Add this new component for showing available users
-const AvailableUsersModal = ({ isOpen, onClose, users }) => {
-  if (!isOpen) return null;
-  
-  return (
-    <AnimatePresence>
-    <motion.div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <motion.div 
-        className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="bg-primary-600 text-white p-4 flex items-center justify-between">
-          <h3 className="text-lg font-medium flex items-center">
-            <FiUserCheck className="mr-2" /> 
-            Available Team Members Today
-          </h3>
-          <button 
-            className="text-white/80 hover:text-white p-1 rounded-full hover:bg-primary-700"
-            onClick={onClose}
-          >
-            <FiX />
-          </button>
-        </div>
-        
-        <div className="p-4 max-h-80 overflow-y-auto">
-          {users.length > 0 ? (
-            <div className="space-y-3">
-              {users.map((user, index) => (
-                <motion.div 
-                  key={user.id}
-                  className="p-3 bg-gray-50 rounded-lg flex items-center"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-medium text-lg mr-3">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-medium text-gray-800">{user.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {user.team?.name || 'No team assigned'}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No team members available today
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-  </AnimatePresence>
-  );
-};
-
 export default function LeaveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
   const [leaveData, setLeaveData] = useState([]);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const [showLeaveForm, setShowLeaveForm] = useState(false);
-  const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
-  const [leaveReason, setLeaveReason] = useState('');
   const [message, setMessage] = useState(null);
-  const [monthDirection, setMonthDirection] = useState(0);
   const [hoverInfo, setHoverInfo] = useState(null);
+  const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
+  const [showAvailableModal, setShowAvailableModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [calendarAnnouncement, setCalendarAnnouncement] = useState(null);
+  const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [leaveReason, setLeaveReason] = useState('');
+  const [monthDirection, setMonthDirection] = useState(0);
   const [teamAvailability, setTeamAvailability] = useState({});
   const [activeTab, setActiveTab] = useState('calendar');
+  const [usersOnLeaveToday, setUsersOnLeaveToday] = useState([]);
 
   // Refs for scroll functionality
   const calendarRef = useRef(null);
@@ -610,9 +474,6 @@ export default function LeaveCalendar() {
     { id: 'requests', label: 'My Requests', icon: <FiClock /> },
   ]; // 'calendar', 'analytics', or 'team'
   
-  // Current user info
-  const [currentUser, setCurrentUser] = useState(null);
-  
   // New stats for enhanced dashboard
   const [stats, setStats] = useState({
     totalTeamMembers: 0,
@@ -620,27 +481,8 @@ export default function LeaveCalendar() {
     membersAvailable: 0
   });
   
-  // Announcement modal state
-  const [showAnnouncement, setShowAnnouncement] = useState(false);
-  const [calendarAnnouncement, setCalendarAnnouncement] = useState(null);
-  const [announcements, setAnnouncements] = useState([]);
-  const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false);
-  
-  // Add state for the users on leave modal
-  const [showUsersOnLeaveModal, setShowUsersOnLeaveModal] = useState(false);
-  const [usersOnLeaveData, setUsersOnLeaveData] = useState({
-    date: null,
-    users: []
-  });
-  
   // Animation controls
   const controls = useAnimation();
-  
-  // Add this new state for showing available users
-  const [showAvailableModal, setShowAvailableModal] = useState(false);
-  const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
-  const [availableUsers, setAvailableUsers] = useState([]);
-  const [onLeaveUsers, setOnLeaveUsers] = useState([]);
   
   // Scroll to tab function
   const scrollToTab = (tabId) => {
@@ -692,55 +534,32 @@ export default function LeaveCalendar() {
   const calculateStats = async () => {
     try {
       const today = new Date();
-      const { data: leaveData, error: leaveError } = await supabase
+      const todayString = format(today, 'yyyy-MM-dd');
+      
+      const { data: onLeaveTodayData, error: onLeaveError } = await supabase
         .from('leave_plans')
         .select(`
-          id,
-          start_date,
-          end_date,
-          users:user_id (
-            id,
-            name,
-            teams:team_id (
-              id,
-              name
-            )
-          )
+          users:user_id (id, name, avatar_url, role)
         `)
-        .eq('status', 'approved');
+        .eq('status', 'approved')
+        .lte('start_date', todayString)
+        .gte('end_date', todayString);
 
-      if (leaveError) throw leaveError;
+      if (onLeaveError) throw onLeaveError;
 
-      // Get all users
+      const usersOnLeave = onLeaveTodayData.map(leave => leave.users).filter(Boolean);
+      const onLeaveIds = usersOnLeave.map(user => user.id);
+      
       const { data: allUsers, error: usersError } = await supabase
         .from('users')
-        .select(`
-          id,
-          name,
-          team:team_id (
-            id,
-            name
-          )
-        `);
+        .select('id, name, avatar_url, role');
 
       if (usersError) throw usersError;
 
-      // Filter users on leave today
-      const usersOnLeave = leaveData
-        .filter(leave => {
-          const startDate = new Date(leave.start_date);
-          const endDate = new Date(leave.end_date);
-          return today >= startDate && today <= endDate;
-        })
-        .map(leave => leave.users);
-
-      const onLeaveIds = usersOnLeave.map(user => user.id);
-      
-      // Filter available users (not on leave)
       const availableUsers = allUsers.filter(user => !onLeaveIds.includes(user.id));
 
       setAvailableUsers(availableUsers);
-      setOnLeaveUsers(usersOnLeave);
+      setUsersOnLeaveToday(usersOnLeave);
 
       return {
         totalTeamMembers: allUsers.length,
@@ -977,17 +796,22 @@ export default function LeaveCalendar() {
   });
   
   // Handle user icon click
-  const handleUsersIconClick = (day, usersOnLeave, event) => {
-    event.stopPropagation(); // Prevent day click handler from firing
-    
-    setUsersOnLeaveData({
-      date: day,
-      users: usersOnLeave
-    });
-    
-    setShowUsersOnLeaveModal(true);
+  const handleUsersIconClick = async (day, usersOnLeave, event) => {
+    event.stopPropagation();
+    setSelectedDate(day);
+    setSelectedUsers(usersOnLeave);
+    setShowOnLeaveModal(true);
   };
-  
+
+  const handleAvailableUsersClick = () => {
+    setShowAvailableModal(true);
+  };
+
+  const handleOnLeaveUsersClick = () => {
+    setSelectedUsers(usersOnLeaveToday);
+    setShowOnLeaveModal(true);
+  };
+
   // Function to render the calendar day
   const renderCalendarDay = (day) => {
     const isWeekendDay = isWeekend(day);
@@ -1126,7 +950,7 @@ export default function LeaveCalendar() {
   };
   
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="relative min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       {/* Tabs with enhanced styling */}
       {/* New Floating Nav with Gluey Animation */}
       <FloatingNav 
@@ -1148,8 +972,8 @@ export default function LeaveCalendar() {
               color="blue"
               badge="Active"
               quickStats={[
-                { label: "Available", value: `${stats.membersAvailable} members` },
-                { label: "On Leave", value: `${stats.membersOnLeave} today` },
+                { label: "Available", value: `${stats.membersAvailable} members`, onClick: handleAvailableUsersClick },
+                { label: "On Leave", value: `${stats.membersOnLeave} today`, onClick: handleOnLeaveUsersClick },
                 { label: "Month", value: format(currentMonth, 'MMM yyyy') }
               ]}
               quickActions={[
@@ -1318,7 +1142,7 @@ export default function LeaveCalendar() {
               quickActions={[
                 {
                   icon: <FiEye className="w-4 h-4" />,
-                  onClick: () => setShowAvailableModal(true),
+                  onClick: () => handleAvailableUsersClick(availableUsers),
                   tooltip: "View Available"
                 },
                 {
@@ -1720,11 +1544,13 @@ export default function LeaveCalendar() {
       )}
       
       {/* Enhanced users on leave modal */}
-      <UsersOnLeaveModal 
-        isOpen={showUsersOnLeaveModal}
-        onClose={() => setShowUsersOnLeaveModal(false)}
-        date={usersOnLeaveData.date}
-        users={usersOnLeaveData.users}
+      <UserListModal
+        isOpen={showOnLeaveModal}
+        onClose={() => setShowOnLeaveModal(false)}
+        title="Team Members on Leave"
+        subtitle={format(new Date(), 'MMMM d, yyyy')}
+        users={selectedUsers}
+        type="onLeave"
       />
       
       {/* Enhanced announcement modal */}
@@ -1766,21 +1592,16 @@ export default function LeaveCalendar() {
       )}
       
       {/* Render the modals */}
-      <AvailableUsersModal
+      <UserListModal
         isOpen={showAvailableModal}
         onClose={() => setShowAvailableModal(false)}
+        title="Available Team Members"
         users={availableUsers}
-      />
-      
-      <UsersOnLeaveModal
-        isOpen={showOnLeaveModal}
-        onClose={() => setShowOnLeaveModal(false)}
-        date={new Date()}
-        users={onLeaveUsers}
+        type="available"
       />
       
       {/* Add custom scrollbar styles */}
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }

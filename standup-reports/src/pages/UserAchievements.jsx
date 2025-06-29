@@ -441,7 +441,7 @@ const UserAchievements = () => {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition-colors"
-                onClick={() => window.open(`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=AgilePulse Achievements&organizationName=AgilePulse`, '_blank')}
+                onClick={() => window.open(`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=SquadSync Achievements&organizationName=SquadSync`, '_blank')}
               >
                 <FiLinkedin className="mr-2" />
                 Add to LinkedIn

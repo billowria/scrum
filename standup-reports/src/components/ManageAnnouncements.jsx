@@ -266,22 +266,22 @@ export default function ManageAnnouncements() {
   };
   
   const fetchAnnouncements = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+      
       const { data, error } = await supabase
-        .from('announcements')
-        .select(`
-          id, title, content, created_at, expiry_date, created_by,
-          manager:created_by (id, name)
-        `)
+        .from('announcements_with_metadata')
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
-      setAnnouncements(data || []);
+      setAnnouncements(data);
     } catch (error) {
-      setError(`Error fetching announcements: ${error.message}`);
       console.error('Error fetching announcements:', error);
+      setError('Failed to load announcements');
     } finally {
       setLoading(false);
     }
@@ -354,35 +354,25 @@ export default function ManageAnnouncements() {
   };
   
   const handleDeleteAnnouncement = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this announcement?')) {
-      return;
-    }
-    
     try {
+      setLoading(true);
+      
       const { error } = await supabase
         .from('announcements')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
+      // Refresh the announcements list
       fetchAnnouncements();
-      
-      setMessage({
-        type: 'success',
-        text: 'Announcement deleted successfully!'
-      });
-      
-      setTimeout(() => setMessage(null), 3000);
     } catch (error) {
-      console.error('Error deleting announcement:', error.message);
-      
-      setMessage({
-        type: 'error',
-        text: `Error deleting announcement: ${error.message}`
-      });
-      
-      setTimeout(() => setMessage(null), 5000);
+      console.error('Error deleting announcement:', error);
+      setError('Failed to delete announcement');
+    } finally {
+      setLoading(false);
     }
   };
   
