@@ -122,6 +122,7 @@ const NotificationBell = ({ userRole }) => {
   const [processingLeaveRequest, setProcessingLeaveRequest] = useState(null);
   const modalRoot = useRef(document.getElementById('modal-root') || document.body);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   // Effect to create modal root if it doesn't exist
   useEffect(() => {
@@ -132,6 +133,18 @@ const NotificationBell = ({ userRole }) => {
       modalRoot.current = modalRootDiv;
     }
   }, []);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
 
   useEffect(() => {
     // Get the current user ID on component mount
@@ -427,6 +440,7 @@ const NotificationBell = ({ userRole }) => {
               initial="hidden"
               animate="visible"
               exit="exit"
+              ref={dropdownRef}
             >
               <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white flex justify-between items-center">
                 <h3 className="font-semibold text-gray-800">Notifications</h3>

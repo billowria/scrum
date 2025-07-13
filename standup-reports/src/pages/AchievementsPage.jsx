@@ -349,7 +349,7 @@ const AchievementsPage = () => {
   return (
     <motion.div 
       ref={containerRef}
-      className="max-w-6xl mx-auto overflow-hidden relative"
+      className="w-full px-8 overflow-hidden relative"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}

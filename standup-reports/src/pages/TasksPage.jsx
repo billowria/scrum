@@ -65,7 +65,7 @@ const statVariants = {
   }
 };
 
-export default function TasksPage() {
+export default function TasksPage({ sidebarOpen }) {
   // State management
   const [view, setView] = useState('board'); // 'board' or 'list'
   const [tasks, setTasks] = useState([]);
@@ -87,6 +87,8 @@ export default function TasksPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [search, setSearch] = useState('');
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Calculate task statistics
   const taskStats = {
@@ -221,6 +223,27 @@ export default function TasksPage() {
     };
   }, [filters, userRole, currentUser]);
 
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY > lastScrollY && currentScrollY > 80) {
+            setShowHeader(false); // scroll down, hide
+          } else {
+            setShowHeader(true); // scroll up, show
+          }
+          setLastScrollY(currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   // Task operation handlers
   const handleTaskUpdate = (task) => {
     setUpdatingTask(task);
@@ -284,14 +307,19 @@ export default function TasksPage() {
       animate="visible"
     >
       {/* Reimagined Beautiful Header */}
-      <div className="relative bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 shadow-sm border-b border-gray-200/60 sticky top-0 z-40 backdrop-blur-sm">
+      <motion.div
+        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} z-30 transition-all duration-300 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 shadow-sm border-b border-gray-200/60 backdrop-blur-sm`}
+        id="tasks-header"
+        animate={{ y: showHeader ? 0 : '-100%' }}
+        transition={{ type: 'tween', duration: 0.3 }}
+        style={{ right: 0 }}
+      >
         {/* Animated background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 animate-pulse"></div>
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_50%,rgba(120,119,198,0.3),transparent_50%)]"></div>
           <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]"></div>
         </div>
-
         <div className="relative max-w-7xl mx-auto px-6 py-8">
           {/* Main Header Content */}
           <motion.div 
@@ -594,10 +622,12 @@ export default function TasksPage() {
             </motion.div>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
+      {/* Spacer to prevent content jump due to fixed header */}
+      <div className="h-[160px] w-full"></div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 pb-6">
+      <div className="pt-4">
         {/* Content */}
         <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {loading ? (

@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, en
 import { supabase } from '../supabaseClient';
 
 // Icons
-import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell } from 'react-icons/fi';
+import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -89,7 +89,7 @@ const statCardVariants = {
   }
 };
 
-export default function Dashboard() {
+export default function Dashboard({ sidebarOpen }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -148,6 +148,9 @@ export default function Dashboard() {
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
   const [onLeaveMembers, setOnLeaveMembers] = useState([]);
+
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     // Get current user information including their team
@@ -534,168 +537,309 @@ export default function Dashboard() {
     }
   };
 
-  // Combined Mega Header component (Dashboard stats + Missing Reports summary)
-  const DashboardHeader = () => (
-    <div className="space-y-8 mb-8">
-      {/* Top Statistic Cards */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Missing Reports Card */}
-        <motion.div 
-          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+  // Scroll hide/show header logic
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY && window.scrollY > 80) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Dashboard stat cards
+  const dashboardStats = [
+    {
+      label: 'Reports Today',
+      value: reports.length,
+      icon: <FiFileText className="w-5 h-5" />,
+      color: 'from-blue-500 to-indigo-500',
+    },
+    {
+      label: 'Present',
+      value: teamMembers.length - onLeaveCount,
+      icon: <FiUsers className="w-5 h-5" />,
+      color: 'from-emerald-500 to-teal-500',
+    },
+    {
+      label: 'On Leave',
+      value: onLeaveCount,
+      icon: <FiClock className="w-5 h-5" />,
+      color: 'from-yellow-400 to-orange-400',
+    },
+    {
+      label: 'Announcements',
+      value: announcementsCount,
+      icon: <FiBell className="w-5 h-5" />,
+      color: 'from-pink-500 to-purple-500',
+    },
+  ];
+
+  // Professional Dashboard Header component with Missing Reports summary
+  const DashboardHeader = () => {
+    // Calculate completion percentage for reports
+    const reportCompletionPercentage = teamMembers.length > 0 
+      ? Math.round(((teamMembers.length - missingReports.length) / teamMembers.length) * 100) 
+      : 0;
+      
+    return (
+      <div className="space-y-8 mb-8">
+        {/* Professional Dashboard Stats Overview */}
+        <motion.div
+          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
           variants={statCardVariants}
-          custom={0}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={scrollToMissingReports}
+          initial="hidden"
+          animate="visible"
         >
-          <div className="flex items-center mb-4">
-            <div className="p-3 rounded-lg bg-yellow-100 text-yellow-700 mr-4">
-              <FiAlertCircle size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">Missing Reports</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{missingReports.length}</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500">Team members pending reports</p>
-        </motion.div>
-
-        {/* On Leave Card */}
-        <motion.div 
-          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          variants={statCardVariants}
-          custom={1}
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowOnLeaveModal(true)}
-        >
-          <div className="flex items-center mb-4">
-            <div className="p-3 rounded-lg bg-blue-100 text-blue-700 mr-4">
-              <FiUser size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">On Leave</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{onLeaveCount}</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500">Team members on leave today</p>
-        </motion.div>
-
-        {/* Announcements Card */}
-        <motion.div 
-          className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow"
-          variants={statCardVariants}
-          custom={2}
-        >
-          <div className="flex items-center mb-4">
-            <div className="p-3 rounded-lg bg-green-100 text-green-700 mr-4">
-              <FiBell size={24} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700">Announcements</h3>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{announcementsCount}</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-500">New announcements</p>
-        </motion.div>
-      </div>
-
-      {/* Integrated Missing Reports Summary */}
-      <motion.div
-        id="missing-reports-header"
-        className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
-        variants={statCardVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
-          <div className="flex items-center">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
-              <FiAlertCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                Missing Reports Today
-              </h2>
-              <p className="text-gray-500 text-sm">Standup submissions pending</p>
-            </div>
-          </div>
-
-          {isToday(date) && !loadingMissing && (
-            <div className="flex items-center mt-2 sm:mt-0">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex items-center px-3 py-1.5 mr-2">
-                <div className="text-center mr-3 pr-3 border-r border-gray-200">
-                  <div className="text-xs text-gray-500">Total</div>
-                  <div className="font-bold text-lg text-indigo-700">{teamMembers.length}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-gray-500">Missing</div>
-                  <div className="font-bold text-lg text-indigo-700">{missingReports.length}</div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleRefresh}
-                className="text-xs bg-indigo-600 text-white rounded-lg px-3 py-1.5 flex items-center hover:bg-indigo-700 transition-colors"
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Report completion status */}
+              <motion.div 
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
-                <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
-                <span className="ml-1">Refresh</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Condensed list of missing members (3x3 grid, fixed height, scrollable if more than 9) */}
-        {isToday(date) && missingReports.length > 0 && (
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto" style={{ minHeight: '12rem' }}>
-            {missingReports.map((member, index) => (
-              <motion.div
-                key={member.id}
-                className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center"
-                variants={itemVariants}
-                custom={index}
-                initial="hidden"
-                animate="visible"
-              >
-                {member.avatar_url ? (
-                  <img
-                    src={member.avatar_url}
-                    alt={member.name}
-                    className="w-9 h-9 rounded-full object-cover shadow mr-3 border-2 border-indigo-100"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow mr-3">
-                    {member.name.charAt(0)}
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-blue-500 rounded-lg text-white">
+                    <FiFileText className="h-5 w-5" />
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{member.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{member.teams?.name || 'No Team'}</p>
+                  <span className="text-2xl font-bold text-blue-600">{reports.length}</span>
                 </div>
-                <FiAlertCircle className="text-amber-500 ml-2" />
+                <h3 className="font-medium text-gray-700 mb-1">Reports Submitted</h3>
+                <div className="w-full bg-blue-100 rounded-full h-2.5">
+                  <div 
+                    className="bg-blue-500 h-2.5 rounded-full" 
+                    style={{ width: `${reportCompletionPercentage}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>{reportCompletionPercentage}% complete</span>
+                  <span>{missingReports.length} missing</span>
+                </div>
               </motion.div>
-            ))}
-            {missingReports.length > 9 && (
-              <div className="col-span-3 text-center text-xs text-gray-400 mt-2">Scroll for more...</div>
+              
+              {/* Team availability */}
+              <motion.div 
+                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-emerald-500 rounded-lg text-white">
+                    <FiUsers className="h-5 w-5" />
+                  </div>
+                  <span className="text-2xl font-bold text-emerald-600">{teamMembers.length}</span>
+                </div>
+                <h3 className="font-medium text-gray-700 mb-1">Team Members</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <span className="text-sm text-gray-600">{teamMembers.length - onLeaveCount} Available</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded-full bg-amber-500"></span>
+                    <span className="text-sm text-gray-600">{onLeaveCount} On Leave</span>
+                  </div>
+                </div>
+              </motion.div>
+              
+              {/* Announcements */}
+              <motion.div 
+                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                onClick={() => setShowAnnouncementsList(true)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-purple-500 rounded-lg text-white">
+                    <FiBell className="h-5 w-5" />
+                  </div>
+                  <span className="text-2xl font-bold text-purple-600">{announcementsCount}</span>
+                </div>
+                <h3 className="font-medium text-gray-700 mb-1">Announcements</h3>
+                <p className="text-sm text-gray-600">
+                  {announcementsCount > 0 
+                    ? `You have ${announcementsCount} unread announcement${announcementsCount !== 1 ? 's' : ''}` 
+                    : 'No new announcements'}
+                </p>
+              </motion.div>
+              
+              {/* Quick Actions */}
+              <motion.div 
+                className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="p-2 bg-gray-700 rounded-lg text-white">
+                    <FiBarChart2 className="h-5 w-5" />
+                  </div>
+                </div>
+                <h3 className="font-medium text-gray-700 mb-2">Quick Actions</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors flex items-center gap-1"
+                  >
+                    <FiRefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    onClick={handleNewReport}
+                    className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200 transition-colors flex items-center gap-1"
+                  >
+                    <FiPlus className="w-3.5 h-3.5" />
+                    <span>Add Report</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Integrated Missing Reports Summary */}
+        <motion.div
+          id="missing-reports-header"
+          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+          variants={statCardVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
+            <div className="flex items-center">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
+                <FiAlertCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">Missing Reports</h3>
+                <p className="text-sm text-gray-600">
+                  {missingReports.length === 0 
+                    ? 'Everyone has submitted their reports today!' 
+                    : `${missingReports.length} team member${missingReports.length !== 1 ? 's' : ''} still need${missingReports.length === 1 ? 's' : ''} to submit a report`}
+                </p>
+              </div>
+            </div>
+            
+            {isToday(date) && !loadingMissing && missingReports.length > 0 && (
+              <button 
+                className="mt-2 sm:mt-0 px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                onClick={() => setShowMissingModal(true)}
+              >
+                <FiUsers className="h-4 w-4" />
+                <span>View All</span>
+              </button>
             )}
           </div>
-        )}
-      </motion.div>
-    </div>
-  );
+          
+          {/* Missing Reports List */}
+          {isToday(date) && missingReports.length > 0 && (
+            <div className="p-4 bg-white">
+              <div className="flex flex-wrap gap-2">
+                {missingReports.slice(0, 5).map(member => (
+                  <div 
+                    key={member.id} 
+                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    {member.avatar_url ? (
+                      <img
+                        src={member.avatar_url}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full object-cover shadow border-2 border-indigo-100"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-gray-700">{member.name}</span>
+                  </div>
+                ))}
+                
+                {missingReports.length > 5 && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                    <span className="text-sm font-medium text-gray-700">+{missingReports.length - 5} more</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    );
+  };
 
   return (
     <motion.div 
-      className="max-w-6xl mx-auto"
+      className="w-full"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* New DashboardHeader component */}
-      <DashboardHeader />
+      {/* Enhanced Dashboard Header */}
+      <motion.header
+        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-300 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 shadow-lg border-b border-gray-200/60 backdrop-blur-sm`}
+        id="dashboard-header"
+        animate={{ y: showHeader ? 0 : '-100%' }}
+        initial={{ y: 0 }}
+        transition={{ type: 'tween', duration: 0.3 }}
+        style={{ minHeight: 112, width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})` }}
+      >
+        {/* Enhanced decorative gradients */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-purple-400/10 to-pink-400/10 animate-pulse pointer-events-none" />
+        <div className="absolute -bottom-10 right-0 w-64 h-64 bg-indigo-400/5 rounded-full blur-3xl"></div>
+        <div className="absolute -top-10 left-0 w-64 h-64 bg-blue-400/5 rounded-full blur-3xl"></div>
+        
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6 px-8 py-5">
+          {/* User Welcome Section */}
+          <div className="flex items-center gap-5">
+            <div className="relative w-16 h-16 bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/80 via-blue-600/50 to-purple-600/30 opacity-80"></div>
+              <FiUser className="w-8 h-8 text-white relative z-10" />
+              <div className="absolute -bottom-6 -right-6 w-12 h-12 bg-white/20 rounded-full"></div>
+              <div className="absolute -top-6 -left-6 w-12 h-12 bg-white/10 rounded-full"></div>
+            </div>
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-blue-800 bg-clip-text text-transparent mb-2">Welcome Back</h1>
+              <div className="text-base text-gray-600 font-medium flex items-center">
+                <span className="mr-2">Team & Standup Overview</span>
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+                <span className="text-sm text-green-600">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+              </div>
+            </div>
+          </div>
+          
+         
+          
+          {/* Quick Actions */}
+          <div className="flex flex-col gap-2 md:gap-3 md:flex-row items-center">
+            <button
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300"
+              onClick={handleRefresh}
+            >
+              <FiRefreshCw className="w-5 h-5" />
+              <span>Refresh</span>
+            </button>
+            <button
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300"
+              onClick={handleNewReport}
+            >
+              <FiPlus className="w-5 h-5" />
+              <span>Add Report</span>
+            </button>
+          </div>
+        </div>
+      </motion.header>
+      {/* Spacer to prevent content overlap */}
+      <div style={{ height: 112 }} />
+
+      {/* Dashboard Header with Missing Reports Component */}
+      <div className="container mx-auto px-6 pt-6">
+        <DashboardHeader />
+      </div>
 
       {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 w-full mt-6">
         
           <motion.div
             variants={itemVariants}
@@ -714,7 +858,7 @@ export default function Dashboard() {
             <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-emerald-400/10 rounded-full blur-3xl"></div>
             
             {/* Header */}
-            <div className="relative p-6 md:p-8 border-b border-indigo-100/50 bg-white/50 backdrop-blur-sm">
+            <div className="relative p-4 border-b border-indigo-100/50 bg-white/50 backdrop-blur-sm">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <motion.h2 
                   className="text-2xl font-bold text-gray-800 flex items-center gap-3"
@@ -825,7 +969,7 @@ export default function Dashboard() {
       <AnimatePresence>
         {showFilters && (
           <motion.div 
-                  className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-4 mx-6 mt-4"
+                  className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-2 mt-2"
                   initial={{ opacity: 0, y: -20, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
                   exit={{ opacity: 0, y: -20, height: 0 }}
@@ -922,7 +1066,7 @@ export default function Dashboard() {
 
             {/* Date navigation bar */}
         <motion.div 
-              className="relative p-5 bg-gradient-to-r from-indigo-50 to-slate-50"
+              className="relative p-4 bg-gradient-to-r from-indigo-50 to-slate-50"
               initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -980,7 +1124,7 @@ export default function Dashboard() {
             </motion.div>
             
             {/* Reports Content */}
-            <div className="p-4 md:p-6 bg-white/90 backdrop-blur-sm min-h-[300px]">
+            <div className="p-4 bg-white/90 backdrop-blur-sm min-h-[300px]">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="w-16 h-16 relative">
@@ -1620,6 +1764,15 @@ export default function Dashboard() {
         subtitle={format(new Date(), 'MMMM d, yyyy')}
         users={onLeaveMembers}
         type="onLeave"
+      />
+
+      {/* Modal for Missing Reports */}
+      <UserListModal
+        isOpen={showMissingModal}
+        onClose={() => setShowMissingModal(false)}
+        title="Missing Reports Today"
+        users={missingReports}
+        emptyMessage="Everyone has submitted their reports today!"
       />
     </motion.div>
   );

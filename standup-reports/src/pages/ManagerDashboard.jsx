@@ -646,7 +646,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 pt-2 pr-5 pb-5 pl-5">
       {/* Floating Navigation */}
       <FloatingNav 
         activeTab={activeTab} 
@@ -662,7 +662,6 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
           initial="hidden"
           animate="visible"
           exit="hidden"
-          className="max-w-7xl mx-auto"
         >
           {/* Team Management Tab */}
           {activeTab === 'team-management' && (
@@ -713,7 +712,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
                 ]}
               />
               <motion.div
-                className="bg-white rounded-xl shadow-lg p-6"
+                className="bg-white rounded-xl shadow-lg"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"

@@ -423,7 +423,7 @@ export default function ReportEntry() {
 
   return (
     <motion.div 
-      className="max-w-4xl mx-auto"
+      className="w-full min-h-screen p-4"
       initial="hidden"
       animate="visible"
       variants={containerVariants}

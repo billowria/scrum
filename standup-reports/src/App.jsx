@@ -5,8 +5,8 @@ import { supabase } from './supabaseClient';
 import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
 
 // Components
+import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
-import NavbarPro from './components/NavbarPro';
 
 // Pages
 import AuthPage from './pages/AuthPage';
@@ -33,6 +33,8 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     // Check for active session on load
@@ -40,6 +42,7 @@ function App() {
       setSession(session);
       if (session) {
         fetchUserRole(session.user.id);
+        fetchUserProfile(session.user.id);
       } else {
         setLoading(false);
       }
@@ -51,8 +54,10 @@ function App() {
         setSession(session);
         if (session) {
           fetchUserRole(session.user.id);
+          fetchUserProfile(session.user.id);
         } else {
           setUserRole(null);
+          setUserProfile(null);
           setLoading(false);
         }
       }
@@ -80,6 +85,22 @@ function App() {
     }
   };
 
+  // Fetch user profile (name, avatar_url, role)
+  const fetchUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, role, avatar_url')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setUserProfile(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
@@ -101,19 +122,34 @@ function App() {
 
   return (
     <Router>
-      <AppContent session={session} userRole={userRole} />
+      {session ? (
+        <>
+          <Navbar user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
+          <div className="flex pt-16">
+            <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+            <div className={`flex-1 min-h-screen bg-gray-50 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-20'}`}>
+              <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30">
+          <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+        </div>
+      )}
     </Router>
   );
 }
 
 // Separate component to handle dynamic content based on routes
-function AppContent({ session, userRole }) {
+function AppContent({ session, userRole, sidebarOpen }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30">
-      <NavbarPro session={session} />
-      <div className="pt-10">
+    <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30" : "min-h-screen"}>
+      {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
+      {/* <NavbarPro session={session} /> */}
+      <div className={session ? "pt-10" : ""}>
         <AnimatePresence mode="sync" initial={false}>
           <Routes>
             {!session ? (
@@ -128,39 +164,38 @@ function AppContent({ session, userRole }) {
               <>
                 <Route path="/dashboard" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                      <Dashboard />
+                    <div className="w-full py-6">
+                      <Dashboard sidebarOpen={sidebarOpen} />
                     </div>
                   </PageTransition>
                 } />
-                
                 {/* Manager-specific routes */}
                 {userRole === 'manager' && (
                   <>
                     <Route path="/team-management" element={
                       <PageTransition>
-                        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="w-full py-6">
                           <TeamManagement />
                         </div>
                       </PageTransition>
                     } />
                     <Route path="/leave-requests" element={
                       <PageTransition>
-                        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="w-full py-6">
                           <ManagerDashboard activeTabDefault="leave-requests" />
                         </div>
                       </PageTransition>
                     } />
                     <Route path="/manager-dashboard" element={
                       <PageTransition>
-                        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="w-full py-6">
                           <ManagerDashboard />
                         </div>
                       </PageTransition>
                     } />
                     <Route path="/history" element={
                       <PageTransition>
-                        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                        <div className="w-full py-6">
                           <History />
                         </div>
                       </PageTransition>
@@ -169,42 +204,42 @@ function AppContent({ session, userRole }) {
                 )}
                 <Route path="/report" element={
                   <PageTransition>
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="w-full py-6">
                       <ReportEntry />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/leave-calendar" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="w-full py-6">
                       <LeaveCalendar />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/announcements" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="w-full py-6">
                       <ManageAnnouncements />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/achievements" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="w-full py-6">
                       <AchievementsPage />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/tasks" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
-                      <TasksPage />
+                    <div className="w-full py-6">
+                      <TasksPage sidebarOpen={sidebarOpen} />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/notifications" element={
                   <PageTransition>
-                    <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-20">
+                    <div className="w-full py-6">
                       <NotificationsPage />
                     </div>
                   </PageTransition>
@@ -239,114 +274,5 @@ function PageTransition({ children }) {
   );
 }
 
-// Footer Link Group with animation
-function FooterLinkGroup({ title, links, delay }) {
-  return (
-    <motion.div 
-      className="flex flex-col space-y-3"
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, delay }}
-    >
-      <h3 className="font-semibold text-gray-800 mb-1">{title}</h3>
-      {links.map((link, index) => (
-        <FooterLinkEnhanced 
-          key={index} 
-          href={link.href}
-          delay={0.1 * index}
-        >
-          {link.label}
-        </FooterLinkEnhanced>
-      ))}
-    </motion.div>
-  );
-}
-
-// Enhanced Footer Link with animated hover effect
-function FooterLinkEnhanced({ href, children, delay }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: delay }}
-    >
-      <motion.a 
-        href={href} 
-        className="text-gray-500 hover:text-primary-600 text-sm transition-colors relative inline-block group"
-        whileHover={{ scale: 1.02, x: 3 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-      >
-        <span>{children}</span>
-        <motion.span 
-          className="absolute bottom-0 left-0 h-0.5 bg-primary-500"
-          initial={{ width: 0 }}
-          whileHover={{ width: '100%' }}
-          transition={{ duration: 0.3 }}
-        />
-        <motion.span
-          className="absolute left-0 w-1 h-1 rounded-full bg-primary-500 -translate-x-2"
-          initial={{ opacity: 0, scale: 0 }}
-          whileHover={{ 
-            opacity: 1, 
-            scale: 1,
-            transition: { duration: 0.2, delay: 0.1 }
-          }}
-        />
-      </motion.a>
-    </motion.div>
-  );
-}
-
-// Enhanced Social Button with branded color and animations
-function SocialButtonEnhanced({ icon, label, color }) {
-  return (
-    <motion.a
-      href="#"
-      aria-label={label}
-      className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 border border-gray-200 relative overflow-hidden group"
-      whileHover={{ 
-        scale: 1.15,
-        boxShadow: `0 0 0 2px rgba(${color === '#1DA1F2' ? '29, 161, 242' : color === '#FF0000' ? '255, 0, 0' : color === '#0077B5' ? '0, 119, 181' : '51, 51, 51'}, 0.3)`,
-        transition: { type: "spring", stiffness: 400, damping: 10 }
-      }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <motion.div
-        className="absolute inset-0 z-0"
-        initial={{ opacity: 0 }}
-        whileHover={{ opacity: 1 }}
-        style={{ backgroundColor: color }}
-        transition={{ duration: 0.3 }}
-        variants={{
-          hover: {
-            scale: [1, 1.1, 1],
-            opacity: 1,
-          }
-        }}
-      />
-      <motion.div 
-        className="relative z-10 flex items-center justify-center w-full h-full"
-        initial={{ color: "#6B7280" }}
-        whileHover={{ 
-          color: "#FFFFFF",
-          rotate: [0, 5, -5, 0],
-          transition: { rotate: { duration: 0.5 } }
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        {icon}
-      </motion.div>
-      <motion.span
-        className="absolute inset-0 z-0 rounded-full"
-        initial={{ boxShadow: "0 0 0 0 rgba(0,0,0,0)" }}
-        whileHover={{ boxShadow: `0 0 20px 3px ${color}33` }}
-        transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
-      />
-    </motion.a>
-  );
-}
 
 export default App;

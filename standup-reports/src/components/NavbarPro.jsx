@@ -81,9 +81,7 @@ const NavbarPro = ({ session }) => {
         {/* Brand */}
         <div className="flex items-center gap-3">
           <img src="/vite.svg" alt="Logo" className="h-9 w-9 rounded-lg shadow" />
-          <span className="text-2xl font-extrabold bg-gradient-to-r from-indigo-700 to-blue-500 bg-clip-text text-transparent tracking-tight select-none">
-            SquadSync
-          </span>
+         
         </div>
 
         {/* Animated Pill Navbar for first 4 links */}

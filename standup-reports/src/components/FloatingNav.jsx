@@ -197,7 +197,7 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
               scale: 1,
               borderRadius: "2rem",
               transition: {
-                duration: 0.8,
+                duration: 0.7,
                 ease: [0.76, 0, 0.24, 1]
               }
             }}
@@ -207,99 +207,93 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
               scale: 0.6,
               borderRadius: "100%",
               transition: {
-                duration: 0.6,
+                duration: 0.5,
                 ease: [0.76, 0, 0.24, 1]
               }
             }}
-            className="relative overflow-hidden"
+            className="relative overflow-visible"
           >
-            {/* Glass Container */}
+            {/* Refined Glassy Container */}
             <div 
-              className="relative rounded-[2rem] overflow-hidden"
+              className="relative rounded-[2rem] overflow-visible shadow-xl border border-indigo-200/60"
               style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 25px 50px -12px rgba(14, 165, 233, 0.15)'
+                background: 'linear-gradient(135deg, rgba(40,48,80,0.82) 0%, rgba(67,56,202,0.72) 60%, rgba(59,130,246,0.60) 100%)',
+                backdropFilter: 'blur(22px)',
+                boxShadow: '0 16px 32px -8px rgba(59,130,246,0.10), 0 1.5px 6px rgba(36,41,81,0.08)',
+                border: '1.5px solid rgba(99,102,241,0.10)',
               }}
             >
               {/* Burst Effect on Open */}
               <BurstEffect isVisible={showBurst} />
               
               {/* Navigation Content */}
-              <div className="flex items-center gap-4 p-6 relative z-10">
+              <div className="flex items-center gap-4 p-6 relative z-20">
                 {tabs.map((tab, index) => (
                   <motion.button
                     key={tab.id}
                     initial={{ opacity: 0, y: 0, scale: 1 }}
                     animate={{
                       opacity: 1,
-                      y: [0, -14, 0],
-                      scale: [1, 1.15, 1],
+                      y: [0, -10, 0],
+                      scale: [1, 1.08, 1],
                       transition: {
-                        delay: 0.6 + index * 0.15,
-                        duration: 0.6,
+                        delay: 0.5 + index * 0.13,
+                        duration: 0.5,
                         ease: 'easeOut'
                       }
                     }}
                     exit={{
                       opacity: 0,
-                      y: 20,
-                      transition: { duration: 0.2 }
+                      y: 16,
+                      transition: { duration: 0.18 }
                     }}
                     onClick={() => handleTabClick(tab)}
-                    className={`relative flex flex-col items-center justify-center w-28 h-28 rounded-xl overflow-hidden group`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className={`relative flex flex-col items-center justify-center w-24 h-24 rounded-2xl overflow-visible group focus:outline-none focus:ring-2 focus:ring-indigo-400`}
+                    whileHover={{ scale: 1.07 }}
+                    whileTap={{ scale: 0.96 }}
                   >
                     {/* Active Tab Indicator */}
                     {activeTab === tab.id && (
                       <motion.div
                         layoutId="activeTab"
-                        className="absolute inset-0 rounded-xl overflow-hidden"
+                        className="absolute inset-0 rounded-2xl overflow-visible z-10"
                         initial={false}
                         transition={{ type: 'spring', bounce: 0.3, duration: 0.6 }}
                       >
-                        {/* Gooey animated gradient */}
+                        {/* Soft glassy highlight for active tab */}
                         <motion.div
-                          className="absolute -inset-2 bg-gradient-to-br from-sky-400 via-sky-300 to-blue-500"
-                          style={{ filter: 'blur(20px)' }}
-                          animate={{
-                            scale: [1, 1.2, 1],
-                            borderRadius: ['30%', '50%', '30%'],
-                          }}
-                          transition={{
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: 'easeInOut',
-                          }}
+                          className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-400/30 via-blue-400/20 to-indigo-600/30"
+                          style={{ filter: 'blur(10px)' }}
+                          initial={{ opacity: 0.7 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5 }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-br from-sky-400/40 to-blue-500/40 opacity-70" />
+                        <div className="absolute inset-0 rounded-2xl border border-indigo-300/40 shadow-lg" style={{ boxShadow: '0 2px 12px 0 rgba(99,102,241,0.10)' }} />
                       </motion.div>
                     )}
                     
                     {/* Icon Container */}
                     <motion.div
-                      className={`text-3xl mb-2 relative z-10 transition-transform duration-300 ${
-                        activeTab === tab.id ? 'text-white scale-110' : 'text-gray-400'
+                      className={`text-3xl mb-2 relative z-20 transition-transform duration-300 ${
+                        activeTab === tab.id ? 'text-white scale-110 drop-shadow-[0_2px_8px_rgba(99,102,241,0.18)]' : 'text-indigo-200 group-hover:text-white'
                       }`}
-                      whileHover={{ scale: 1.2 }}
+                      whileHover={{ scale: 1.13, color: '#6366f1' }}
                     >
                       <tab.icon />
                     </motion.div>
                     
                     {/* Label */}
-                    <span className={`text-sm font-medium relative z-10 ${
-                      activeTab === tab.id ? 'text-white' : 'text-gray-400'
+                    <span className={`text-sm font-semibold relative z-20 ${
+                      activeTab === tab.id ? 'text-white drop-shadow-[0_1px_4px_rgba(99,102,241,0.13)]' : 'text-indigo-100 group-hover:text-white'
                     }`}>
                       {tab.label}
                     </span>
                     
                     {/* Hover Effect */}
                     <motion.div
-                      className="absolute inset-0 bg-sky-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
                       style={{ 
-                        background: 'linear-gradient(45deg, rgba(56,189,248,0.2), rgba(14,165,233,0.2))'
+                        background: 'linear-gradient(45deg, rgba(99,102,241,0.08), rgba(59,130,246,0.08))'
                       }}
                     />
                   </motion.button>
@@ -313,7 +307,7 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
       {/* Toggle Button */}
       <motion.button
         onClick={() => setIsVisible(!isVisible)}
-        className="w-16 h-16 rounded-full relative overflow-hidden"
+        className="w-16 h-16 rounded-full relative overflow-hidden shadow-xl border border-indigo-200 focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-gradient-to-br from-white/70 via-indigo-50 to-indigo-100"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         animate={{
@@ -323,53 +317,44 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
         onMouseEnter={() => setToggleHover(true)}
         onMouseLeave={() => setToggleHover(false)}
       >
+        {/* Glassy background and animated ring on hover/focus */}
         <motion.div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-full"
           animate={{
             background: isVisible
-              ? 'linear-gradient(45deg, rgba(56,189,248,0.6), rgba(14,165,233,0.6))'
-              : 'rgba(255, 255, 255, 0.08)'
+              ? 'linear-gradient(45deg, rgba(99,102,241,0.12), rgba(59,130,246,0.10))'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.7) 60%, rgba(99,102,241,0.08) 100%)',
+            boxShadow: toggleHover && !isVisible
+              ? '0 0 0 6px rgba(99,102,241,0.18), 0 8px 32px rgba(59,130,246,0.10)'
+              : '0 8px 32px rgba(59,130,246,0.10)'
           }}
           style={{
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 32px rgba(14, 165, 233, 0.25)'
+            border: '1.5px solid rgba(99,102,241,0.13)',
+            backdropFilter: 'blur(12px)',
+            transition: 'box-shadow 0.3s, background 0.3s',
           }}
         />
         <div className="relative z-10 w-full h-full flex items-center justify-center">
-          <ToggleIcon isOpen={isVisible} isHover={toggleHover} />
+          {/* Professional icon: larger, indigo, soft glow */}
+          <motion.div
+            className="relative w-8 h-8 flex items-center justify-center"
+            animate={{
+              scale: toggleHover && !isVisible ? 1.13 : 1,
+              filter: !isVisible && toggleHover ? 'drop-shadow(0 0 8px #6366f1cc)' : 'drop-shadow(0 1px 4px #6366f133)'
+            }}
+            transition={{ duration: 0.22 }}
+          >
+            {isVisible
+              ? <FiX className="w-8 h-8 text-white" />
+              : <FiGrid className="w-8 h-8 text-indigo-600" />}
+          </motion.div>
         </div>
-
-        {/* Micro-options on hover when nav closed */}
-        {toggleHover && !isVisible && (
-          <AnimatePresence>
-            {[0, 1, 2, 3].map((i) => {
-              const positions = [
-                { top: '8%', left: '8%' },
-                { top: '8%', right: '8%' },
-                { bottom: '8%', left: '8%' },
-                { bottom: '8%', right: '8%' },
-              ];
-              return (
-                <motion.span
-                  key={i}
-                  className="absolute w-1.5 h-1.5 rounded-full bg-sky-400"
-                  style={positions[i]}
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, delay: 0.05 * i }}
-                />
-              );
-            })}
-          </AnimatePresence>
-        )}
 
         {/* "More" text on hover when closed */}
         <AnimatePresence>
           {toggleHover && !isVisible && (
             <motion.span
-              className="absolute left-1/2 top-full mt-2 -translate-x-1/2 text-xs font-medium text-gray-400 select-none"
+              className="absolute left-1/2 top-full mt-2 -translate-x-1/2 text-xs font-medium text-gray-400/70 select-none"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
