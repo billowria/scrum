@@ -5,7 +5,7 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
   FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
-  FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar } from 'react-icons/fi';
+  FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock } from 'react-icons/fi';
 import { TbHistory } from 'react-icons/tb';
 import History from './History';
 
@@ -332,6 +332,11 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       id: 'team-management',
       label: 'Team Management',
       icon: <FiUsers />,
+    },
+    {
+      id: 'add-member',
+      label: 'Add Member',
+      icon: <FiUserPlus />,
     },
     {
       id: 'leave-requests',
@@ -689,6 +694,14 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
             </div>
           )}
 
+          {/* Add Member Tab */}
+          {activeTab === 'add-member' && (
+            <AddMemberForm onMemberAdded={() => {
+              fetchUsers();
+              setRefreshTrigger(prev => prev + 1);
+            }} />
+          )}
+
           {/* Leave Requests Tab */}
           {activeTab === 'leave-requests' && (
             <div ref={leaveRequestsRef}>
@@ -997,3 +1010,392 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     </div>
   );
 }
+
+// Avatar URLs for random assignment
+const AVATAR_URLS = [
+  'https://i.imghippo.com/files/XHF3893M.jpeg',
+  'https://i.imghippo.com/files/QBoU6103Ko.jpeg',
+  'https://i.imghippo.com/files/fBoU9649gng.jpeg',
+  'https://i.imghippo.com/files/yinH4907V.jpeg',
+  'https://i.imghippo.com/files/Ta2332vQ.jpeg'
+];
+
+// AddMemberForm Component
+const AddMemberForm = ({ onMemberAdded }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'member',
+    team_id: ''
+  });
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [gradientPosition, setGradientPosition] = useState({ x: 0, y: 0 });
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 200, damping: 24, delayChildren: 0.2, staggerChildren: 0.08 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
+
+  const buttonVariants = {
+    idle: { scale: 1 },
+    hover: { scale: 1.05 },
+    tap: { scale: 0.95 }
+  };
+
+  // Fetch teams on component mount
+  useEffect(() => {
+    fetchTeams();
+    
+    // Animated background gradient
+    const handleMouseMove = (e) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      setGradientPosition({ x, y });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      setTeams(data || []);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Validate form data
+      if (!formData.name || !formData.email || !formData.password) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
+      // Create user account
+      const { error: signUpError, data } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      if (signUpError) throw signUpError;
+      
+      // If signup successful, create user profile
+      if (data?.user) {
+        // Get a random avatar URL
+        const randomAvatarUrl = AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)];
+        
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([{
+            id: data.user.id,
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            team_id: formData.team_id || null,
+            avatar_url: randomAvatarUrl
+          }]);
+        
+        if (profileError) throw profileError;
+        
+        // Show success message
+        setSuccess(true);
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'member',
+          team_id: ''
+        });
+        
+        // Call callback to refresh data
+        if (onMemberAdded) {
+          onMemberAdded();
+        }
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => setSuccess(false), 3000);
+      }
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        background: `radial-gradient(circle at ${gradientPosition.x * 100}% ${gradientPosition.y * 100}%, 
+          rgba(59, 130, 246, 0.15) 0%, 
+          rgba(147, 51, 234, 0.1) 25%, 
+          rgba(236, 72, 153, 0.05) 50%, 
+          transparent 100%)`
+      }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -100, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-pink-400/20 to-blue-600/20 rounded-full blur-3xl"
+          animate={{
+            x: [0, -100, 0],
+            y: [0, 100, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        <motion.div
+          className="max-w-2xl mx-auto"
+          variants={itemVariants}
+        >
+          {/* Header */}
+          <motion.div className="text-center mb-8" variants={itemVariants}>
+            <motion.div
+              className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <FiUserPlus className="w-8 h-8 text-white" />
+            </motion.div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-2">
+              Add New Member
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Invite a new team member to join your organization
+            </p>
+          </motion.div>
+
+          {/* Form */}
+          <motion.div
+            className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8"
+            variants={itemVariants}
+          >
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Name Field */}
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Full Name *
+                </label>
+                <div className="relative">
+                  <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter full name"
+                    required
+                  />
+                </div>
+              </motion.div>
+
+              {/* Email Field */}
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+              </motion.div>
+
+              {/* Password Field */}
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password *
+                </label>
+                <div className="relative">
+                  <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                    placeholder="Enter password (min 6 characters)"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? '🙈' : '👁️'}
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Role Field */}
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Role
+                </label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                >
+                  <option value="member">Member</option>
+                  <option value="manager">Manager</option>
+                </select>
+              </motion.div>
+
+              {/* Team Field */}
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Team (Optional)
+                </label>
+                <select
+                  name="team_id"
+                  value={formData.team_id}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/50 backdrop-blur-sm"
+                >
+                  <option value="">Select a team (optional)</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              </motion.div>
+
+              {/* Error Message */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-2 text-red-700"
+                  >
+                    <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Success Message */}
+              <AnimatePresence>
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center space-x-2 text-green-700"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 500, damping: 30 }}
+                    >
+                      <FiCheck className="w-5 h-5 flex-shrink-0" />
+                    </motion.div>
+                    <span>Member added successfully! Welcome email has been sent.</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Submit Button */}
+              <motion.button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                variants={buttonVariants}
+                initial="idle"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <motion.div
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
+                    <span>Adding Member...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-2">
+                    <FiUserPlus className="w-5 h-5" />
+                    <span>Add Member</span>
+                  </div>
+                )}
+              </motion.button>
+            </form>
+          </motion.div>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};

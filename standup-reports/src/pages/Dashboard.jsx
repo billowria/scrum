@@ -150,6 +150,8 @@ export default function Dashboard({ sidebarOpen }) {
   const [onLeaveMembers, setOnLeaveMembers] = useState([]);
 
   const [showHeader, setShowHeader] = useState(true);
+  // State to toggle showing all missing reports in-card
+  const [showAllMissingReports, setShowAllMissingReports] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
@@ -736,30 +738,70 @@ export default function Dashboard({ sidebarOpen }) {
           {isToday(date) && missingReports.length > 0 && (
             <div className="p-4 bg-white">
               <div className="flex flex-wrap gap-2">
-                {missingReports.slice(0, 5).map(member => (
-                  <div 
+                {(showAllMissingReports ? missingReports : missingReports.slice(0, 5)).map((member, index) => (
+                  <motion.div 
                     key={member.id} 
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0, 
+                      scale: 1,
+                      transition: { 
+                        delay: showAllMissingReports ? index * 0.05 : 0 
+                      }
+                    }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ 
+                      type: 'spring', 
+                      stiffness: 300,
+                      damping: 20
+                    }}
+                    layout
                   >
-                    {member.avatar_url ? (
-                      <img
-                        src={member.avatar_url}
-                        alt={member.name}
-                        className="w-8 h-8 rounded-full object-cover shadow border-2 border-indigo-100"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
-                        {member.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-gray-700">{member.name}</span>
-                  </div>
+                    <div 
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      {member.avatar_url ? (
+                        <img
+                          src={member.avatar_url}
+                          alt={member.name}
+                          className="w-8 h-8 rounded-full object-cover shadow border-2 border-indigo-100"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-700">{member.name}</span>
+                    </div>
+                  </motion.div>
                 ))}
                 
-                {missingReports.length > 5 && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                {missingReports.length > 5 && !showAllMissingReports && (
+                  <button
+                     type="button"
+                     className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                     onClick={() => {
+                      setIsAnimating(true);
+                      setShowAllMissingReports(true);
+                      setTimeout(() => setIsAnimating(false), 300);
+                    }}
+                   >
                     <span className="text-sm font-medium text-gray-700">+{missingReports.length - 5} more</span>
-                  </div>
+                  </button>
+                )}
+                {showAllMissingReports && (
+                  <button
+                     type="button"
+                     className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                     onClick={() => {
+                      setIsAnimating(true);
+                      setShowAllMissingReports(false);
+                      setTimeout(() => setIsAnimating(false), 300);
+                    }}
+                   >
+                    <span className="text-sm font-medium text-gray-700">Close</span>
+                  </button>
                 )}
               </div>
             </div>
@@ -1181,7 +1223,7 @@ export default function Dashboard({ sidebarOpen }) {
                                 className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-semibold text-lg border-2 border-white shadow-md">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
                                 {filteredReports[currentReportIndex].users?.name?.charAt(0) || "U"}
                         </div>
                             )}
@@ -1284,12 +1326,10 @@ export default function Dashboard({ sidebarOpen }) {
                                 : 'bg-gradient-to-br from-blue-50 to-blue-100/50 group-hover:from-blue-100 group-hover:to-blue-50'
                             }`}>
                               <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'}`}>
-                                {filteredReports[currentReportIndex].blockers || 
-                                  <span className="italic text-emerald-600 flex items-center gap-1">
-                                    <FiCheckCircle className="h-3 w-3" />
-                                    No blockers
-                                  </span>
-                                }
+                                {filteredReports[currentReportIndex].blockers || <span className="italic text-emerald-600 flex items-center gap-1">
+                                  <FiCheckCircle className="h-3 w-3" />
+                                  No blockers
+                                </span>}
                               </div>
                           </div>
                         </motion.div>
@@ -1574,7 +1614,7 @@ export default function Dashboard({ sidebarOpen }) {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-800 truncate">{member.name}</p>
-                              <p className="text-xs text-gray-500 truncate">{member.teams?.name || 'No Team'}</p>
+                              <p className="text-xs text-gray-600 truncate">{member.teams?.name || 'No Team'}</p>
                             </div>
                             <FiAlertCircle className="text-amber-500 ml-2" />
                           </motion.div>

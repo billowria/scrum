@@ -9,7 +9,8 @@ import {
   TbSettings,
   TbClipboardText,
   TbBell,
-  TbHistory
+  TbHistory,
+  TbUserPlus
 } from 'react-icons/tb';
 
 // Shooting Star Component
@@ -154,6 +155,7 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
     'manager-dashboard': [
       { id: 'leave-requests', icon: TbClipboardText, label: 'Leave Requests', path: '/manager-dashboard?tab=leave-requests' },
       { id: 'team-management', icon: TbUsers, label: 'Team', path: '/manager-dashboard?tab=team-management' },
+      { id: 'add-member', icon: TbUserPlus, label: 'Add Member', path: '/manager-dashboard?tab=add-member' },
       { id: 'announcements', icon: TbBell, label: 'Announcements', path: '/manager-dashboard?tab=announcements' },
       { id: 'leave-history', icon: TbHistory, label: 'History', path: '/manager-dashboard?tab=leave-history' },
       { id: 'report-history', icon: TbHistory, label: 'Reports', path: '/manager-dashboard?tab=report-history' }
