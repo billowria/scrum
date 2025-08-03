@@ -147,7 +147,9 @@ export default function Dashboard({ sidebarOpen }) {
   // Add new state for modals and on-leave members
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
+  const [showTeamAvailabilityModal, setShowTeamAvailabilityModal] = useState(false);
   const [onLeaveMembers, setOnLeaveMembers] = useState([]);
+  const [availableMembers, setAvailableMembers] = useState([]);
 
   const [showHeader, setShowHeader] = useState(true);
   // State to toggle showing all missing reports in-card
@@ -503,8 +505,14 @@ export default function Dashboard({ sidebarOpen }) {
   useEffect(() => {
     fetchOnLeaveCount();
     fetchAnnouncementsCount();
-    fetchOnLeaveMembers();
   }, []);
+
+  // Fetch available and on-leave members when userTeamId is available
+  useEffect(() => {
+    if (userTeamId) {
+      fetchOnLeaveMembers();
+    }
+  }, [userTeamId]);
 
   // Function to scroll to missing reports section
   const scrollToMissingReports = () => {
@@ -514,26 +522,45 @@ export default function Dashboard({ sidebarOpen }) {
     }
   };
 
-  // Function to fetch on-leave members
+  // Function to fetch on-leave members and available members
   const fetchOnLeaveMembers = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
+      
+      // Fetch on-leave members
+      const { data: leaveData, error: leaveError } = await supabase
         .from('leave_plans')
         .select(`
           id,
-          users:user_id (id, name, avatar_url, role)
+          users:user_id (id, name, avatar_url, role, teams:team_id (id, name))
         `)
         .eq('status', 'approved')
         .lte('start_date', today)
         .gte('end_date', today);
 
-      if (error) {
-        console.error('Error fetching on-leave members:', error);
-        throw error;
+      if (leaveError) {
+        console.error('Error fetching on-leave members:', leaveError);
+        throw leaveError;
       }
       
-      setOnLeaveMembers(data.map(item => item.users).filter(Boolean));
+      const onLeaveUserIds = leaveData.map(item => item.users?.id).filter(Boolean);
+      setOnLeaveMembers(leaveData.map(item => item.users).filter(Boolean));
+      
+      // Fetch all team members to determine available ones
+      if (userTeamId) {
+        const { data: allMembers, error: membersError } = await supabase
+          .from('users')
+          .select('id, name, avatar_url, role, teams:team_id (id, name)')
+          .eq('team_id', userTeamId);
+          
+        if (membersError) {
+          console.error('Error fetching team members:', membersError);
+        } else {
+          // Filter out on-leave members to get available members
+          const available = allMembers.filter(member => !onLeaveUserIds.includes(member.id));
+          setAvailableMembers(available);
+        }
+      }
     } catch (error) {
       console.error('Error in fetchOnLeaveMembers:', error);
     }
@@ -625,8 +652,9 @@ export default function Dashboard({ sidebarOpen }) {
               
               {/* Team availability */}
               <motion.div 
-                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100"
+                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100 cursor-pointer"
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                onClick={() => setShowTeamAvailabilityModal(true)}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="p-2 bg-emerald-500 rounded-lg text-white">
@@ -649,10 +677,9 @@ export default function Dashboard({ sidebarOpen }) {
               
               {/* Announcements */}
               <motion.div 
-                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100"
+                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100 cursor-pointer"
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                onClick={() => setShowAnnouncementsList(true)}
-                style={{ cursor: 'pointer' }}
+                onClick={() => navigate('/notifications')}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="p-2 bg-purple-500 rounded-lg text-white">
@@ -1814,6 +1841,181 @@ export default function Dashboard({ sidebarOpen }) {
         users={missingReports}
         emptyMessage="Everyone has submitted their reports today!"
       />
+
+      {/* Team Availability Modal */}
+      <AnimatePresence>
+        {showTeamAvailabilityModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowTeamAvailabilityModal(false)}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/20 rounded-xl">
+                      <FiUsers className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Team Availability</h2>
+                      <p className="text-emerald-100">{format(new Date(), 'MMMM d, yyyy')}</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    onClick={() => setShowTeamAvailabilityModal(false)}
+                    className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiX className="w-5 h-5" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 overflow-y-auto max-h-[70vh]">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Available Members */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                        <FiCheckCircle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">Available Today</h3>
+                        <p className="text-sm text-gray-600">{availableMembers.length} team members</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {availableMembers.length > 0 ? (
+                        availableMembers.map((member, index) => (
+                          <motion.div
+                            key={member.id}
+                            className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt={member.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-emerald-200"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-medium">
+                                {member.name?.charAt(0) || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">{member.name}</p>
+                              <p className="text-sm text-gray-600 capitalize">{member.role}</p>
+                            </div>
+                            <div className="ml-auto">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-200 text-emerald-800 text-xs font-medium rounded-full">
+                                <FiCheckCircle className="w-3 h-3" />
+                                Available
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <FiUsers className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No team members available</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* On Leave Members */}
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                        <FiClock className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">On Leave Today</h3>
+                        <p className="text-sm text-gray-600">{onLeaveMembers.length} team members</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {onLeaveMembers.length > 0 ? (
+                        onLeaveMembers.map((member, index) => (
+                          <motion.div
+                            key={member.id}
+                            className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            {member.avatar_url ? (
+                              <img
+                                src={member.avatar_url}
+                                alt={member.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-200"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-medium">
+                                {member.name?.charAt(0) || '?'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">{member.name}</p>
+                              <p className="text-sm text-gray-600 capitalize">{member.role}</p>
+                            </div>
+                            <div className="ml-auto">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
+                                <FiClock className="w-3 h-3" />
+                                On Leave
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <FiCheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                          <p>No team members on leave</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Total: {availableMembers.length + onLeaveMembers.length} team members
+                  </div>
+                  <motion.button
+                    onClick={() => setShowTeamAvailabilityModal(false)}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Close
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

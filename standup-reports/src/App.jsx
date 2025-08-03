@@ -126,7 +126,7 @@ function App() {
         <>
           <Navbar user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
           <div className="flex pt-16">
-            <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+            <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
             <div className={`flex-1 min-h-screen bg-gray-50 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-20'}`}>
               <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
             </div>

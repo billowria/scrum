@@ -1,333 +1,830 @@
-import React from 'react';
-import { FiHome, FiCalendar, FiList, FiAward, FiUser, FiChevronLeft, FiChevronRight, FiBriefcase, FiUsers, FiClipboard, FiClock, FiBell, FiMenu, FiSidebar, FiArrowLeftCircle, FiArrowRightCircle,FiX } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  FiHome, FiCalendar, FiList, FiAward, FiUser, FiChevronLeft, 
+  FiChevronRight, FiBriefcase, FiUsers, FiClipboard, FiClock, 
+  FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
+  FiTrendingUp, FiShield, FiZap, FiHeart
+} from 'react-icons/fi';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+// Enhanced navigation configuration with premium visual elements
 const navLinks = [
-  { to: '/dashboard', icon: <FiHome />, label: 'Dashboard', color: 'from-blue-500 to-blue-400' },
-  { to: '/leave-calendar', icon: <FiCalendar />, label: 'Leave Calendar', color: 'from-teal-500 to-teal-400' },
-  { to: '/tasks', icon: <FiList />, label: 'Tasks', color: 'from-pink-500 to-pink-400' },
-  { to: '/achievements', icon: <FiAward />, label: 'Achievements', color: 'from-purple-500 to-purple-400' },
+  { 
+    to: '/dashboard', 
+    icon: <FiHome />, 
+    label: 'Dashboard', 
+    gradient: 'from-cyan-400 via-blue-500 to-indigo-600',
+    shadowColor: 'rgba(59, 130, 246, 0.5)',
+    description: 'Overview & Analytics'
+  },
+  { 
+    to: '/leave-calendar', 
+    icon: <FiCalendar />, 
+    label: 'Leave Calendar', 
+    gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
+    shadowColor: 'rgba(20, 184, 166, 0.5)',
+    description: 'Time Management'
+  },
+  { 
+    to: '/tasks', 
+    icon: <FiList />, 
+    label: 'Tasks', 
+    gradient: 'from-pink-400 via-purple-500 to-indigo-600',
+    shadowColor: 'rgba(168, 85, 247, 0.5)',
+    description: 'Project Workflow'
+  },
+  { 
+    to: '/achievements', 
+    icon: <FiAward />, 
+    label: 'Achievements', 
+    gradient: 'from-amber-400 via-orange-500 to-red-600',
+    shadowColor: 'rgba(251, 146, 60, 0.5)',
+    description: 'Recognition & Goals'
+  },
 ];
 
 const managerPortalSubtasks = [
-  { label: 'Team Management', icon: <FiUsers />, to: '/manager-dashboard?tab=team-management' },
-  { label: 'Leave Requests', icon: <FiClipboard />, to: '/manager-dashboard?tab=leave-requests' },
-  { label: 'Leave History', icon: <FiClock />, to: '/manager-dashboard?tab=leave-history' },
-  { label: 'Announcements', icon: <FiBell />, to: '/manager-dashboard?tab=announcements' },
-  { label: 'Report History', icon: <FiList />, to: '/manager-dashboard?tab=report-history' },
+  { 
+    label: 'Team Management', 
+    icon: <FiUsers />, 
+    to: '/manager-dashboard?tab=team-management',
+    gradient: 'from-blue-500 to-indigo-600',
+    description: 'Manage team structure'
+  },
+  { 
+    label: 'Add Member', 
+    icon: <FiUserPlus />, 
+    to: '/manager-dashboard?tab=add-member',
+    gradient: 'from-green-500 to-emerald-600',
+    description: 'Onboard new talent'
+  },
+  { 
+    label: 'Leave Requests', 
+    icon: <FiClipboard />, 
+    to: '/manager-dashboard?tab=leave-requests',
+    gradient: 'from-yellow-500 to-orange-600',
+    description: 'Review time-off requests'
+  },
+  { 
+    label: 'Leave History', 
+    icon: <FiClock />, 
+    to: '/manager-dashboard?tab=leave-history',
+    gradient: 'from-purple-500 to-pink-600',
+    description: 'Historical records'
+  },
+  { 
+    label: 'Announcements', 
+    icon: <FiBell />, 
+    to: '/manager-dashboard?tab=announcements',
+    gradient: 'from-red-500 to-pink-600',
+    description: 'Team communications'
+  },
+  { 
+    label: 'Report History', 
+    icon: <FiList />, 
+    to: '/manager-dashboard?tab=report-history',
+    gradient: 'from-indigo-500 to-purple-600',
+    description: 'Analytics & insights'
+  },
 ];
 
-const glueyTransition = {
+// Premium animation configurations
+const premiumSpring = {
   type: 'spring',
-  stiffness: 500,
+  stiffness: 300,
   damping: 30,
+  mass: 0.8,
 };
 
-export default function Sidebar({ open, setOpen }) {
+const sidebarVariants = {
+  expanded: {
+    width: 280,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 40,
+      mass: 0.8,
+      when: "beforeChildren",
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    }
+  },
+  collapsed: {
+    width: 88,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 40,
+      mass: 0.8,
+      when: "afterChildren",
+      staggerChildren: 0.03,
+      staggerDirection: -1
+    }
+  }
+};
+
+const itemVariants = {
+  expanded: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      ...premiumSpring,
+      delay: 0.1
+    }
+  },
+  collapsed: {
+    opacity: 0,
+    x: -30,
+    scale: 0.8,
+    transition: {
+      ...premiumSpring,
+      duration: 0.3
+    }
+  }
+};
+
+const floatingVariants = {
+  float: {
+    y: [-2, 2, -2],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  }
+};
+
+// Enhanced sidebar component with premium interactions
+export default function Sidebar({ open, setOpen, user }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [managerDropdown, setManagerDropdown] = React.useState(false);
-  const [showBurst, setShowBurst] = React.useState(false);
-  const [toggleHover, setToggleHover] = React.useState(false);
-  const [hoveredLink, setHoveredLink] = React.useState(null);
+  const [managerDropdown, setManagerDropdown] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState(3);
+  
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const springConfig = { stiffness: 150, damping: 25, mass: 0.1 };
+  const mouseSpringX = useSpring(mouseX, springConfig);
+  const mouseSpringY = useSpring(mouseY, springConfig);
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
   const isManagerDashboard = location.pathname.startsWith('/manager-dashboard');
 
+  const handleMouseMove = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  }, [mouseX, mouseY]);
+
+  // Premium notification component
+  const NotificationBadge = ({ count }) => (
+    <motion.div
+      className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold shadow-lg"
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      whileHover={{ scale: 1.2 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+    >
+      {count}
+    </motion.div>
+  );
+
   return (
     <motion.aside
-      animate={{ width: open ? 256 : 80 }}
-      className={`fixed top-0 left-0 h-screen bg-gradient-to-b from-indigo-900 to-indigo-700 flex flex-col justify-between shadow-xl z-40 transition-all duration-300 pt-16`}
-      style={{ width: open ? 256 : 80 }}
+      animate={open ? 'expanded' : 'collapsed'}
+      onMouseMove={handleMouseMove}
+      className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col overflow-hidden z-50 select-none"
+      style={{
+        background: `linear-gradient(145deg, rgba(255, 255, 255, ${open ? 0.25 : 0.3}), rgba(248, 250, 252, ${open ? 0.2 : 0.25}), rgba(241, 245, 249, ${open ? 0.15 : 0.2}))`,
+        backdropFilter: `blur(${open ? 32 : 24}px) saturate(${open ? 200 : 180}%)`,
+        borderRight: `1px solid rgba(148, 163, 184, ${open ? 0.15 : 0.2})`,
+        boxShadow: `
+          0 25px 50px -12px rgba(0, 0, 0, ${open ? 0.08 : 0.12}),
+          0 0 0 1px rgba(255, 255, 255, ${open ? 0.1 : 0.15}),
+          inset 0 1px 0 rgba(255, 255, 255, ${open ? 0.3 : 0.4}),
+          inset 0 -1px 0 rgba(148, 163, 184, ${open ? 0.1 : 0.15})
+        `,
+        width: open ? 280 : 88
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 40,
+        mass: 0.8
+      }}
+      initial={false}
     >
-      {/* Toggle Button */}
-      <div className="flex items-center justify-end p-2">
+      {/* Ambient background effects */}
+      <motion.div
+        className="absolute inset-0"
+        animate={{ 
+          opacity: open ? 0.3 : 0.15,
+          scale: open ? 1 : 0.7
+        }}
+        transition={{ 
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          mass: 0.8
+        }}
+        style={{
+          background: `radial-gradient(${open ? '600px' : '250px'} circle at ${mouseSpringX}px ${mouseSpringY}px, rgba(148, 163, 184, ${open ? '0.15' : '0.08'}), rgba(203, 213, 225, ${open ? '0.1' : '0.05'}), transparent 50%)`,
+          transformOrigin: 'center center'
+        }}
+      />
+      
+      {/* Additional soft glow overlay */}
+      <motion.div
+        className="absolute inset-0"
+        animate={{ 
+          opacity: open ? 0.15 : 0.08,
+          scaleY: open ? 1 : 0.5
+        }}
+        transition={{ 
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          mass: 0.8
+        }}
+        style={{
+          background: `radial-gradient(ellipse at top, rgba(226, 232, 240, ${open ? '0.12' : '0.06'}), transparent ${open ? '60%' : '35%'})`,
+          transformOrigin: 'top center'
+        }}
+      />
+      
+      {/* Header with centered toggle button */}
+      <motion.div 
+        className={`relative flex items-center justify-center border-b ${isDarkMode ? 'border-gray-600/30' : 'border-slate-200/20'}`}
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ 
+          y: 0, 
+          opacity: 1,
+          paddingLeft: open ? 24 : 12,
+          paddingRight: open ? 24 : 12,
+          paddingTop: 16,
+          paddingBottom: 16
+        }}
+        transition={{ 
+          delay: 0.1, 
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          mass: 0.8
+        }}
+      >
+
+
+        {/* Enhanced toggle button */}
         <motion.button
-          onClick={() => setOpen(o => !o)}
-          className="relative w-12 h-12 flex items-center justify-center rounded-full focus:outline-none"
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.97 }}
-          animate={{ rotate: open ? 0 : 0, transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] } }}
+          onClick={() => setOpen(prev => !prev)}
+          className={`relative group p-3 rounded-xl backdrop-blur-sm border transition-all duration-300 focus:outline-none focus:ring-2 ${
+            isDarkMode 
+              ? 'bg-white/10 border-gray-600/40 hover:border-gray-500/60 focus:ring-gray-400/50' 
+              : 'bg-white/15 border-slate-200/30 hover:border-slate-300/50 focus:ring-slate-400/50'
+          }`}
+          whileHover={{ 
+            scale: 1.05,
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.2)',
+          }}
+          whileTap={{ scale: 0.95 }}
           aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-          tabIndex={0}
-          onMouseEnter={() => setToggleHover(true)}
-          onMouseLeave={() => setToggleHover(false)}
         >
-          {/* Animated Toggle Icon */}
+          {/* Glow effect */}
           <motion.div
-            className="relative z-10 flex items-center justify-center"
-            animate={{
-              scale: toggleHover ? 1.15 : 1,
-              color: toggleHover ? '#ffffff' : '#e0e7ff',
-              filter: toggleHover ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' : 'none'
-            }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className={`absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20' 
+                : 'bg-gradient-to-r from-slate-300/20 to-gray-300/20'
+            }`}
+            initial={false}
+          />
+          
+          <motion.div
+            animate={{ rotate: open ? 0 : 180 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className={`relative z-10 transition-colors ${
+              isDarkMode 
+                ? 'text-gray-300 group-hover:text-white' 
+                : 'text-slate-600 group-hover:text-slate-800'
+            }`}
           >
-            <motion.div
-              className="absolute"
-              animate={{
-                rotate: open ? 0 : 0
-              }}
-            >
-              {/* Hamburger to X animation */}
-              <motion.span
-                className="block bg-current rounded-full"
-                style={{ width: '18px', height: '2px', position: 'absolute', transformOrigin: 'center' }}
-                animate={{
-                  rotate: open ? 45 : 0,
-                  y: open ? 0 : -6,
-                  width: open ? '18px' : '18px'
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              />
-              <motion.span
-                className="block bg-current rounded-full"
-                style={{ width: '18px', height: '2px', position: 'absolute', transformOrigin: 'center' }}
-                animate={{
-                  opacity: open ? 0 : 1,
-                  width: open ? 0 : '18px'
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              />
-              <motion.span
-                className="block bg-current rounded-full"
-                style={{ width: '18px', height: '2px', position: 'absolute', transformOrigin: 'center' }}
-                animate={{
-                  rotate: open ? -45 : 0,
-                  y: open ? 0 : 6,
-                  width: open ? '18px' : '18px'
-                }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              />
-            </motion.div>
+            <FiChevronLeft size={18} />
           </motion.div>
-          {/* Tooltip on hover */}
-          <AnimatePresence>
-            {toggleHover && (
-              <motion.span
-                className="absolute left-1/2 top-full mt-2 -translate-x-1/2 text-xs font-medium text-indigo-100 select-none bg-indigo-900/90 px-3 py-1 rounded shadow"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-              >
-                {open ? 'Collapse' : 'Expand'}
-              </motion.span>
-            )}
-          </AnimatePresence>
         </motion.button>
-      </div>
-      {/* Navigation */}
-      <nav className={`flex-1 flex flex-col items-center gap-4 mt-8 ${open ? 'px-2' : ''}`}>
-        {navLinks.map((link, idx) => {
-          const active = isActive(link.to);
+      </motion.div>
+
+      {/* Main navigation */}
+      <motion.nav 
+        className="flex-1 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+        animate={{ 
+          paddingLeft: open ? 16 : 8,
+          paddingRight: open ? 16 : 8,
+          paddingTop: 16,
+          paddingBottom: 16
+        }}
+        transition={{ 
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          mass: 0.8
+        }}
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: isDarkMode ? 'rgba(156, 163, 175, 0.5) transparent' : 'rgba(156, 163, 175, 0.3) transparent'
+        }}
+      >
+        {navLinks.map((link, index) => {
+          const isActiveLink = isActive(link.to);
           return (
             <motion.div
               key={link.to}
-              layout
-              transition={glueyTransition}
-              className="w-full flex justify-center"
-              onMouseEnter={() => setHoveredLink(link.label)}
-              onMouseLeave={() => setHoveredLink(null)}
+              variants={itemVariants}
+              className="relative"
+              onHoverStart={() => setHoveredItem(link.to)}
+              onHoverEnd={() => setHoveredItem(null)}
             >
               <motion.button
                 type="button"
                 onClick={() => navigate(link.to)}
-                className={`group relative flex items-center w-full ${open ? 'justify-start' : 'justify-center'} my-1 focus:outline-none`}
-                whileHover={{ scale: 1.06, y: -2, boxShadow: '0 4px 16px rgba(80,80,255,0.08)' }}
-                transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-                style={{ minHeight: 48, borderRadius: 16, position: 'relative' }}
+                className={`
+                  group relative w-full flex items-center p-3 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-400/50
+                  ${isActiveLink 
+                    ? 'bg-gradient-to-r ' + link.gradient + ' text-white shadow-xl' 
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-white/10'
+                  }
+                `}
+                whileHover={{ 
+                  scale: 1.02, 
+                  y: -1,
+                  transition: { type: 'spring', stiffness: 400, damping: 30 }
+                }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  boxShadow: isActiveLink 
+                    ? `0 8px 32px ${link.shadowColor}, 0 0 0 1px rgba(255, 255, 255, 0.1)` 
+                    : undefined
+                }}
               >
-                {/* Active gluey indicator */}
+                {/* Active indicator */}
                 <AnimatePresence>
-                  {active && (
+                  {isActiveLink && (
                     <motion.div
-                      layoutId="sidebar-active-indicator"
-                      className={`absolute left-0 top-0 h-full w-full z-0 rounded-2xl bg-gradient-to-r ${link.color} shadow-lg`}
-                      style={{ filter: 'blur(0.5px)', opacity: 0.18 }}
-                      transition={glueyTransition}
+                      layoutId="activeIndicator"
+                      className="absolute inset-0 rounded-2xl bg-white/15"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
                 </AnimatePresence>
-                <span
-                  className={`relative z-10 flex items-center justify-center w-10 h-10 text-xl transition-colors duration-200 ${
-                    active
-                      ? 'text-white drop-shadow-lg'
-                      : 'text-indigo-200 group-hover:text-white'
-                  }`}
+
+                {/* Icon with enhanced hover effects */}
+                <motion.div
+                  className={`
+                    relative z-10 flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300
+                    ${isActiveLink 
+                      ? 'bg-white/20 shadow-lg' 
+                      : 'bg-white/5 group-hover:bg-white/10'
+                    }
+                  `}
+                  whileHover={{ 
+                    rotate: 5,
+                    scale: 1.1,
+                    transition: { type: 'spring', stiffness: 400 }
+                  }}
                 >
-                  {link.icon}
-                </span>
-                {/* Only show text if open */}
-                {open && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -16 }}
-                    transition={{ duration: 0.18 }}
-                    className={`ml-3 text-base font-semibold tracking-tight relative z-10 ${active ? 'text-white' : 'text-indigo-100 group-hover:text-white'}`}
-                  >
-                    {link.label}
-                  </motion.span>
-                )}
-                {/* Tooltip for closed sidebar, only on hover */}
-                {!open && hoveredLink === link.label && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 10, scale: 0.9 }}
-                    animate={{ opacity: 1, x: 20, scale: 1 }}
-                    exit={{ opacity: 0, x: 10, scale: 0.9 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute left-full ml-2 px-3 py-2 bg-white rounded-lg shadow-lg z-50 pointer-events-none"
-                  >
-                    <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white transform rotate-45"></div>
-                    <div className="text-sm font-medium text-gray-800 whitespace-nowrap">{link.label}</div>
-                  </motion.div>
-                )}
+                  <span className="text-xl relative">
+                    {link.icon}
+                    {link.to === '/tasks' && notifications > 0 && (
+                      <NotificationBadge count={notifications} />
+                    )}
+                  </span>
+                </motion.div>
+
+                {/* Label and description */}
+                <AnimatePresence>
+                  {open && (
+                    <motion.div
+                      variants={itemVariants}
+                      className="ml-4 flex-1 text-left"
+                    >
+                      <div className="font-semibold text-sm tracking-wide">
+                        {link.label}
+                      </div>
+                                        <div className={`text-xs mt-0.5 transition-colors ${
+                    isActiveLink ? 'text-white/70' : 'text-slate-500 group-hover:text-slate-600'
+                  }`}>
+                        {link.description}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Hover glow effect */}
+                <AnimatePresence>
+                  {hoveredItem === link.to && !isActiveLink && (
+                    <motion.div
+                      className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/5 to-white/10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  )}
+                </AnimatePresence>
               </motion.button>
+
+              {/* Premium tooltip for collapsed state */}
+              {!open && (
+                <AnimatePresence>
+                  {hoveredItem === link.to && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: -10, scale: 0.9 }}
+                      transition={{ 
+                        type: 'spring', 
+                        stiffness: 400, 
+                        damping: 30,
+                        duration: 0.2 
+                      }}
+                      className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[60] pointer-events-none"
+                    >
+                      <div className="bg-gray-900/95 backdrop-blur-sm text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10">
+                        <div className="font-semibold text-sm whitespace-nowrap">{link.label}</div>
+                        <div className="text-xs text-gray-400 mt-1 whitespace-nowrap">{link.description}</div>
+                        {/* Enhanced tooltip arrow */}
+                        <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
             </motion.div>
           );
         })}
-        {/* Manager Portal Tab with Dropdown */}
+
+        {/* Premium divider */}
+        <motion.div
+          variants={itemVariants}
+          className="my-6 h-px bg-gradient-to-r from-transparent via-slate-300/30 to-transparent"
+        />
+
+        {/* Enhanced Manager Portal */}
         <motion.div 
-          layout 
-          transition={glueyTransition} 
-          className="w-full flex justify-center relative"
-          onMouseEnter={() => !open && setHoveredLink('Manager Portal')}
-          onMouseLeave={() => setHoveredLink(null)}
+          variants={itemVariants} 
+          className="relative"
+          onHoverStart={() => setHoveredItem('manager-portal')}
+          onHoverEnd={() => setHoveredItem(null)}
         >
           <motion.button
             type="button"
-            onClick={() => setManagerDropdown((d) => !d)}
-            className={`group relative flex items-center w-full ${open ? 'justify-start' : 'justify-center'} my-1 focus:outline-none border-2 border-indigo-500 shadow-lg bg-gradient-to-r from-indigo-800 via-indigo-700 to-blue-700 ${managerDropdown ? 'ring-2 ring-blue-400' : ''}`}
-            whileHover={{ scale: 1.07, y: -2, boxShadow: '0 6px 24px rgba(80,80,255,0.18)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-            style={{ minHeight: 52, borderRadius: 18, position: 'relative' }}
+            onClick={() => setManagerDropdown(prev => !prev)}
+            className={`
+              group relative w-full flex items-center p-3 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-slate-400/50
+              ${isManagerDashboard 
+                ? 'bg-gradient-to-r from-slate-600 via-gray-600 to-slate-700 text-white shadow-xl' 
+                : 'text-slate-600 hover:text-slate-800 hover:bg-white/10'
+              }
+            `}
+            whileHover={{ 
+              scale: 1.02, 
+              y: -1,
+              transition: { type: 'spring', stiffness: 400, damping: 30 }
+            }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              boxShadow: isManagerDashboard 
+                ? '0 8px 32px rgba(71, 85, 105, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)' 
+                : undefined
+            }}
             aria-haspopup="true"
             aria-expanded={managerDropdown}
           >
-            {/* Active gluey indicator */}
+            {/* Special glow for manager portal */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-slate-400/10 to-gray-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              animate={{
+                opacity: managerDropdown ? [0.5, 0.8, 0.5] : 0
+              }}
+              transition={{
+                duration: 2,
+                repeat: managerDropdown ? Infinity : 0,
+                ease: "easeInOut"
+              }}
+            />
+
+            <motion.div
+              className={`
+                relative z-10 flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300
+                ${isManagerDashboard 
+                  ? 'bg-white/20 shadow-lg' 
+                  : 'bg-white/5 group-hover:bg-white/10'
+                }
+              `}
+              whileHover={{ 
+                rotate: 10,
+                scale: 1.1,
+                transition: { type: 'spring', stiffness: 400 }
+              }}
+            >
+              <FiBriefcase className="text-xl" />
+            </motion.div>
+
             <AnimatePresence>
-              {isManagerDashboard && (
+              {open && (
                 <motion.div
-                  layoutId="sidebar-active-indicator"
-                  className={`absolute left-0 top-0 h-full w-full z-0 rounded-2xl bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-700 shadow-xl`}
-                  style={{ filter: 'blur(0.5px)', opacity: 0.22 }}
-                  transition={glueyTransition}
-                />
+                  variants={itemVariants}
+                  className="ml-4 flex-1 text-left"
+                >
+                  <div className="font-bold text-sm tracking-wide flex items-center">
+                    Manager Portal
+                    <motion.div
+                      animate={{ rotate: managerDropdown ? 90 : 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      className="ml-auto"
+                    >
+                      <FiChevronRight className="text-sm" />
+                    </motion.div>
+                  </div>
+                  <div className={`text-xs mt-0.5 transition-colors ${
+                    isManagerDashboard ? 'text-white/70' : 'text-slate-500 group-hover:text-slate-600'
+                  }`}>
+                    Leadership tools & insights
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
-            <span
-              className={`relative z-10 flex items-center justify-center w-10 h-10 text-xl transition-colors duration-200 ${
-                isManagerDashboard
-                  ? 'text-white drop-shadow-lg'
-                  : 'text-indigo-100 group-hover:text-white'
-              }`}
-            >
-              <FiBriefcase />
-            </span>
-            {open && (
-              <motion.span
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                transition={{ duration: 0.18 }}
-                className={`ml-3 text-base font-bold tracking-tight relative z-10 ${isManagerDashboard ? 'text-white' : 'text-indigo-100 group-hover:text-white'}`}
-              >
-                Manager Portal
-              </motion.span>
-            )}
-            {/* Dropdown arrow */}
-            {open && (
-              <motion.span
-                initial={{ rotate: 0 }}
-                animate={{ rotate: managerDropdown ? 90 : 0 }}
-                className="ml-auto mr-4 text-indigo-200 group-hover:text-white"
-                style={{ display: 'inline-flex', alignItems: 'center' }}
-              >
-                <FiChevronRight />
-              </motion.span>
-            )}
-            {/* Tooltip for closed sidebar */}
-            {!open && hoveredLink === 'Manager Portal' && (
-              <motion.div
-                initial={{ opacity: 0, x: 10, scale: 0.9 }}
-                animate={{ opacity: 1, x: 20, scale: 1 }}
-                exit={{ opacity: 0, x: 10, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-                className="absolute left-full ml-2 px-3 py-2 bg-white rounded-lg shadow-lg z-50 pointer-events-none"
-              >
-                <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white transform rotate-45"></div>
-                <div className="text-sm font-medium text-gray-800 whitespace-nowrap">Manager Portal</div>
-              </motion.div>
-            )}
           </motion.button>
-          {/* Dropdown menu */}
+
+          {/* Enhanced dropdown menu */}
           <AnimatePresence>
             {managerDropdown && (
               <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.18 }}
-                className={`absolute ${open ? 'left-0 right-0 top-14' : 'left-20 top-0'} bg-indigo-900 rounded-xl shadow-2xl z-50 flex flex-col py-2 border-2 border-indigo-700 ${open ? '' : 'w-56'}`}
-                style={{ minWidth: open ? '100%' : 224 }}
+                initial={{ 
+                  opacity: 0, 
+                  y: -20, 
+                  scale: 0.95,
+                  filter: 'blur(4px)'
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  y: 0, 
+                  scale: 1,
+                  filter: 'blur(0px)'
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  y: -20, 
+                  scale: 0.95,
+                  filter: 'blur(4px)'
+                }}
+                transition={{ 
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30
+                }}
+                className={`
+                  absolute ${open ? 'left-0 right-0 top-16 max-h-64 overflow-y-auto' : 'left-20 top-0 w-72 max-h-64 overflow-y-auto'} 
+                  backdrop-blur-xl rounded-2xl border shadow-2xl z-50 p-2 ${
+                    isDarkMode ? 'border-gray-600/40' : 'border-slate-200/30'
+                  }
+                  scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent
+                `}
+                style={{
+                  background: isDarkMode
+                    ? 'linear-gradient(145deg, rgba(23, 23, 23, 0.95), rgba(38, 38, 38, 0.9))'
+                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.85))',
+                  boxShadow: isDarkMode
+                    ? '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                    : '0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: isDarkMode ? 'rgba(156, 163, 175, 0.6) transparent' : 'rgba(156, 163, 175, 0.4) transparent'
+                }}
               >
-                <button
-                  onClick={() => setManagerDropdown(false)}
-                  className="absolute top-2 right-2 text-indigo-300 hover:text-blue-400 text-lg p-1 rounded-full focus:outline-none"
-                  aria-label="Close Manager Portal menu"
-                  tabIndex={0}
-                >
-                  ×
-                </button>
-                <div className="pt-2" />
-                {managerPortalSubtasks.map((sub, i) => (
-                  <button
-                    key={sub.to}
-                    onClick={() => navigate(sub.to)}
-                    className={`flex items-center gap-3 px-4 py-2 text-sm font-semibold text-indigo-100 hover:bg-indigo-800 transition-colors ${location.search.includes(sub.to.split('=')[1]) ? 'bg-indigo-700 text-white' : ''}`}
+                {managerPortalSubtasks.map((item, index) => (
+                  <motion.button
+                    key={item.to}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ 
+                      opacity: 1, 
+                      x: 0,
+                      transition: { delay: index * 0.1 }
+                    }}
+                    exit={{ opacity: 0, x: -20 }}
+                    onClick={() => {
+                      navigate(item.to);
+                      setManagerDropdown(false);
+                    }}
+                    className={`w-full flex items-center p-3 rounded-xl text-left transition-all duration-200 group ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:text-white hover:bg-white/10' 
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    }`}
+                    whileHover={{ 
+                      scale: 1.02,
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                    }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-lg">{sub.icon}</span>
-                    <span>{sub.label}</span>
-                  </button>
+                    <motion.div
+                      className={`w-9 h-9 rounded-lg bg-gradient-to-r ${item.gradient} flex items-center justify-center text-white shadow-md`}
+                      whileHover={{ 
+                        rotate: 5,
+                        scale: 1.1,
+                        transition: { type: 'spring', stiffness: 400 }
+                      }}
+                    >
+                      {item.icon}
+                    </motion.div>
+                    <div className="ml-3 flex-1">
+                      <div className="font-semibold text-sm">{item.label}</div>
+                      <div className={`text-xs transition-colors ${
+                        isDarkMode 
+                          ? 'text-gray-400 group-hover:text-gray-300' 
+                          : 'text-slate-500 group-hover:text-slate-400'
+                      }`}>
+                        {item.description}
+                      </div>
+                    </div>
+                  </motion.button>
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
-      </nav>
-      {/* User Profile (optional, can be removed if in navbar) */}
-      <div 
-        className="flex flex-col items-center mb-6"
-        onMouseEnter={() => !open && setHoveredLink('User Profile')}
-        onMouseLeave={() => setHoveredLink(null)}
-      >
-        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-lg shadow relative">
-          <FiUser />
-          {/* Tooltip for user profile when sidebar is collapsed */}
-          {!open && hoveredLink === 'User Profile' && (
-            <motion.div
-              initial={{ opacity: 0, x: 10, scale: 0.9 }}
-              animate={{ opacity: 1, x: 20, scale: 1 }}
-              exit={{ opacity: 0, x: 10, scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-              className="absolute left-full ml-2 px-3 py-2 bg-white rounded-lg shadow-lg z-50 pointer-events-none"
-            >
-              <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white transform rotate-45"></div>
-              <div className="text-sm font-medium text-gray-800 whitespace-nowrap">User Profile</div>
-            </motion.div>
+
+          {/* Manager Portal tooltip for collapsed state */}
+          {!open && (
+            <AnimatePresence>
+              {hoveredItem === 'manager-portal' && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -10, scale: 0.9 }}
+                  transition={{ 
+                    type: 'spring', 
+                    stiffness: 400, 
+                    damping: 30,
+                    duration: 0.2 
+                  }}
+                  className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[60] pointer-events-none"
+                >
+                  <div className="bg-gray-900/95 backdrop-blur-sm text-white px-4 py-3 rounded-xl shadow-2xl border border-white/10">
+                    <div className="font-semibold text-sm whitespace-nowrap">Manager Portal</div>
+                    <div className="text-xs text-gray-400 mt-1 whitespace-nowrap">Leadership tools & insights</div>
+                    {/* Enhanced tooltip arrow */}
+                    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
+        </motion.div>
+      </motion.nav>
+
+      {/* Premium footer section */}
+      <motion.div 
+        variants={itemVariants}
+        className="border-t border-slate-200/20"
+        animate={{ 
+          paddingLeft: open ? 16 : 8,
+          paddingRight: open ? 16 : 8,
+          paddingTop: 16,
+          paddingBottom: 16
+        }}
+        transition={{ 
+          type: 'spring',
+          stiffness: 400,
+          damping: 40,
+          mass: 0.8
+        }}
+      >
+        {/* Settings and theme toggle */}
+        <div className="flex items-center space-x-2 mb-4">
+          <motion.button
+            className="flex-1 flex items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsDarkMode(prev => !prev)}
+          >
+            <motion.div
+              animate={{ rotate: isDarkMode ? 180 : 0 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              {isDarkMode ? <FiMoon size={16} /> : <FiSun size={16} />}
+            </motion.div>
+          </motion.button>
+          
+          <motion.button
+            className="flex-1 flex items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all duration-200"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FiSettings size={16} />
+          </motion.button>
         </div>
-        <motion.span
-          initial={false}
-          animate={{ opacity: open ? 1 : 0, x: open ? 0 : -16 }}
-          transition={{ duration: 0.2 }}
-          className={`text-xs text-indigo-100 mt-2 ${open ? 'block' : 'hidden'}`}
-          style={{ display: open ? 'block' : 'none' }}
+
+        {/* Enhanced user profile */}
+        <motion.div 
+          className={`flex items-center p-3 rounded-2xl backdrop-blur-sm border transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-white/10' 
+              : 'bg-gradient-to-r from-white/50 to-slate-100/50 border-slate-200/30'
+          }`}
+          whileHover={{ 
+            scale: 1.02,
+            backgroundColor: isDarkMode ? 'rgba(51, 65, 85, 0.6)' : 'rgba(255, 255, 255, 0.8)'
+          }}
+          transition={{ type: 'spring', stiffness: 300 }}
         >
-          User
-        </motion.span>
-      </div>
+          <motion.div 
+            className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg relative overflow-hidden"
+            whileHover={{ 
+              scale: 1.1,
+              rotate: 5,
+              transition: { type: 'spring', stiffness: 400 }
+            }}
+          >
+            {/* Animated background gradient */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400"
+              animate={{
+                rotate: [0, 360],
+                scale: [1, 1.2, 1]
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            />
+            <FiUser className="relative z-10" size={16} />
+          </motion.div>
+          
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                variants={itemVariants}
+                className="ml-3 flex-1"
+              >
+                <div className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {user?.name || 'User'}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {user?.role || 'member'}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {open && (
+              <motion.button
+                variants={itemVariants}
+                className={`ml-2 p-2 rounded-lg transition-all duration-200 ${
+                  isDarkMode 
+                    ? 'text-slate-400 hover:text-white hover:bg-white/10' 
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
+                }`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <FiLogOut size={14} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </motion.div>
+
+      {/* Floating elements for extra premium feel */}
+      <motion.div
+        animate={{
+          y: [-2, 2, -2],
+          scale: open ? 1 : 0.5,
+          opacity: open ? 1 : 0.6
+        }}
+        transition={{
+          y: {
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          },
+          scale: { type: 'spring', stiffness: 400, damping: 40 },
+          opacity: { type: 'spring', stiffness: 400, damping: 40 }
+        }}
+        className="absolute top-1/2 left-1/2 bg-gradient-to-r from-slate-300/20 to-gray-300/20 rounded-full blur-2xl pointer-events-none"
+        style={{ 
+          transform: 'translate(-50%, -50%)',
+          width: open ? 128 : 64,
+          height: open ? 128 : 64
+        }}
+      />
     </motion.aside>
   );
-}
+} 

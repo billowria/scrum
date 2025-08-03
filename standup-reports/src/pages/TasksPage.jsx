@@ -306,325 +306,169 @@ export default function TasksPage({ sidebarOpen }) {
       initial="hidden"
       animate="visible"
     >
-      {/* Reimagined Beautiful Header */}
+      {/* Modern Compact Header */}
       <motion.div
-        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} z-30 transition-all duration-300 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 shadow-sm border-b border-gray-200/60 backdrop-blur-sm`}
+        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} z-30 transition-all duration-300`}
         id="tasks-header"
         animate={{ y: showHeader ? 0 : '-100%' }}
-        transition={{ type: 'tween', duration: 0.3 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         style={{ right: 0 }}
       >
-        {/* Animated background pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 animate-pulse"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_50%,rgba(120,119,198,0.3),transparent_50%)]"></div>
-          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.3),transparent_50%)]"></div>
-        </div>
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          {/* Main Header Content */}
-          <motion.div 
-            variants={itemVariants} 
-            className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8"
-          >
-            {/* Left Section - Title and Description */}
-            <div className="flex items-start space-x-4">
-              {/* Animated Icon Container */}
-              <motion.div 
-                className="relative w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl"
-                whileHover={{ 
-                  scale: 1.05,
-                  rotate: 5,
-                  transition: { duration: 0.3 }
-                }}
-                animate={{
-                  boxShadow: [
-                    "0 20px 40px rgba(59, 130, 246, 0.3)",
-                    "0 20px 40px rgba(147, 51, 234, 0.3)",
-                    "0 20px 40px rgba(59, 130, 246, 0.3)"
-                  ]
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <FiGrid className="w-8 h-8 text-white" />
-                {/* Floating particles effect */}
-                <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                  <div className="absolute top-1 left-1 w-1 h-1 bg-white/60 rounded-full animate-ping"></div>
-                  <div className="absolute bottom-2 right-2 w-0.5 h-0.5 bg-white/40 rounded-full animate-pulse"></div>
+        <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              {/* Left: Title and Stats */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <motion.div 
+                    className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+                    whileHover={{ scale: 1.05, rotate: 5 }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                  >
+                    <FiGrid className="w-5 h-5 text-white" />
+                  </motion.div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">Tasks</h1>
+                    <p className="text-sm text-gray-600">{format(new Date(), 'MMM d, yyyy')}</p>
+                  </div>
                 </div>
-              </motion.div>
 
-              {/* Title and Description */}
-              <div className="flex-1">
-                <motion.h1 
-                  className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-2"
-                  variants={itemVariants}
-                >
-                  Task Management
-                </motion.h1>
-                <motion.p 
-                  className="text-lg text-gray-600 font-medium"
-                  variants={itemVariants}
-                >
-                  {userRole === 'manager' 
-                    ? 'Manage your team\'s workflow and track progress' 
-                    : 'View and update your assigned tasks'
-                  }
-                </motion.p>
-                <motion.div 
-                  className="flex items-center gap-4 mt-3"
-                  variants={itemVariants}
-                >
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span>Live updates</span>
+                {/* Compact Stats */}
+                <div className="hidden md:flex items-center gap-4">
+                  <motion.div 
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-blue-700">{taskStats.total} Total</span>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-orange-700">{taskStats.inProgress} Active</span>
+                  </motion.div>
+                  
+                  <motion.div 
+                    className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium text-green-700">{taskStats.completed} Done</span>
+                  </motion.div>
+                  
+                  {taskStats.overdue > 0 && (
+                    <motion.div 
+                      className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-lg"
+                      whileHover={{ scale: 1.02 }}
+                      animate={{ 
+                        boxShadow: ['0 0 0 0 rgba(239, 68, 68, 0.4)', '0 0 0 4px rgba(239, 68, 68, 0)', '0 0 0 0 rgba(239, 68, 68, 0.4)']
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <FiAlertCircle className="w-3 h-3 text-red-500" />
+                      <span className="text-sm font-medium text-red-700">{taskStats.overdue} Overdue</span>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Progress Bar */}
+                {taskStats.total > 0 && (
+                  <div className="hidden lg:flex items-center gap-3">
+                    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.round((taskStats.completed / taskStats.total) * 100)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-600">
+                      {Math.round((taskStats.completed / taskStats.total) * 100)}%
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <FiUsers className="w-4 h-4" />
-                    <span>{userRole === 'manager' ? 'Team view' : 'Personal view'}</span>
-                  </div>
-                </motion.div>
+                )}
               </div>
-            </div>
 
-            {/* Right Section - Actions */}
-            <motion.div 
-              className="flex items-center gap-3"
-              variants={itemVariants}
-            >
-              {/* Quick Actions */}
+              {/* Right: Actions */}
               <div className="flex items-center gap-2">
+                {/* View Toggle */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <motion.button
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'board' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                    onClick={() => setView('board')}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiGrid className="w-4 h-4" />
+                  </motion.button>
+                  <motion.button
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+                    onClick={() => setView('list')}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiList className="w-4 h-4" />
+                  </motion.button>
+                </div>
+
+                {/* Quick Actions */}
                 <motion.button
-                  className="p-3 text-gray-600 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all duration-200 backdrop-blur-sm border border-gray-200/50"
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
+                  onClick={fetchTasks}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95, rotate: 180 }}
+                  title="Refresh Tasks"
+                >
+                  <FiRefreshCw className="w-4 h-4" />
+                </motion.button>
+
+                <motion.button
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
                   onClick={() => setShowStats(!showStats)}
-                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   title={showStats ? 'Hide Statistics' : 'Show Statistics'}
                 >
-                  {showStats ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
+                  {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                 </motion.button>
-                
-                <motion.button
-                  className="p-3 text-gray-600 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all duration-200 backdrop-blur-sm border border-gray-200/50"
-                  onClick={() => setCompactMode(!compactMode)}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  title={compactMode ? 'Normal View' : 'Compact View'}
-                >
-                  <FiSettings className="w-5 h-5" />
-                </motion.button>
-                
-                <motion.button
-                  className="p-3 text-gray-600 hover:text-gray-900 rounded-xl hover:bg-white/60 transition-all duration-200 backdrop-blur-sm border border-gray-200/50"
-                  onClick={fetchTasks}
-                  whileHover={{ scale: 1.05, y: -2, rotate: 180 }}
-                  whileTap={{ scale: 0.95 }}
-                  title="Refresh Tasks"
-                >
-                  <FiRefreshCw className="w-5 h-5" />
-                </motion.button>
-              </div>
 
-              {/* Create Task Button - Only for Managers */}
-              {userRole === 'manager' && (
-                <motion.button
-                  className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl flex items-center font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden group"
-                  onClick={() => {
-                    setShowCreateModal(true);
-                    setEditingTask(null);
-                  }}
-                  whileHover={{ 
-                    scale: 1.08, 
-                    y: -5,
-                    transition: { duration: 0.3, ease: "easeOut" }
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  {/* Animated background layers */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  
-                  {/* Shimmer effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></div>
-                  
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500"></div>
-                  
-                  {/* Content */}
-                  <div className="relative z-10 flex items-center">
-                    <motion.div
-                      className="mr-3 p-2 bg-white/20 rounded-xl backdrop-blur-sm"
-                      whileHover={{ rotate: 90 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <FiPlus className="w-6 h-6" />
-                    </motion.div>
-                    <span>Create Task</span>
-                  </div>
-                  
-                  {/* Floating particles */}
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-                    <motion.div
-                      className="absolute top-2 left-4 w-1 h-1 bg-white/60 rounded-full"
-                      animate={{
-                        y: [0, -10, 0],
-                        opacity: [0.6, 1, 0.6],
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    />
-                    <motion.div
-                      className="absolute bottom-3 right-6 w-0.5 h-0.5 bg-white/40 rounded-full"
-                      animate={{
-                        y: [0, -8, 0],
-                        opacity: [0.4, 0.8, 0.4],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: 0.5
-                      }}
-                    />
-                  </div>
-                  
-                  {/* Border glow */}
-                  <div className="absolute inset-0 rounded-2xl border-2 border-white/20 group-hover:border-white/40 transition-all duration-500"></div>
-                </motion.button>
-              )}
-            </motion.div>
-          </motion.div>
-
-          {/* Enhanced Controls Section */}
-          <motion.div 
-            variants={itemVariants} 
-            className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
-          >
-            {/* Professional View Toggle */}
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-1.5 shadow-lg border border-gray-200/60">
-                  <div className="flex relative">
-                    {/* Animated background slider */}
-                    <motion.div
-                      className="absolute top-1.5 bottom-1.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-md"
-                      initial={{ width: view === 'board' ? '50%' : '50%', x: view === 'board' ? 0 : '100%' }}
-                      animate={{ 
-                        width: '50%', 
-                        x: view === 'board' ? 0 : '100%' 
-                      }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 300, 
-                        damping: 30 
-                      }}
-                    />
-                    
-                    <motion.button
-                      className={`relative px-6 py-3 rounded-xl flex items-center font-semibold text-sm transition-all duration-300 z-10 ${
-                        view === 'board' 
-                          ? 'text-white' 
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                      onClick={() => setView('board')}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <FiGrid className="mr-2 w-4 h-4" />
-                      Board
-                    </motion.button>
-                    
-                    <motion.button
-                      className={`relative px-6 py-3 rounded-xl flex items-center font-semibold text-sm transition-all duration-300 z-10 ${
-                        view === 'list' 
-                          ? 'text-white' 
-                          : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                      onClick={() => setView('list')}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <FiList className="mr-2 w-4 h-4" />
-                      List
-                    </motion.button>
-                  </div>
+                {/* Search */}
+                <div className="relative">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <motion.input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-48 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    whileFocus={{ scale: 1.02 }}
+                  />
                 </div>
-                
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-2xl blur-xl -z-10"></div>
-              </div>
 
-              {/* Enhanced Quick Filters */}
-              <div className="flex items-center gap-3">
-                <motion.button
-                  className="group relative px-4 py-2.5 text-sm bg-gradient-to-r from-red-50 to-red-100 text-red-700 rounded-xl hover:from-red-100 hover:to-red-200 transition-all duration-300 border border-red-200/50 shadow-sm hover:shadow-md"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="flex items-center">
-                    <FiAlertCircle className="w-4 h-4 mr-2 group-hover:animate-pulse" />
-                    <span className="font-medium">Overdue</span>
-                    <span className="ml-2 px-2 py-0.5 bg-red-200 text-red-800 rounded-full text-xs font-bold">
-                      {taskStats.overdue}
-                    </span>
-                  </div>
-                  {/* Hover glow */}
-                  <div className="absolute inset-0 bg-red-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </motion.button>
-                
-                <motion.button
-                  className="group relative px-4 py-2.5 text-sm bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-xl hover:from-blue-100 hover:to-blue-200 transition-all duration-300 border border-blue-200/50 shadow-sm hover:shadow-md"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="flex items-center">
-                    <FiClock className="w-4 h-4 mr-2 group-hover:animate-spin" />
-                    <span className="font-medium">Due Today</span>
-                  </div>
-                  {/* Hover glow */}
-                  <div className="absolute inset-0 bg-blue-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Enhanced User Info */}
-            <motion.div 
-              className="flex items-center gap-4 text-sm"
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-3 px-4 py-2.5 bg-white/80 rounded-xl backdrop-blur-sm border border-gray-200/50 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-sm"></div>
-                  <span className="font-semibold text-gray-700 capitalize">{userRole}</span>
-                </div>
-                <div className="w-px h-4 bg-gray-300"></div>
-                {currentUser && (
-                  <span className="font-medium text-gray-800">{currentUser.name}</span>
+                {/* Create Task Button - Only for Managers */}
+                {userRole === 'manager' && (
+                  <motion.button
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
+                    onClick={() => {
+                      setShowCreateModal(true);
+                      setEditingTask(null);
+                    }}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">New Task</span>
+                  </motion.button>
                 )}
               </div>
-              
-              {/* Status indicator */}
-              <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-medium text-green-700">Active</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </motion.div>
+      
       {/* Spacer to prevent content jump due to fixed header */}
-      <div className="h-[160px] w-full"></div>
+      <div className="h-20 w-full"></div>
 
       {/* Main Content */}
       <div className="pt-4">
