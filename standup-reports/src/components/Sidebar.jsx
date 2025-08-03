@@ -4,13 +4,16 @@ import {
   FiChevronRight, FiBriefcase, FiUsers, FiClipboard, FiClock, 
   FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
   FiTrendingUp, FiShield, FiZap, FiHeart, FiSearch, FiStar,
-  FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare
+  FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
-// Enhanced navigation configuration with premium visual elements
-const navLinks = [
+
+
+// Enhanced navigation configuration with real-time counts
+const createNavLinks = (counts, user) => [
   { 
     to: '/dashboard', 
     icon: <FiHome />, 
@@ -28,7 +31,7 @@ const navLinks = [
     gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
     shadowColor: 'rgba(20, 184, 166, 0.5)',
     description: 'Time Management',
-    badge: 'pending',
+    badge: counts.leaveRequests > 0 ? counts.leaveRequests : null,
     shortcut: '⌘C'
   },
   { 
@@ -38,7 +41,7 @@ const navLinks = [
     gradient: 'from-pink-400 via-purple-500 to-indigo-600',
     shadowColor: 'rgba(168, 85, 247, 0.5)',
     description: 'Project Workflow',
-    badge: 3,
+    badge: counts.tasks,
     shortcut: '⌘T'
   },
   { 
@@ -48,7 +51,7 @@ const navLinks = [
     gradient: 'from-amber-400 via-orange-500 to-red-600',
     shadowColor: 'rgba(251, 146, 60, 0.5)',
     description: 'Recognition & Goals',
-    badge: 'new',
+    badge: counts.achievements > 0 ? 'new' : null,
     shortcut: '⌘A'
   },
   { 
@@ -58,19 +61,30 @@ const navLinks = [
     gradient: 'from-indigo-500 to-purple-600',
     shadowColor: 'rgba(168, 85, 247, 0.5)',
     description: 'View assigned projects',
-    badge: null,
+    badge: counts.projects,
     shortcut: '⌘P'
+  },
+  { 
+    to: '/notifications', 
+    icon: <FiBell />, 
+    label: 'Notifications', 
+    gradient: 'from-red-400 via-pink-500 to-purple-600',
+    shadowColor: 'rgba(239, 68, 68, 0.5)',
+    description: 'Stay updated',
+    badge: counts.notifications,
+    shortcut: '⌘N'
   },
 ];
 
-const managerPortalSubtasks = [
+const createManagerPortalSubtasks = (counts, user) => [
   { 
     label: 'Team Management', 
     icon: <FiUsers />, 
     to: '/manager-dashboard?tab=team-management',
     gradient: 'from-blue-500 to-indigo-600',
     description: 'Manage team structure',
-    status: 'active'
+    status: 'active',
+    badge: counts.teamMembers
   },
   { 
     label: 'Add Member', 
@@ -86,8 +100,8 @@ const managerPortalSubtasks = [
     to: '/manager-dashboard?tab=leave-requests',
     gradient: 'from-yellow-500 to-orange-600',
     description: 'Review time-off requests',
-    status: 'urgent',
-    count: 5
+    status: counts.leaveRequests > 0 ? 'urgent' : 'normal',
+    badge: counts.leaveRequests
   },
   { 
     label: 'Leave History', 
@@ -101,26 +115,37 @@ const managerPortalSubtasks = [
     label: 'Announcements', 
     icon: <FiBell />, 
     to: '/manager-dashboard?tab=announcements',
-    gradient: 'from-red-500 to-pink-600',
+    gradient: 'from-indigo-500 to-purple-600',
     description: 'Team communications',
     status: 'normal'
+  },
+  { 
+    label: 'Report History', 
+    icon: <FiTrendingUp />, 
+    to: '/manager-dashboard?tab=report-history',
+    gradient: 'from-emerald-500 to-teal-600',
+    description: 'Performance insights',
+    status: 'normal',
+    badge: counts.reports
   },
   { 
     label: 'Projects', 
     icon: <FiFolder />, 
     to: '/manager-dashboard?tab=projects',
-    gradient: 'from-indigo-500 to-purple-600',
-    description: 'Manage project portfolios',
-    status: 'normal'
+    gradient: 'from-orange-500 to-red-600',
+    description: 'Project overview',
+    status: 'normal',
+    badge: counts.projects
   },
   { 
-    label: 'Report History', 
-    icon: <FiList />, 
-    to: '/manager-dashboard?tab=report-history',
-    gradient: 'from-gray-500 to-slate-600',
-    description: 'View past reports',
-    status: 'normal'
-  }
+    label: 'Project Manager', 
+    icon: <FiBriefcase />, 
+    to: '/manager-dashboard?tab=project-manager',
+    gradient: 'from-cyan-500 to-blue-600',
+    description: 'Project management',
+    status: 'normal',
+    badge: counts.projects
+  },
 ];
 
 // Premium animation configurations
@@ -428,6 +453,103 @@ export default function Sidebar({ open, setOpen, user }) {
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCollapsing, setIsCollapsing] = useState(false);
+  
+  // Real-time counts state
+  const [counts, setCounts] = useState({
+    tasks: 0,
+    notifications: 0,
+    leaveRequests: 0,
+    projects: 0,
+    achievements: 0,
+    teamMembers: 0,
+    reports: 0
+  });
+  
+  // Fetch counts function
+  const fetchCounts = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const countsData = {};
+
+      // Fetch tasks count
+      const { data: tasksData } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('assigned_to', user.id)
+        .eq('status', 'pending');
+      countsData.tasks = tasksData?.length || 0;
+
+      // Fetch unread notifications count
+      const { data: notificationsData } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('read', false);
+      countsData.notifications = notificationsData?.length || 0;
+
+      // Fetch projects count (for managers: all projects, for others: assigned projects)
+      if (user.role === 'manager' || user.role === 'admin') {
+        const { data: projectsData } = await supabase
+          .from('projects')
+          .select('id');
+        countsData.projects = projectsData?.length || 0;
+      } else {
+        const { data: projectsData } = await supabase
+          .from('project_assignments')
+          .select('id')
+          .eq('user_id', user.id);
+        countsData.projects = projectsData?.length || 0;
+      }
+
+      // Fetch achievements count
+      const { data: achievementsData } = await supabase
+        .from('user_achievements')
+        .select('id')
+        .eq('user_id', user.id);
+      countsData.achievements = achievementsData?.length || 0;
+
+      // Fetch team members count (for managers only)
+      if (user.role === 'manager' || user.role === 'admin') {
+        const { data: teamMembersData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'developer');
+        countsData.teamMembers = teamMembersData?.length || 0;
+      }
+
+      // Fetch pending leave requests count (for managers only)
+      if (user.role === 'manager' || user.role === 'admin') {
+        const { data: leaveRequestsData } = await supabase
+          .from('leave_plans')
+          .select('id')
+          .eq('status', 'pending');
+        countsData.leaveRequests = leaveRequestsData?.length || 0;
+      }
+
+      // Fetch recent reports count
+      const { data: reportsData } = await supabase
+        .from('standup_reports')
+        .select('id')
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+      countsData.reports = reportsData?.length || 0;
+
+      setCounts(countsData);
+    } catch (error) {
+      console.error('Error fetching counts:', error);
+    }
+  }, [user]);
+
+  // Fetch counts on mount and set up interval
+  useEffect(() => {
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, [user, fetchCounts]);
+  
+  // Create navigation links with real-time counts
+  const navLinks = useMemo(() => createNavLinks(counts, user), [counts, user]);
+  const managerPortalSubtasks = useMemo(() => createManagerPortalSubtasks(counts, user), [counts, user]);
   
   const prefersReducedMotion = useReducedMotion();
   const mouseX = useMotionValue(0);
@@ -1078,8 +1200,8 @@ export default function Sidebar({ open, setOpen, user }) {
                             transition={{ duration: 1, repeat: Infinity }}
                           />
                         )}
-                        {item.count && (
-                          <Badge type="urgent" count={item.count} className="absolute -top-1 -right-1" />
+                        {item.badge && (
+                          <Badge type="urgent" count={item.badge} className="absolute -top-1 -right-1" />
                         )}
                       </motion.div>
                       <div className="ml-4 flex-1">

@@ -461,15 +461,15 @@ export default function ProjectManagement() {
   };
 
   return (
-    <div className="w-full">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="w-full h-full">
+      <div className="w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <FiFolder className="text-indigo-600" size={28} />
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+              <FiFolder className="text-indigo-600" size={24} />
               Project Management
             </h1>
-            <p className="text-gray-600 mt-2 text-lg">
+            <p className="text-gray-600 mt-1 text-base">
               Manage projects, assign teams, and organize content efficiently.
             </p>
           </div>
@@ -487,7 +487,7 @@ export default function ProjectManagement() {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {loading ? (
             <div className="col-span-full flex justify-center items-center h-40">
               <motion.div
@@ -506,17 +506,17 @@ export default function ProjectManagement() {
             projects.map(project => (
               <motion.div
                 key={project.id}
-                className="bg-white rounded-xl shadow-md p-5 flex flex-col gap-4 hover:shadow-xl transition-shadow cursor-pointer"
+                className="bg-white rounded-lg shadow-md p-4 flex flex-col gap-3 hover:shadow-xl transition-shadow cursor-pointer"
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedProject(project)}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
                       <FiFolder className="text-indigo-600" />
                       {project.name}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.description}</p>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">{project.description}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
                     project.status === 'active' ? 'bg-green-100 text-green-800' :
@@ -526,17 +526,17 @@ export default function ProjectManagement() {
                     {project.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-3 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><FiCalendar /> {project.start_date || 'N/A'}</span>
                   <span className="flex items-center gap-1"><FiCalendar /> {project.end_date || 'N/A'}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                   <FiUsers />
                   {project.project_assignments?.length || 0} members
                 </div>
                 <div className="flex gap-2 mt-auto pt-2 border-t">
                   <button
-                    className="flex-1 py-2 rounded-lg bg-indigo-100 text-indigo-800 font-medium text-sm hover:bg-indigo-200"
+                    className="flex-1 py-1.5 rounded-lg bg-indigo-100 text-indigo-800 font-medium text-xs hover:bg-indigo-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOpenAssignmentModal(project);
@@ -545,7 +545,7 @@ export default function ProjectManagement() {
                     Assign
                   </button>
                   <button
-                    className="p-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
+                    className="p-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleViewMembers(project);
@@ -554,7 +554,7 @@ export default function ProjectManagement() {
                     <FiUsers />
                   </button>
                   <button
-                    className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    className="p-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleEditProject(project);
@@ -563,7 +563,7 @@ export default function ProjectManagement() {
                     <FiEdit2 />
                   </button>
                   <button
-                    className="p-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
+                    className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteProject(project.id);
@@ -582,12 +582,12 @@ export default function ProjectManagement() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-md p-6"
+            className="bg-white rounded-lg shadow-md p-4"
           >
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h2>
-                <p className="text-gray-600 mt-2">{selectedProject.description}</p>
+                <h2 className="text-xl font-bold text-gray-900">{selectedProject.name}</h2>
+                <p className="text-gray-600 mt-1">{selectedProject.description}</p>
               </div>
               <button
                 className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
@@ -596,8 +596,8 @@ export default function ProjectManagement() {
                 <FiChevronUp size={20} />
               </button>
             </div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">Sections</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-semibold text-gray-800">Sections</h3>
               <button
                 className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"
                 onClick={() => {
@@ -608,7 +608,7 @@ export default function ProjectManagement() {
                 <FiPlus /> Add Section
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {sections.map(section => (
                 <div key={section.id} className="border rounded-lg">
                   <div

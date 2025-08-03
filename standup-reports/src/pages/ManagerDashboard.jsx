@@ -150,10 +150,17 @@ const TabHeader = ({
       text: "text-indigo-600",
       bg: "bg-indigo-50",
       border: "border-indigo-200"
+    },
+    emerald: {
+      gradient: "from-emerald-600 via-teal-600 to-cyan-600",
+      accent: "from-emerald-500 to-teal-500",
+      text: "text-emerald-600",
+      bg: "bg-emerald-50",
+      border: "border-emerald-200"
     }
   };
 
-  const colors = colorClasses[accentColor];
+  const colors = colorClasses[accentColor] || colorClasses.blue;
 
   return (
     <motion.div
@@ -297,6 +304,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   const leaveHistoryRef = useRef(null);
   const announcementsRef = useRef(null);
   const reportHistoryRef = useRef(null);
+  const projectManagerRef = useRef(null);
   const projectsRef = useRef(null);
   
   // Get tab from URL query parameters
@@ -305,7 +313,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     const tabParam = searchParams.get('tab');
     const subtabParam = searchParams.get('subtab');
 
-    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects'].includes(tabParam)) {
+    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects', 'project-manager'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setActiveTab(activeTabDefault);
@@ -385,6 +393,11 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       id: 'report-history',
       label: 'Report History',
       icon: <TbHistory />,
+    },
+    {
+      id: 'project-manager',
+      label: 'Project Manager',
+      icon: <FiFolder />,
     },
     {
       id: 'projects',
@@ -674,6 +687,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       'leave-history': leaveHistoryRef,
       'announcements': announcementsRef,
       'report-history': reportHistoryRef,
+      'project-manager': projectManagerRef,
       'projects': projectsRef
     };
 
@@ -1045,6 +1059,32 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
                 ]}
               />
               <History />
+            </div>
+          )}
+
+          {/* Project Manager Tab */}
+          {activeTab === 'project-manager' && (
+            <div ref={projectManagerRef}>
+              <TabHeader
+                title="Project Manager"
+                subtitle="Create & Manage Projects"
+                description="Comprehensive project management system for creating, organizing, and managing projects with sections, topics, and content. Assign team members, track progress, and maintain project documentation."
+                icon={FiFolder}
+                accentColor="emerald"
+                features={[
+                  "Project Creation",
+                  "Team Assignment",
+                  "Content Management",
+                  "Progress Tracking"
+                ]}
+                stats={[
+                  { value: "Active", label: "Status" },
+                  { value: "Multiple", label: "Projects" },
+                  { value: "Real-time", label: "Updates" },
+                  { value: "Secure", label: "Access" }
+                ]}
+              />
+              <ProjectManagement />
             </div>
           )}
 
