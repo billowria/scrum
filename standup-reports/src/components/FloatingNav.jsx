@@ -10,7 +10,8 @@ import {
   TbClipboardText,
   TbBell,
   TbHistory,
-  TbUserPlus
+  TbUserPlus,
+  TbFolder
 } from 'react-icons/tb';
 
 // Shooting Star Component
@@ -138,7 +139,7 @@ const BurstEffect = ({ isVisible }) => {
   );
 };
 
-const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTabClick }) => {
+const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTabClick, userRole }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
   const [toggleHover, setToggleHover] = useState(false);
@@ -156,13 +157,25 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
       { id: 'leave-requests', icon: TbClipboardText, label: 'Leave Requests', path: '/manager-dashboard?tab=leave-requests' },
       { id: 'team-management', icon: TbUsers, label: 'Team', path: '/manager-dashboard?tab=team-management' },
       { id: 'add-member', icon: TbUserPlus, label: 'Add Member', path: '/manager-dashboard?tab=add-member' },
+      { id: 'project-manager', icon: TbFolder, label: 'Project Manager', path: '/project-management' },
       { id: 'announcements', icon: TbBell, label: 'Announcements', path: '/manager-dashboard?tab=announcements' },
       { id: 'leave-history', icon: TbHistory, label: 'History', path: '/manager-dashboard?tab=leave-history' },
       { id: 'report-history', icon: TbHistory, label: 'Reports', path: '/manager-dashboard?tab=report-history' }
     ]
   };
 
-  const tabs = tabConfigs[context] || tabConfigs['leave-calendar'];
+  let tabs = tabConfigs[context] || tabConfigs['leave-calendar'];
+  
+  // Filter tabs based on user role
+  if (context === 'manager-dashboard' && userRole) {
+    tabs = tabs.filter(tab => {
+      // Show Project Manager tab only for managers and admins
+      if (tab.id === 'project-manager') {
+        return userRole === 'manager' || userRole === 'admin';
+      }
+      return true;
+    });
+  }
 
   useEffect(() => {
     if (isVisible) {

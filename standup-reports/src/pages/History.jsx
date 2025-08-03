@@ -159,14 +159,14 @@ export default function History() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-7xl mx-auto px-4 py-8"
+      className="w-full h-full px-4 py-6"
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <motion.h1 
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4 md:mb-0"
+          className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-3 md:mb-0"
         >
           Report History
         </motion.h1>
@@ -183,7 +183,7 @@ export default function History() {
       
       {/* Filters */}
       <motion.div 
-        className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8"
+        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -245,7 +245,7 @@ export default function History() {
 
       {/* Controls */}
       <motion.div 
-        className="flex justify-between items-center mb-6"
+        className="flex justify-between items-center mb-4"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -276,7 +276,7 @@ export default function History() {
       {/* Date Groupings */}
       {loading ? (
         <motion.div 
-          className="flex justify-center items-center h-64"
+          className="flex justify-center items-center h-[calc(100vh-300px)]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
@@ -298,7 +298,7 @@ export default function History() {
         </motion.div>
       ) : Object.keys(reportsByDate).length === 0 ? (
         <motion.div 
-          className="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm"
+          className="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm h-[calc(100vh-300px)] flex flex-col items-center justify-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -311,7 +311,7 @@ export default function History() {
         </motion.div>
       ) : (
         <motion.div 
-          className="space-y-6"
+          className="space-y-4 h-[calc(100vh-300px)] overflow-y-auto pr-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -324,11 +324,11 @@ export default function History() {
             return (
               <motion.div 
                 key={date} 
-                className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
+                className="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md"
                 variants={itemVariants}
               >
                 <motion.div 
-                  className={`px-6 py-4 cursor-pointer flex justify-between items-center ${isToday ? 'bg-gradient-to-r from-indigo-50 to-blue-50' : 'bg-white'}`}
+                  className={`px-4 py-3 cursor-pointer flex justify-between items-center ${isToday ? 'bg-gradient-to-r from-indigo-50 to-blue-50' : 'bg-white'}`}
                   onClick={() => toggleDate(date)}
                   whileHover={{ backgroundColor: isToday ? 'rgba(238, 242, 255, 0.8)' : 'rgba(249, 250, 251, 0.8)' }}
                 >
@@ -371,7 +371,7 @@ export default function History() {
                       }}
                       className="overflow-hidden"
                     >
-                      <div className="p-6 pt-0">
+                      <div className="p-4 pt-0">
                         <div className="grid grid-cols-1 gap-4">
                           {dateReports.map((report) => {
                             const status = report.status === 'submitted' ? 'submitted' : 'pending';
@@ -380,7 +380,7 @@ export default function History() {
                             return (
                               <motion.div 
                                 key={report.id} 
-                                className={`border ${colors.border} ${colors.bg} rounded-xl p-4 transition-all duration-200 hover:shadow-sm`}
+                                className={`border ${colors.border} ${colors.bg} rounded-lg p-3 transition-all duration-200 hover:shadow-sm`}
                                 whileHover={{ y: -2, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                               >
                                 <div className="flex justify-between items-start">

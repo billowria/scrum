@@ -87,8 +87,7 @@ export default function TasksPage({ sidebarOpen }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [search, setSearch] = useState('');
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const [employees, setEmployees] = useState([]);
 
   // Calculate task statistics
   const taskStats = {
@@ -128,6 +127,27 @@ export default function TasksPage({ sidebarOpen }) {
     };
     fetchCurrentUser();
   }, []);
+
+  // Fetch employees/team members for filter
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!currentUser || !userRole) return;
+      try {
+        let query = supabase.from('users').select('id, name');
+        if (userRole === 'manager' && currentUser.team_id) {
+          query = query.eq('team_id', currentUser.team_id);
+        } else if (userRole === 'member') {
+          query = query.eq('id', currentUser.id);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        setEmployees(data || []);
+      } catch (err) {
+        setEmployees([]);
+      }
+    };
+    fetchEmployees();
+  }, [currentUser, userRole]);
 
   // Fetch tasks
   const fetchTasks = async () => {
@@ -223,27 +243,6 @@ export default function TasksPage({ sidebarOpen }) {
     };
   }, [filters, userRole, currentUser]);
 
-  useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          if (currentScrollY > lastScrollY && currentScrollY > 80) {
-            setShowHeader(false); // scroll down, hide
-          } else {
-            setShowHeader(true); // scroll up, show
-          }
-          setLastScrollY(currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
   // Task operation handlers
   const handleTaskUpdate = (task) => {
     setUpdatingTask(task);
@@ -310,8 +309,6 @@ export default function TasksPage({ sidebarOpen }) {
       <motion.div
         className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} z-30 transition-all duration-300`}
         id="tasks-header"
-        animate={{ y: showHeader ? 0 : '-100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         style={{ right: 0 }}
       >
         <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
@@ -446,6 +443,31 @@ export default function TasksPage({ sidebarOpen }) {
                   />
                 </div>
 
+                {/* Status Filter */}
+                <select
+                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all mr-2"
+                  value={filters.status}
+                  onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Review">Review</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Overdue">Overdue</option>
+                </select>
+                {/* Employee Filter */}
+                <select
+                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all mr-2"
+                  value={filters.assignee}
+                  onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
+                >
+                  <option value="all">All Employees</option>
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.name}</option>
+                  ))}
+                </select>
+
                 {/* Create Task Button - Only for Managers */}
                 {userRole === 'manager' && (
                   <motion.button
@@ -467,9 +489,6 @@ export default function TasksPage({ sidebarOpen }) {
         </div>
       </motion.div>
       
-      {/* Spacer to prevent content jump due to fixed header */}
-      <div className="h-20 w-full"></div>
-
       {/* Main Content */}
       <div className="pt-4">
         {/* Content */}

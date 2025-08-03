@@ -21,6 +21,8 @@ import ManageAnnouncements from './components/ManageAnnouncements';
 import DepartmentManagement from './pages/DepartmentManagement';
 import TasksPage from './pages/TasksPage';
 import NotificationsPage from './pages/NotificationsPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectManagement from './components/ProjectManagement';
 
 // Animation variants
 const pageVariants = {
@@ -245,6 +247,21 @@ function AppContent({ session, userRole, sidebarOpen }) {
                   </PageTransition>
                 } />
                 <Route path="/department-management" element={<DepartmentManagement />} />
+                <Route path="/projects" element={
+                  <PageTransition>
+                    <ProjectsPage />
+                  </PageTransition>
+                } />
+                {/* Manager/Admin-specific routes */}
+                {(userRole === 'manager' || userRole === 'admin') && (
+                  <Route path="/project-management" element={
+                    <PageTransition>
+                      <div className="w-full py-6">
+                        <ProjectManagement />
+                      </div>
+                    </PageTransition>
+                  } />
+                )}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </>
             )}

@@ -5,7 +5,7 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
   FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
-  FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock } from 'react-icons/fi';
+  FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock, FiFolder } from 'react-icons/fi';
 import { TbHistory } from 'react-icons/tb';
 import History from './History';
 
@@ -15,6 +15,7 @@ import AnnouncementManager from '../components/AnnouncementManager';
 import TeamManagement from './TeamManagement';
 import FloatingNav from '../components/FloatingNav';
 import AddMember from '../components/AddMember';
+import ProjectManagement from '../components/ProjectManagement';
 import './ManagerDashboard.css';
 
 // Animation variants
@@ -296,6 +297,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   const leaveHistoryRef = useRef(null);
   const announcementsRef = useRef(null);
   const reportHistoryRef = useRef(null);
+  const projectsRef = useRef(null);
   
   // Get tab from URL query parameters
   useEffect(() => {
@@ -303,7 +305,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     const tabParam = searchParams.get('tab');
     const subtabParam = searchParams.get('subtab');
 
-    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history'].includes(tabParam)) {
+    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setActiveTab(activeTabDefault);
@@ -314,6 +316,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     }
   }, [location.search, activeTabDefault]);
   
+  const [currentUser, setCurrentUser] = useState(null);
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
@@ -327,6 +330,30 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date'); // date, status, team
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setCurrentUser(null);
+          return;
+        }
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, name, role, team_id, manager_id')
+          .eq('id', user.id)
+          .single();
+        if (error) throw error;
+        setCurrentUser(data);
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+        setCurrentUser(null);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const tabs = [
     {
@@ -358,6 +385,11 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       id: 'report-history',
       label: 'Report History',
       icon: <TbHistory />,
+    },
+    {
+      id: 'projects',
+      label: 'Projects',
+      icon: <FiFolder />,
     },
   ];
   
@@ -464,6 +496,8 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       console.error('Error fetching leave requests:', error.message);
     }
   };
+
+
   
   const handleRefresh = () => {
     setLoading(true);
@@ -639,7 +673,8 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       'leave-requests': leaveRequestsRef,
       'leave-history': leaveHistoryRef,
       'announcements': announcementsRef,
-      'report-history': reportHistoryRef
+      'report-history': reportHistoryRef,
+      'projects': projectsRef
     };
 
     const ref = refs[tabId];
@@ -651,14 +686,17 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     }
   };
 
+
+
   return (
-    <div className="min-h-screen bg-gray-50 pt-2 pr-5 pb-5 pl-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 pt-2 pr-5 pb-5 pl-5">
       {/* Floating Navigation */}
       <FloatingNav 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         context="manager-dashboard"
         onTabClick={scrollToTab}
+        userRole={currentUser?.role}
       />
 
       <AnimatePresence mode="wait">
@@ -1009,8 +1047,18 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
               <History />
             </div>
           )}
+
+          {/* Projects Tab */}
+          {activeTab === 'projects' && (
+            <div ref={projectsRef}>
+              <ProjectManagement />
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
+
+
+
     </div>
   );
 }

@@ -50,38 +50,10 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
         </motion.div>
       </div>
 
-      {/* Center - Page Title */}
-      <div className="flex-1 flex justify-center">
-        <motion.div 
-          className="px-4 py-1.5 rounded-full bg-white/50 backdrop-blur-sm border border-slate-200/50 shadow-sm"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, type: 'spring', stiffness: 400 }}
-        >
-          <span className="text-slate-700 font-medium text-sm">Dashboard</span>
-        </motion.div>
-      </div>
-
       {/* Right Side - Actions & User */}
       <div className="relative flex items-center gap-3">
         {/* Notification Bell */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          <NotificationBell userRole={user.role} />
-        </motion.div>
-
-        {/* Settings Button */}
-        <motion.button
-          className="p-2 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-slate-800 hover:bg-white/70 transition-all duration-200"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          <FiSettings size={16} />
-        </motion.button>
+        <NotificationBell userRole={user.role} />
 
         {/* User Profile */}
         <motion.button

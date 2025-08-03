@@ -213,36 +213,7 @@ export default function TaskList({
               />
             </div>
           </div>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">All Status</option>
-            <option value="To Do">To Do</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Review">Review</option>
-            <option value="Completed">Completed</option>
-          </select>
-
-          {/* Assignee Filter */}
-          <select
-            value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-            <option value="all">All Assignees</option>
-            {Array.from(new Set(tasks.map(t => t.assignee?.id).filter(Boolean))).map(assigneeId => {
-              const assignee = tasks.find(t => t.assignee?.id === assigneeId)?.assignee;
-              return (
-                <option key={assigneeId} value={assigneeId}>
-                  {assignee?.name}
-                </option>
-              );
-            })}
-          </select>
+          {/* Removed status and assignee filter dropdowns */}
         </div>
       </div>
 
