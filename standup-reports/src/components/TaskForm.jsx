@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { FiX, FiCalendar, FiUser, FiUsers, FiAlertCircle, FiPlus, FiEdit3, FiCheck, FiClock, FiTag } from 'react-icons/fi';
+import { FiX, FiCalendar, FiUser, FiUsers, FiAlertCircle, FiPlus, FiEdit3, FiCheck, FiClock, FiTag, FiLoader } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 
 const modalVariants = {
