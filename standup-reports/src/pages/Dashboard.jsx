@@ -155,6 +155,8 @@ export default function Dashboard({ sidebarOpen }) {
   // State to toggle showing all missing reports in-card
   const [showAllMissingReports, setShowAllMissingReports] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  // Toggle for Missing Reports header visibility
+  const [showMissingHeader, setShowMissingHeader] = useState(false);
 
   useEffect(() => {
     // Get current user information including their team
@@ -580,6 +582,13 @@ export default function Dashboard({ sidebarOpen }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // When showing the missing header, scroll it into view
+  useEffect(() => {
+    if (showMissingHeader) {
+      setTimeout(() => scrollToMissingReports(), 100);
+    }
+  }, [showMissingHeader]);
+
   // Dashboard stat cards
   const dashboardStats = [
     {
@@ -628,8 +637,11 @@ export default function Dashboard({ sidebarOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Report completion status */}
               <motion.div 
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100"
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 cursor-pointer"
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                onClick={() => setShowMissingHeader((prev) => !prev)}
+                role="button"
+                aria-expanded={showMissingHeader}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div className="p-2 bg-blue-500 rounded-lg text-white">
@@ -728,13 +740,17 @@ export default function Dashboard({ sidebarOpen }) {
         </motion.div>
         
         {/* Integrated Missing Reports Summary */}
-        <motion.div
-          id="missing-reports-header"
-          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
-          variants={statCardVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        <AnimatePresence initial={false}>
+          {showMissingHeader && (
+            <motion.div
+              id="missing-reports-header"
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+              initial={{ opacity: 0, height: 0, y: -10 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -10 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              layout
+            >
           <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
             <div className="flex items-center">
               <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
@@ -833,7 +849,9 @@ export default function Dashboard({ sidebarOpen }) {
               </div>
             </div>
           )}
-        </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   };

@@ -84,6 +84,8 @@ export default function TaskForm({
   // Options for dropdowns
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [projectId, setProjectId] = useState(task?.project_id || '');
   
   // Status options with colors
   const statusOptions = [
@@ -116,6 +118,14 @@ export default function TaskForm({
         
         if (teamsError) throw teamsError;
         setTeams(teamsData);
+        
+        // Fetch projects
+        const { data: projectsData, error: projectsError } = await supabase
+          .from('projects')
+          .select('id, name')
+          .order('name', { ascending: true });
+        if (projectsError) throw projectsError;
+        setProjects(projectsData || []);
         
       } catch (err) {
         console.error('Error fetching options:', err);
@@ -167,7 +177,8 @@ export default function TaskForm({
         assignee_id: assigneeId,
         team_id: teamId,
         due_date: dueDate,
-        reporter_id: task?.reporter_id || user.id
+        reporter_id: task?.reporter_id || user.id,
+        project_id: projectId || null
       };
       
       let result;
@@ -324,6 +335,24 @@ export default function TaskForm({
                     <option value="">No team</option>
                     {teams.map(team => (
                       <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {/* Project Field */}
+              <div className="relative group">
+                <label htmlFor="project" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Project</label>
+                <div className="relative">
+                  <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-400" />
+                  <select
+                    id="project"
+                    className="w-full border-2 border-emerald-100 rounded-xl p-2 pl-9 bg-white/90 text-emerald-700 font-semibold focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-sm text-sm"
+                    value={projectId || ''}
+                    onChange={e => setProjectId(e.target.value || '')}
+                  >
+                    <option value="">No project</option>
+                    {projects.map(project => (
+                      <option key={project.id} value={project.id}>{project.name}</option>
                     ))}
                   </select>
                 </div>

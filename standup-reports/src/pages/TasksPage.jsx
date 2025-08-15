@@ -88,6 +88,32 @@ export default function TasksPage({ sidebarOpen }) {
   const [userRole, setUserRole] = useState(null);
   const [search, setSearch] = useState('');
   const [employees, setEmployees] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('all');
+  // Export visible tasks to CSV
+  const exportTasksToCSV = () => {
+    if (!tasks || tasks.length === 0) return;
+    const headers = [
+      'Title', 'Status', 'Assignee', 'Team', 'Project', 'Due Date', 'Created At'
+    ];
+    const rows = tasks.map(t => [
+      (t.title || '').replaceAll('\n', ' ').replaceAll(',', ' '),
+      t.status || '',
+      t.assignee?.name || '',
+      t.team?.name || '',
+      t.project?.name || '',
+      t.due_date || '',
+      t.created_at || ''
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tasks_${selectedProjectId !== 'all' ? selectedProjectId : 'all'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Calculate task statistics
   const taskStats = {
@@ -158,7 +184,7 @@ export default function TasksPage({ sidebarOpen }) {
       let query = supabase
         .from('tasks')
         .select(`
-          id, title, description, status, due_date, created_at, updated_at,
+          id, title, description, status, due_date, created_at, updated_at, project_id,
           assignee:team_members_view!assignee_id(
             id, 
             name,
@@ -173,6 +199,7 @@ export default function TasksPage({ sidebarOpen }) {
             team_name
           ),
           team:team_id(id, name),
+          project:project_id(id, name),
           assignee_id
         `);
 
@@ -185,6 +212,11 @@ export default function TasksPage({ sidebarOpen }) {
       } else if (userRole === 'member' && currentUser) {
         // Member: show only their own tasks
         query = query.eq('assignee_id', currentUser.id);
+      }
+
+      // Project filter
+      if (selectedProjectId !== 'all') {
+        query = query.eq('project_id', selectedProjectId);
       }
 
       // Apply filters
@@ -241,7 +273,48 @@ export default function TasksPage({ sidebarOpen }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [filters, userRole, currentUser]);
+  }, [filters, userRole, currentUser, selectedProjectId]);
+
+  // Fetch projects relevant to the current user
+  const fetchProjects = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setProjects([]);
+
+      // Fetch projects where the user is assigned or created_by the user
+      // Note: Using OR filter; some rows may duplicate - we will de-dup client-side.
+      let query = supabase
+        .from('projects')
+        .select('id, name, created_by, project_assignments(user_id)')
+        .order('name', { ascending: true });
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Filter by involvement: show created_by user or assigned (for members)
+      const filtered = (data || []).filter((p) => {
+        const assigned = (p.project_assignments || []).some(a => a.user_id === user.id);
+        if (userRole === 'manager') {
+          return assigned || p.created_by === user.id;
+        }
+        return assigned;
+      });
+
+      // De-duplicate by id
+      const uniqueById = Array.from(new Map(filtered.map(p => [p.id, { id: p.id, name: p.name }])).values());
+      setProjects(uniqueById);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setProjects([]);
+    }
+  };
+
+  // Load projects when user data available
+  useEffect(() => {
+    if (currentUser && userRole) {
+      fetchProjects();
+    }
+  }, [currentUser, userRole]);
 
   // Task operation handlers
   const handleTaskUpdate = (task) => {
@@ -307,9 +380,8 @@ export default function TasksPage({ sidebarOpen }) {
     >
       {/* Modern Compact Header */}
       <motion.div
-        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} z-30 transition-all duration-300`}
+        className={`sticky top-16 z-30 transition-all duration-300 w-full`}
         id="tasks-header"
-        style={{ right: 0 }}
       >
         <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
           <div className="px-6 py-4">
@@ -391,6 +463,30 @@ export default function TasksPage({ sidebarOpen }) {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-2">
+                {/* Project Filter */}
+                <div className="hidden md:flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Project</label>
+                  <select
+                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={selectedProjectId}
+                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                  >
+                    <option value="all">All Projects</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Export CSV */}
+                <motion.button
+                  className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
+                  onClick={exportTasksToCSV}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title="Export Visible Tasks to CSV"
+                >
+                  Export
+                </motion.button>
                 {/* View Toggle */}
                 <div className="flex items-center bg-gray-100 rounded-lg p-1">
                   <motion.button
@@ -419,6 +515,19 @@ export default function TasksPage({ sidebarOpen }) {
                 >
                   <FiRefreshCw className="w-4 h-4" />
                 </motion.button>
+
+                {/* Assigned to me toggle */}
+                {currentUser && (
+                  <motion.button
+                    className={`px-3 py-2 rounded-lg text-sm transition-all ${filters.assignee === currentUser.id ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
+                    onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Toggle Assigned to Me"
+                  >
+                    My Tasks
+                  </motion.button>
+                )}
 
                 <motion.button
                   className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
@@ -467,6 +576,16 @@ export default function TasksPage({ sidebarOpen }) {
                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
                 </select>
+                {/* Clear filters */}
+                <motion.button
+                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50"
+                  onClick={() => { setFilters({ status: 'all', assignee: 'all', team: 'all', dueDate: 'all', search: '' }); setSearch(''); setSelectedProjectId('all'); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title="Clear All Filters"
+                >
+                  Clear
+                </motion.button>
 
                 {/* Create Task Button - Only for Managers */}
                 {userRole === 'manager' && (
@@ -488,6 +607,23 @@ export default function TasksPage({ sidebarOpen }) {
           </div>
         </div>
       </motion.div>
+      {/* Active Filters Bar */}
+      <div className="px-6 pt-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedProjectId !== 'all' && (
+            <span className="text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">Project: {projects.find(p => p.id === selectedProjectId)?.name || selectedProjectId}</span>
+          )}
+          {filters.status !== 'all' && (
+            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Status: {filters.status}</span>
+          )}
+          {filters.assignee !== 'all' && (
+            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Assignee: {employees.find(e => e.id === filters.assignee)?.name || 'Me'}</span>
+          )}
+          {filters.search && (
+            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Search: {filters.search}</span>
+          )}
+        </div>
+      </div>
       
       {/* Main Content */}
       <div className="pt-4">

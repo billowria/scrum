@@ -13,26 +13,26 @@ export const useRealTimeCounts = (user) => {
   });
 
   const fetchCounts = useCallback(async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     try {
       const countsData = {};
 
-      // Fetch tasks count
+      // Fetch tasks count (schema uses assignee_id and task_status enum)
       const { data: tasksData } = await supabase
         .from('tasks')
         .select('id')
-        .eq('assigned_to', user.id)
-        .eq('status', 'pending');
+        .eq('assignee_id', user.id)
+        .in('status', ['To Do', 'In Progress']);
       countsData.tasks = tasksData?.length || 0;
 
-      // Fetch unread notifications count
-      const { data: notificationsData } = await supabase
-        .from('notifications')
+      // Unread notifications proxy via announcement_reads
+      const { data: readsData } = await supabase
+        .from('announcement_reads')
         .select('id')
         .eq('user_id', user.id)
         .eq('read', false);
-      countsData.notifications = notificationsData?.length || 0;
+      countsData.notifications = readsData?.length || 0;
 
       // Fetch projects count (for managers: all projects, for others: assigned projects)
       if (user.role === 'manager' || user.role === 'admin') {
@@ -50,7 +50,7 @@ export const useRealTimeCounts = (user) => {
 
       // Fetch achievements count
       const { data: achievementsData } = await supabase
-        .from('user_achievements')
+        .from('achievements')
         .select('id')
         .eq('user_id', user.id);
       countsData.achievements = achievementsData?.length || 0;
@@ -73,11 +73,13 @@ export const useRealTimeCounts = (user) => {
         countsData.leaveRequests = leaveRequestsData?.length || 0;
       }
 
-      // Fetch recent reports count
+      // Fetch recent daily reports for this user (last 7 days)
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: reportsData } = await supabase
-        .from('standup_reports')
+        .from('daily_reports')
         .select('id')
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        .gte('created_at', since)
+        .eq('user_id', user.id);
       countsData.reports = reportsData?.length || 0;
 
       setCounts(countsData);

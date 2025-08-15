@@ -227,7 +227,7 @@ const NotificationBell = ({ userRole }) => {
 
         if (leaveError) throw leaveError;
 
-        // Transform leave requests into notifications
+      // Transform leave requests into notifications
         const leaveNotifications = leaveRequests.map(request => {
           // Format the leave days count
           const startDate = parseISO(request.start_date);
@@ -292,6 +292,29 @@ const NotificationBell = ({ userRole }) => {
           data: announcement
         }));
         
+      // Timesheet submissions for managers
+      if (userRole === 'manager') {
+        const { data: timesheetSubs } = await supabase
+          .from('timesheet_submissions')
+          .select(`
+            id, user_id, start_date, end_date, status, created_at,
+            users:user_id ( id, name, teams:team_id ( id, name ) )
+          `)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        const tsNotifications = (timesheetSubs || []).map(sub => ({
+          id: `timesheet-${sub.id}`,
+          type: 'timesheet',
+          title: 'Timesheet Submission',
+          message: `${sub.users?.name || 'Employee'} submitted timesheet for ${new Date(sub.start_date).toLocaleDateString()} - ${new Date(sub.end_date).toLocaleDateString()}`,
+          created_at: sub.created_at || sub.start_date,
+          is_read: false,
+          status: sub.status,
+          data: sub,
+        }));
+        allNotifications = [...allNotifications, ...tsNotifications];
+      }
+
       // Add announcements to notifications
       allNotifications = [...allNotifications, ...announcementNotifications];
       

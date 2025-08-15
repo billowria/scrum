@@ -6,6 +6,7 @@ import { supabase } from '../supabaseClient';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
   FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
   FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock, FiFolder } from 'react-icons/fi';
+import { TbListDetails } from 'react-icons/tb';
 import { TbHistory } from 'react-icons/tb';
 import History from './History';
 
@@ -16,6 +17,7 @@ import TeamManagement from './TeamManagement';
 import FloatingNav from '../components/FloatingNav';
 import AddMember from '../components/AddMember';
 import ProjectManagement from '../components/ProjectManagement';
+import TimesheetHistory from '../components/TimesheetHistory';
 import './ManagerDashboard.css';
 
 // Animation variants
@@ -313,7 +315,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     const tabParam = searchParams.get('tab');
     const subtabParam = searchParams.get('subtab');
 
-    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects', 'project-manager'].includes(tabParam)) {
+    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects', 'project-manager', 'timesheets'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setActiveTab(activeTabDefault);
@@ -368,6 +370,11 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       id: 'team-management',
       label: 'Team Management',
       icon: <FiUsers />,
+    },
+    {
+      id: 'timesheets',
+      label: 'Timesheets',
+      icon: <TbListDetails />,
     },
     {
       id: 'add-member',
@@ -1059,6 +1066,26 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
                 ]}
               />
               <History />
+            </div>
+          )}
+
+          {/* Timesheets Tab */}
+          {activeTab === 'timesheets' && (
+            <div>
+              <TabHeader
+                title="Timesheet History"
+                subtitle="Review & Approve Submissions"
+                description="View employee timesheet submissions for your teams. Inspect entries and approve or reject pending submissions."
+                icon={TbListDetails}
+                accentColor="indigo"
+                features={[
+                  'Submission Review',
+                  'Approval Workflow',
+                  'Team Filtering',
+                  'Detailed View'
+                ]}
+              />
+              <TimesheetHistory />
             </div>
           )}
 

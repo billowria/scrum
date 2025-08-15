@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './supabaseClient';
 import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
+import squadsyncLogo from './assets/brand/squadsync-logo.png';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -29,6 +30,64 @@ const pageVariants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeInOut' } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
 };
+
+function AppLoader() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-gradient-to-br from-primary-50/60 via-white to-secondary-50/60">
+      <div
+        className="relative w-[320px] rounded-3xl border border-gray-200 bg-white/70 p-8 shadow-2xl backdrop-blur-xl"
+        role="status"
+        aria-busy="true"
+      >
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative h-28 w-28">
+            <div className="absolute inset-0 rounded-full border-2 border-gray-100" />
+            <motion.div
+              className="absolute inset-0 rounded-full border-4 border-transparent"
+              style={{ borderTopColor: 'rgb(2 132 199)' }}
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+            />
+            <motion.div
+              className="absolute inset-3 rounded-full border-4 border-transparent"
+              style={{ borderBottomColor: 'rgb(20 184 166)' }}
+              animate={{ rotate: -360 }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+            />
+            <div className="absolute inset-6 grid place-items-center rounded-full bg-white shadow-inner">
+              <img
+                src={squadsyncLogo}
+                alt="SquadSync"
+                className="h-10 w-10 object-contain"
+                decoding="async"
+              />
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="font-display text-lg font-semibold text-gray-800">Loading SquadSync</div>
+            <motion.div
+              className="mt-1 text-sm text-gray-500"
+              initial={{ opacity: 0.4 }}
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+            >
+              Preparing your workspace…
+            </motion.div>
+          </div>
+
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <motion.div
+              className="h-full w-1/3 rounded-full bg-gradient-to-r from-primary-300 via-primary-500 to-primary-300"
+              animate={{ x: ['-120%', '220%'] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [session, setSession] = useState(null);
@@ -86,12 +145,12 @@ function App() {
     }
   };
 
-  // Fetch user profile (name, avatar_url, role)
+  // Fetch user profile (id, name, avatar_url, role)
   const fetchUserProfile = async (userId) => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('name, role, avatar_url')
+        .select('id, name, role, avatar_url, team_id')
         .eq('id', userId)
         .single();
       if (error) throw error;
@@ -103,22 +162,7 @@ function App() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="relative">
-          {/* Animated loading spinner */}
-          <div className="h-16 w-16 relative">
-            <div className="absolute top-0 left-0 right-0 bottom-0 rounded-full border-4 border-primary-200"></div>
-            <div className="absolute top-0 left-0 right-0 bottom-0 rounded-full border-4 border-transparent border-t-primary-600 animate-spin"></div>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center shadow-lg">
-              <span className="text-white text-xs font-bold">AP</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <AppLoader />;
   }
 
   return (
@@ -150,7 +194,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
     <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30" : "min-h-screen"}>
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}
-      <div className={session ? "pt-10" : ""}>
+      <div>
         <AnimatePresence mode="sync" initial={false}>
           <Routes>
             {!session ? (

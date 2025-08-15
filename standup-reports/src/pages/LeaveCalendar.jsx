@@ -2,53 +2,49 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiBarChart2, FiArrowRight, FiFilter, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiUserCheck, FiEye, FiTrendingUp, FiTarget, FiZap, FiStar, FiGrid, FiList } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2 } from 'react-icons/fi';
 
 // Import components
-import LeaveCalendarView from '../components/LeaveCalendarView';
 import LeaveRequestForm from '../components/LeaveRequestForm';
-import LeaveSummary from '../components/LeaveSummary';
 import FloatingNav from '../components/FloatingNav';
 import AnnouncementModal from '../components/AnnouncementModal';
-import TeamAvailabilityAnalytics from '../components/TeamAvailabilityAnalytics';
-import TeamLeaveOverview from '../components/TeamLeaveOverview';
 import UserListModal from '../components/UserListModal';
 
 // Professional color palette
 const colors = {
   primary: {
-    light: '#EBF4FF', // Light blue
-    medium: '#3F83F8', // Medium blue
-    dark: '#1E429F', // Dark blue
+    light: '#EBF4FF',
+    medium: '#3F83F8',
+    dark: '#1E429F',
   },
   accent: {
-    light: '#FDF2F8', // Light pink
-    medium: '#F472B6', // Medium pink
-    dark: '#9D174D', // Dark pink
+    light: '#FDF2F8',
+    medium: '#F472B6',
+    dark: '#9D174D',
   },
   success: {
-    light: '#ECFDF5', // Light green
-    medium: '#34D399', // Medium green
-    dark: '#065F46', // Dark green
+    light: '#ECFDF5',
+    medium: '#34D399',
+    dark: '#065F46',
   },
   warning: {
-    light: '#FFFBEB', // Light yellow
-    medium: '#FBBF24', // Medium yellow
-    dark: '#92400E', // Dark yellow
+    light: '#FFFBEB',
+    medium: '#FBBF24',
+    dark: '#92400E',
   },
   danger: {
-    light: '#FEF2F2', // Light red
-    medium: '#F87171', // Medium red
-    dark: '#991B1B', // Dark red
+    light: '#FEF2F2',
+    medium: '#F87171',
+    dark: '#991B1B',
   },
   neutral: {
-    lightest: '#F9FAFB', // Almost white
-    lighter: '#F3F4F6', // Very light gray
-    light: '#E5E7EB', // Light gray
-    medium: '#9CA3AF', // Medium gray
-    dark: '#4B5563', // Dark gray
-    darker: '#1F2937', // Very dark gray
-    darkest: '#111827', // Almost black
+    lightest: '#F9FAFB',
+    lighter: '#F3F4F6',
+    light: '#E5E7EB',
+    medium: '#9CA3AF',
+    dark: '#4B5563',
+    darker: '#1F2937',
+    darkest: '#111827',
   }
 };
 
@@ -115,40 +111,7 @@ const overlayButtonVariants = {
   tap: { scale: 0.95 }
 };
 
-// Enhanced stat card animation
-const statCardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: custom => ({
-    opacity: 1,
-    y: 0,
-    transition: { 
-      delay: custom * 0.1,
-      type: 'spring', 
-      stiffness: 400, 
-      damping: 15 
-    }
-  }),
-  hover: {
-    y: -5,
-    transition: { 
-      type: 'spring', 
-      stiffness: 400, 
-      damping: 10
-    }
-  }
-};
-
-// New tab variants
-const tabVariants = {
-  inactive: { opacity: 0.7, y: 5 },
-  active: { 
-    opacity: 1, 
-    y: 0,
-    transition: { type: 'spring', stiffness: 500, damping: 30 }
-  }
-};
-
-// Compact Tab Header Component - Completely different design
+// Compact Tab Header Component - Small and Responsive Design
 const CompactTabHeader = ({ 
   title, 
   subtitle, 
@@ -160,40 +123,28 @@ const CompactTabHeader = ({
 }) => {
   const colorSchemes = {
     blue: {
-      gradient: "from-blue-500 via-indigo-600 to-purple-600",
-      glow: "shadow-blue-500/25",
-      accent: "from-cyan-400 to-blue-500",
-      iconBg: "bg-gradient-to-br from-blue-400 to-indigo-500",
+      bg: "bg-gradient-to-r from-blue-600 to-indigo-600",
       text: "text-blue-50",
-      border: "border-blue-400/30",
-      pulse: "bg-blue-400"
+      border: "border-blue-500/20",
+      accent: "bg-blue-500/20"
     },
     green: {
-      gradient: "from-emerald-500 via-teal-600 to-cyan-600",
-      glow: "shadow-emerald-500/25",
-      accent: "from-green-400 to-emerald-500",
-      iconBg: "bg-gradient-to-br from-emerald-400 to-teal-500",
+      bg: "bg-gradient-to-r from-emerald-600 to-teal-600",
       text: "text-emerald-50",
-      border: "border-emerald-400/30",
-      pulse: "bg-emerald-400"
+      border: "border-emerald-500/20",
+      accent: "bg-emerald-500/20"
     },
     purple: {
-      gradient: "from-purple-500 via-violet-600 to-indigo-600",
-      glow: "shadow-purple-500/25",
-      accent: "from-violet-400 to-purple-500",
-      iconBg: "bg-gradient-to-br from-purple-400 to-violet-500",
+      bg: "bg-gradient-to-r from-purple-600 to-violet-600",
       text: "text-purple-50",
-      border: "border-purple-400/30",
-      pulse: "bg-purple-400"
+      border: "border-purple-500/20",
+      accent: "bg-purple-500/20"
     },
     orange: {
-      gradient: "from-orange-500 via-red-500 to-pink-600",
-      glow: "shadow-orange-500/25",
-      accent: "from-orange-400 to-red-500",
-      iconBg: "bg-gradient-to-br from-orange-400 to-red-500",
+      bg: "bg-gradient-to-r from-orange-600 to-red-600",
       text: "text-orange-50",
-      border: "border-orange-400/30",
-      pulse: "bg-orange-400"
+      border: "border-orange-500/20",
+      accent: "bg-orange-500/20"
     }
   };
 
@@ -201,241 +152,88 @@ const CompactTabHeader = ({
 
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-2xl mb-8 shadow-2xl ${scheme.glow}`}
-      initial={{ opacity: 0, y: -20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1.0] }}
+      className={`sticky top-16 z-30 ${scheme.bg} shadow-lg border-b ${scheme.border} backdrop-blur-sm`}
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
     >
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className={`absolute inset-0 bg-gradient-to-r ${scheme.gradient}`} />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,255,255,0.15),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
-        
-        {/* Animated particles */}
-        <motion.div
-          className="absolute top-4 right-4 w-2 h-2 bg-white/60 rounded-full"
-          animate={{ 
-            scale: [1, 1.5, 1],
-            opacity: [0.6, 1, 0.6]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-6 left-6 w-1 h-1 bg-white/40 rounded-full"
-          animate={{ 
-            scale: [1, 2, 1],
-            opacity: [0.4, 0.8, 0.4]
-          }}
-          transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/3 w-1.5 h-1.5 bg-white/50 rounded-full"
-          animate={{ 
-            scale: [1, 1.3, 1],
-            opacity: [0.5, 0.9, 0.5]
-          }}
-          transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-        />
-      </div>
-
-      <div className="relative p-6">
-        {/* Main Content */}
-        <div className="flex items-start justify-between">
-          {/* Left Section - Icon and Title */}
-          <div className="flex items-start space-x-4 flex-1">
+      <div className="px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Left Section - Title and Icon */}
+          <div className="flex items-center gap-3">
             <motion.div 
-              className={`relative p-4 ${scheme.iconBg} rounded-2xl shadow-lg backdrop-blur-sm border ${scheme.border}`}
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ duration: 0.3 }}
+              className={`p-2 rounded-lg ${scheme.accent} backdrop-blur-sm`}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
             >
-              <Icon className={`w-6 h-6 ${scheme.text}`} />
-              
-              {/* Glow effect */}
-              <div className={`absolute inset-0 ${scheme.iconBg} rounded-2xl blur-xl opacity-50`} />
+              <Icon className={`w-5 h-5 ${scheme.text}`} />
             </motion.div>
             
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <motion.h2 
-                  className="text-2xl font-bold text-white"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
+            <div className="flex items-center gap-3">
+              <div>
+                <h2 className={`text-lg sm:text-xl font-bold ${scheme.text} flex items-center gap-2`}>
                   {title}
-                </motion.h2>
-                {badge && (
-                  <motion.span 
-                    className={`px-3 py-1 text-xs font-bold bg-white/20 backdrop-blur-sm border border-white/30 rounded-full ${scheme.text}`}
+                  {badge && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full">
+                      {badge}
+                    </span>
+                  )}
+                </h2>
+                <p className={`text-sm ${scheme.text} opacity-90 hidden sm:block`}>
+                  {subtitle}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Section - Stats and Actions */}
+          <div className="flex items-center gap-3">
+            {/* Quick Stats */}
+            {quickStats.length > 0 && (
+              <div className="hidden sm:flex items-center gap-3">
+                {quickStats.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    onClick={stat.onClick}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${scheme.accent} ${stat.onClick ? 'cursor-pointer hover:bg-white/10' : ''} transition-colors`}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + index * 0.05 }}
+                    whileHover={stat.onClick ? { scale: 1.02 } : {}}
+                  >
+                    <span className={`text-xs ${scheme.text} opacity-80`}>{stat.label}:</span>
+                    <span className={`text-sm font-bold ${scheme.text}`}>{stat.value}</span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            {quickActions.length > 0 && (
+              <div className="flex items-center gap-2">
+                {quickActions.map((action, index) => (
+                  <motion.button
+                    key={index}
+                    className={`p-2 rounded-lg ${scheme.accent} hover:bg-white/10 transition-colors ${scheme.text}`}
+                    onClick={action.onClick}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={action.tooltip}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 }}
+                    transition={{ delay: 0.2 + index * 0.05 }}
                   >
-                    {badge}
-                  </motion.span>
-                )}
-              </div>
-              
-              <motion.p 
-                className="text-white/90 text-lg font-medium mb-4"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {subtitle}
-              </motion.p>
-              
-              {/* Quick Stats with enhanced design */}
-              {quickStats.length > 0 && (
-                <div className="flex items-center gap-6">
-                  {quickStats.map((stat, index) => (
-                    <motion.div
-                      key={index}
-                      onClick={stat.onClick}
-                      className={`flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20 ${stat.onClick ? 'cursor-pointer' : ''}`}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                      whileHover={stat.onClick ? { scale: 1.05, y: -2 } : {}}
-                      whileTap={stat.onClick ? { scale: 0.98 } : {}}
-                    >
-                      <span className="text-white/70 text-sm font-medium">{stat.label}:</span>
-                      <span className="text-white font-bold text-lg">{stat.value}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right Section - Quick Actions */}
-          {quickActions.length > 0 && (
-            <motion.div 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              {quickActions.map((action, index) => (
-                <motion.button
-                  key={index}
-                  className={`relative p-3 bg-white/15 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/25 transition-all duration-300 group ${scheme.text}`}
-                  onClick={action.onClick}
-                  whileHover={{ scale: 1.1, y: -3 }}
-                  whileTap={{ scale: 0.95 }}
-                  title={action.tooltip}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                >
-                  <div className="relative z-10">
                     {action.icon}
-                  </div>
-                  
-                  {/* Hover glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  {/* Pulse animation on hover */}
-                  <motion.div
-                    className={`absolute inset-0 ${scheme.pulse} rounded-xl opacity-20`}
-                    initial={{ scale: 1 }}
-                    whileHover={{ scale: 1.2, opacity: 0 }}
-                    transition={{ duration: 0.6 }}
-                  />
-                </motion.button>
-              ))}
-            </motion.div>
-          )}
-        </div>
-
-        {/* Bottom Section - Enhanced Features */}
-        <motion.div 
-          className="mt-6 pt-4 border-t border-white/20"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-white/80">
-                <FiEye className="w-4 h-4" />
-                <span className="text-sm font-medium">Interactive Dashboard</span>
+                  </motion.button>
+                ))}
               </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <FiZap className="w-4 h-4" />
-                <span className="text-sm font-medium">Real-time Updates</span>
-              </div>
-              <div className="flex items-center gap-2 text-white/80">
-                <FiStar className="w-4 h-4" />
-                <span className="text-sm font-medium">Smart Insights</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <motion.div 
-                className={`w-3 h-3 ${scheme.pulse} rounded-full`}
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.7, 1, 0.7]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <span className="text-white/80 text-sm font-medium">Live</span>
-            </div>
+            )}
           </div>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
 };
-
-// Professional stat card component
-const StatCard = ({ icon, title, value, color, index }) => (
-  <motion.div
-    className={`bg-white rounded-xl border border-${color}-100 shadow-sm overflow-hidden`}
-    variants={statCardVariants}
-    custom={index}
-    initial="hidden"
-    animate="visible"
-    whileHover="hover"
-  >
-    <div className={`p-5 flex items-start justify-between bg-gradient-to-r from-${color}-50 to-white`}>
-      <div>
-        <p className={`text-${color}-700 text-sm font-medium mb-1`}>{title}</p>
-        <h4 className="text-2xl font-bold text-gray-800">{value}</h4>
-      </div>
-      <div className={`p-3 rounded-full bg-${color}-100 text-${color}-600`}>
-        {icon}
-      </div>
-    </div>
-  </motion.div>
-);
-
-const TabButton = ({ active, onClick, icon, children }) => (
-  <motion.button
-    className={`flex items-center justify-center py-3 px-4 text-sm font-medium relative rounded-t-lg ${
-      active 
-        ? 'bg-white text-primary-700 shadow-sm' 
-        : 'text-gray-600 hover:bg-gray-100'
-    }`}
-    onClick={onClick}
-    variants={tabVariants}
-    animate={active ? 'active' : 'inactive'}
-    initial={false}
-  >
-    <span className="mr-2">{icon}</span>
-    {children}
-    {active && (
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600"
-        layoutId="underline"
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      />
-    )}
-  </motion.button>
-);
 
 export default function LeaveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -447,91 +245,86 @@ export default function LeaveCalendar() {
   const [message, setMessage] = useState(null);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
-  const [showAvailableModal, setShowAvailableModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [availableUsers, setAvailableUsers] = useState([]);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [calendarAnnouncement, setCalendarAnnouncement] = useState(null);
   const [hasUnreadAnnouncements, setHasUnreadAnnouncements] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [leaveReason, setLeaveReason] = useState('');
   const [monthDirection, setMonthDirection] = useState(0);
   const [teamAvailability, setTeamAvailability] = useState({});
-  const [activeTab, setActiveTab] = useState('calendar');
   const [usersOnLeaveToday, setUsersOnLeaveToday] = useState([]);
 
-  // Refs for scroll functionality
-  const calendarRef = useRef(null);
-  const teamRef = useRef(null);
-  const analyticsRef = useRef(null);
-  const requestsRef = useRef(null);
+  // Timesheet state
+  const [timesheetsByDate, setTimesheetsByDate] = useState({}); // { 'yyyy-MM-dd': [entries] }
+  const [timesheetTotalsByDate, setTimesheetTotalsByDate] = useState({}); // { 'yyyy-MM-dd': totalHours }
+  const [showTimesheetModal, setShowTimesheetModal] = useState(false);
+  const [timesheetDate, setTimesheetDate] = useState(null);
+  const [timesheetLoading, setTimesheetLoading] = useState(false);
+  const [showTimesheetRangeModal, setShowTimesheetRangeModal] = useState(false);
+  const [timesheetRange, setTimesheetRange] = useState({ start: null, end: null });
 
-  const tabs = [
-    { id: 'calendar', label: 'Calendar View', icon: <FiCalendar /> },
-    { id: 'team', label: 'Team Overview', icon: <FiUsers /> },
-    { id: 'analytics', label: 'Analytics', icon: <FiBarChart2 /> },
-    { id: 'requests', label: 'My Requests', icon: <FiClock /> },
-  ]; // 'calendar', 'analytics', or 'team'
-  
-  // New stats for enhanced dashboard
-  const [stats, setStats] = useState({
-    totalTeamMembers: 0,
-    membersOnLeave: 0,
-    membersAvailable: 0
-  });
-  
+  // Timesheet approvals count for indicator
+  const [pendingTimesheetCount, setPendingTimesheetCount] = useState(0);
+
   // Animation controls
   const controls = useAnimation();
   
-  // Scroll to tab function
-  const scrollToTab = (tabId) => {
-    const refs = {
-      'calendar': calendarRef,
-      'team': teamRef,
-      'analytics': analyticsRef,
-      'requests': requestsRef
-    };
-
-    const ref = refs[tabId];
-    if (ref && ref.current) {
-      ref.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }
-  };
-  
   useEffect(() => {
     fetchCurrentUser();
-    fetchUsers();
-    fetchLeaveData();
-    fetchAnnouncements();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchUsers();
+      fetchLeaveData();
+      fetchAnnouncements();
+      fetchTimesheets();
+      fetchPendingTimesheetCount();
+    }
     
     // Animate the calendar on initial load
     controls.start('visible');
-  }, []);
+  }, [currentUser]);
   
   useEffect(() => {
-    fetchLeaveData();
-  }, [currentMonth]);
+    if (currentUser) {
+      fetchLeaveData();
+      fetchTimesheets();
+      fetchPendingTimesheetCount();
+    }
+  }, [currentMonth, currentUser]);
+
+  const fetchPendingTimesheetCount = async () => {
+    if (!currentUser) return;
+    try {
+      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+      const { count, error } = await supabase
+        .from('timesheet_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', currentUser.id)
+        .eq('status', 'pending')
+        .gte('start_date', start)
+        .lte('end_date', end);
+      if (error) throw error;
+      setPendingTimesheetCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching pending timesheet count:', error.message);
+    }
+  };
   
   // Calculate team availability whenever leave data changes
   useEffect(() => {
-    const doCalculations = async () => {
-      if (leaveData.length > 0 && users.length > 0) {
-        calculateTeamAvailability();
-        const newStats = await calculateStats();
-        if (newStats) {
-          setStats(newStats);
-        }
-      }
-    };
-    doCalculations();
+    if (leaveData.length > 0 && users.length > 0) {
+      calculateTeamAvailability();
+      calculateStats();
+    }
   }, [leaveData, users]);
   
-  // Update the calculateStats function to set available and on-leave users
   const calculateStats = async () => {
+    if (!currentUser) return;
+    
     try {
       const today = new Date();
       const todayString = format(today, 'yyyy-MM-dd');
@@ -558,7 +351,6 @@ export default function LeaveCalendar() {
 
       const availableUsers = allUsers.filter(user => !onLeaveIds.includes(user.id));
 
-      setAvailableUsers(availableUsers);
       setUsersOnLeaveToday(usersOnLeave);
 
       return {
@@ -623,6 +415,8 @@ export default function LeaveCalendar() {
   };
   
   const fetchUsers = async () => {
+    if (!currentUser) return;
+    
     try {
       const { data, error } = await supabase
         .from('users')
@@ -636,6 +430,8 @@ export default function LeaveCalendar() {
   };
   
   const fetchLeaveData = async () => {
+    if (!currentUser) return;
+    
     setLoading(true);
     try {
       const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
@@ -658,9 +454,46 @@ export default function LeaveCalendar() {
       setLoading(false);
     }
   };
+
+  // Fetch timesheets for the current month for the logged-in user
+  const fetchTimesheets = async () => {
+    if (!currentUser) return;
+    try {
+      setTimesheetLoading(true);
+      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+      const { data, error } = await supabase
+        .from('timesheets')
+        .select(`id, date, hours, notes, project_id, projects:project_id (id, name)`) 
+        .gte('date', start)
+        .lte('date', end)
+        .eq('user_id', currentUser.id)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      const byDate = {};
+      const totals = {};
+      (data || []).forEach((entry) => {
+        const key = entry.date;
+        if (!byDate[key]) byDate[key] = [];
+        byDate[key].push(entry);
+        totals[key] = (totals[key] || 0) + Number(entry.hours || 0);
+      });
+      setTimesheetsByDate(byDate);
+      setTimesheetTotalsByDate(totals);
+    } catch (error) {
+      console.error('Error fetching timesheets:', error.message);
+    } finally {
+      setTimesheetLoading(false);
+    }
+  };
   
   // Fetch announcements from the database
   const fetchAnnouncements = async () => {
+    if (!currentUser) return;
+    
     try {
       const today = new Date().toISOString();
       
@@ -676,7 +509,6 @@ export default function LeaveCalendar() {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setAnnouncements(data);
         setCalendarAnnouncement(data[0]); // Use the most recent announcement
         setHasUnreadAnnouncements(true);
       }
@@ -803,13 +635,10 @@ export default function LeaveCalendar() {
     setShowOnLeaveModal(true);
   };
 
-  const handleAvailableUsersClick = () => {
-    setShowAvailableModal(true);
-  };
-
-  const handleOnLeaveUsersClick = () => {
-    setSelectedUsers(usersOnLeaveToday);
-    setShowOnLeaveModal(true);
+  const openTimesheetForDay = (day, event) => {
+    if (event) event.stopPropagation();
+    setTimesheetDate(day);
+    setShowTimesheetModal(true);
   };
 
   // Function to render the calendar day
@@ -819,6 +648,7 @@ export default function LeaveCalendar() {
     const isSameMonthDay = isSameMonth(day, currentMonth);
     const availability = teamAvailability[dateStr];
     const isToday = isSameDay(new Date(), day);
+    const totalHours = timesheetTotalsByDate[dateStr] || 0;
     
     // Check if this day has leave data
     const usersOnLeave = leaveData
@@ -899,6 +729,18 @@ export default function LeaveCalendar() {
                 Pending
               </span>
             )}
+
+            {/* Timesheet total hours badge */}
+            <motion.span
+              className={`mt-0.5 text-xs px-1.5 py-0.5 ${totalHours > 0 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer'} rounded-full inline-flex items-center`}
+              onClick={(e) => openTimesheetForDay(day, e)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={totalHours > 0 ? `${totalHours}h logged` : 'Log time'}
+            >
+              <FiClock size={10} className="mr-1" />
+              {totalHours > 0 ? `${totalHours}h` : 'Log'}
+            </motion.span>
           </div>
         </div>
         
@@ -950,413 +792,169 @@ export default function LeaveCalendar() {
   };
   
   return (
-    <div className="relative min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
-      {/* Tabs with enhanced styling */}
-      {/* New Floating Nav with Gluey Animation */}
-      <FloatingNav 
-        tabs={tabs} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onTabClick={scrollToTab}
+    <div className="relative min-h-screen bg-gray-50">
+      {/* Header */}
+      <CompactTabHeader
+        title="Leave Calendar"
+        subtitle="View and request leave with interactive calendar"
+        icon={FiCalendar}
+        color="blue"
+        badge="Active"
+        quickStats={[
+          { label: "Month", value: format(currentMonth, 'MMM yyyy') },
+          { label: "Hours Logged", value: Object.values(timesheetTotalsByDate).reduce((a, b) => a + b, 0) }
+        ]}
+        quickActions={[
+          {
+            icon: <FiPlus className="w-4 h-4" />,
+            onClick: () => setShowLeaveForm(true),
+            tooltip: "Request Leave"
+          },
+          {
+            icon: <FiRefreshCw className="w-4 h-4" />,
+            onClick: () => window.location.reload(),
+            tooltip: "Refresh"
+          },
+          {
+            icon: <FiClock className="w-4 h-4" />,
+            onClick: () => setShowTimesheetRangeModal(true),
+            tooltip: "Log Timesheet Range"
+          }
+        ]}
       />
       
-      {/* Tab Content with improved transitions */}
-      <AnimatePresence mode="wait">
-        {/* Calendar View */}
-        {activeTab === 'calendar' && (
-          <div ref={calendarRef}>
-            <CompactTabHeader
-              title="Calendar View"
-              subtitle="Interactive monthly calendar with team availability and leave tracking"
-              icon={FiCalendar}
-              color="blue"
-              badge="Active"
-              quickStats={[
-                { label: "Available", value: `${stats.membersAvailable} members`, onClick: handleAvailableUsersClick },
-                { label: "On Leave", value: `${stats.membersOnLeave} today`, onClick: handleOnLeaveUsersClick },
-                { label: "Month", value: format(currentMonth, 'MMM yyyy') }
-              ]}
-              quickActions={[
-                {
-                  icon: <FiPlus className="w-4 h-4" />,
-                  onClick: () => setShowLeaveForm(true),
-                  tooltip: "Request Leave"
-                },
-                {
-                  icon: <FiRefreshCw className="w-4 h-4" />,
-                  onClick: () => window.location.reload(),
-                  tooltip: "Refresh"
-                }
-              ]}
-            />
-            <motion.div
-              key="calendar"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative"
-            >
-              {/* Integrated Calendar Header with Controls and Legend */}
-              <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-100">
-                {/* Month Navigation and Controls */}
-                <div className="flex flex-wrap items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <motion.button
-                      className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
-                      onClick={goToPreviousMonth}
-                      variants={overlayButtonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <FiChevronLeft size={20} />
-                    </motion.button>
-                    
-                    <div className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
-                      {format(currentMonth, 'MMMM yyyy')}
-                    </div>
-                    
-                    <motion.button
-                      className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
-                      onClick={goToNextMonth}
-                      variants={overlayButtonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <FiChevronRight size={20} />
-                    </motion.button>
-                    
-                    <motion.button 
-                      className="ml-2 px-4 py-2 text-sm bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 flex items-center transition-all shadow-sm border border-primary-200"
-                      onClick={() => setCurrentMonth(new Date())}
-                      variants={overlayButtonVariants}
-                      whileHover="hover"
-                      whileTap="tap"
-                    >
-                      <FiCalendar className="mr-1.5" /> Today
-                    </motion.button>
-                  </div>
-                  
-                  <motion.button
-                    className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 flex items-center justify-center transition-all shadow-sm"
-                    onClick={() => setShowLeaveForm(true)}
-                    variants={overlayButtonVariants}
-                    whileHover={{ scale: 1.03, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)" }}
-                    whileTap="tap"
-                  >
-                    <FiPlus className="mr-2" /> Request Leave
-                  </motion.button>
+      {/* Calendar Content */}
+      <div className="px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8">
+        <motion.div
+          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {/* Calendar Header with Controls */}
+          <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-100">
+          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
+              <div className="flex items-center space-x-4">
+                <motion.button
+                  className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
+                  onClick={goToPreviousMonth}
+                  variants={overlayButtonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <FiChevronLeft size={20} />
+                </motion.button>
+                
+                <div className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
+                  {format(currentMonth, 'MMMM yyyy')}
                 </div>
                 
-                {/* Integrated Legend and Help */}
-                <div className="flex flex-wrap items-center justify-between">
-                  <div className="flex flex-wrap gap-6">
-                    <div className="flex items-center text-sm">
-                      <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                        <div className="h-full w-16 bg-green-500"></div>
-                      </div>
-                      <span className="text-gray-700 font-medium">High Availability</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                        <div className="h-full w-10 bg-yellow-500"></div>
-                      </div>
-                      <span className="text-gray-700 font-medium">Medium Availability</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                        <div className="h-full w-5 bg-red-500"></div>
-                      </div>
-                      <span className="text-gray-700 font-medium">Low Availability</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                      <span className="inline-block w-3 h-3 mr-2 border-2 border-accent-500 rounded-full bg-accent-50"></span>
-                      <span className="text-gray-700 font-medium">Your Leave</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-sm text-gray-500 flex items-center bg-gray-50 px-3 py-1.5 rounded-lg">
-                    <FiInfo className="mr-1.5" /> 
-                    <span>Shift+Click to see team members on leave</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Calendar Header with days of week */}
-              <div className="bg-gradient-to-r from-gray-50 to-white p-4 border-b border-gray-100">
-                <motion.div
-                  className="grid grid-cols-7 gap-2"
-                  variants={calendarVariants}
-                  initial="hidden"
-                  animate={controls}
+                <motion.button
+                  className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
+                  onClick={goToNextMonth}
+                  variants={overlayButtonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                 >
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                    <div key={day} className="text-center p-2 font-semibold text-gray-500">
-                      {day}
-                    </div>
-                  ))}
-                </motion.div>
+                  <FiChevronRight size={20} />
+                </motion.button>
+                
+                <motion.button 
+                  className="ml-2 px-4 py-2 text-sm bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 flex items-center transition-all shadow-sm border border-primary-200"
+                  onClick={() => setCurrentMonth(new Date())}
+                  variants={overlayButtonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
+                  <FiCalendar className="mr-1.5" /> Today
+                </motion.button>
               </div>
               
-              {/* Calendar body with days */}
-              <div className="p-4">
-                {/* Calendar grid */}
-                <AnimatePresence initial={false} custom={monthDirection}>
-                  <motion.div
-                    key={format(currentMonth, 'yyyy-MM')}
-                    custom={monthDirection}
-                    variants={monthTransitionVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                  >
-                    <motion.div 
-                      className="grid grid-cols-7 gap-2"
-                      variants={calendarVariants}
-                      initial="hidden"
-                      animate={controls}
-                    >
-                      {daysInMonth.map(day => renderCalendarDay(day))}
-                    </motion.div>
-                  </motion.div>
-                </AnimatePresence>
+              <div className="flex items-center gap-2">
+                <motion.button
+                  className="px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 flex items-center justify-center transition-all shadow-sm"
+                  onClick={() => setShowLeaveForm(true)}
+                  variants={overlayButtonVariants}
+                  whileHover={{ scale: 1.03, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)" }}
+                  whileTap="tap"
+                >
+                  <FiPlus className="mr-2" /> Request Leave
+                </motion.button>
+                <motion.button
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 flex items-center justify-center transition-all shadow-sm"
+                  onClick={() => {
+                    setTimesheetDate(new Date());
+                    setShowTimesheetRangeModal(true);
+                  }}
+                  variants={overlayButtonVariants}
+                  whileHover={{ scale: 1.03, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)" }}
+                  whileTap="tap"
+                >
+                  <FiPlus className="mr-2" /> Log Timesheet Range
+                </motion.button>
               </div>
-            </motion.div>
-          </div>
-        )}
-        
-        {/* Team View */}
-        {activeTab === 'team' && (
-          <div ref={teamRef}>
-            <CompactTabHeader
-              title="Team Overview"
-              subtitle="Comprehensive team leave status and availability insights"
-              icon={FiUsers}
-              color="green"
-              badge="Live"
-              quickStats={[
-                { label: "Total", value: `${users.length} members` },
-                { label: "Available", value: `${stats.membersAvailable} today` },
-                { label: "On Leave", value: `${stats.membersOnLeave} today` }
-              ]}
-              quickActions={[
-                {
-                  icon: <FiEye className="w-4 h-4" />,
-                  onClick: () => handleAvailableUsersClick(availableUsers),
-                  tooltip: "View Available"
-                },
-                {
-                  icon: <FiUsers className="w-4 h-4" />,
-                  onClick: () => stats.membersOnLeave > 0 && setShowOnLeaveModal(true),
-                  tooltip: "View On Leave"
-                }
-              ]}
-            />
-            <motion.div
-              key="team"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
-            >
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <FiUsers className="mr-2 text-primary-500" />
-                Team Leave Overview
-              </h2>
-              
-              <TeamLeaveOverview 
-                users={users}
-                leaveData={leaveData}
-                currentMonth={currentMonth}
-              />
-            </motion.div>
-          </div>
-        )}
-        
-        {/* Analytics View */}
-        {activeTab === 'analytics' && (
-          <div ref={analyticsRef}>
-            <CompactTabHeader
-              title="Analytics Dashboard"
-              subtitle="Data-driven insights into team availability patterns and trends"
-              icon={FiBarChart2}
-              color="purple"
-              badge="Insights"
-              quickStats={[
-                { label: "Coverage", value: `${Math.round((stats.membersAvailable / stats.totalTeamMembers) * 100)}%` },
-                { label: "Trend", value: "Stable" },
-                { label: "Peak", value: "Mon-Wed" }
-              ]}
-              quickActions={[
-                {
-                  icon: <FiTrendingUp className="w-4 h-4" />,
-                  onClick: () => console.log("View Trends"),
-                  tooltip: "View Trends"
-                },
-                {
-                  icon: <FiTarget className="w-4 h-4" />,
-                  onClick: () => console.log("Set Goals"),
-                  tooltip: "Set Goals"
-                }
-              ]}
-            />
-            <motion.div
-              key="analytics"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
-            >
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <FiBarChart2 className="mr-2 text-primary-500" />
-                Team Availability Analytics
-              </h2>
-              
-              <TeamAvailabilityAnalytics 
-                teamAvailability={teamAvailability}
-                users={users}
-                leaveData={leaveData} 
-                currentMonth={currentMonth} 
-              />
-            </motion.div>
-          </div>
-        )}
-        
-        {/* My Requests View */}
-        {activeTab === 'requests' && (
-          <div ref={requestsRef}>
-            <CompactTabHeader
-              title="My Requests"
-              subtitle="Track and manage your personal leave requests and history"
-              icon={FiClock}
-              color="orange"
-              badge="Personal"
-              quickStats={[
-                { label: "Total", value: `${leaveData.filter(leave => leave.users?.id === currentUser?.id).length} requests` },
-                { label: "Pending", value: `${leaveData.filter(leave => leave.users?.id === currentUser?.id && leave.status === 'pending').length} pending` },
-                { label: "Approved", value: `${leaveData.filter(leave => leave.users?.id === currentUser?.id && leave.status === 'approved').length} approved` }
-              ]}
-              quickActions={[
-                {
-                  icon: <FiPlus className="w-4 h-4" />,
-                  onClick: () => setShowLeaveForm(true),
-                  tooltip: "New Request"
-                },
-                {
-                  icon: <FiList className="w-4 h-4" />,
-                  onClick: () => console.log("View History"),
-                  tooltip: "View History"
-                }
-              ]}
-            />
-            <motion.div
-              key="requests"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
-            >
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <FiClock className="mr-2 text-primary-500" />
-                My Leave Requests
-              </h2>
-              
-              {currentUser ? (
-                <div className="space-y-4">
-                  {leaveData.filter(leave => leave.users?.id === currentUser.id).length > 0 ? (
-                    <div className="divide-y divide-gray-100">
-                      {leaveData
-                        .filter(leave => leave.users?.id === currentUser.id)
-                        .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))
-                        .map((leave, index) => (
-                          <motion.div 
-                            key={leave.id}
-                            className="py-4 px-1"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-4">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <FiCalendar className="text-primary-500" />
-                                  <span className="font-medium text-gray-800">
-                                    {format(parseISO(leave.start_date), 'MMM dd, yyyy')} 
-                                    {' '} - {' '}
-                                    {format(parseISO(leave.end_date), 'MMM dd, yyyy')}
-                                  </span>
-                                </div>
-                                <div className="text-sm text-gray-500 ml-6 mt-1">
-                                  {differenceInDays(parseISO(leave.end_date), parseISO(leave.start_date)) + 1} days of leave
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                  leave.status === 'approved' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : leave.status === 'rejected'
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                  {leave.status === 'approved' ? (
-                                    <span className="flex items-center">
-                                      <FiCheckCircle className="mr-1" /> Approved
-                                    </span>
-                                  ) : leave.status === 'rejected' ? (
-                                    <span className="flex items-center">
-                                      <FiX className="mr-1" /> Rejected
-                                    </span>
-                                  ) : (
-                                    <span className="flex items-center">
-                                      <FiClock className="mr-1" /> Pending
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            {leave.reason && (
-                              <div className="mt-2 ml-6 text-sm text-gray-600">
-                                <span className="font-medium">Reason:</span> {leave.reason}
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 bg-gray-50 rounded-lg">
-                      <FiCalendar className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                      <h3 className="text-lg font-medium text-gray-800 mb-1">No Leave Requests</h3>
-                      <p className="text-gray-500">You haven't made any leave requests yet.</p>
-                      <motion.button
-                        className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg inline-flex items-center"
-                        onClick={() => setShowLeaveForm(true)}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <FiPlus className="mr-2" /> Request Leave
-                      </motion.button>
-                    </div>
-                  )}
+            </div>
+            
+            {/* Legend */}
+            <div className="flex flex-wrap gap-6">
+              <div className="flex items-center text-sm">
+                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
+                  <div className="h-full w-16 bg-green-500"></div>
                 </div>
-              ) : (
-                <div className="text-center py-10 bg-gray-50 rounded-lg">
-                  <FiUser className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                  <h3 className="text-lg font-medium text-gray-800 mb-1">Not Logged In</h3>
-                  <p className="text-gray-500">Please log in to view your leave requests.</p>
+                <span className="text-gray-700 font-medium">High Availability</span>
+              </div>
+              <div className="flex items-center text-sm">
+                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
+                  <div className="h-full w-10 bg-yellow-500"></div>
                 </div>
-              )}
-            </motion.div>
+                <span className="text-gray-700 font-medium">Medium Availability</span>
+              </div>
+              <div className="flex items-center text-sm">
+                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
+                  <div className="h-full w-5 bg-red-500"></div>
+                </div>
+                <span className="text-gray-700 font-medium">Low Availability</span>
+              </div>
+              <div className="flex items-center text-sm">
+                <span className="inline-block w-3 h-3 mr-2 border-2 border-accent-500 rounded-full bg-accent-50"></span>
+                <span className="text-gray-700 font-medium">Your Leave</span>
+              </div>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+          
+          {/* Calendar Header with days of week */}
+          <div className="bg-gradient-to-r from-gray-50 to-white p-4 border-b border-gray-100">
+            <div className="grid grid-cols-7 gap-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center p-2 font-semibold text-gray-500">
+                  {day}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Calendar body with days */}
+          <div className="p-4">
+            <AnimatePresence initial={false} custom={monthDirection}>
+              <motion.div
+                key={format(currentMonth, 'yyyy-MM')}
+                custom={monthDirection}
+                variants={monthTransitionVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <div className="grid grid-cols-7 gap-2">
+                  {daysInMonth.map(day => renderCalendarDay(day))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      </div>
       
-      {/* Enhanced selected date range indicator */}
-      {selectedDates.start && activeTab === 'calendar' && (
+      {/* Selected date range indicator */}
+      {selectedDates.start && (
         <motion.div 
           className="mb-6 p-5 bg-gradient-to-r from-primary-50 to-white rounded-xl shadow-sm border border-primary-200"
           initial={{ opacity: 0, y: 20 }}
@@ -1438,7 +1036,7 @@ export default function LeaveCalendar() {
         </motion.div>
       )}
       
-      {/* Enhanced users on leave hover info */}
+      {/* Users on leave hover info */}
       <AnimatePresence>
         {hoverInfo && (
           <motion.div
@@ -1497,7 +1095,7 @@ export default function LeaveCalendar() {
         )}
       </AnimatePresence>
       
-      {/* Enhanced success message */}
+      {/* Success message */}
       <AnimatePresence>
         {message && (
           <motion.div
@@ -1529,7 +1127,7 @@ export default function LeaveCalendar() {
         )}
       </AnimatePresence>
       
-      {/* Enhanced leave request form */}
+      {/* Leave request form */}
       {showLeaveForm && (
         <LeaveRequestForm 
           isOpen={showLeaveForm}
@@ -1542,18 +1140,47 @@ export default function LeaveCalendar() {
           onClose={() => setShowLeaveForm(false)}
         />
       )}
+
+      {/* Timesheet range modal */}
+      <TimesheetRangeModal
+        isOpen={showTimesheetRangeModal}
+        onClose={() => setShowTimesheetRangeModal(false)}
+        defaultStart={selectedDates.start || new Date()}
+        defaultEnd={selectedDates.end || new Date()}
+        currentUser={currentUser}
+        onSubmitted={async () => {
+          setShowTimesheetRangeModal(false);
+          await fetchTimesheets();
+          setMessage({ type: 'success', text: 'Timesheet submitted for approval' });
+          setTimeout(() => setMessage(null), 2500);
+        }}
+      />
       
-      {/* Enhanced users on leave modal */}
+      {/* Timesheet Modal */}
+      <TimesheetModal 
+        isOpen={showTimesheetModal}
+        onClose={() => setShowTimesheetModal(false)}
+        date={timesheetDate}
+        currentUser={currentUser}
+        entries={(timesheetDate ? timesheetsByDate[format(timesheetDate, 'yyyy-MM-dd')] : []) || []}
+        onChanged={async () => {
+          await fetchTimesheets();
+          setMessage({ type: 'success', text: 'Timesheet updated' });
+          setTimeout(() => setMessage(null), 2500);
+        }}
+      />
+
+      {/* Users on leave modal */}
       <UserListModal
         isOpen={showOnLeaveModal}
         onClose={() => setShowOnLeaveModal(false)}
         title="Team Members on Leave"
-        subtitle={format(new Date(), 'MMMM d, yyyy')}
+        subtitle={selectedDate ? format(selectedDate, 'MMMM d, yyyy') : format(new Date(), 'MMMM d, yyyy')}
         users={selectedUsers}
         type="onLeave"
       />
       
-      {/* Enhanced announcement modal */}
+      {/* Announcement modal */}
       <AnnouncementModal
         isOpen={showAnnouncement}
         onClose={() => {
@@ -1565,7 +1192,7 @@ export default function LeaveCalendar() {
         onDismiss={() => setHasUnreadAnnouncements(false)}
       />
       
-      {/* Enhanced announcement button */}
+      {/* Announcement button */}
       {calendarAnnouncement && (
         <motion.button
           className={`fixed bottom-5 right-5 p-3.5 ${
@@ -1580,6 +1207,11 @@ export default function LeaveCalendar() {
           whileTap={{ scale: 0.9 }}
         >
           <FiBell size={24} />
+          {pendingTimesheetCount > 0 && (
+            <span className="absolute -bottom-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 border-2 border-white">
+              {pendingTimesheetCount}
+            </span>
+          )}
           {hasUnreadAnnouncements && (
             <motion.span 
               className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"
@@ -1591,16 +1223,7 @@ export default function LeaveCalendar() {
         </motion.button>
       )}
       
-      {/* Render the modals */}
-      <UserListModal
-        isOpen={showAvailableModal}
-        onClose={() => setShowAvailableModal(false)}
-        title="Available Team Members"
-        users={availableUsers}
-        type="available"
-      />
-      
-      {/* Add custom scrollbar styles */}
+      {/* Custom scrollbar styles */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -1620,3 +1243,401 @@ export default function LeaveCalendar() {
     </div>
   );
 }
+
+// Timesheet Modal Component
+const TimesheetModal = ({ isOpen, onClose, date, currentUser, entries, onChanged }) => {
+  const [hours, setHours] = useState('');
+  const [notes, setNotes] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchProjects();
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, date]);
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .order('name', { ascending: true });
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error.message);
+    }
+  };
+
+  const resetForm = () => {
+    setHours('');
+    setNotes('');
+    setProjectId('');
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    if (!currentUser || !date) return;
+    const hoursValue = Number(hours);
+    if (Number.isNaN(hoursValue) || hoursValue <= 0) return;
+
+    try {
+      setSubmitting(true);
+      const payload = {
+        user_id: currentUser.id,
+        date: format(date, 'yyyy-MM-dd'),
+        hours: hoursValue,
+        notes: notes || null,
+        project_id: projectId || null,
+      };
+
+      if (editingId) {
+        const { error } = await supabase
+          .from('timesheets')
+          .update(payload)
+          .eq('id', editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('timesheets')
+          .insert([payload]);
+        if (error) throw error;
+      }
+
+      resetForm();
+      await onChanged?.();
+    } catch (error) {
+      console.error('Error saving timesheet:', error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (entry) => {
+    setEditingId(entry.id);
+    setHours(String(entry.hours || ''));
+    setNotes(entry.notes || '');
+    setProjectId(entry.project_id || '');
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      setSubmitting(true);
+      const { error } = await supabase.from('timesheets').delete().eq('id', id);
+      if (error) throw error;
+      if (editingId === id) resetForm();
+      await onChanged?.();
+    } catch (error) {
+      console.error('Error deleting timesheet:', error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary-50 to-white">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary-100 text-primary-700">
+                <FiClock />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">{date ? format(date, 'MMM dd, yyyy') : 'Timesheet'}</h3>
+                <p className="text-sm text-gray-500">Log and review your time entries</p>
+              </div>
+            </div>
+            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={onClose}>
+              <FiX />
+            </button>
+          </div>
+
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+              <div className="mb-3">
+                <label className="block text-sm text-gray-600 mb-1">Project</label>
+                <select
+                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                >
+                  <option value="">Unassigned</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm text-gray-600 mb-1">Hours</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.25"
+                  placeholder="e.g. 1.5"
+                  value={hours}
+                  onChange={(e) => setHours(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm text-gray-600 mb-1">Notes</label>
+                <textarea
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="What did you work on?"
+                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-60"
+                >
+                  {editingId ? 'Update Entry' : 'Add Entry'}
+                </button>
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Entries list */}
+            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-800">Entries</h4>
+                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{entries.length} item(s)</span>
+              </div>
+              {entries.length === 0 ? (
+                <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-4">No entries yet. Log your first one!</div>
+              ) : (
+                <ul className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                  {entries.map((entry) => (
+                    <li key={entry.id} className="flex items-start justify-between p-3 rounded-lg border border-gray-100 bg-white hover:bg-gray-50">
+                      <div>
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
+                          <FiClock className="text-emerald-600" /> {Number(entry.hours)}h
+                          {entry.projects?.name && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{entry.projects.name}</span>
+                          )}
+                        </div>
+                        {entry.notes && <div className="text-sm text-gray-600 mt-1">{entry.notes}</div>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+                          onClick={() => handleEdit(entry)}
+                          title="Edit"
+                        >
+                          <FiEdit3 />
+                        </button>
+                        <button
+                          className="p-2 rounded-lg hover:bg-red-50 text-red-600"
+                          onClick={() => handleDelete(entry.id)}
+                          title="Delete"
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+// Timesheet Range Modal: submit multiple days and create a submission for approval
+const TimesheetRangeModal = ({ isOpen, onClose, defaultStart, defaultEnd, currentUser, onSubmitted }) => {
+  const [startDate, setStartDate] = useState(defaultStart || null);
+  const [endDate, setEndDate] = useState(defaultEnd || null);
+  const [hoursPerDay, setHoursPerDay] = useState('8');
+  const [notes, setNotes] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [projects, setProjects] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('projects').select('id, name').order('name');
+        setProjects(data || []);
+      } catch {}
+    })();
+  }, [isOpen]);
+
+  useEffect(() => {
+    setStartDate(defaultStart || new Date());
+    setEndDate(defaultEnd || new Date());
+  }, [defaultStart, defaultEnd, isOpen]);
+
+  if (!isOpen) return null;
+
+  const createRangeEntries = async () => {
+    if (!currentUser || !startDate || !endDate) return;
+    const start = startDate <= endDate ? startDate : endDate;
+    const end = endDate >= startDate ? endDate : startDate;
+    const days = eachDayOfInterval({ start, end });
+    const hoursValue = Number(hoursPerDay);
+    if (Number.isNaN(hoursValue) || hoursValue <= 0) return;
+
+    try {
+      setSubmitting(true);
+      // Create a submission record
+      const submissionPayload = {
+        user_id: currentUser.id,
+        start_date: format(start, 'yyyy-MM-dd'),
+        end_date: format(end, 'yyyy-MM-dd'),
+        status: 'pending',
+        notes: notes || null,
+      };
+      const { data: subRows, error: subErr } = await supabase
+        .from('timesheet_submissions')
+        .insert([submissionPayload])
+        .select('id')
+        .single();
+      if (subErr) throw subErr;
+
+      const submissionId = subRows.id;
+      const rows = days.map((d) => ({
+        user_id: currentUser.id,
+        date: format(d, 'yyyy-MM-dd'),
+        hours: hoursValue,
+        notes: notes || null,
+        project_id: projectId || null,
+        submission_id: submissionId,
+      }));
+
+      const { error } = await supabase.from('timesheets').insert(rows);
+      if (error) throw error;
+
+      await onSubmitted?.();
+    } catch (error) {
+      console.error('Error submitting timesheet range:', error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-white">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
+                <FiClock />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">Submit Timesheet Range</h3>
+                <p className="text-sm text-gray-500">Create entries for a date range and send for approval</p>
+              </div>
+            </div>
+            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={onClose}>
+              <FiX />
+            </button>
+          </div>
+
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Start Date</label>
+                  <input type="date" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={startDate ? format(startDate, 'yyyy-MM-dd') : ''} onChange={(e) => setStartDate(e.target.value ? parseISO(e.target.value) : null)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">End Date</label>
+                  <input type="date" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={endDate ? format(endDate, 'yyyy-MM-dd') : ''} onChange={(e) => setEndDate(e.target.value ? parseISO(e.target.value) : null)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Hours per day</label>
+                  <input type="number" min="0" step="0.25" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={hoursPerDay} onChange={(e) => setHoursPerDay(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Project</label>
+                  <select className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                    <option value="">Unassigned</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Notes</label>
+                  <textarea rows={3} className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the submission" />
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button disabled={submitting} className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700" onClick={createRangeEntries}>
+                  Submit for Approval
+                </button>
+                <button className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={onClose}>Cancel</button>
+              </div>
+            </div>
+
+            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+              <h4 className="font-semibold text-gray-800 mb-2">Preview</h4>
+              {startDate && endDate ? (
+                <div className="text-sm text-gray-600">
+                  {format(startDate, 'MMM dd, yyyy')} → {format(endDate, 'MMM dd, yyyy')} ({differenceInDays((endDate >= startDate ? endDate : startDate), (startDate <= endDate ? startDate : endDate)) + 1} days)
+                  <div className="mt-2 p-2 rounded bg-gray-50 border border-gray-100">{hoursPerDay}h/day, {projectId ? 'Assigned to selected project' : 'Unassigned'}</div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500">Select a start and end date to preview.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};

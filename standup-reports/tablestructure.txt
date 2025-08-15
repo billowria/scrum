@@ -1,0 +1,313 @@
+-- Database Schema for Project Management System
+
+-- Custom Types
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'task_status') THEN
+        CREATE TYPE task_status AS ENUM ('To Do', 'In Progress', 'Review', 'Completed');
+    END IF;
+END$$;
+
+-- Departments Table
+CREATE TABLE IF NOT EXISTS departments (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    director_id UUID
+);
+
+-- Users Table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT,
+    role TEXT NOT NULL CHECK (role = ANY (ARRAY['member', 'manager', 'admin'])),
+    team_id UUID,
+    manager_id UUID,
+    department_id UUID,
+    avatar_url TEXT,
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (manager_id) REFERENCES users(id),
+    FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+
+-- Update departments with foreign key after users table is created
+ALTER TABLE departments 
+ADD CONSTRAINT departments_director_id_fkey 
+FOREIGN KEY (director_id) REFERENCES users(id);
+
+-- Teams Table
+CREATE TABLE IF NOT EXISTS teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    department_id UUID,
+    FOREIGN KEY (department_id) REFERENCES departments(id)
+);
+
+-- Team Members Table
+CREATE TABLE IF NOT EXISTS team_members (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    team_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member' 
+        CHECK (role = ANY (ARRAY['admin', 'member'])),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Projects Table
+CREATE TABLE IF NOT EXISTS projects (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    name TEXT NOT NULL,
+    description TEXT,
+    start_date DATE,
+    end_date DATE,
+    status TEXT DEFAULT 'active',
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Project Sections Table
+CREATE TABLE IF NOT EXISTS project_sections (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    project_id UUID,
+    name TEXT NOT NULL,
+    description TEXT,
+    "order" INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+-- Project Topics Table
+CREATE TABLE IF NOT EXISTS project_topics (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    section_id UUID,
+    name TEXT NOT NULL,
+    description TEXT,
+    "order" INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (section_id) REFERENCES project_sections(id)
+);
+
+-- Project Topic Content Table
+CREATE TABLE IF NOT EXISTS project_topic_content (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    topic_id UUID,
+    title TEXT NOT NULL,
+    content TEXT,
+    created_by UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (topic_id) REFERENCES project_topics(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Project Assignments Table
+CREATE TABLE IF NOT EXISTS project_assignments (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    project_id UUID,
+    user_id UUID,
+    role_in_project TEXT,
+    assigned_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Tasks Table
+CREATE TABLE IF NOT EXISTS tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    description TEXT,
+    status task_status DEFAULT 'To Do',
+    assignee_id UUID,
+    reporter_id UUID,
+    due_date TIMESTAMP WITH TIME ZONE,
+    team_id UUID,
+    project_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (assignee_id) REFERENCES users(id),
+    FOREIGN KEY (reporter_id) REFERENCES users(id),
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+-- Task Activities Table
+CREATE TABLE IF NOT EXISTS task_activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    action VARCHAR NOT NULL,
+    from_status VARCHAR,
+    to_status VARCHAR,
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (task_id) REFERENCES tasks(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Comments Table
+CREATE TABLE IF NOT EXISTS comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    content TEXT NOT NULL,
+    task_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (task_id) REFERENCES tasks(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Daily Reports Table
+CREATE TABLE IF NOT EXISTS daily_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    date DATE NOT NULL,
+    yesterday TEXT,
+    today TEXT,
+    blockers TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Timesheets Table
+CREATE TABLE IF NOT EXISTS timesheets (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    date DATE NOT NULL,
+    hours NUMERIC NOT NULL CHECK (hours >= 0 AND hours <= 24),
+    notes TEXT,
+    project_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    submission_id UUID,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+-- Timesheet Submissions Table
+CREATE TABLE IF NOT EXISTS timesheet_submissions (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' 
+        CHECK (status = ANY (ARRAY['pending', 'approved', 'rejected'])),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Alter timesheets to add foreign key to timesheet submissions
+ALTER TABLE timesheets 
+ADD CONSTRAINT timesheets_submission_id_fkey 
+FOREIGN KEY (submission_id) REFERENCES timesheet_submissions(id);
+
+-- Leave Plans Table
+CREATE TABLE IF NOT EXISTS leave_plans (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    reason TEXT,
+    status TEXT NOT NULL DEFAULT 'pending' 
+        CHECK (status = ANY (ARRAY['pending', 'approved', 'rejected'])),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    approved_by UUID,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (approved_by) REFERENCES users(id)
+);
+
+-- Achievements Table
+CREATE TABLE IF NOT EXISTS achievements (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    award_type TEXT NOT NULL,
+    awarded_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    created_by UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    image_url TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Announcements Table
+CREATE TABLE IF NOT EXISTS announcements (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    team_id UUID,
+    created_by UUID,
+    expiry_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    FOREIGN KEY (team_id) REFERENCES teams(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Announcement Reads Table
+CREATE TABLE IF NOT EXISTS announcement_reads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    announcement_id UUID,
+    user_id UUID,
+    read BOOLEAN DEFAULT false,
+    read_at TIMESTAMP,
+    FOREIGN KEY (announcement_id) REFERENCES announcements(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Announcement Dismissals Table
+CREATE TABLE IF NOT EXISTS announcement_dismissals (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    announcement_id UUID NOT NULL,
+    dismissed_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (announcement_id) REFERENCES announcements(id)
+);
+
+-- Audit Log Table
+CREATE TABLE IF NOT EXISTS audit_log (
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
+    action TEXT NOT NULL,
+    table_name TEXT NOT NULL,
+    record_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Manager Teams Table
+CREATE TABLE IF NOT EXISTS manager_teams (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    manager_id UUID NOT NULL,
+    team_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    FOREIGN KEY (manager_id) REFERENCES users(id),
+    FOREIGN KEY (team_id) REFERENCES teams(id)
+);
+
+-- Optional: Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_reporter ON tasks(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_timesheets_user ON timesheets(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
+
+-- Optional: Add comments to tables
+COMMENT ON TABLE users IS 'Stores user account information';
+COMMENT ON TABLE tasks IS 'Stores tasks assigned to users within teams';
+COMMENT ON TABLE projects IS 'Stores project information and metadata';
+COMMENT ON TABLE timesheets IS 'Tracks time entries for users across projects';

@@ -67,7 +67,8 @@ const NotificationsHeader = ({
   const typeStats = {
     all: notifications.length,
     announcement: notifications.filter(n => n.type === 'announcement').length,
-    leave_request: notifications.filter(n => n.type === 'leave_request').length
+    leave_request: notifications.filter(n => n.type === 'leave_request').length,
+    timesheet: notifications.filter(n => n.type === 'timesheet').length
   };
 
   return (
@@ -210,7 +211,8 @@ const NotificationsHeader = ({
               {[
                 { key: 'all', label: 'All', icon: <FiBell className="w-4 h-4" />, count: typeStats.all, color: 'indigo' },
                 { key: 'announcement', label: 'Announcements', icon: <FiMessageSquare className="w-4 h-4" />, count: typeStats.announcement, color: 'blue' },
-                { key: 'leave_request', label: 'Leave Requests', icon: <FiCalendar className="w-4 h-4" />, count: typeStats.leave_request, color: 'emerald' }
+                { key: 'leave_request', label: 'Leave Requests', icon: <FiCalendar className="w-4 h-4" />, count: typeStats.leave_request, color: 'emerald' },
+                { key: 'timesheet', label: 'Timesheets', icon: <FiClock className="w-4 h-4" />, count: typeStats.timesheet, color: 'purple' }
               ].map((type) => (
                 <motion.button
                   key={type.key}
@@ -341,6 +343,7 @@ const NotificationCard = ({
   onMarkAsRead, 
   onViewDetails, 
   onLeaveAction,
+  onTimesheetAction,
   viewMode = 'list'
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -378,6 +381,20 @@ const NotificationCard = ({
 
   const getStatusBadge = (notification) => {
     if (notification.type === 'leave_request' && notification.status) {
+      const statusConfig = {
+        pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200', icon: <FiClock className="w-3 h-3" /> },
+        approved: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200', icon: <FiCheck className="w-3 h-3" /> },
+        rejected: { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200', icon: <FiX className="w-3 h-3" /> }
+      };
+      const statusStyle = statusConfig[notification.status] || statusConfig.pending;
+      return (
+        <span className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border} border`}>
+          {statusStyle.icon}
+          {notification.status.charAt(0).toUpperCase() + notification.status.slice(1)}
+        </span>
+      );
+    }
+    if (notification.type === 'timesheet' && notification.status) {
       const statusConfig = {
         pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-200', icon: <FiClock className="w-3 h-3" /> },
         approved: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200', icon: <FiCheck className="w-3 h-3" /> },
@@ -503,6 +520,36 @@ const NotificationCard = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         onLeaveAction(notification.data?.id || notification.id, 'rejected');
+                      }}
+                      className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiX className="w-4 h-4" />
+                      Reject
+                    </motion.button>
+                  </div>
+                )}
+
+                {/* Timesheet Actions */}
+                {notification.type === 'timesheet' && notification.status === 'pending' && onTimesheetAction && (
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTimesheetAction(notification.data?.id || notification.id, 'approved');
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiCheck className="w-4 h-4" />
+                      Approve
+                    </motion.button>
+                    <motion.button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTimesheetAction(notification.data?.id || notification.id, 'rejected');
                       }}
                       className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2"
                       whileHover={{ scale: 1.05 }}
@@ -835,6 +882,30 @@ export default function NotificationsPage({ sidebarOpen }) {
         allNotifications = [...leaveNotifications];
       }
       
+      // Timesheet submissions (for managers only)
+      if (userData.role === 'manager') {
+        const { data: timesheetSubs, error: tsErr } = await supabase
+          .from('timesheet_submissions')
+          .select(`
+            id, user_id, start_date, end_date, status, created_at,
+            users:user_id ( id, name, teams:team_id ( id, name ) )
+          `)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+        if (tsErr) throw tsErr;
+        const tsNotifications = timesheetSubs.map(sub => ({
+          id: `timesheet-${sub.id}`,
+          type: 'timesheet',
+          title: 'Timesheet Submission',
+          message: `${sub.users?.name || 'Employee'} submitted timesheet for ${format(parseISO(sub.start_date), 'MMM dd')} - ${format(parseISO(sub.end_date), 'MMM dd')}`,
+          created_at: sub.created_at || sub.start_date,
+          is_read: false,
+          status: sub.status,
+          data: sub,
+        }));
+        allNotifications = [...allNotifications, ...tsNotifications];
+      }
+
       // Get total count for pagination
       const { count: totalAnnouncements } = await supabase
         .from('announcements')
@@ -972,6 +1043,25 @@ export default function NotificationsPage({ sidebarOpen }) {
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {
       fetchNotifications(currentPage + 1, true);
+    }
+  };
+
+  const handleTimesheetAction = async (submissionId, action) => {
+    try {
+      const id = typeof submissionId === 'string' && submissionId.startsWith('timesheet-')
+        ? submissionId.replace('timesheet-', '')
+        : submissionId;
+      const { error } = await supabase
+        .from('timesheet_submissions')
+        .update({ status: action, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+
+      setNotifications(prev => prev
+        .map(n => n.id === `timesheet-${id}` ? { ...n, status: action } : n)
+        .filter(n => !(n.id === `timesheet-${id}` && action !== 'pending')));
+    } catch (error) {
+      console.error(`Error ${action} timesheet submission:`, error);
     }
   };
 
@@ -1176,6 +1266,7 @@ export default function NotificationsPage({ sidebarOpen }) {
                     onMarkAsRead={handleMarkAsRead}
                     onViewDetails={handleViewDetails}
                     onLeaveAction={currentUserRole === 'manager' ? handleLeaveAction : null}
+                    onTimesheetAction={currentUserRole === 'manager' ? handleTimesheetAction : null}
                     viewMode={viewMode}
                   />
                 </motion.div>

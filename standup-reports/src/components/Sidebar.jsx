@@ -472,21 +472,21 @@ export default function Sidebar({ open, setOpen, user }) {
     try {
       const countsData = {};
 
-      // Fetch tasks count
+      // Fetch tasks count (schema: assignee_id + task_status enum)
       const { data: tasksData } = await supabase
         .from('tasks')
         .select('id')
-        .eq('assigned_to', user.id)
-        .eq('status', 'pending');
+        .eq('assignee_id', user.id)
+        .in('status', ['To Do', 'In Progress']);
       countsData.tasks = tasksData?.length || 0;
 
-      // Fetch unread notifications count
-      const { data: notificationsData } = await supabase
-        .from('notifications')
+      // Unread notifications proxy via announcement_reads
+      const { data: readsData } = await supabase
+        .from('announcement_reads')
         .select('id')
         .eq('user_id', user.id)
         .eq('read', false);
-      countsData.notifications = notificationsData?.length || 0;
+      countsData.notifications = readsData?.length || 0;
 
       // Fetch projects count (for managers: all projects, for others: assigned projects)
       if (user.role === 'manager' || user.role === 'admin') {
@@ -504,7 +504,7 @@ export default function Sidebar({ open, setOpen, user }) {
 
       // Fetch achievements count
       const { data: achievementsData } = await supabase
-        .from('user_achievements')
+        .from('achievements')
         .select('id')
         .eq('user_id', user.id);
       countsData.achievements = achievementsData?.length || 0;
@@ -527,11 +527,13 @@ export default function Sidebar({ open, setOpen, user }) {
         countsData.leaveRequests = leaveRequestsData?.length || 0;
       }
 
-      // Fetch recent reports count
+      // Fetch recent daily_reports for this user (last 7 days)
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: reportsData } = await supabase
-        .from('standup_reports')
+        .from('daily_reports')
         .select('id')
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        .gte('created_at', since)
+        .eq('user_id', user.id);
       countsData.reports = reportsData?.length || 0;
 
       setCounts(countsData);
@@ -615,39 +617,26 @@ export default function Sidebar({ open, setOpen, user }) {
 
   // Dynamic background calculation
   const dynamicBackground = useMemo(() => {
-    const baseOpacity = open ? (isDarkMode ? 0.15 : 0.25) : (isDarkMode ? 0.2 : 0.3);
-    const blurAmount = open ? 32 : 24;
-    const saturation = open ? 200 : 180;
-
+    if (!isDarkMode) {
+      // Professional white background in light mode
+      return {
+        background: open ? '#ffffff' : 'rgba(255,255,255,0.95)',
+        backdropFilter: open ? 'blur(4px) saturate(120%)' : 'blur(8px) saturate(110%)',
+        borderRight: `1px solid rgba(226, 232, 240, ${open ? 1 : 0.8})`,
+        boxShadow: `0 25px 50px -12px rgba(0,0,0,${open ? 0.06 : 0.1}), 0 1px 2px rgba(0,0,0,0.04)`
+      };
+    }
+    // Subtle gradient for dark mode
+    const baseOpacity = open ? 0.15 : 0.2;
     return {
-      background: isDarkMode
-        ? `linear-gradient(145deg, 
-            rgba(23, 23, 23, ${baseOpacity}), 
-            rgba(38, 38, 38, ${baseOpacity - 0.05}), 
-            rgba(64, 64, 64, ${baseOpacity - 0.1})
-          )`
-        : `linear-gradient(145deg, 
-            rgba(255, 255, 255, ${baseOpacity}), 
-            rgba(248, 250, 252, ${baseOpacity - 0.05}), 
-            rgba(241, 245, 249, ${baseOpacity - 0.1})
-          )`,
-      backdropFilter: `blur(${blurAmount}px) saturate(${saturation}%)`,
-      borderRight: isDarkMode
-        ? `1px solid rgba(64, 64, 64, ${open ? 0.3 : 0.4})`
-        : `1px solid rgba(148, 163, 184, ${open ? 0.15 : 0.2})`,
-      boxShadow: isDarkMode
-        ? `
-          0 25px 50px -12px rgba(0, 0, 0, ${open ? 0.4 : 0.5}),
-          0 0 0 1px rgba(255, 255, 255, ${open ? 0.05 : 0.08}),
-          inset 0 1px 0 rgba(255, 255, 255, ${open ? 0.1 : 0.15}),
-          inset 0 -1px 0 rgba(64, 64, 64, ${open ? 0.2 : 0.25})
-        `
-        : `
-          0 25px 50px -12px rgba(0, 0, 0, ${open ? 0.08 : 0.12}),
-          0 0 0 1px rgba(255, 255, 255, ${open ? 0.1 : 0.15}),
-          inset 0 1px 0 rgba(255, 255, 255, ${open ? 0.3 : 0.4}),
-          inset 0 -1px 0 rgba(148, 163, 184, ${open ? 0.1 : 0.15})
-        `
+      background: `linear-gradient(145deg, 
+        rgba(23,23,23, ${baseOpacity}), 
+        rgba(38,38,38, ${baseOpacity - 0.05}), 
+        rgba(64,64,64, ${baseOpacity - 0.1})
+      )`,
+      backdropFilter: `blur(${open ? 32 : 24}px) saturate(${open ? 200 : 180}%)`,
+      borderRight: `1px solid rgba(64,64,64, ${open ? 0.3 : 0.4})`,
+      boxShadow: `0 25px 50px -12px rgba(0,0,0,${open ? 0.4 : 0.5}), 0 0 0 1px rgba(255,255,255,${open ? 0.05 : 0.08}), inset 0 1px 0 rgba(255,255,255,${open ? 0.1 : 0.15}), inset 0 -1px 0 rgba(64,64,64,${open ? 0.2 : 0.25})`
     };
   }, [open, isDarkMode]);
 
@@ -669,7 +658,7 @@ export default function Sidebar({ open, setOpen, user }) {
 
       <motion.aside
         onMouseMove={handleMouseMove}
-        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col overflow-hidden z-50 select-none ${
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col ${open ? 'overflow-hidden' : 'overflow-visible'} z-50 select-none ${
           isCollapsing ? 'pointer-events-none' : ''
         }`}
         style={{
@@ -691,7 +680,7 @@ export default function Sidebar({ open, setOpen, user }) {
       <motion.div
         className="absolute inset-0"
         animate={{ 
-          opacity: open ? (isDarkMode ? 0.3 : 0.4) : (isDarkMode ? 0.1 : 0.15),
+          opacity: open ? (isDarkMode ? 0.3 : 0) : (isDarkMode ? 0.1 : 0),
           scale: open ? 1 : 0.4,
           x: open ? 0 : -30,
           scaleX: open ? 1 : 0.3
@@ -723,7 +712,7 @@ export default function Sidebar({ open, setOpen, user }) {
       <motion.div
         className="absolute inset-0"
         animate={{ 
-          opacity: open ? (isDarkMode ? 0.15 : 0.2) : (isDarkMode ? 0.05 : 0.08),
+          opacity: open ? (isDarkMode ? 0.15 : 0) : (isDarkMode ? 0.05 : 0),
           scaleY: open ? 1 : 0.3,
           y: open ? 0 : 20,
           scaleX: open ? 1 : 0.4
@@ -957,23 +946,27 @@ export default function Sidebar({ open, setOpen, user }) {
                 <AnimatePresence>
                   {hoveredItem === link.to && (
                     <motion.div
-                      initial={{ opacity: 0, x: -10, scale: 0.9 }}
+                      initial={{ opacity: 0, x: 10, scale: 0.95 }}
                       animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -10, scale: 0.9 }}
+                      exit={{ opacity: 0, x: 10, scale: 0.95 }}
                       transition={{ 
                         type: 'spring', 
                         stiffness: 400, 
                         damping: 30,
                         duration: 0.2 
                       }}
-                      className="absolute left-full ml-6 top-1/2 -translate-y-1/2 z-[60] pointer-events-none"
+                      className="fixed z-[60] pointer-events-none"
+                      style={{
+                        top: '50%',
+                        left: open ? 320 : 88,
+                        transform: 'translateY(-50%)',
+                      }}
                     >
-                      <div className="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10">
+                      <div className="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 whitespace-nowrap">
                         <div className="font-bold text-sm whitespace-nowrap">{link.label}</div>
                         <div className="text-xs text-gray-400 mt-1 whitespace-nowrap">{link.description}</div>
                         <div className="text-xs text-gray-500 mt-1 whitespace-nowrap">{link.shortcut}</div>
-                        {/* Enhanced tooltip arrow with glow */}
-                        <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10 shadow-lg" />
+                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10 shadow-lg" />
                       </div>
                     </motion.div>
                   )}
@@ -1005,7 +998,8 @@ export default function Sidebar({ open, setOpen, user }) {
           />
         </motion.div>
 
-        {/* Enhanced Manager Portal */}
+        {/* Enhanced Manager Portal (hidden for non-manager/admin) */}
+        {['manager', 'admin'].includes(user?.role) && (
         <motion.div 
           variants={itemVariants} 
           className="relative"
@@ -1258,6 +1252,7 @@ export default function Sidebar({ open, setOpen, user }) {
             </AnimatePresence>
           )}
         </motion.div>
+        )}
       </motion.nav>
 
       {/* Enhanced footer section */}
@@ -1313,6 +1308,7 @@ export default function Sidebar({ open, setOpen, user }) {
                 }`}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/notifications')}
               >
                 <FiBell size={16} className="mr-2" />
                 <span className="text-sm font-medium">Alerts</span>
@@ -1368,7 +1364,6 @@ export default function Sidebar({ open, setOpen, user }) {
            x: [-2, 2, -2],
            scale: open ? 1 : 0.3,
            opacity: open ? (isDarkMode ? 0.2 : 0.3) : (isDarkMode ? 0.05 : 0.1),
-           y: open ? 0 : 15
          }}
          transition={{
            y: {
