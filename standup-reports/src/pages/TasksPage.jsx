@@ -20,7 +20,9 @@ import {
   FiBell,
   FiStar,
   FiEye,
-  FiEyeOff
+  FiEyeOff,
+  FiUser,
+  FiFolder
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import TaskForm from '../components/TaskForm';
@@ -378,96 +380,156 @@ export default function TasksPage({ sidebarOpen }) {
       initial="hidden"
       animate="visible"
     >
-      {/* Modern Compact Header */}
+      {/* Professional Responsive Header */}
       <motion.div
         className={`sticky top-16 z-30 transition-all duration-300 w-full`}
         id="tasks-header"
       >
         <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              {/* Left: Title and Stats */}
-              <div className="flex items-center gap-6">
+          <div className="px-4 sm:px-6 py-4">
+            {/* Main Header Row */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              {/* Left Section: Title and Key Stats */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="flex items-center gap-3">
                   <motion.div 
-                    className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+                    className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ type: 'spring', stiffness: 300 }}
                   >
-                    <FiGrid className="w-5 h-5 text-white" />
+                    <FiGrid className="w-6 h-6 text-white" />
                   </motion.div>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">Tasks</h1>
-                    <p className="text-sm text-gray-600">{format(new Date(), 'MMM d, yyyy')}</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+                    <p className="text-sm text-gray-600">{format(new Date(), 'EEEE, MMM d, yyyy')}</p>
                   </div>
                 </div>
 
-                {/* Compact Stats */}
-                <div className="hidden md:flex items-center gap-4">
+                {/* Key Stats Cards */}
+                <div className="flex flex-wrap items-center gap-2">
                   <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
                   >
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-blue-700">{taskStats.total} Total</span>
+                    <FiGrid className="w-4 h-4" />
+                    <span className="text-sm font-medium">{taskStats.total}</span>
                   </motion.div>
                   
                   <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
                   >
-                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-orange-700">{taskStats.inProgress} Active</span>
+                    <FiClock className="w-4 h-4" />
+                    <span className="text-sm font-medium">{taskStats.inProgress}</span>
                   </motion.div>
                   
                   <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg"
-                    whileHover={{ scale: 1.02 }}
+                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg shadow"
+                    whileHover={{ scale: 1.03 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
                   >
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-green-700">{taskStats.completed} Done</span>
+                    <FiCheckCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">{taskStats.completed}</span>
                   </motion.div>
                   
                   {taskStats.overdue > 0 && (
                     <motion.div 
-                      className="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-lg"
-                      whileHover={{ scale: 1.02 }}
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-lg shadow"
+                      whileHover={{ scale: 1.03 }}
                       animate={{ 
-                        boxShadow: ['0 0 0 0 rgba(239, 68, 68, 0.4)', '0 0 0 4px rgba(239, 68, 68, 0)', '0 0 0 0 rgba(239, 68, 68, 0.4)']
+                        boxShadow: ['0 0 0 0 rgba(244, 63, 94, 0.4)', '0 0 0 6px rgba(244, 63, 94, 0)', '0 0 0 0 rgba(244, 63, 94, 0.4)']
                       }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <FiAlertCircle className="w-3 h-3 text-red-500" />
-                      <span className="text-sm font-medium text-red-700">{taskStats.overdue} Overdue</span>
+                      <FiAlertCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">{taskStats.overdue}</span>
                     </motion.div>
                   )}
                 </div>
-
-                {/* Progress Bar */}
-                {taskStats.total > 0 && (
-                  <div className="hidden lg:flex items-center gap-3">
-                    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.round((taskStats.completed / taskStats.total) * 100)}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-600">
-                      {Math.round((taskStats.completed / taskStats.total) * 100)}%
-                    </span>
-                  </div>
-                )}
               </div>
 
-              {/* Right: Actions */}
-              <div className="flex items-center gap-2">
+              {/* Right Section: Primary Actions */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* View Toggle */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                  <motion.button
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                      view === 'board' 
+                        ? 'bg-white text-indigo-700 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setView('board')}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiGrid className="w-4 h-4" />
+                    <span className="hidden xs:inline">Board</span>
+                  </motion.button>
+                  <motion.button
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                      view === 'list' 
+                        ? 'bg-white text-indigo-700 shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setView('list')}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiList className="w-4 h-4" />
+                    <span className="hidden xs:inline">List</span>
+                  </motion.button>
+                </div>
+
+                {/* Refresh Button */}
+                <motion.button
+                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow-sm hover:shadow transition-all"
+                  onClick={fetchTasks}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95, rotate: 180 }}
+                  title="Refresh Tasks"
+                >
+                  <FiRefreshCw className="w-4 h-4" />
+                </motion.button>
+
+                {/* Export Button */}
+                <motion.button
+                  className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                  onClick={exportTasksToCSV}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  title="Export Tasks to CSV"
+                >
+                  <FiDownload className="w-4 h-4" />
+                  <span className="hidden sm:inline">Export</span>
+                </motion.button>
+
+                {/* Create Task Button - Only for Managers */}
+                {userRole === 'manager' && (
+                  <motion.button
+                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                    onClick={() => {
+                      setShowCreateModal(true);
+                      setEditingTask(null);
+                    }}
+                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    <span className="hidden sm:inline">New Task</span>
+                  </motion.button>
+                )}
+              </div>
+            </div>
+
+            {/* Secondary Row: Filters and Search */}
+            <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Filters Section */}
+              <div className="flex flex-wrap items-center gap-3">
                 {/* Project Filter */}
-                <div className="hidden md:flex items-center gap-2">
-                  <label className="text-sm text-gray-600">Project</label>
+                <div className="flex items-center gap-2">
+                  <FiFolder className="w-4 h-4 text-gray-500" />
                   <select
-                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
                     value={selectedProjectId}
                     onChange={(e) => setSelectedProjectId(e.target.value)}
                   >
@@ -477,97 +539,26 @@ export default function TasksPage({ sidebarOpen }) {
                     ))}
                   </select>
                 </div>
-                {/* Export CSV */}
-                <motion.button
-                  className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700"
-                  onClick={exportTasksToCSV}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  title="Export Visible Tasks to CSV"
-                >
-                  Export
-                </motion.button>
-                {/* View Toggle */}
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                  <motion.button
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'board' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-                    onClick={() => setView('board')}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiGrid className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${view === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-                    onClick={() => setView('list')}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiList className="w-4 h-4" />
-                  </motion.button>
-                </div>
-
-                {/* Quick Actions */}
-                <motion.button
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-                  onClick={fetchTasks}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95, rotate: 180 }}
-                  title="Refresh Tasks"
-                >
-                  <FiRefreshCw className="w-4 h-4" />
-                </motion.button>
-
-                {/* Assigned to me toggle */}
-                {currentUser && (
-                  <motion.button
-                    className={`px-3 py-2 rounded-lg text-sm transition-all ${filters.assignee === currentUser.id ? 'bg-indigo-600 text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}`}
-                    onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    title="Toggle Assigned to Me"
-                  >
-                    My Tasks
-                  </motion.button>
-                )}
-
-                <motion.button
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-                  onClick={() => setShowStats(!showStats)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  title={showStats ? 'Hide Statistics' : 'Show Statistics'}
-                >
-                  {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                </motion.button>
-
-                {/* Search */}
-                <div className="relative">
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <motion.input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-48 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                    whileFocus={{ scale: 1.02 }}
-                  />
-                </div>
-
+                
                 {/* Status Filter */}
-                <select
-                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all mr-2"
-                  value={filters.status}
-                  onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="To Do">To Do</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Review">Review</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Overdue">Overdue</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <FiFilter className="w-4 h-4 text-gray-500" />
+                  <select
+                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                    value={filters.status}
+                    onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="To Do">To Do</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Review">Review</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+                
                 {/* Employee Filter */}
                 <select
-                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all mr-2"
+                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
                   value={filters.assignee}
                   onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
                 >
@@ -576,34 +567,86 @@ export default function TasksPage({ sidebarOpen }) {
                     <option key={emp.id} value={emp.id}>{emp.name}</option>
                   ))}
                 </select>
+                
+                {/* My Tasks Toggle */}
+                {currentUser && (
+                  <motion.button
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
+                      filters.assignee === currentUser.id 
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-200' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Toggle Assigned to Me"
+                  >
+                    <FiUser className="inline w-3 h-3 mr-1" />
+                    My Tasks
+                  </motion.button>
+                )}
+                
                 {/* Clear filters */}
                 <motion.button
-                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50"
+                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 shadow-sm"
                   onClick={() => { setFilters({ status: 'all', assignee: 'all', team: 'all', dueDate: 'all', search: '' }); setSearch(''); setSelectedProjectId('all'); }}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.98 }}
                   title="Clear All Filters"
                 >
                   Clear
                 </motion.button>
+              </div>
 
-                {/* Create Task Button - Only for Managers */}
-                {userRole === 'manager' && (
-                  <motion.button
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
-                    onClick={() => {
-                      setShowCreateModal(true);
-                      setEditingTask(null);
-                    }}
-                    whileHover={{ scale: 1.02, y: -1 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FiPlus className="w-4 h-4" />
-                    <span className="hidden sm:inline">New Task</span>
-                  </motion.button>
-                )}
+              {/* Search */}
+              <div className="relative w-full md:w-auto">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <motion.input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full md:w-64 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                  whileFocus={{ scale: 1.02 }}
+                />
               </div>
             </div>
+
+            {/* Progress Bar - Always visible now */}
+            {taskStats.total > 0 && (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">Task Completion</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {Math.round((taskStats.completed / taskStats.total) * 100)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.round((taskStats.completed / taskStats.total) * 100)}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Toggle Stats Visibility */}
+                <motion.button
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-all"
+                  onClick={() => setShowStats(!showStats)}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  title={showStats ? 'Hide Detailed Statistics' : 'Show Detailed Statistics'}
+                >
+                  {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                  <span className="hidden xs:inline">
+                    {showStats ? 'Hide Stats' : 'Show Stats'}
+                  </span>
+                </motion.button>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { supabase } from '../supabaseClient';
@@ -80,8 +81,95 @@ const NavbarPro = ({ session }) => {
       <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <img src="/vite.svg" alt="Logo" className="h-9 w-9 rounded-lg shadow" />
-         
+          {/* Animated Sync Logo */}
+          <motion.div 
+            className="relative flex items-center justify-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* Outer glow ring */}
+            <motion.div
+              className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 blur-md"
+              animate={{
+                scale: [1, 1.1, 1],
+                opacity: [0.2, 0.3, 0.2]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            
+            {/* Main logo container */}
+            <motion.div
+              className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center shadow-lg"
+              animate={{
+                rotate: [0, 5, 0, -5, 0]
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              {/* Sync icon elements */}
+              <div className="relative w-6 h-6">
+                {/* Top curve */}
+                <motion.div
+                  className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-white rounded-tl-full"
+                  initial={{ opacity: 0, pathLength: 0 }}
+                  animate={{ opacity: 1, pathLength: 1 }}
+                  transition={{ duration: 1, ease: "easeInOut" }}
+                />
+                
+                {/* Bottom curve */}
+                <motion.div
+                  className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-white rounded-br-full"
+                  initial={{ opacity: 0, pathLength: 0 }}
+                  animate={{ opacity: 1, pathLength: 1 }}
+                  transition={{ duration: 1, ease: "easeInOut", delay: 0.3 }}
+                />
+                
+                {/* Center dot */}
+                <motion.div
+                  className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    ease: "easeOut",
+                    delay: 0.6
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+          
+          {/* Animated Text */}
+          <motion.div
+            className="overflow-hidden"
+            initial={{ width: 0 }}
+            animate={{ width: "auto" }}
+            transition={{ duration: 0.8, ease: "easeInOut", delay: 0.5 }}
+          >
+            <motion.h1 
+              className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+              whileHover={{ 
+                backgroundPosition: ["0%", "100%", "0%"],
+                transition: { duration: 2, repeat: Infinity }
+              }}
+              style={{ 
+                backgroundSize: "200% auto",
+                backgroundImage: "linear-gradient(90deg, #2563eb, #7c3aed, #4f46e5, #2563eb)"
+              }}
+            >
+              Sync
+            </motion.h1>
+          </motion.div>
         </div>
 
         {/* Animated Pill Navbar for first 4 links */}

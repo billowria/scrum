@@ -302,7 +302,7 @@ const SearchBar = ({ open, isDarkMode }) => {
   );
 };
 
-// Enhanced User Profile Component
+// Enhanced User Profile Component - Minimal Design
 const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -313,72 +313,43 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
       onHoverEnd={() => setShowMenu(false)}
     >
       <motion.div 
-        className={`flex items-center p-4 rounded-2xl backdrop-blur-sm border cursor-pointer transition-all duration-300 ${
+        className={`flex items-center p-3 rounded-xl backdrop-blur-sm border cursor-pointer transition-all duration-300 ${
           isDarkMode 
-            ? 'bg-gradient-to-r from-slate-800/60 to-slate-700/60 border-white/10 hover:border-white/20' 
-            : 'bg-gradient-to-r from-white/60 to-slate-100/60 border-slate-200/40 hover:border-slate-300/60'
+            ? 'bg-slate-800/40 border-white/5' 
+            : 'bg-white/40 border-slate-200/20'
         }`}
         whileHover={{ 
           scale: 1.02,
-          y: -2,
+          y: -1,
           boxShadow: isDarkMode 
-            ? '0 8px 32px rgba(0, 0, 0, 0.3)' 
-            : '0 8px 32px rgba(0, 0, 0, 0.1)'
+            ? '0 4px 16px rgba(0, 0, 0, 0.2)' 
+            : '0 4px 16px rgba(0, 0, 0, 0.05)'
         }}
         transition={{ type: 'spring', stiffness: 300 }}
       >
         <motion.div 
-          className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg overflow-hidden"
+          className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow overflow-hidden"
           whileHover={{ 
-            scale: 1.1,
-            rotate: 5,
+            scale: 1.05,
             transition: { type: 'spring', stiffness: 400 }
           }}
         >
-          {/* Animated background gradient */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400"
-            animate={{
-              rotate: [0, 360],
-              scale: [1, 1.3, 1]
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          />
-          <FiUser className="relative z-10" size={18} />
-          
-          {/* Status indicator */}
-          <motion.div
-            className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
+          {/* Simplified background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400" />
+          <FiUser className="relative z-10" size={16} />
         </motion.div>
         
         <AnimatePresence>
           {open && (
             <motion.div
               variants={itemVariants}
-              className="ml-4 flex-1"
+              className="ml-3 flex-1"
             >
-              <div className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                {user?.name || 'John Doe'}
+              <div className={`font-medium text-sm truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {user?.name || 'User'}
               </div>
-              <div className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                {user?.role || 'Senior Developer'}
-              </div>
-              <div className={`text-xs mt-1 flex items-center ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
-                Online
+              <div className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                {user?.role || 'Member'}
               </div>
             </motion.div>
           )}
@@ -388,22 +359,11 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
           {open && (
             <motion.div
               variants={itemVariants}
-              className="flex flex-col space-y-1"
+              className="flex space-x-1"
             >
               <motion.button
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'text-slate-400 hover:text-white hover:bg-white/10' 
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100/50'
-                }`}
-                whileHover={{ scale: 1.1, rotate: 180 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <FiSettings size={16} />
-              </motion.button>
-              <motion.button
                 onClick={onLogout}
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-1.5 rounded-lg transition-all duration-200 ${
                   isDarkMode 
                     ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10' 
                     : 'text-red-500 hover:text-red-600 hover:bg-red-100/50'
@@ -411,30 +371,30 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <FiLogOut size={16} />
+                <FiLogOut size={14} />
               </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* Quick menu popup */}
+      {/* Simplified menu popup */}
       <AnimatePresence>
         {showMenu && open && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            initial={{ opacity: 0, y: 5, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white/90 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl"
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+            className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white/90 backdrop-blur-xl rounded-xl border border-white/20 shadow-lg"
           >
             <div className="space-y-1">
-              <button className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/20 transition-colors text-sm">
-                View Profile
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm">
+                Profile
               </button>
-              <button className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/20 transition-colors text-sm">
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm">
                 Settings
               </button>
-              <button className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/20 transition-colors text-sm text-red-600">
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm text-red-600">
                 Sign Out
               </button>
             </div>
@@ -812,7 +772,7 @@ export default function Sidebar({ open, setOpen, user }) {
           mass: 0.8
         }}
       >
-        <SearchBar open={open} isDarkMode={isDarkMode} />
+        {/* SearchBar removed to save space for main components */}
       </motion.div>
 
       {/* Main navigation */}
@@ -1271,52 +1231,7 @@ export default function Sidebar({ open, setOpen, user }) {
           mass: 0.8
         }}
       >
-        {/* Quick actions and theme toggle */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              variants={itemVariants}
-              className="grid grid-cols-2 gap-3 mb-6"
-            >
-              <motion.button
-                className={`flex items-center justify-center p-3 rounded-2xl transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'bg-gradient-to-r from-slate-800/60 to-slate-700/60 text-gray-300 hover:text-white border border-white/10' 
-                    : 'bg-gradient-to-r from-white/60 to-slate-100/60 text-slate-600 hover:text-slate-800 border border-slate-200/30'
-                }`}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsDarkMode(prev => !prev)}
-              >
-                <motion.div
-                  animate={{ rotate: isDarkMode ? 180 : 0 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                  className="mr-2"
-                >
-                  {isDarkMode ? <FiMoon size={16} /> : <FiSun size={16} />}
-                </motion.div>
-                <span className="text-sm font-medium">
-                  {isDarkMode ? 'Dark' : 'Light'}
-                </span>
-              </motion.button>
-              
-              <motion.button
-                className={`flex items-center justify-center p-3 rounded-2xl transition-all duration-200 relative ${
-                  isDarkMode 
-                    ? 'bg-gradient-to-r from-slate-800/60 to-slate-700/60 text-gray-300 hover:text-white border border-white/10' 
-                    : 'bg-gradient-to-r from-white/60 to-slate-100/60 text-slate-600 hover:text-slate-800 border border-slate-200/30'
-                }`}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/notifications')}
-              >
-                <FiBell size={16} className="mr-2" />
-                <span className="text-sm font-medium">Alerts</span>
-                <Badge type="urgent" count={2} className="absolute -top-1 -right-1" />
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Quick actions and theme toggle - removed to save space for main components */}
 
         {/* Enhanced user profile */}
         <UserProfile 

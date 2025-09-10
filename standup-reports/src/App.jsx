@@ -9,6 +9,10 @@ import squadsyncLogo from './assets/brand/squadsync-logo.png';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 
+// Import the new profile components
+import UserProfile from './components/UserProfile';
+import ManagerUserProfile from './components/ManagerUserProfile';
+
 // Pages
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -245,6 +249,14 @@ function AppContent({ session, userRole, sidebarOpen }) {
                         </div>
                       </PageTransition>
                     } />
+                    {/* Manager Profile Route */}
+                    <Route path="/manager/profiles" element={
+                      <PageTransition>
+                        <div className="w-full py-6">
+                          <ManagerUserProfile />
+                        </div>
+                      </PageTransition>
+                    } />
                   </>
                 )}
                 <Route path="/report" element={
@@ -293,6 +305,22 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/projects" element={
                   <PageTransition>
                     <ProjectsPage />
+                  </PageTransition>
+                } />
+                
+                {/* Profile Routes */}
+                <Route path="/profile" element={
+                  <PageTransition>
+                    <div className="w-full py-6">
+                      <UserProfile />
+                    </div>
+                  </PageTransition>
+                } />
+                <Route path="/profile/:userId" element={
+                  <PageTransition>
+                    <div className="w-full py-6">
+                      <UserProfile />
+                    </div>
                   </PageTransition>
                 } />
 
