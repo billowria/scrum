@@ -172,7 +172,7 @@ const ManagerUserProfile = () => {
                             ? 'bg-indigo-50 border-l-4 border-indigo-500' 
                             : 'hover:bg-gray-50'
                         }`}
-                        onClick={() => handleMemberSelect(member)}
+                        onClick={() => navigate(`/profile/${member.id}`)}
                         whileHover={{ x: 5 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       >

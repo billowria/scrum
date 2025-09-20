@@ -38,7 +38,96 @@ import {
   FiDownload,
   FiUpload,
   FiEye,
-  FiEyeOff
+  FiEyeOff,
+  FiUserCheck,
+  FiUserPlus,
+  FiUserMinus,
+  FiBook,
+  FiTarget,
+  FiZap,
+  FiHeart,
+  FiShield,
+  FiLock,
+  FiUnlock,
+  FiDollarSign,
+  FiBarChart2,
+  FiFolder,
+  FiTag,
+  FiUserX,
+  FiBell,
+  FiCompass,
+  FiHome,
+  FiNavigation,
+  FiFlag,
+  FiMessageSquare,
+  FiFileText,
+  FiClipboard,
+  FiBox,
+  FiDatabase,
+  FiServer,
+  FiCode,
+  FiLayout,
+  FiImage,
+  FiVideo,
+  FiMusic,
+  FiFilm,
+  FiHeadphones,
+  FiMic,
+  FiMonitor,
+  FiSmartphone,
+  FiTablet,
+  FiWatch,
+  FiPrinter,
+  FiCpu,
+  FiHardDrive,
+  FiKey,
+  FiCreditCard,
+  FiPercent,
+  FiShoppingCart,
+  FiGift,
+  FiPackage,
+  FiTruck,
+  FiMap,
+  FiAnchor,
+  FiAtSign,
+  FiDroplet,
+  FiSun,
+  FiMoon,
+  FiCloud,
+  FiCloudRain,
+  FiCloudSnow,
+  FiCloudLightning,
+  FiWind,
+  FiSunrise,
+  FiSunset,
+  FiThermometer,
+  FiUmbrella,
+  FiFeather,
+  FiFrown,
+  FiMeh,
+  FiSmile,
+  FiThumbsUp,
+  FiThumbsDown,
+  FiBookmark,
+  FiShare,
+  FiShare2,
+  FiPaperclip,
+  FiScissors,
+  FiCopy,
+  FiCrop,
+  FiEdit,
+  FiEdit3,
+  FiPenTool,
+  FiType,
+  FiBold,
+  FiItalic,
+  FiUnderline,
+  FiAlignLeft,
+  FiAlignCenter,
+  FiAlignRight,
+  FiAlignJustify,
+  FiLink,
+  FiLink2
 } from 'react-icons/fi';
 
 const UserProfile = () => {
@@ -53,6 +142,12 @@ const UserProfile = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [timesheets, setTimesheets] = useState([]);
+  const [leavePlans, setLeavePlans] = useState([]);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -63,6 +158,12 @@ const UserProfile = () => {
       setIsOwnProfile(!userId || userId === currentUser.id);
       const id = userId || currentUser.id;
       fetchProfile(id);
+      fetchTeamMembers(id);
+      fetchAchievements(id);
+      fetchProjects(id);
+      fetchTasks(id);
+      fetchTimesheets(id);
+      fetchLeavePlans(id);
     }
   }, [userId, currentUser]);
 
@@ -90,14 +191,37 @@ const UserProfile = () => {
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      // First get the basic user data with avatar_url from users table (like navbar does)
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, name, role, avatar_url, team_id, teams(name)')
+        .eq('id', id)
+        .single();
+        
+      if (userError) throw userError;
+      
+      // Then get the detailed profile data from the RPC
+      const { data: profileData, error: profileError } = await supabase
         .rpc('get_user_profile', { p_user_id: id });
         
-      if (error) throw error;
+      if (profileError) throw profileError;
       
-      if (data && data.length > 0) {
-        setProfile(data[0]);
-        setFormData(data[0]);
+      if (profileData && profileData.length > 0) {
+        // Merge the user data (with avatar_url) with profile data
+        const mergedProfile = {
+          ...profileData[0],
+          avatar_url: userData.avatar_url, // Use avatar_url from users table
+          name: userData.name, // Use name from users table
+          role: userData.role, // Use role from users table
+          team_id: userData.team_id, // Use team_id from users table
+          team_name: userData.teams?.name // Use team_name from teams table
+        };
+        
+        console.log('Profile data:', mergedProfile);
+        console.log('Avatar URL:', mergedProfile.avatar_url);
+        console.log('All profile fields:', Object.keys(mergedProfile));
+        setProfile(mergedProfile);
+        setFormData(mergedProfile);
       } else {
         setError('Profile not found');
       }
@@ -106,6 +230,129 @@ const UserProfile = () => {
       setError(error.message || 'Failed to fetch profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeamMembers = async (id) => {
+    try {
+      // Get user's team_id first
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('team_id')
+        .eq('id', id)
+        .single();
+        
+      if (userError) throw userError;
+      
+      if (userData.team_id) {
+        const { data: membersData, error: membersError } = await supabase
+          .from('user_info')
+          .select('*')
+          .eq('team_id', userData.team_id);
+          
+        if (membersError) throw membersError;
+        setTeamMembers(membersData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching team members:', error);
+    }
+  };
+
+  const fetchAchievements = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('achievements')
+        .select('*')
+        .eq('user_id', id)
+        .order('awarded_at', { ascending: false });
+        
+      if (error) throw error;
+      setAchievements(data || []);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+    }
+  };
+
+  const fetchProjects = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('project_assignments')
+        .select(`
+          id,
+          role_in_project,
+          projects (
+            id,
+            name,
+            description,
+            start_date,
+            end_date,
+            status
+          )
+        `)
+        .eq('user_id', id);
+        
+      if (error) throw error;
+      
+      const projectData = data.map(item => ({
+        id: item.projects.id,
+        name: item.projects.name,
+        description: item.projects.description,
+        role: item.role_in_project,
+        start_date: item.projects.start_date,
+        end_date: item.projects.end_date,
+        status: item.projects.status
+      }));
+      
+      setProjects(projectData || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  const fetchTasks = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('assignee_id', id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
+
+  const fetchTimesheets = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('timesheets')
+        .select('*')
+        .eq('user_id', id)
+        .order('date', { ascending: false })
+        .limit(10);
+        
+      if (error) throw error;
+      setTimesheets(data || []);
+    } catch (error) {
+      console.error('Error fetching timesheets:', error);
+    }
+  };
+
+  const fetchLeavePlans = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('leave_plans')
+        .select('*')
+        .eq('user_id', id)
+        .order('start_date', { ascending: false });
+        
+      if (error) throw error;
+      setLeavePlans(data || []);
+    } catch (error) {
+      console.error('Error fetching leave plans:', error);
     }
   };
 
@@ -173,32 +420,59 @@ const UserProfile = () => {
     }
   };
 
-  // Stats cards data
+  // Stats cards data with more colorful and diverse icons
   const stats = [
-    { name: 'Projects', value: '12', icon: <FiBriefcase className="w-6 h-6" />, color: 'border-blue-500 bg-blue-50 text-blue-600' },
-    { name: 'Tasks Completed', value: '42', icon: <FiCheck className="w-6 h-6" />, color: 'border-green-500 bg-green-50 text-green-600' },
-    { name: 'Achievements', value: '8', icon: <FiAward className="w-6 h-6" />, color: 'border-purple-500 bg-purple-50 text-purple-600' },
-    { name: 'Attendance', value: '98%', icon: <FiTrendingUp className="w-6 h-6" />, color: 'border-amber-500 bg-amber-50 text-amber-600' },
+    { name: 'Projects', value: projects.length, icon: <FiFolder className="w-6 h-6" />, color: 'from-blue-500 to-indigo-600', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
+    { name: 'Tasks Completed', value: tasks.filter(t => t.status === 'Completed').length, icon: <FiCheck className="w-6 h-6" />, color: 'from-green-500 to-emerald-600', bgColor: 'bg-green-100', textColor: 'text-green-600' },
+    { name: 'Achievements', value: achievements.length, icon: <FiAward className="w-6 h-6" />, color: 'from-purple-500 to-fuchsia-600', bgColor: 'bg-purple-100', textColor: 'text-purple-600' },
+    { name: 'Attendance', value: `${100 - (leavePlans.length > 0 ? Math.round((leavePlans.filter(l => l.status === 'approved').length / 365) * 100) : 0)}%`, icon: <FiTrendingUp className="w-6 h-6" />, color: 'from-amber-500 to-orange-600', bgColor: 'bg-amber-100', textColor: 'text-amber-600' },
+    { name: 'Team Members', value: teamMembers.length, icon: <FiUsers className="w-6 h-6" />, color: 'from-cyan-500 to-teal-600', bgColor: 'bg-cyan-100', textColor: 'text-cyan-600' },
+    { name: 'Hours Logged', value: timesheets.reduce((sum, t) => sum + (t.hours || 0), 0), icon: <FiClock className="w-6 h-6" />, color: 'from-rose-500 to-pink-600', bgColor: 'bg-rose-100', textColor: 'text-rose-600' },
   ];
 
-  // Social links data
+  // Social links data with more diverse icons
   const socialLinks = [
-    { name: 'LinkedIn', icon: <FiLinkedin className="w-5 h-5" />, url: formData.linkedin_url, color: 'bg-blue-600' },
-    { name: 'GitHub', icon: <FiGithub className="w-5 h-5" />, url: '#', color: 'bg-gray-800' },
-    { name: 'Twitter', icon: <FiTwitter className="w-5 h-5" />, url: '#', color: 'bg-sky-500' },
-    { name: 'Slack', icon: <FiSlack className="w-5 h-5" />, value: formData.slack_handle, color: 'bg-purple-500' },
+    { name: 'LinkedIn', icon: <FiLinkedin className="w-5 h-5" />, url: formData.linkedin_url, color: 'bg-blue-600', bgColor: 'bg-blue-100' },
+    { name: 'GitHub', icon: <FiGithub className="w-5 h-5" />, url: '#', color: 'bg-gray-800', bgColor: 'bg-gray-100' },
+    { name: 'Twitter', icon: <FiTwitter className="w-5 h-5" />, url: '#', color: 'bg-sky-500', bgColor: 'bg-sky-100' },
+    { name: 'Slack', icon: <FiSlack className="w-5 h-5" />, value: formData.slack_handle, color: 'bg-purple-500', bgColor: 'bg-purple-100' },
   ];
+
+  // Team members excluding current user
+  const filteredTeamMembers = teamMembers.filter(member => member.id !== profile?.id);
+
+  // Project status colors
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'on hold': return 'bg-amber-100 text-amber-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Task status colors
+  const getTaskStatusColor = (status) => {
+    switch (status) {
+      case 'To Do': return 'bg-gray-100 text-gray-800';
+      case 'In Progress': return 'bg-blue-100 text-blue-800';
+      case 'Review': return 'bg-amber-100 text-amber-800';
+      case 'Completed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <motion.div
-            className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
+            className="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-6"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Profile</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-3">Loading Profile</h3>
           <p className="text-gray-600">Please wait while we fetch your profile information...</p>
         </div>
       </div>
@@ -209,26 +483,27 @@ const UserProfile = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
         <motion.div
-          className="text-center max-w-md mx-auto p-8"
+          className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <motion.div
-            className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <FiAlertCircle className="w-10 h-10 text-red-600" />
+            <FiAlertCircle className="w-12 h-12 text-red-600" />
           </motion.div>
-          <h3 className="text-2xl font-bold text-red-800 mb-3">Something went wrong</h3>
-          <p className="text-red-600 mb-6">{error}</p>
+          <h3 className="text-3xl font-bold text-red-800 mb-4">Something went wrong</h3>
+          <p className="text-red-600 mb-8 text-lg">{error}</p>
           <motion.button
             onClick={handleGoBack}
-            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors duration-200 font-medium"
+            className="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 transition-all duration-300 font-medium text-lg shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
+            <FiArrowLeft className="inline mr-2" />
             Go Back
           </motion.button>
         </motion.div>
@@ -240,26 +515,27 @@ const UserProfile = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <motion.div
-          className="text-center max-w-md mx-auto p-8"
+          className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <motion.div
-            className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            <FiUser className="w-10 h-10 text-gray-400" />
+            <FiUser className="w-12 h-12 text-gray-400" />
           </motion.div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Profile Not Found</h3>
-          <p className="text-gray-600 mb-6">The requested profile could not be found.</p>
+          <h3 className="text-3xl font-bold text-gray-800 mb-4">Profile Not Found</h3>
+          <p className="text-gray-600 mb-8 text-lg">The requested profile could not be found.</p>
           <motion.button
             onClick={handleGoBack}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 font-medium"
+            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium text-lg shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
+            <FiArrowLeft className="inline mr-2" />
             Go Back
           </motion.button>
         </motion.div>
@@ -268,7 +544,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -276,7 +552,7 @@ const UserProfile = () => {
             <div className="flex items-center">
               <button
                 onClick={handleGoBack}
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center text-gray-600 hover:text-indigo-700 transition-colors px-4 py-2 rounded-lg hover:bg-indigo-50"
               >
                 <FiArrowLeft className="mr-2" />
                 Back
@@ -287,7 +563,7 @@ const UserProfile = () => {
               {isOwnProfile && !isEditing && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-md"
+                  className="flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
                 >
                   <FiEdit2 className="mr-2" />
                   Edit Profile
@@ -295,11 +571,11 @@ const UserProfile = () => {
               )}
               
               {isEditing && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={handleCancel}
                     disabled={saving}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                    className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center font-medium"
                   >
                     <FiX className="mr-2" />
                     Cancel
@@ -307,11 +583,11 @@ const UserProfile = () => {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md flex items-center disabled:opacity-50"
+                    className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg flex items-center font-medium disabled:opacity-50"
                   >
                     {saving ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                         Saving...
                       </>
                     ) : (
@@ -328,36 +604,49 @@ const UserProfile = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="py-8 px-4">
         {/* Profile Header */}
         <motion.div
-          className="bg-white rounded-2xl shadow-xl overflow-hidden mb-8"
+          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-3xl shadow-2xl overflow-hidden mb-8 relative"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="relative h-48 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
+          
+          <div className="relative h-80">
             <div className="absolute inset-0 bg-black/10"></div>
             
             {/* Profile Picture */}
-            <div className="absolute -bottom-16 left-8">
+            <div className="absolute -bottom-24 left-8 z-10">
               <div className="relative">
-                <div className="w-32 h-32 rounded-2xl bg-white p-1 shadow-2xl">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.name}
-                      className="w-full h-full rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold shadow">
-                      {profile.name.charAt(0)}
-                    </div>
-                  )}
+                <div className="w-48 h-48 rounded-3xl bg-white p-2 shadow-2xl">
+                  {(() => {
+                    const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url;
+                    const userInitial = profile?.name?.charAt(0)?.toUpperCase() || 'U';
+                    return avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={profile.name}
+                        className="w-full h-full rounded-xl object-cover shadow-md border-2 border-white"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null;
+                  })()}
+                  <div style={{ display: (profile?.avatar_url || profile?.avatar || profile?.image_url) ? 'none' : 'flex' }} className="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-bold text-4xl shadow-md border-2 border-white">
+                    {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
                 </div>
                 {isEditing && (
-                  <button className="absolute bottom-2 right-2 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 transition-colors">
-                    <FiCamera className="w-4 h-4" />
+                  <button className="absolute bottom-3 right-3 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 transition-colors">
+                    <FiCamera className="w-5 h-5" />
                   </button>
                 )}
               </div>
@@ -365,21 +654,21 @@ const UserProfile = () => {
           </div>
           
           {/* Profile Info */}
-          <div className="pt-20 pb-8 px-8">
+          <div className="pt-24 pb-8 px-8">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between">
               <div className="flex-1">
-                <div className="flex flex-col md:flex-row md:items-end md:space-x-4">
-                  <div>
+                <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
+                  <div className="mt-4">
                     {isEditing ? (
                       <input
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="text-3xl font-bold bg-gray-100 rounded-lg px-3 py-1 mb-1 w-full"
+                        className="text-4xl font-extrabold bg-white/20 rounded-xl px-4 py-2 mb-2 w-full text-white placeholder-white/70"
                       />
                     ) : (
-                      <h1 className="text-3xl font-bold text-gray-900">{profile.name}</h1>
+                      <h1 className="text-4xl font-extrabold text-white">{profile.name}</h1>
                     )}
                     
                     {isEditing ? (
@@ -389,24 +678,24 @@ const UserProfile = () => {
                         value={formData.job_title}
                         onChange={handleInputChange}
                         placeholder="Job title"
-                        className="text-lg text-gray-600 bg-gray-100 rounded-lg px-3 py-1 w-full"
+                        className="text-xl text-white/90 bg-white/20 rounded-lg px-4 py-1 w-full"
                       />
                     ) : (
-                      <p className="text-lg text-gray-600">{profile.job_title || profile.role}</p>
+                      <p className="text-xl text-white/90">{profile.job_title || profile.role}</p>
                     )}
                   </div>
                   
-                  <div className="flex items-center mt-2 md:mt-0">
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium capitalize">
+                  <div className="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
+                    <span className="px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium backdrop-blur-sm">
                       {profile.role}
                     </span>
                     {profile.team_name && (
-                      <span className="ml-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                      <span className="px-4 py-1.5 bg-purple-500/30 text-white rounded-full text-sm font-medium backdrop-blur-sm">
                         {profile.team_name}
                       </span>
                     )}
                     {isOwnProfile && (
-                      <span className="ml-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium flex items-center">
+                      <span className="px-4 py-1.5 bg-green-500/30 text-white rounded-full text-sm font-medium flex items-center backdrop-blur-sm">
                         <FiCheck className="mr-1" />
                         You
                       </span>
@@ -421,10 +710,10 @@ const UserProfile = () => {
                     onChange={handleInputChange}
                     placeholder="Tell us about yourself..."
                     rows={2}
-                    className="mt-4 w-full p-3 bg-gray-100 rounded-lg text-gray-700"
+                    className="mt-6 w-full p-4 bg-white/20 rounded-xl text-white placeholder-white/70 backdrop-blur-sm"
                   />
                 ) : (
-                  <p className="mt-4 text-gray-700 max-w-3xl">
+                  <p className="mt-6 text-white/90 max-w-3xl text-lg">
                     {profile.bio || 'No bio available.'}
                   </p>
                 )}
@@ -439,7 +728,7 @@ const UserProfile = () => {
                         href={social.url || '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`w-10 h-10 ${social.color} rounded-lg flex items-center justify-center text-white hover:opacity-90 transition-opacity`}
+                        className={`w-12 h-12 ${social.color} rounded-xl flex items-center justify-center text-white hover:opacity-90 transition-opacity shadow-lg`}
                       >
                         {social.icon}
                       </a>
@@ -452,21 +741,21 @@ const UserProfile = () => {
         </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
           {stats.map((stat, index) => (
             <motion.div
               key={index}
-              className={`bg-white rounded-xl shadow-lg p-6 border-l-4 ${stat.color.split(' ')[0]} hover:shadow-xl transition-all duration-300`}
+              className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition-all duration-300 border border-gray-100"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{ y: -5 }}
             >
-              <div className="flex items-center">
-                <div className={`p-3 rounded-lg ${stat.color.split(' ')[1]} ${stat.color.split(' ')[2]}`}>
+              <div className="flex items-center justify-between">
+                <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.textColor}`}>
                   {stat.icon}
                 </div>
-                <div className="ml-4">
+                <div className="text-right">
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                   <p className="text-sm text-gray-600">{stat.name}</p>
                 </div>
@@ -476,21 +765,24 @@ const UserProfile = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-lg mb-8">
+        <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
           <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
+            <nav className="flex flex-wrap -mb-px">
               {[
                 { id: 'overview', name: 'Overview', icon: <FiUser className="mr-2 w-4 h-4" /> },
+                { id: 'team', name: 'Team', icon: <FiUsers className="mr-2 w-4 h-4" /> },
+                { id: 'projects', name: 'Projects', icon: <FiBriefcase className="mr-2 w-4 h-4" /> },
                 { id: 'activity', name: 'Activity', icon: <FiActivity className="mr-2 w-4 h-4" /> },
-                { id: 'settings', name: 'Settings', icon: <FiSettings className="mr-2 w-4 h-4" /> }
+                { id: 'achievements', name: 'Achievements', icon: <FiAward className="mr-2 w-4 h-4" /> },
+                { id: 'timesheets', name: 'Timesheets', icon: <FiClock className="mr-2 w-4 h-4" /> }
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-4 px-6 text-sm font-medium border-b-2 ${
+                  className={`flex items-center py-4 px-6 text-sm font-medium border-b-2 transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   {tab.icon}
@@ -505,15 +797,20 @@ const UserProfile = () => {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Personal Information */}
                 <div className="lg:col-span-2">
-                  <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FiUser className="w-5 h-5 text-indigo-600" />
+                  <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 rounded-lg">
+                        <FiUser className="w-5 h-5 text-indigo-600" />
+                      </div>
                       Personal Information
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiUser className="w-4 h-4 text-indigo-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="text"
@@ -523,12 +820,15 @@ const UserProfile = () => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : (
-                          <p className="text-gray-900">{profile.name}</p>
+                          <p className="text-gray-900 font-medium">{profile.name}</p>
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiMail className="w-4 h-4 text-indigo-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="email"
@@ -538,12 +838,15 @@ const UserProfile = () => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : (
-                          <p className="text-gray-900">{profile.email}</p>
+                          <p className="text-gray-900 font-medium">{profile.email}</p>
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiBriefcase className="w-4 h-4 text-indigo-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Job Title</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="text"
@@ -554,12 +857,15 @@ const UserProfile = () => {
                             placeholder="Your job title"
                           />
                         ) : (
-                          <p className="text-gray-900">{profile.job_title || 'Not specified'}</p>
+                          <p className="text-gray-900 font-medium">{profile.job_title || 'Not specified'}</p>
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiCalendar className="w-4 h-4 text-indigo-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="date"
@@ -569,16 +875,19 @@ const UserProfile = () => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : profile.start_date ? (
-                          <p className="text-gray-900">
+                          <p className="text-gray-900 font-medium">
                             {new Date(profile.start_date).toLocaleDateString()}
                           </p>
                         ) : (
-                          <p className="text-gray-900">Not specified</p>
+                          <p className="text-gray-900 font-medium">Not specified</p>
                         )}
                       </div>
                       
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                      <div className="md:col-span-2 bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiBook className="w-4 h-4 text-indigo-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Bio</label>
+                        </div>
                         {isEditing ? (
                           <textarea
                             name="bio"
@@ -598,89 +907,138 @@ const UserProfile = () => {
                   </div>
                 </div>
                 
-                {/* Contact Information */}
-                <div>
-                  <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FiMail className="w-5 h-5 text-indigo-600" />
+                {/* Contact & Team Information */}
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-cyan-50 to-white rounded-2xl border border-cyan-100 p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-cyan-100 rounded-lg">
+                        <FiMail className="w-5 h-5 text-cyan-600" />
+                      </div>
                       Contact Information
                     </h3>
                     
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <div className="space-y-5">
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiPhone className="w-4 h-4 text-cyan-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="tel"
                             name="phone"
                             value={formData.phone || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                             placeholder="Your phone number"
                           />
                         ) : (
-                          <p className="text-gray-900">{profile.phone || 'Not provided'}</p>
+                          <p className="text-gray-900 font-medium">{profile.phone || 'Not provided'}</p>
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Slack Handle</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiSlack className="w-4 h-4 text-cyan-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Slack Handle</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="text"
                             name="slack_handle"
                             value={formData.slack_handle || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                             placeholder="Your Slack handle"
                           />
                         ) : (
-                          <p className="text-gray-900">
+                          <p className="text-gray-900 font-medium">
                             {profile.slack_handle ? `@${profile.slack_handle}` : 'Not provided'}
                           </p>
                         )}
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiLinkedin className="w-4 h-4 text-cyan-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
+                        </div>
                         {isEditing ? (
                           <input
                             type="url"
                             name="linkedin_url"
                             value={formData.linkedin_url || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                             placeholder="https://linkedin.com/in/username"
                           />
                         ) : profile.linkedin_url ? (
                           <a 
-                            href={profile.linkedin_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-indigo-600 hover:underline flex items-center"
-                          >
-                            View LinkedIn Profile
-                            <FiChevronRight className="ml-1" />
-                          </a>
+                                href={profile.linkedin_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-cyan-600 hover:underline font-medium flex items-center"
+                              >
+                                View LinkedIn Profile
+                                <FiLink2 className="ml-1" />
+                              </a>
                         ) : (
-                          <p className="text-gray-900">Not provided</p>
+                          <p className="text-gray-900 font-medium">Not provided</p>
                         )}
                       </div>
                     </div>
                   </div>
                   
+                  <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-100 p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <FiUsers className="w-5 h-5 text-purple-600" />
+                      </div>
+                      Team Information
+                    </h3>
+                    
+                    <div className="space-y-5">
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiUsers className="w-4 h-4 text-purple-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Team</label>
+                        </div>
+                        <p className="text-gray-900 font-medium">{profile.team_name || 'Not assigned'}</p>
+                      </div>
+                      
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiHome className="w-4 h-4 text-purple-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Department</label>
+                        </div>
+                        <p className="text-gray-900 font-medium">{profile.department_name || 'Not specified'}</p>
+                      </div>
+                      
+                      <div className="bg-white rounded-xl p-4 border border-gray-200">
+                        <div className="flex items-center mb-2">
+                          <FiUserCheck className="w-4 h-4 text-purple-500 mr-2" />
+                          <label className="block text-sm font-medium text-gray-700">Manager</label>
+                        </div>
+                        <p className="text-gray-900 font-medium">{profile.manager_name || 'Not assigned'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   {/* Skills */}
-                  <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FiStar className="w-5 h-5 text-indigo-600" />
+                  <div className="bg-gradient-to-br from-amber-50 to-white rounded-2xl border border-amber-100 p-6 shadow-sm">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 rounded-lg">
+                        <FiStar className="w-5 h-5 text-amber-600" />
+                      </div>
                       Skills
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {['React', 'Node.js', 'UI/UX', 'Project Management'].map((skill, index) => (
+                      {['React', 'Node.js', 'UI/UX', 'Project Management', 'JavaScript', 'Python', 'SQL', 'Agile'].map((skill, index) => (
                         <span 
                           key={index}
-                          className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                          className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium flex items-center"
                         >
+                          <FiStar className="w-3 h-3 mr-1" />
                           {skill}
                         </span>
                       ))}
@@ -690,23 +1048,286 @@ const UserProfile = () => {
               </div>
             )}
             
-            {activeTab === 'activity' && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiActivity className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Activity Feed</h3>
-                <p className="text-gray-500">Recent activities will appear here</p>
+            {activeTab === 'team' && (
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <FiUsers className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  Team Members
+                </h3>
+                
+                {filteredTeamMembers.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filteredTeamMembers.map((member, index) => (
+                      <motion.div
+                        key={member.id}
+                        className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer"
+                        whileHover={{ y: -5 }}
+                        onClick={() => navigate(`/profile/${member.id}`)}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className="flex items-center">
+                          {member.avatar_url ? (
+                        <img
+                          src={member.avatar_url}
+                          alt={member.name}
+                          className="w-12 h-12 rounded-full object-cover shadow border-2 border-indigo-100"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 text-lg">{member.name}</h4>
+                            <p className="text-gray-600 text-sm mb-1">{member.job_title || member.role}</p>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <FiBriefcase className="w-3 h-3 mr-1" />
+                              {member.team_name || 'Team'}
+                            </div>
+                          </div>
+                          <FiChevronRight className="w-5 h-5 text-gray-400" />
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                    <FiUsers className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Team Members</h4>
+                    <p className="text-gray-500">There are no other members in your team.</p>
+                  </div>
+                )}
               </div>
             )}
             
-            {activeTab === 'settings' && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiSettings className="w-8 h-8 text-gray-400" />
+            {activeTab === 'projects' && (
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <FiBriefcase className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  Projects
+                </h3>
+                
+                {projects.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {projects.map((project, index) => (
+                      <motion.div
+                        key={project.id}
+                        className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all"
+                        whileHover={{ y: -3 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h4 className="font-bold text-gray-900 text-lg flex items-center">
+                              <FiFolder className="w-5 h-5 text-indigo-500 mr-2" />
+                              {project.name}
+                            </h4>
+                            <p className="text-gray-600 text-sm mt-1">{project.description || 'No description available'}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                            {project.status}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+                          <div className="text-sm">
+                            <p className="text-gray-700 font-medium">Role: <span className="text-gray-900">{project.role}</span></p>
+                            <div className="flex items-center text-gray-500 mt-1">
+                              <FiCalendar className="w-4 h-4 mr-1" />
+                              <span>
+                                {project.start_date && new Date(project.start_date).toLocaleDateString()} - 
+                                {project.end_date && new Date(project.end_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <button className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium flex items-center">
+                            View Details
+                            <FiChevronRight className="w-4 h-4 ml-1" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                    <FiBriefcase className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Projects Assigned</h4>
+                    <p className="text-gray-500">You haven't been assigned to any projects yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'activity' && (
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <FiActivity className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  Recent Activity
+                </h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Tasks */}
+                  {tasks.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                      <h4 className="font-bold text-gray-900 text-lg mb-5 flex items-center">
+                        <FiTarget className="w-5 h-5 text-blue-500 mr-2" />
+                        Recent Tasks
+                      </h4>
+                      <div className="space-y-4">
+                        {tasks.slice(0, 5).map((task) => (
+                          <div key={task.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">{task.title}</p>
+                              <p className="text-sm text-gray-600 mt-1">{task.description?.substring(0, 60)}...</p>
+                              <div className="flex items-center text-xs text-gray-500 mt-2">
+                                <FiCalendar className="w-3 h-3 mr-1" />
+                                <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ml-3 ${getTaskStatusColor(task.status)}`}>
+                              {task.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Timesheets */}
+                  {timesheets.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                      <h4 className="font-bold text-gray-900 text-lg mb-5 flex items-center">
+                        <FiClock className="w-5 h-5 text-purple-500 mr-2" />
+                        Recent Timesheets
+                      </h4>
+                      <div className="space-y-4">
+                        {timesheets.slice(0, 5).map((timesheet) => (
+                          <div key={timesheet.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div>
+                              <p className="font-medium text-gray-900">{new Date(timesheet.date).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-600 mt-1">{timesheet.notes?.substring(0, 40) || 'No notes'}...</p>
+                            </div>
+                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                              {timesheet.hours} hrs
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Profile Settings</h3>
-                <p className="text-gray-500">Manage your profile settings here</p>
+              </div>
+            )}
+            
+            {activeTab === 'achievements' && (
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <FiAward className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  Achievements
+                </h3>
+                
+                {achievements.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {achievements.map((achievement, index) => (
+                      <motion.div
+                        key={achievement.id}
+                        className="bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-2xl p-6 hover:shadow-lg transition-all"
+                        whileHover={{ y: -3 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className="flex items-start">
+                          <div className="p-3 bg-amber-100 rounded-xl mr-4">
+                            <FiAward className="w-6 h-6 text-amber-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900 text-lg">{achievement.title}</h4>
+                            <p className="text-gray-600 mt-2">{achievement.description || 'No description available'}</p>
+                            <div className="flex items-center text-sm text-gray-500 mt-3">
+                              <FiCalendar className="w-4 h-4 mr-1" />
+                              <span>Awarded on {new Date(achievement.awarded_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                    <FiAward className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Achievements Yet</h4>
+                    <p className="text-gray-500">You haven't received any achievements yet. Keep up the good work!</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'timesheets' && (
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <FiClock className="w-6 h-6 text-indigo-600" />
+                  </div>
+                  Timesheets
+                </h3>
+                
+                {timesheets.length > 0 ? (
+                  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {timesheets.map((timesheet) => (
+                            <tr key={timesheet.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {new Date(timesheet.date).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                                  {timesheet.hours} hrs
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {timesheet.project_id ? 'Project Name' : 'General'}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-900">
+                                {timesheet.notes?.substring(0, 50) || 'No notes'}
+                                {timesheet.notes && timesheet.notes.length > 50 ? '...' : ''}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                    <FiClock className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Timesheets Recorded</h4>
+                    <p className="text-gray-500">You haven't recorded any timesheets yet.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

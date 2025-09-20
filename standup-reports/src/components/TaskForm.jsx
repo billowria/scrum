@@ -86,6 +86,8 @@ export default function TaskForm({
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
   const [projectId, setProjectId] = useState(task?.project_id || '');
+  const [sprints, setSprints] = useState([]);
+  const [sprintId, setSprintId] = useState(task?.sprint_id || '');
   
   // Status options with colors
   const statusOptions = [
@@ -136,6 +138,32 @@ export default function TaskForm({
     fetchOptions();
   }, []);
   
+  // Fetch sprints based on selected project
+  useEffect(() => {
+    const fetchSprints = async () => {
+      if (!projectId) {
+        setSprints([]);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('sprints')
+          .select('id, name, start_date, end_date, status')
+          .eq('project_id', projectId)
+          .order('start_date', { ascending: false });
+          
+        if (error) throw error;
+        setSprints(data || []);
+      } catch (err) {
+        console.error('Error fetching sprints:', err);
+        setSprints([]);
+      }
+    };
+    
+    fetchSprints();
+  }, [projectId]);
+  
   // Update teamId when assignee changes
   useEffect(() => {
     if (assigneeId && users.length > 0) {
@@ -170,6 +198,10 @@ export default function TaskForm({
         throw new Error('User not authenticated');
       }
       
+      // Get existing metadata or create new object
+      const existingMetadata = task?.metadata || {};
+      
+      // Create task data with metadata
       const taskData = {
         title: title.trim(),
         description: description.trim(),
@@ -178,7 +210,11 @@ export default function TaskForm({
         team_id: teamId,
         due_date: dueDate,
         reporter_id: task?.reporter_id || user.id,
-        project_id: projectId || null
+        project_id: projectId || null,
+        metadata: {
+          ...existingMetadata,
+          sprint_id: sprintId || null
+        }
       };
       
       let result;
@@ -357,6 +393,31 @@ export default function TaskForm({
                   </select>
                 </div>
               </div>
+              
+              {/* Sprint Field */}
+              <div className="relative group">
+                <label htmlFor="sprint" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Sprint</label>
+                <div className="relative">
+                  <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400" />
+                  <select
+                    id="sprint"
+                    className="w-full border-2 border-amber-100 rounded-xl p-2 pl-9 bg-white/90 text-amber-700 font-semibold focus:ring-2 focus:ring-amber-400 focus:border-amber-500 transition-all shadow-sm text-sm"
+                    value={sprintId || ''}
+                    onChange={e => setSprintId(e.target.value || '')}
+                    disabled={!projectId || sprints.length === 0}
+                  >
+                    <option value="">No sprint</option>
+                    {sprints.map(sprint => (
+                      <option key={sprint.id} value={sprint.id}>
+                        {sprint.name} {sprint.status ? `(${sprint.status})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {projectId && sprints.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-600 ml-1">No sprints available for this project</p>
+                )}
+              </div>
               {/* Status Field (edit only) */}
               {isEdit && (
                 <div className="relative group">
@@ -415,4 +476,4 @@ export default function TaskForm({
       )}
     </AnimatePresence>
   );
-} 
+}

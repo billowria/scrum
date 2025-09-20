@@ -16,7 +16,8 @@ import {
   FiEye,
   FiMessageSquare,
   FiTag,
-  FiZap
+  FiZap,
+  FiTarget
 } from 'react-icons/fi';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -111,6 +112,7 @@ export default function TaskCard({
   onEdit, 
   onUpdate,
   onDelete,
+  onSprintAssign,
   isDragging = false,
   columnColor = null
 }) {
@@ -230,6 +232,16 @@ export default function TaskCard({
                 </span>
               </div>
             )}
+            
+            {/* Sprint */}
+          {task.metadata?.sprint_id && (
+            <div className="flex items-center gap-1">
+              <FiTarget className="w-3 h-3 text-purple-500" />
+              <span className="font-medium text-gray-600 truncate max-w-[60px]">
+                Sprint
+              </span>
+            </div>
+          )}
           </div>
           
           {/* Due Date */}
@@ -271,6 +283,19 @@ export default function TaskCard({
           >
             <FiTrash2 className="w-3 h-3" />
           </motion.button>
+          {onSprintAssign && (
+            <motion.button
+              className="p-1.5 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-purple-100/80 backdrop-blur-sm transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSprintAssign?.(task);
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiTarget className="w-3 h-3" />
+            </motion.button>
+          )}
         </motion.div>
         
         {/* Task Indicators */}
@@ -304,4 +329,4 @@ export default function TaskCard({
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </motion.div>
   );
-} 
+}

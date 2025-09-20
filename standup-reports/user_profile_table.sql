@@ -59,7 +59,7 @@ SELECT
     u.team_id,
     u.manager_id,
     u.department_id,
-    up.avatar_url,
+    COALESCE(u.avatar_url, up.avatar_url) as avatar_url,
     up.job_title,
     up.bio,
     up.start_date,

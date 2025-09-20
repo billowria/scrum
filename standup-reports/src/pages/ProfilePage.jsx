@@ -6,7 +6,7 @@ const ProfilePage = () => {
   const { userId } = useParams();
 
   return (
-    <div className="w-full py-6">
+    <div className="w-full h-full">
       <UserProfile userId={userId} />
     </div>
   );

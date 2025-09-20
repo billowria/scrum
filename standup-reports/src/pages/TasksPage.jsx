@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, addWeeks, parseISO, isWithinInterval } from 'date-fns';
 import { 
   FiGrid, 
   FiList, 
@@ -22,13 +22,20 @@ import {
   FiEye,
   FiEyeOff,
   FiUser,
-  FiFolder
+  FiFolder,
+  FiFlag,
+  FiTarget,
+  FiBarChart2,
+  FiLayers
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
 import TaskBoard from '../components/TaskBoard';
 import TaskList from '../components/TaskList';
+import SprintBoard from '../components/SprintBoard';
+import SprintModal from '../components/SprintModal';
+import SprintAssignmentModal from '../components/SprintAssignmentModal';
 
 // Animation variants
 const containerVariants = {
@@ -84,7 +91,8 @@ export default function TasksPage({ sidebarOpen }) {
     assignee: 'all',
     team: 'all',
     dueDate: 'all',
-    search: ''
+    search: '',
+    sprint: 'all'
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -92,6 +100,154 @@ export default function TasksPage({ sidebarOpen }) {
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('all');
+  
+  // Sprint planning state
+  const [sprints, setSprints] = useState([]);
+  const [selectedSprintId, setSelectedSprintId] = useState('all');
+  const [showSprintModal, setShowSprintModal] = useState(false);
+  const [editingSprint, setEditingSprint] = useState(null);
+  const [sprintLoading, setSprintLoading] = useState(false);
+  // Fetch sprints
+  const fetchSprints = async () => {
+    try {
+      setSprintLoading(true);
+      
+      let query = supabase
+        .from('sprints')
+        .select('*');
+      
+      // Filter by project if selected
+      if (selectedProjectId !== 'all') {
+        query = query.eq('project_id', selectedProjectId);
+      }
+      
+      const { data, error } = await query.order('start_date', { ascending: false });
+      
+      if (error) throw error;
+      setSprints(data || []);
+    } catch (err) {
+      console.error('Error fetching sprints:', err);
+      // Don't set error state to avoid disrupting the UI
+    } finally {
+      setSprintLoading(false);
+    }
+  };
+
+  // Create or update sprint
+  const handleSprintSubmit = async (sprintData) => {
+    try {
+      const { name, goal, start_date, end_date, project_id } = sprintData;
+      
+      if (editingSprint) {
+        // Update existing sprint
+        const { error } = await supabase
+          .from('sprints')
+          .update({
+            name,
+            goal,
+            start_date,
+            end_date,
+            project_id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingSprint.id);
+          
+        if (error) throw error;
+      } else {
+        // Create new sprint
+        const { error } = await supabase
+          .from('sprints')
+          .insert({
+            name,
+            goal,
+            start_date,
+            end_date,
+            project_id,
+            created_by: currentUser?.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            status: 'Planning'
+          });
+          
+        if (error) throw error;
+      }
+      
+      // Refresh sprints
+      fetchSprints();
+      setShowSprintModal(false);
+      setEditingSprint(null);
+    } catch (err) {
+      console.error('Error saving sprint:', err);
+      setError('Failed to save sprint. Please try again.');
+    }
+  };
+
+  // Assign tasks to sprint
+  const assignTasksToSprint = async (taskIds, sprintId) => {
+    try {
+      const updates = taskIds.map(taskId => ({
+        id: taskId,
+        sprint_id: sprintId,
+        updated_at: new Date().toISOString()
+      }));
+      
+      const { error } = await supabase
+        .from('tasks')
+        .upsert(updates);
+        
+      if (error) throw error;
+      
+      // Refresh tasks
+      fetchTasks();
+      setShowSprintAssignModal(false);
+    } catch (err) {
+      console.error('Error assigning tasks to sprint:', err);
+      setError('Failed to assign tasks to sprint. Please try again.');
+    }
+  };
+
+  // Start sprint
+  const startSprint = async (sprintId) => {
+    try {
+      const { error } = await supabase
+        .from('sprints')
+        .update({
+          status: 'Active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sprintId);
+        
+      if (error) throw error;
+      
+      // Refresh sprints
+      fetchSprints();
+    } catch (err) {
+      console.error('Error starting sprint:', err);
+      setError('Failed to start sprint. Please try again.');
+    }
+  };
+
+  // Complete sprint
+  const completeSprint = async (sprintId) => {
+    try {
+      const { error } = await supabase
+        .from('sprints')
+        .update({
+          status: 'Completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sprintId);
+        
+      if (error) throw error;
+      
+      // Refresh sprints
+      fetchSprints();
+    } catch (err) {
+      console.error('Error completing sprint:', err);
+      setError('Failed to complete sprint. Please try again.');
+    }
+  };
+
   // Export visible tasks to CSV
   const exportTasksToCSV = () => {
     if (!tasks || tasks.length === 0) return;
@@ -234,6 +390,11 @@ export default function TasksPage({ sidebarOpen }) {
       if (filters.search) {
         query = query.ilike('title', `%${filters.search}%`);
       }
+      
+      // Sprint filter
+      if (selectedSprintId !== 'all') {
+        query = query.eq('sprint_id', selectedSprintId);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -276,6 +437,13 @@ export default function TasksPage({ sidebarOpen }) {
       subscription.unsubscribe();
     };
   }, [filters, userRole, currentUser, selectedProjectId]);
+  
+  // Fetch sprints when project changes
+  useEffect(() => {
+    if (currentUser && userRole) {
+      fetchSprints();
+    }
+  }, [currentUser, selectedProjectId]);
 
   // Fetch projects relevant to the current user
   const fetchProjects = async () => {
@@ -347,6 +515,16 @@ export default function TasksPage({ sidebarOpen }) {
       }
     }
   };
+  
+  const handleSprintAssign = (task) => {
+    setCurrentTask(task);
+    setShowSprintAssignModal(true);
+  };
+
+  // Sprint assignment modal state
+  const [showSprintAssignModal, setShowSprintAssignModal] = useState(false);
+
+
 
   const StatCard = ({ icon: Icon, label, value, color, trend }) => (
     <motion.div
@@ -380,6 +558,118 @@ export default function TasksPage({ sidebarOpen }) {
       initial="hidden"
       animate="visible"
     >
+      {/* Sprint Planning Modal */}
+      <AnimatePresence>
+        {showSprintModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-4">{editingSprint ? 'Edit Sprint' : 'Create New Sprint'}</h2>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const sprintData = {
+                    name: formData.get('name'),
+                    goal: formData.get('goal'),
+                    start_date: formData.get('start_date'),
+                    end_date: formData.get('end_date'),
+                    project_id: formData.get('project_id')
+                  };
+                  handleSprintSubmit(sprintData);
+                }}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Name</label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      defaultValue={editingSprint?.name || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Goal</label>
+                    <textarea 
+                      name="goal" 
+                      defaultValue={editingSprint?.goal || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      rows="3"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <input 
+                        type="date" 
+                        name="start_date" 
+                        defaultValue={editingSprint?.start_date || format(new Date(), 'yyyy-MM-dd')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                      <input 
+                        type="date" 
+                        name="end_date" 
+                        defaultValue={editingSprint?.end_date || format(addWeeks(new Date(), 2), 'yyyy-MM-dd')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                    <select 
+                      name="project_id" 
+                      defaultValue={editingSprint?.project_id || selectedProjectId !== 'all' ? selectedProjectId : ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="">Select a project</option>
+                      {projects.map(project => (
+                        <option key={project.id} value={project.id}>{project.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3">
+                    <button 
+                      type="button" 
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                      onClick={() => {
+                        setShowSprintModal(false);
+                        setEditingSprint(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                    >
+                      {editingSprint ? 'Update Sprint' : 'Create Sprint'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Professional Responsive Header */}
       <motion.div
         className={`sticky top-16 z-30 transition-all duration-300 w-full`}
@@ -453,32 +743,44 @@ export default function TasksPage({ sidebarOpen }) {
               {/* Right Section: Primary Actions */}
               <div className="flex flex-wrap items-center gap-2">
                 {/* View Toggle */}
-                <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
-                  <motion.button
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                      view === 'board' 
-                        ? 'bg-white text-indigo-700 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setView('board')}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiGrid className="w-4 h-4" />
-                    <span className="hidden xs:inline">Board</span>
-                  </motion.button>
-                  <motion.button
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                      view === 'list' 
-                        ? 'bg-white text-indigo-700 shadow-sm' 
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setView('list')}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiList className="w-4 h-4" />
-                    <span className="hidden xs:inline">List</span>
-                  </motion.button>
-                </div>
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                <motion.button
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                    view === 'board' 
+                      ? 'bg-white text-indigo-700 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setView('board')}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiGrid className="w-4 h-4" />
+                  <span className="hidden xs:inline">Board</span>
+                </motion.button>
+                <motion.button
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                    view === 'list' 
+                      ? 'bg-white text-indigo-700 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setView('list')}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiList className="w-4 h-4" />
+                  <span className="hidden xs:inline">List</span>
+                </motion.button>
+                <motion.button
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                    view === 'sprint' 
+                      ? 'bg-white text-indigo-700 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setView('sprint')}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiTarget className="w-4 h-4" />
+                  <span className="hidden xs:inline">Sprints</span>
+                </motion.button>
+              </div>
 
                 {/* Refresh Button */}
                 <motion.button
@@ -531,7 +833,10 @@ export default function TasksPage({ sidebarOpen }) {
                   <select
                     className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
                     value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedProjectId(e.target.value);
+                      setSelectedSprintId('all'); // Reset sprint selection when project changes
+                    }}
                   >
                     <option value="all">All Projects</option>
                     {projects.map((p) => (
@@ -553,6 +858,23 @@ export default function TasksPage({ sidebarOpen }) {
                     <option value="In Progress">In Progress</option>
                     <option value="Review">Review</option>
                     <option value="Completed">Completed</option>
+                  </select>
+                </div>
+                
+                {/* Sprint Filter */}
+                <div className="flex items-center gap-2">
+                  <FiTarget className="w-4 h-4 text-gray-500" />
+                  <select
+                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                    value={selectedSprintId}
+                    onChange={e => setSelectedSprintId(e.target.value)}
+                  >
+                    <option value="all">All Sprints</option>
+                    {sprints.map(sprint => (
+                      <option key={sprint.id} value={sprint.id}>
+                        {sprint.name} {sprint.status === 'Active' ? '(Active)' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
@@ -719,14 +1041,45 @@ export default function TasksPage({ sidebarOpen }) {
                   search={search}
                   setSearch={setSearch}
                 />
-              ) : (
+              ) : view === 'list' ? (
                 <TaskList
                   tasks={tasks}
                   onTaskUpdate={handleTaskUpdate}
                   onTaskEdit={handleTaskEdit}
                   onTaskDelete={handleTaskDelete}
                 />
-              )}
+              ) : (
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-gray-800">Sprint Board</h2>
+                    {userRole === 'manager' && (
+                      <motion.button
+                        onClick={() => {
+                          setEditingSprint(null);
+                          setShowSprintModal(true);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        <span>New Sprint</span>
+                      </motion.button>
+                    )}
+                  </div>
+                  
+                  <SprintBoard
+                    sprints={sprints}
+                    onEditSprint={(sprint) => {
+                      setEditingSprint(sprint);
+                      setShowSprintModal(true);
+                    }}
+                    onStartSprint={startSprint}
+                    onCompleteSprint={completeSprint}
+                    selectedSprintId={selectedSprintId}
+                    onSelectSprint={(sprintId) => setSelectedSprintId(sprintId === selectedSprintId ? 'all' : sprintId)}
+                  />
+                </div>)}
             </div>
           )}
         </motion.div>
@@ -765,7 +1118,112 @@ export default function TasksPage({ sidebarOpen }) {
             task={updatingTask}
           />
         )}
+        
+        {/* Sprint Modal */}
+        <SprintModal
+          isOpen={showSprintModal}
+          onClose={() => {
+            setShowSprintModal(false);
+            setEditingSprint(null);
+          }}
+          onSubmit={handleSprintSubmit}
+          sprint={editingSprint}
+          projects={projects}
+        />
+        
+        {/* Sprint Assignment Modal */}
+        {showSprintAssignModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-4">Assign Tasks to Sprint</h2>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const sprintId = formData.get('sprint_id');
+                  const selectedTaskIds = tasks
+                    .filter(task => task.selected)
+                    .map(task => task.id);
+                  
+                  if (selectedTaskIds.length === 0) {
+                    setError('Please select at least one task to assign');
+                    return;
+                  }
+                  
+                  assignTasksToSprint(selectedTaskIds, sprintId);
+                }}>
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint</label>
+                    <select 
+                      name="sprint_id" 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="">Select a sprint</option>
+                      {sprints
+                        .filter(sprint => sprint.status !== 'Completed')
+                        .map(sprint => (
+                          <option key={sprint.id} value={sprint.id}>
+                            {sprint.name} {sprint.status === 'Active' ? '(Active)' : '(Planning)'}
+                          </option>
+                        ))
+                      }
+                    </select>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Selected Tasks</label>
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
+                      {tasks.filter(task => task.selected).length > 0 ? (
+                        <ul className="space-y-1">
+                          {tasks
+                            .filter(task => task.selected)
+                            .map(task => (
+                              <li key={task.id} className="text-sm py-1 px-2 bg-gray-50 rounded flex justify-between">
+                                <span className="truncate">{task.title}</span>
+                                <span className="text-xs text-gray-500">{task.status}</span>
+                              </li>
+                            ))
+                          }
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500 py-2 text-center">No tasks selected</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end gap-3">
+                    <button 
+                      type="button" 
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                      onClick={() => setShowSprintAssignModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                      disabled={tasks.filter(task => task.selected).length === 0}
+                    >
+                      Assign to Sprint
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </motion.div>
   );
-} 
+}

@@ -20,6 +20,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   const avatarUrl = user.avatar_url || user.avatar;
   const userInitial = user.name?.charAt(0)?.toUpperCase() || 'U';
 
+
   useEffect(() => {
     if (!dropdownOpen) return;
     function handleClickOutside(event) {

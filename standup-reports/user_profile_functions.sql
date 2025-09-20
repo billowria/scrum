@@ -92,7 +92,7 @@ RETURNS TABLE (
     updated_at TIMESTAMPTZ
 )
 LANGUAGE sql
-AS $$
+AS $
 SELECT 
     u.id,
     u.name,
@@ -101,7 +101,7 @@ SELECT
     u.team_id,
     u.manager_id,
     u.department_id,
-    up.avatar_url,
+    COALESCE(u.avatar_url, up.avatar_url) as avatar_url,
     up.job_title,
     up.bio,
     up.start_date,
@@ -113,7 +113,7 @@ SELECT
 FROM users u
 LEFT JOIN user_profiles up ON u.id = up.user_id
 WHERE u.id = p_user_id;
-$$;
+$;;
 
 -- Add comments to describe the functions
 COMMENT ON FUNCTION upsert_user_profile IS 'Creates or updates a user profile';

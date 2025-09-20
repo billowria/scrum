@@ -156,7 +156,7 @@ export default function Dashboard({ sidebarOpen }) {
   const [showAllMissingReports, setShowAllMissingReports] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   // Toggle for Missing Reports header visibility
-  const [showMissingHeader, setShowMissingHeader] = useState(false);
+  const [showMissingHeader, setShowMissingHeader] = useState(true);
 
   useEffect(() => {
     // Get current user information including their team
@@ -582,11 +582,9 @@ export default function Dashboard({ sidebarOpen }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // When showing the missing header, scroll it into view
+  // When showing the missing header, don't scroll it into view
   useEffect(() => {
-    if (showMissingHeader) {
-      setTimeout(() => scrollToMissingReports(), 100);
-    }
+    // Removed auto-scrolling effect
   }, [showMissingHeader]);
 
   // Dashboard stat cards
@@ -802,7 +800,8 @@ export default function Dashboard({ sidebarOpen }) {
                     layout
                   >
                     <div 
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer"
+                      onClick={() => navigate(`/profile/${member.id}`)}
                     >
                       {member.avatar_url ? (
                         <img
@@ -1639,12 +1638,13 @@ export default function Dashboard({ sidebarOpen }) {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {missingReports.map((member, index) => (
                           <motion.div
-                            key={member.id}
-                            className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center"
+                            key={`missing-${member.id}-${index}`}
+                            className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center cursor-pointer hover:bg-gray-50 transition-colors"
                             variants={itemVariants}
                             custom={index}
                             initial="hidden"
                             animate="visible"
+                            onClick={() => navigate(`/profile/${member.id}`)}
                           >
                             {member.avatar_url ? (
                               <img
@@ -1662,6 +1662,7 @@ export default function Dashboard({ sidebarOpen }) {
                               <p className="text-xs text-gray-600 truncate">{member.teams?.name || 'No Team'}</p>
                             </div>
                             <FiAlertCircle className="text-amber-500 ml-2" />
+                            <FiChevronRight className="w-4 h-4 text-gray-400 ml-1" />
                           </motion.div>
                         ))}
                       </div>
@@ -1921,10 +1922,11 @@ export default function Dashboard({ sidebarOpen }) {
                         availableMembers.map((member, index) => (
                           <motion.div
                             key={member.id}
-                            className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100"
+                            className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100 cursor-pointer hover:bg-emerald-100 transition-colors"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
+                            onClick={() => navigate(`/profile/${member.id}`)}
                           >
                             {member.avatar_url ? (
                               <img
@@ -1975,10 +1977,11 @@ export default function Dashboard({ sidebarOpen }) {
                         onLeaveMembers.map((member, index) => (
                           <motion.div
                             key={member.id}
-                            className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100"
+                            className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100 cursor-pointer hover:bg-amber-100 transition-colors"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
+                            onClick={() => navigate(`/profile/${member.id}`)}
                           >
                             {member.avatar_url ? (
                               <img
