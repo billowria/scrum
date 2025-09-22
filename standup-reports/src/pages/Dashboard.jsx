@@ -98,6 +98,7 @@ export default function Dashboard({ sidebarOpen }) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [userName, setUserName] = useState('');
   const [currentReportIndex, setCurrentReportIndex] = useState(0);
   const [viewMode, setViewMode] = useState('carousel'); 
   const [showFullscreenModal, setShowFullscreenModal] = useState(false);
@@ -159,13 +160,13 @@ export default function Dashboard({ sidebarOpen }) {
   const [showMissingHeader, setShowMissingHeader] = useState(true);
 
   useEffect(() => {
-    // Get current user information including their team
-    const getUserInfo = async () => {
+      // Get current user information including their team
+      const getUserInfo = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        
         setUserId(user.id);
+        setUserName(user.user_metadata.name || user.email);
         
         // Get user's team information
         const { data, error } = await supabase
@@ -624,6 +625,7 @@ export default function Dashboard({ sidebarOpen }) {
       
     return (
       <div className="space-y-8 mb-8">
+
         {/* Professional Dashboard Stats Overview */}
         <motion.div
           className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"

@@ -21,8 +21,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-cyan-400 via-blue-500 to-indigo-600',
     shadowColor: 'rgba(59, 130, 246, 0.5)',
     description: 'Overview & Analytics',
-    badge: null,
-    shortcut: '⌘D'
+    badge: null
   },
   { 
     to: '/leave-calendar', 
@@ -31,8 +30,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
     shadowColor: 'rgba(20, 184, 166, 0.5)',
     description: 'Time Management',
-    badge: counts.leaveRequests > 0 ? counts.leaveRequests : null,
-    shortcut: '⌘C'
+    badge: counts.leaveRequests > 0 ? counts.leaveRequests : null
   },
   { 
     to: '/tasks', 
@@ -41,8 +39,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-pink-400 via-purple-500 to-indigo-600',
     shadowColor: 'rgba(168, 85, 247, 0.5)',
     description: 'Project Workflow',
-    badge: counts.tasks,
-    shortcut: '⌘T'
+    badge: counts.tasks
   },
   { 
     to: '/achievements', 
@@ -51,8 +48,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-amber-400 via-orange-500 to-red-600',
     shadowColor: 'rgba(251, 146, 60, 0.5)',
     description: 'Recognition & Goals',
-    badge: counts.achievements > 0 ? 'new' : null,
-    shortcut: '⌘A'
+    badge: counts.achievements > 0 ? 'new' : null
   },
   { 
     to: '/projects', 
@@ -61,8 +57,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-indigo-500 to-purple-600',
     shadowColor: 'rgba(168, 85, 247, 0.5)',
     description: 'View assigned projects',
-    badge: counts.projects,
-    shortcut: '⌘P'
+    badge: counts.projects
   },
   { 
     to: '/notifications', 
@@ -71,8 +66,7 @@ const createNavLinks = (counts, user) => [
     gradient: 'from-red-400 via-pink-500 to-purple-600',
     shadowColor: 'rgba(239, 68, 68, 0.5)',
     description: 'Stay updated',
-    badge: counts.notifications,
-    shortcut: '⌘N'
+    badge: counts.notifications
   },
 ];
 
@@ -539,42 +533,6 @@ export default function Sidebar({ open, setOpen, user }) {
     }, 150);
   }, [open, setOpen]);
 
-  // Enhanced keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key.toLowerCase()) {
-          case 'd':
-            e.preventDefault();
-            navigate('/dashboard');
-            break;
-          case 'c':
-            e.preventDefault();
-            navigate('/leave-calendar');
-            break;
-          case 't':
-            e.preventDefault();
-            navigate('/tasks');
-            break;
-          case 'a':
-            e.preventDefault();
-            navigate('/achievements');
-            break;
-          case '\\':
-            e.preventDefault();
-            handleToggle();
-            break;
-        }
-      }
-      if (e.key === 'Escape') {
-        setManagerDropdown(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, handleToggle]);
-
   // Dynamic background calculation
   const dynamicBackground = useMemo(() => {
     if (!isDarkMode) {
@@ -870,13 +828,8 @@ export default function Sidebar({ open, setOpen, user }) {
                       variants={itemVariants}
                       className="ml-4 flex-1 text-left"
                     >
-                      <div className="font-bold text-base tracking-wide flex items-center justify-between">
+                      <div className="font-bold text-base tracking-wide">
                         {link.label}
-                        <span className={`text-xs px-2 py-1 rounded-lg ${
-                          isActiveLink ? 'bg-white/20 text-white/80' : 'bg-slate-200/20 text-slate-500'
-                        }`}>
-                          {link.shortcut}
-                        </span>
                       </div>
                       <div className={`text-sm mt-1 transition-colors ${
                         isActiveLink ? 'text-white/80' : 'text-slate-500 group-hover:text-slate-600'
@@ -902,36 +855,7 @@ export default function Sidebar({ open, setOpen, user }) {
               </motion.button>
 
               {/* Premium tooltip for collapsed state */}
-              {!open && (
-                <AnimatePresence>
-                  {hoveredItem === link.to && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: 10, scale: 0.95 }}
-                      transition={{ 
-                        type: 'spring', 
-                        stiffness: 400, 
-                        damping: 30,
-                        duration: 0.2 
-                      }}
-                      className="fixed z-[60] pointer-events-none"
-                      style={{
-                        top: '50%',
-                        left: open ? 320 : 88,
-                        transform: 'translateY(-50%)',
-                      }}
-                    >
-                      <div className="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 whitespace-nowrap">
-                        <div className="font-bold text-sm whitespace-nowrap">{link.label}</div>
-                        <div className="text-xs text-gray-400 mt-1 whitespace-nowrap">{link.description}</div>
-                        <div className="text-xs text-gray-500 mt-1 whitespace-nowrap">{link.shortcut}</div>
-                        <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10 shadow-lg" />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
+
             </motion.div>
           );
         })}

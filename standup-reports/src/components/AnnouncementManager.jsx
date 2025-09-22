@@ -210,7 +210,7 @@ const EmptyState = ({ onCreateNew }) => (
 );
 
 // Enhanced Notification Component
-const NotificationToast = ({ type, message, onClose }) => {
+export const NotificationToast = ({ type, message, onClose }) => {
   const styles = {
     success: {
       bg: 'bg-gradient-to-r from-green-50 to-emerald-50',

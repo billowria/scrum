@@ -7,6 +7,7 @@ import {
   FiChevronRight, FiX, FiRefreshCw, FiLayers, FiEye, FiAlertCircle
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
+import ContentLoader from '../components/ContentLoader';
 
 // Enhanced Animation Variants
 const containerVariants = {
@@ -977,24 +978,7 @@ export default function ProjectsPage() {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-6"
-          />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Projects</h3>
-          <p className="text-gray-600">Please wait while we fetch your assigned projects...</p>
-        </motion.div>
-      </div>
-    );
+    return <ContentLoader type="projects" />;
   }
 
   if (error) {
