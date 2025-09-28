@@ -635,34 +635,11 @@ export default function Dashboard({ sidebarOpen }) {
         >
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Team availability - Made smaller and clickable */}
-              <motion.div 
-                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-100 cursor-pointer"
-                whileHover={{ y: -3, transition: { duration: 0.2 } }}
-                onClick={() => setShowTeamAvailabilityModal(true)}
-              >
-                <div className="flex justify-between items-center mb-1">
-                  <div className="p-2 bg-emerald-500 rounded-lg text-white">
-                    <FiUsers className="h-4 w-4" />
-                  </div>
-                  <span className="text-lg font-bold text-emerald-600">{teamMembers.length}</span>
-                </div>
-                <h3 className="text-xs font-medium text-gray-700 mb-2">Team Members</h3>
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-gray-600">{teamMembers.length - onLeaveCount} Avail</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span className="text-gray-600">{onLeaveCount} Leave</span>
-                  </div>
-                </div>
-              </motion.div>
+            
               
               {/* Quick Actions - Premium Design */}
               <motion.div 
-                className="lg:col-span-2 bg-gradient-to-br from-slate-50/50 to-white/50 backdrop-blur-lg rounded-3xl p-6 border border-white/50 shadow-xl relative overflow-hidden"
+                className="md:col-span-3 bg-gradient-to-br from-slate-50/50 to-white/50 backdrop-blur-lg rounded-3xl p-6 border border-white/50 shadow-xl relative overflow-hidden"
                 whileHover={{ y: -3 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
@@ -954,23 +931,7 @@ export default function Dashboard({ sidebarOpen }) {
           
          
           
-          {/* Quick Actions */}
-          <div className="flex flex-col gap-2 md:gap-3 md:flex-row items-center">
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300"
-              onClick={handleRefresh}
-            >
-              <FiRefreshCw className="w-5 h-5" />
-              <span>Refresh</span>
-            </button>
-            <button
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300"
-              onClick={handleNewReport}
-            >
-              <FiPlus className="w-5 h-5" />
-              <span>Add Report</span>
-            </button>
-          </div>
+      
         </div>
       </motion.header>
       {/* Spacer to prevent content overlap */}
@@ -982,7 +943,7 @@ export default function Dashboard({ sidebarOpen }) {
       </div>
 
       {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
-      <div className="grid grid-cols-1 gap-6 w-full mt-6">
+      <div className="grid grid-cols-1 gap-6 w-full mt-6 px-6">
         
           <motion.div
             variants={itemVariants}
@@ -1918,182 +1879,7 @@ export default function Dashboard({ sidebarOpen }) {
         emptyMessage="Everyone has submitted their reports today!"
       />
 
-      {/* Team Availability Modal */}
-      <AnimatePresence>
-        {showTeamAvailabilityModal && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowTeamAvailabilityModal(false)}
-          >
-            <motion.div
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-white/20 rounded-xl">
-                      <FiUsers className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">Team Availability</h2>
-                      <p className="text-emerald-100">{format(new Date(), 'MMMM d, yyyy')}</p>
-                    </div>
-                  </div>
-                  <motion.button
-                    onClick={() => setShowTeamAvailabilityModal(false)}
-                    className="p-2 text-white/80 hover:text-white hover:bg-white/20 rounded-lg transition-colors"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiX className="w-5 h-5" />
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6 overflow-y-auto max-h-[70vh]">
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Available Members */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                        <FiCheckCircle className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Available Today</h3>
-                        <p className="text-sm text-gray-600">{availableMembers.length} team members</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {availableMembers.length > 0 ? (
-                        availableMembers.map((member, index) => (
-                          <motion.div
-                            key={member.id}
-                            className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100 cursor-pointer hover:bg-emerald-100 transition-colors"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            onClick={() => navigate(`/profile/${member.id}`)}
-                          >
-                            {member.avatar_url ? (
-                              <img
-                                src={member.avatar_url}
-                                alt={member.name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-emerald-200"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-medium">
-                                {member.name?.charAt(0) || '?'}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-900">{member.name}</p>
-                              <p className="text-sm text-gray-600 capitalize">{member.role}</p>
-                            </div>
-                            <div className="ml-auto">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-200 text-emerald-800 text-xs font-medium rounded-full">
-                                <FiCheckCircle className="w-3 h-3" />
-                                Available
-                              </span>
-                            </div>
-                          </motion.div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <FiUsers className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                          <p>No team members available</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* On Leave Members */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                        <FiClock className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">On Leave Today</h3>
-                        <p className="text-sm text-gray-600">{onLeaveMembers.length} team members</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {onLeaveMembers.length > 0 ? (
-                        onLeaveMembers.map((member, index) => (
-                          <motion.div
-                            key={member.id}
-                            className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100 cursor-pointer hover:bg-amber-100 transition-colors"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            onClick={() => navigate(`/profile/${member.id}`)}
-                          >
-                            {member.avatar_url ? (
-                              <img
-                                src={member.avatar_url}
-                                alt={member.name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-amber-200"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-medium">
-                                {member.name?.charAt(0) || '?'}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-medium text-gray-900">{member.name}</p>
-                              <p className="text-sm text-gray-600 capitalize">{member.role}</p>
-                            </div>
-                            <div className="ml-auto">
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
-                                <FiClock className="w-3 h-3" />
-                                On Leave
-                              </span>
-                            </div>
-                          </motion.div>
-                        ))
-                      ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <FiCheckCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                          <p>No team members on leave</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Total: {availableMembers.length + onLeaveMembers.length} team members
-                  </div>
-                  <motion.button
-                    onClick={() => setShowTeamAvailabilityModal(false)}
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Close
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+   
     </motion.div>
   );
 }
