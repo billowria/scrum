@@ -141,6 +141,7 @@ const UserProfile = () => {
   const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [canEditProfile, setCanEditProfile] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [teamMembers, setTeamMembers] = useState([]);
   const [achievements, setAchievements] = useState([]);
@@ -156,6 +157,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (currentUser) {
       setIsOwnProfile(!userId || userId === currentUser.id);
+      setCanEditProfile(currentUser.role === 'manager');
       const id = userId || currentUser.id;
       fetchProfile(id);
       fetchTeamMembers(id);
@@ -545,64 +547,6 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <button
-                onClick={handleGoBack}
-                className="flex items-center text-gray-600 hover:text-indigo-700 transition-colors px-4 py-2 rounded-lg hover:bg-indigo-50"
-              >
-                <FiArrowLeft className="mr-2" />
-                Back
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              {isOwnProfile && !isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
-                >
-                  <FiEdit2 className="mr-2" />
-                  Edit Profile
-                </button>
-              )}
-              
-              {isEditing && (
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={handleCancel}
-                    disabled={saving}
-                    className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center font-medium"
-                  >
-                    <FiX className="mr-2" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg flex items-center font-medium disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <FiSave className="mr-2" />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="py-8 px-4">
         {/* Profile Header */}
@@ -615,37 +559,69 @@ const UserProfile = () => {
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
+          <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-cyan-400/30 to-fuchsia-400/30 blur-3xl rounded-full"></div>
+          <div className="pointer-events-none absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-tr from-amber-300/25 to-rose-400/25 blur-3xl rounded-full"></div>
           
-          <div className="relative h-80">
+          <div className="relative h-96">
             <div className="absolute inset-0 bg-black/10"></div>
+            {/* Animated accents */}
+            <motion.div
+              className="absolute left-10 top-8 w-28 h-28 rounded-full bg-white/10"
+              animate={{ y: [0, -8, 0], opacity: [0.85, 1, 0.85] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="absolute right-10 bottom-10 w-36 h-36 rounded-full bg-white/10"
+              animate={{ y: [0, 10, 0], opacity: [0.7, 0.95, 0.7] }}
+              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+            />
+            <div className="absolute top-5 right-5 z-10 flex items-center gap-2">
+              {(profile?.email) && (
+                <a href={`mailto:${profile.email}`} className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
+                  Email
+                </a>
+              )}
+              {(profile?.phone) && (
+                <a href={`tel:${profile.phone}`} className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
+                  Call
+                </a>
+              )}
+              {(profile?.slack_handle || profile?.linkedin_url) && (
+                <a href={profile?.linkedin_url || '#'} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
+                  Connect
+                </a>
+              )}
+            </div>
             
             {/* Profile Picture */}
-            <div className="absolute -bottom-24 left-8 z-10">
+            <div className="absolute -bottom-28 left-1/2 -translate-x-1/2 z-10">
               <div className="relative">
-                <div className="w-48 h-48 rounded-3xl bg-white p-2 shadow-2xl">
-                  {(() => {
-                    const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url;
-                    const userInitial = profile?.name?.charAt(0)?.toUpperCase() || 'U';
-                    return avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={profile.name}
-                        className="w-full h-full rounded-xl object-cover shadow-md border-2 border-white"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.style.display = 'none';
-                          const fallback = e.currentTarget.nextElementSibling;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                    ) : null;
-                  })()}
-                  <div style={{ display: (profile?.avatar_url || profile?.avatar || profile?.image_url) ? 'none' : 'flex' }} className="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-bold text-4xl shadow-md border-2 border-white">
-                    {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                <div className="p-[3px] rounded-3xl bg-gradient-to-br from-white/70 via-rose-200 to-indigo-300 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                  <div className="w-60 h-60 sm:w-64 sm:h-64 rounded-3xl bg-white p-2 shadow-2xl">
+                    {(() => {
+                      const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url;
+                      const userInitial = profile?.name?.charAt(0)?.toUpperCase() || 'U';
+                      return avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={profile.name}
+                          className="w-full h-full rounded-xl object-cover shadow-md border-2 border-white"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null;
+                    })()}
+                    <div style={{ display: (profile?.avatar_url || profile?.avatar || profile?.image_url) ? 'none' : 'flex' }} className="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-bold text-5xl sm:text-6xl shadow-md border-2 border-white">
+                      {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
                   </div>
                 </div>
                 {isEditing && (
-                  <button className="absolute bottom-3 right-3 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 transition-colors">
+                  <button className="absolute bottom-3 right-3 w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 transition-colors">
                     <FiCamera className="w-5 h-5" />
                   </button>
                 )}
@@ -686,21 +662,54 @@ const UserProfile = () => {
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
-                    <span className="px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                      {profile.role}
-                    </span>
-                    {profile.team_name && (
-                      <span className="px-4 py-1.5 bg-purple-500/30 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                        {profile.team_name}
-                      </span>
+              <span className="px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium backdrop-blur-sm">
+                {profile.role}
+              </span>
+              {profile.team_name && (
+                <span className="px-4 py-1.5 bg-purple-500/30 text-white rounded-full text-sm font-medium backdrop-blur-sm">
+                  {profile.team_name}
+                </span>
+              )}
+              {isOwnProfile && (
+                <span className="px-4 py-1.5 bg-green-500/30 text-white rounded-full text-sm font-medium flex items-center backdrop-blur-sm">
+                  <FiCheck className="mr-1" />
+                  You
+                </span>
+              )}
+              {canEditProfile && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors shadow-md"
+                  title="Edit Profile"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                </button>
+              )}
+              {isEditing && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="p-2 border-2 border-white/30 text-white rounded-full hover:bg-white/20 transition-colors flex items-center justify-center"
+                    title="Cancel"
+                  >
+                    <FiX className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md flex items-center justify-center"
+                    title="Save Changes"
+                  >
+                    {saving ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <FiSave className="w-4 h-4" />
                     )}
-                    {isOwnProfile && (
-                      <span className="px-4 py-1.5 bg-green-500/30 text-white rounded-full text-sm font-medium flex items-center backdrop-blur-sm">
-                        <FiCheck className="mr-1" />
-                        You
-                      </span>
-                    )}
-                  </div>
+                  </button>
+                </div>
+              )}
+            </div>
                 </div>
                 
                 {isEditing ? (
@@ -717,6 +726,28 @@ const UserProfile = () => {
                     {profile.bio || 'No bio available.'}
                   </p>
                 )}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {profile?.email && (
+                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
+                      {profile.email}
+                    </span>
+                  )}
+                  {profile?.phone && (
+                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
+                      {profile.phone}
+                    </span>
+                  )}
+                  {profile?.linkedin_url && (
+                    <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20 hover:bg-white/25 transition-colors">
+                      LinkedIn
+                    </a>
+                  )}
+                  {profile?.start_date && (
+                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
+                      Started: {new Date(profile.start_date).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
               </div>
               
               <div className="mt-6 md:mt-0">
@@ -745,11 +776,33 @@ const UserProfile = () => {
           {stats.map((stat, index) => (
             <motion.div
               key={index}
-              className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition-all duration-300 border border-gray-100"
+              className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5 }}
+              onClick={() => {
+                // Navigate to the corresponding section
+                switch(stat.name) {
+                  case 'Projects':
+                    setActiveTab('projects');
+                    break;
+                  case 'Tasks Completed':
+                    setActiveTab('activity');
+                    break;
+                  case 'Achievements':
+                    setActiveTab('achievements');
+                    break;
+                  case 'Team Members':
+                    setActiveTab('team');
+                    break;
+                  case 'Hours Logged':
+                    setActiveTab('timesheets');
+                    break;
+                  default:
+                    setActiveTab('overview');
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.textColor}`}>

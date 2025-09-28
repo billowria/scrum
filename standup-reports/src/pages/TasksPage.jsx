@@ -824,113 +824,131 @@ export default function TasksPage({ sidebarOpen }) {
             </div>
 
             {/* Secondary Row: Filters and Search */}
-            <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              {/* Filters Section */}
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-col gap-4">
+              {/* Filters Section - colorful pill controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* Project Filter */}
-                <div className="flex items-center gap-2">
-                  <FiFolder className="w-4 h-4 text-gray-500" />
-                  <select
-                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                    value={selectedProjectId}
-                    onChange={(e) => {
-                      setSelectedProjectId(e.target.value);
-                      setSelectedSprintId('all'); // Reset sprint selection when project changes
-                    }}
-                  >
-                    <option value="all">All Projects</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                <div className="relative group">
+                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-indigo-600 text-white shadow-sm">Project</label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-400">
+                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700"><FiFolder className="w-4 h-4" /></div>
+                    <select
+                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
+                      value={selectedProjectId}
+                      onChange={(e) => {
+                        setSelectedProjectId(e.target.value);
+                        setSelectedSprintId('all');
+                      }}
+                    >
+                      <option value="all">All Projects</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                
+
                 {/* Status Filter */}
-                <div className="flex items-center gap-2">
-                  <FiFilter className="w-4 h-4 text-gray-500" />
-                  <select
-                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                    value={filters.status}
-                    onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="To Do">To Do</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Review">Review</option>
-                    <option value="Completed">Completed</option>
-                  </select>
+                <div className="relative group">
+                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-amber-600 text-white shadow-sm">Status</label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm focus-within:ring-2 focus-within:ring-amber-400">
+                    <div className="p-2 rounded-lg bg-amber-100 text-amber-700"><FiFilter className="w-4 h-4" /></div>
+                    <select
+                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
+                      value={filters.status}
+                      onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="To Do">To Do</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Review">Review</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
                 </div>
-                
+
                 {/* Sprint Filter */}
-                <div className="flex items-center gap-2">
-                  <FiTarget className="w-4 h-4 text-gray-500" />
-                  <select
-                    className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                    value={selectedSprintId}
-                    onChange={e => setSelectedSprintId(e.target.value)}
-                  >
-                    <option value="all">All Sprints</option>
-                    {sprints.map(sprint => (
-                      <option key={sprint.id} value={sprint.id}>
-                        {sprint.name} {sprint.status === 'Active' ? '(Active)' : ''}
-                      </option>
-                    ))}
-                  </select>
+                <div className="relative group">
+                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-fuchsia-600 text-white shadow-sm">Sprint</label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 shadow-sm focus-within:ring-2 focus-within:ring-fuchsia-400">
+                    <div className="p-2 rounded-lg bg-fuchsia-100 text-fuchsia-700"><FiTarget className="w-4 h-4" /></div>
+                    <select
+                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
+                      value={selectedSprintId}
+                      onChange={e => setSelectedSprintId(e.target.value)}
+                    >
+                      <option value="all">All Sprints</option>
+                      {sprints.map(sprint => (
+                        <option key={sprint.id} value={sprint.id}>
+                          {sprint.name} {sprint.status === 'Active' ? '(Active)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                
+
                 {/* Employee Filter */}
-                <select
-                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                  value={filters.assignee}
-                  onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
-                >
-                  <option value="all">All Employees</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                  ))}
-                </select>
-                
-                {/* My Tasks Toggle */}
-                {currentUser && (
-                  <motion.button
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${
-                      filters.assignee === currentUser.id 
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-200' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    title="Toggle Assigned to Me"
-                  >
-                    <FiUser className="inline w-3 h-3 mr-1" />
-                    My Tasks
-                  </motion.button>
-                )}
-                
-                {/* Clear filters */}
-                <motion.button
-                  className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 shadow-sm"
-                  onClick={() => { setFilters({ status: 'all', assignee: 'all', team: 'all', dueDate: 'all', search: '' }); setSearch(''); setSelectedProjectId('all'); }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  title="Clear All Filters"
-                >
-                  Clear
-                </motion.button>
+                <div className="relative group">
+                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm">Assignee</label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm focus-within:ring-2 focus-within:ring-emerald-400">
+                    <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700"><FiUsers className="w-4 h-4" /></div>
+                    <select
+                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
+                      value={filters.assignee}
+                      onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
+                    >
+                      <option value="all">All Employees</option>
+                      {employees.map(emp => (
+                        <option key={emp.id} value={emp.id}>{emp.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              {/* Search */}
-              <div className="relative w-full md:w-auto">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <motion.input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full md:w-64 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                  whileFocus={{ scale: 1.02 }}
-                />
+              {/* Quick actions and search */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {currentUser && (
+                    <motion.button
+                      className={`px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${
+                        filters.assignee === currentUser.id 
+                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-200' 
+                          : 'bg-white/80 backdrop-blur border border-gray-200 text-gray-700 hover:bg-white'
+                      }`}
+                      onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      title="Toggle Assigned to Me"
+                    >
+                      <FiUser className="inline w-3 h-3 mr-1" />
+                      My Tasks
+                    </motion.button>
+                  )}
+
+                  <motion.button
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 shadow-sm"
+                    onClick={() => { setFilters({ status: 'all', assignee: 'all', team: 'all', dueDate: 'all', search: '' }); setSearch(''); setSelectedProjectId('all'); }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Clear All Filters"
+                  >
+                    Clear
+                  </motion.button>
+                </div>
+
+                {/* Search */}
+                <div className="relative w-full md:w-auto">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <motion.input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full md:w-64 text-sm rounded-xl border border-gray-200 bg-white/90 backdrop-blur focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+                    whileFocus={{ scale: 1.02 }}
+                  />
+                </div>
               </div>
             </div>
 

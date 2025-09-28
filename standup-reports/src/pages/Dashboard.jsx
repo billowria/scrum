@@ -634,105 +634,121 @@ export default function Dashboard({ sidebarOpen }) {
           animate="visible"
         >
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Report completion status */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Team availability - Made smaller and clickable */}
               <motion.div 
-                className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 cursor-pointer"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                onClick={() => setShowMissingHeader((prev) => !prev)}
-                role="button"
-                aria-expanded={showMissingHeader}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 bg-blue-500 rounded-lg text-white">
-                    <FiFileText className="h-5 w-5" />
-                  </div>
-                  <span className="text-2xl font-bold text-blue-600">{reports.length}</span>
-                </div>
-                <h3 className="font-medium text-gray-700 mb-1">Reports Submitted</h3>
-                <div className="w-full bg-blue-100 rounded-full h-2.5">
-                  <div 
-                    className="bg-blue-500 h-2.5 rounded-full" 
-                    style={{ width: `${reportCompletionPercentage}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>{reportCompletionPercentage}% complete</span>
-                  <span>{missingReports.length} missing</span>
-                </div>
-              </motion.div>
-              
-              {/* Team availability */}
-              <motion.div 
-                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100 cursor-pointer"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-100 cursor-pointer"
+                whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 onClick={() => setShowTeamAvailabilityModal(true)}
               >
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-center mb-1">
                   <div className="p-2 bg-emerald-500 rounded-lg text-white">
-                    <FiUsers className="h-5 w-5" />
+                    <FiUsers className="h-4 w-4" />
                   </div>
-                  <span className="text-2xl font-bold text-emerald-600">{teamMembers.length}</span>
+                  <span className="text-lg font-bold text-emerald-600">{teamMembers.length}</span>
                 </div>
-                <h3 className="font-medium text-gray-700 mb-1">Team Members</h3>
-                <div className="flex items-center justify-between">
+                <h3 className="text-xs font-medium text-gray-700 mb-2">Team Members</h3>
+                <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1">
-                    <span className="inline-block w-3 h-3 rounded-full bg-emerald-500"></span>
-                    <span className="text-sm text-gray-600">{teamMembers.length - onLeaveCount} Available</span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-gray-600">{teamMembers.length - onLeaveCount} Avail</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="inline-block w-3 h-3 rounded-full bg-amber-500"></span>
-                    <span className="text-sm text-gray-600">{onLeaveCount} On Leave</span>
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span className="text-gray-600">{onLeaveCount} Leave</span>
                   </div>
                 </div>
               </motion.div>
               
-              {/* Announcements */}
+              {/* Quick Actions - Premium Design */}
               <motion.div 
-                className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100 cursor-pointer"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                onClick={() => navigate('/notifications')}
+                className="lg:col-span-2 bg-gradient-to-br from-slate-50/50 to-white/50 backdrop-blur-lg rounded-3xl p-6 border border-white/50 shadow-xl relative overflow-hidden"
+                whileHover={{ y: -3 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 bg-purple-500 rounded-lg text-white">
-                    <FiBell className="h-5 w-5" />
+                {/* Enhanced decorative elements */}
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-emerald-400/10 to-cyan-400/10 rounded-full blur-3xl" />
+
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
+                      <FiBarChart2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-800">Quick Actions</h3>
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Efficiency at your fingertips</p>
+                    </div>
                   </div>
-                  <span className="text-2xl font-bold text-purple-600">{announcementsCount}</span>
+                  <motion.button
+                    onClick={() => navigate('/notifications')}
+                    className="relative p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md"
+                    title="Notifications"
+                    whileHover={{ scale: 1.05, rotate: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FiBell className="w-4 h-4" />
+                    {announcementsCount > 0 && (
+                      <motion.span 
+                        className="absolute -top-1 -right-1 text-[8px] font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full px-1.5 py-0.5 min-w-[16px] h-[16px] flex items-center justify-center"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                      >
+                        {announcementsCount}
+                      </motion.span>
+                    )}
+                  </motion.button>
                 </div>
-                <h3 className="font-medium text-gray-700 mb-1">Announcements</h3>
-                <p className="text-sm text-gray-600">
-                  {announcementsCount > 0 
-                    ? `You have ${announcementsCount} unread announcement${announcementsCount !== 1 ? 's' : ''}` 
-                    : 'No new announcements'}
-                </p>
-              </motion.div>
-              
-              {/* Quick Actions */}
-              <motion.div 
-                className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200"
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="p-2 bg-gray-700 rounded-lg text-white">
-                    <FiBarChart2 className="h-5 w-5" />
+
+                {/* Enhanced horizontal scrollable icon-only list */}
+                <div className="relative">
+                  <div className="flex gap-5 overflow-x-auto pb-12 custom-scrollbar scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {[
+                      { key: 'tasks', icon: <FiList className="w-6 h-6" />, onClick: () => navigate('/tasks?assignee=me'), label: 'My Tasks', color: 'text-blue-500' },
+                      { key: 'report', icon: <FiPlus className="w-6 h-6" />, onClick: handleNewReport, label: 'Add Report', color: 'text-emerald-500' },
+                      { key: 'projects', icon: <FiGrid className="w-6 h-6" />, onClick: () => navigate('/projects'), label: 'Projects', color: 'text-purple-500' },
+                      { key: 'team', icon: <FiUsers className="w-6 h-6" />, onClick: () => setShowTeamAvailabilityModal(true), label: 'Team', color: 'text-teal-500' },
+                      { key: 'ach', icon: <FiFileText className="w-6 h-6" />, onClick: () => navigate('/achievements'), label: 'Achievements', color: 'text-amber-500' },
+                      { key: 'missing', icon: <FiAlertCircle className="w-6 h-6" />, onClick: scrollToMissingReports, label: 'Missing', color: 'text-rose-500' },
+                      { key: 'leaves', icon: <FiClock className="w-6 h-6" />, onClick: () => navigate('/leaves'), label: 'Leaves', color: 'text-cyan-500' },
+                      { key: 'announcements', icon: <FiBell className="w-6 h-6" />, onClick: () => navigate('/notifications'), label: 'Announcements', color: 'text-purple-500' },
+                      { key: 'refresh', icon: <FiRefreshCw className="w-6 h-6" />, onClick: handleRefresh, label: 'Refresh', color: 'text-slate-500' },
+                      { key: 'profile', icon: <FiUser className="w-6 h-6" />, onClick: () => navigate('/profile'), label: 'Profile', color: 'text-fuchsia-500' },
+                    ].map((tile) => (
+                      <div 
+                        key={tile.key} 
+                        className="relative group shrink-0 flex flex-col items-center"
+                      >
+                        <button
+                          onClick={tile.onClick}
+                          className={`w-16 h-16 rounded-2xl bg-white/60 border border-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all hover:shadow-md ${tile.color}`}
+                          title={tile.label}
+                        >
+                          {tile.icon}
+                        </button>
+                        <div className={`absolute -bottom-10 left-1/2 transform -translate-x-1/2 px-3.5 py-2 rounded-lg bg-gradient-to-r ${tile.color.includes('blue') ? 'from-blue-500 to-indigo-500' : 
+                          tile.color.includes('emerald') ? 'from-emerald-500 to-teal-500' : 
+                          tile.color.includes('purple') ? 'from-purple-500 to-fuchsia-500' : 
+                          tile.color.includes('teal') ? 'from-teal-500 to-cyan-500' : 
+                          tile.color.includes('amber') ? 'from-amber-500 to-orange-500' : 
+                          tile.color.includes('rose') ? 'from-rose-500 to-pink-500' : 
+                          tile.color.includes('cyan') ? 'from-cyan-500 to-blue-500' : 
+                          tile.color.includes('slate') ? 'from-slate-500 to-gray-500' : 
+                          'from-fuchsia-500 to-pink-500'} text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-[100] shadow-xl pointer-events-none`}>
+                          {tile.label}
+                          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 ${tile.color.includes('blue') ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 
+                            tile.color.includes('emerald') ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 
+                            tile.color.includes('purple') ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500' : 
+                            tile.color.includes('teal') ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 
+                            tile.color.includes('amber') ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 
+                            tile.color.includes('rose') ? 'bg-gradient-to-r from-rose-500 to-pink-500' : 
+                            tile.color.includes('cyan') ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 
+                            tile.color.includes('slate') ? 'bg-gradient-to-r from-slate-500 to-gray-500' : 
+                            'bg-gradient-to-r from-fuchsia-500 to-pink-500'} rotate-45`}></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <h3 className="font-medium text-gray-700 mb-2">Quick Actions</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleRefresh}
-                    className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors flex items-center gap-1"
-                  >
-                    <FiRefreshCw className="w-3.5 h-3.5" />
-                    <span>Refresh</span>
-                  </button>
-                  <button
-                    onClick={handleNewReport}
-                    className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200 transition-colors flex items-center gap-1"
-                  >
-                    <FiPlus className="w-3.5 h-3.5" />
-                    <span>Add Report</span>
-                  </button>
                 </div>
               </motion.div>
             </div>
@@ -847,6 +863,45 @@ export default function Dashboard({ sidebarOpen }) {
                     <span className="text-sm font-medium text-gray-700">Close</span>
                   </button>
                 )}
+              </div>
+            </div>
+          )}
+          
+          {/* Beautiful and Thin Animated Progress Bar */}
+          {isToday(date) && teamMembers.length > 0 && (
+            <div className="px-5 py-3 bg-gradient-to-r from-white to-indigo-50/30 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                  Report Progress
+                </h4>
+                <motion.span 
+                  className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  {reportCompletionPercentage}%
+                </motion.span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-full relative"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${reportCompletionPercentage}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+                </motion.div>
+              </div>
+              <div className="flex justify-between mt-1.5 text-[10px] text-gray-500">
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                  <span>{teamMembers.length - missingReports.length}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                  <span>{missingReports.length}</span>
+                </div>
               </div>
             </div>
           )}
