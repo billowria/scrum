@@ -952,41 +952,36 @@ export default function TasksPage({ sidebarOpen }) {
               </div>
             </div>
 
-            {/* Progress Bar - Always visible now */}
-            {taskStats.total > 0 && (
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">Task Completion</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {Math.round((taskStats.completed / taskStats.total) * 100)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.round((taskStats.completed / taskStats.total) * 100)}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Toggle Stats Visibility */}
-                <motion.button
-                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-all"
-                  onClick={() => setShowStats(!showStats)}
+            {/* Compact Stats Row with Progress Indicator */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              {/* Progress Indicator */}
+              {taskStats.total > 0 && (
+                <motion.div 
+                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow"
                   whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  title={showStats ? 'Hide Detailed Statistics' : 'Show Detailed Statistics'}
+                  transition={{ type: 'spring', stiffness: 400 }}
                 >
-                  {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                  <span className="hidden xs:inline">
-                    {showStats ? 'Hide Stats' : 'Show Stats'}
+                  <FiBarChart2 className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {Math.round((taskStats.completed / taskStats.total) * 100)}%
                   </span>
-                </motion.button>
-              </div>
-            )}
+                </motion.div>
+              )}
+              
+              {/* Toggle Stats Visibility */}
+              <motion.button
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-all"
+                onClick={() => setShowStats(!showStats)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                title={showStats ? 'Hide Detailed Statistics' : 'Show Detailed Statistics'}
+              >
+                {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                <span className="hidden xs:inline">
+                  {showStats ? 'Hide Stats' : 'Show Stats'}
+                </span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>

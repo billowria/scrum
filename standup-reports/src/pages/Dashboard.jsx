@@ -158,6 +158,11 @@ export default function Dashboard({ sidebarOpen }) {
   const [lastScrollY, setLastScrollY] = useState(0);
   // Toggle for Missing Reports header visibility
   const [showMissingHeader, setShowMissingHeader] = useState(true);
+  
+  // State for animated time display
+  const [currentTime, setCurrentTime] = useState(new Date());
+  // Current user avatar
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   useEffect(() => {
       // Get current user information including their team
@@ -167,15 +172,16 @@ export default function Dashboard({ sidebarOpen }) {
         if (!user) return;
         setUserId(user.id);
         setUserName(user.user_metadata.name || user.email);
-        
-        // Get user's team information
+
+        // Get user's info including avatar and team
         const { data, error } = await supabase
           .from('users')
-          .select('team_id')
+          .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
           .eq('id', user.id)
           .single();
         
         if (!error && data) {
+          setAvatarUrl(data.avatar_url || null);
           setUserTeamId(data.team_id);
           fetchTeamMembers(data.team_id);
         }
@@ -234,6 +240,15 @@ export default function Dashboard({ sidebarOpen }) {
       }
     };
   }, [date, cardControls]);
+  
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchTeams = async () => {
     try {
@@ -898,44 +913,116 @@ export default function Dashboard({ sidebarOpen }) {
     >
       {/* Enhanced Dashboard Header */}
       <motion.header
-        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-300 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 shadow-lg border-b border-gray-200/60 backdrop-blur-sm`}
+        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-300 bg-gradient-to-r from-slate-50 via-indigo-50/30 to-purple-50 backdrop-blur-xl shadow-lg border-b border-indigo-100/50`}
         id="dashboard-header"
         animate={{ y: showHeader ? 0 : '-100%' }}
         initial={{ y: 0 }}
         transition={{ type: 'tween', duration: 0.3 }}
-        style={{ minHeight: 112, width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})` }}
+        style={{ minHeight: 100, width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})` }}
       >
-        {/* Enhanced decorative gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-purple-400/10 to-pink-400/10 animate-pulse pointer-events-none" />
-        <div className="absolute -bottom-10 right-0 w-64 h-64 bg-indigo-400/5 rounded-full blur-3xl"></div>
-        <div className="absolute -top-10 left-0 w-64 h-64 bg-blue-400/5 rounded-full blur-3xl"></div>
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-purple-500/5"></div>
+        <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
         
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6 px-8 py-5">
-          {/* User Welcome Section */}
-          <div className="flex items-center gap-5">
-            <div className="relative w-16 h-16 bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/80 via-blue-600/50 to-purple-600/30 opacity-80"></div>
-              <FiUser className="w-8 h-8 text-white relative z-10" />
-              <div className="absolute -bottom-6 -right-6 w-12 h-12 bg-white/20 rounded-full"></div>
-              <div className="absolute -top-6 -left-6 w-12 h-12 bg-white/10 rounded-full"></div>
-            </div>
+        <div className="relative z-10 flex items-center justify-between px-6 py-3">
+          {/* Left section - User information */}
+          <div className="flex items-center gap-4">
+            <motion.div 
+              className="p-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg"
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+            >
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="User avatar"
+                  className="w-10 h-10 rounded-lg object-cover bg-white"
+                />
+              ) : (
+                <div className="p-2.5 text-white">
+                  <FiUser className="w-5 h-5" />
+                </div>
+              )}
+            </motion.div>
+            
             <div>
-              <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-blue-800 bg-clip-text text-transparent mb-2">Welcome Back</h1>
-              <div className="text-base text-gray-600 font-medium flex items-center">
-                <span className="mr-2">Team & Standup Overview</span>
-                <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>
-                <span className="text-sm text-green-600">{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent">
+                  Good day, 
+                </h1>
+                <span className="text-lg font-bold text-indigo-600">
+                  {userName || 'User'}
+                </span>
+                <motion.span 
+                  className="text-2xl"
+                  animate={{ rotate: [0, 5, 0, -5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
+                >
+                  👋
+                </motion.span>
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <FiCalendar className="w-4 h-4 text-indigo-500" />
+                <p className="text-sm text-gray-600">
+                  {format(currentTime, 'EEEE, MMMM d, yyyy')}
+                </p>
               </div>
             </div>
           </div>
           
-         
-          
-      
+          {/* Right section - Animated time display */}
+          <div className="flex items-center gap-6">
+            {/* Greeting badge */}
+            <motion.div 
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full shadow-md"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <motion.div
+                animate={{ rotate: [0, 10, 0, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <FiCheckCircle className="w-4 h-4" />
+              </motion.div>
+              <span className="text-sm font-medium">Productive Day!</span>
+            </motion.div>
+            
+            {/* Animated time display */}
+            <motion.div 
+              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-3"
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-xl blur opacity-30"></div>
+                  <div className="relative bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1.5 rounded-xl text-center">
+                    <div className="text-sm font-medium tracking-wider">
+                      {format(currentTime, 'h:mm')}
+                    </div>
+                  </div>
+                </div>
+                <motion.div 
+                  className="text-2xl font-bold text-gray-800 min-w-[40px] text-center"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
+                >
+                  {format(currentTime, 'ss')}
+                </motion.div>
+                <div className="text-gray-500 text-sm font-medium px-2 py-1.5 bg-gray-100 rounded-lg">
+                  {format(currentTime, 'a')}
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 text-center mt-1 font-medium uppercase tracking-wider">
+                {format(currentTime, 'zzz')}
+              </div>
+            </motion.div>
+          </div>
         </div>
       </motion.header>
       {/* Spacer to prevent content overlap */}
-      <div style={{ height: 112 }} />
+      <div style={{ height: 80 }} />
 
       {/* Dashboard Header with Missing Reports Component */}
       <div className="container mx-auto px-6 pt-6">
