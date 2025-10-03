@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, en
 import { supabase } from '../supabaseClient';
 
 // Icons
-import { FiFilter, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
+import { FiFilter,FiAward,FiZap, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
