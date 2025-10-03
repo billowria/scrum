@@ -654,58 +654,120 @@ export default function Dashboard({ sidebarOpen }) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
               
-              {/* Quick Actions - Premium Design */}
+              {/* Premium Quick Actions - Completely Redesigned */}
               <motion.div 
-                className="md:col-span-3 bg-gradient-to-br from-slate-50/50 to-white/50 backdrop-blur-lg rounded-3xl p-6 border border-white/50 shadow-xl relative overflow-hidden"
-                whileHover={{ y: -3 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="md:col-span-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700/50 relative overflow-hidden"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
               >
-                {/* Enhanced decorative elements */}
-                <div className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-emerald-400/10 to-cyan-400/10 rounded-full blur-3xl" />
-
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20">
-                      <FiBarChart2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-800">Quick Actions</h3>
-                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Efficiency at your fingertips</p>
-                    </div>
-                  </div>
-                  <motion.button
-                    onClick={() => navigate('/notifications')}
-                    className="relative p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-700 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md"
-                    title="Notifications"
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiBell className="w-4 h-4" />
-                    {announcementsCount > 0 && (
-                      <motion.span 
-                        className="absolute -top-1 -right-1 text-[8px] font-bold bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full px-1.5 py-0.5 min-w-[16px] h-[16px] flex items-center justify-center"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                      >
-                        {announcementsCount}
-                      </motion.span>
-                    )}
-                  </motion.button>
+                {/* Animated background elements */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
+                  <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl animate-pulse delay-1500" />
                 </div>
 
-                {/* Enhanced horizontal scrollable icon-only list */}
-                <div className="relative">
-                  <div className="flex gap-5 overflow-x-auto pb-12 custom-scrollbar scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+                <div className="relative z-10">
+                  {/* Header Section */}
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-6">
+                    <div className="flex items-center gap-4">
+                      <motion.div 
+                        className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-xl shadow-cyan-500/20"
+                        whileHover={{ scale: 1.05, rotate: 5 }}
+                        transition={{ type: 'spring', stiffness: 400 }}
+                      >
+                        <FiZap className="w-6 h-6" />
+                      </motion.div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-white">Quick Actions</h3>
+                        <p className="text-slate-400 text-sm mt-1">Accelerate your workflow with one-click actions</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <motion.button
+                        onClick={() => navigate('/notifications')}
+                        className="relative p-3 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-300 hover:bg-slate-700/50 transition-all shadow-md"
+                        title="Notifications"
+                        whileHover={{ scale: 1.1, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FiBell className="w-5 h-5" />
+                        {announcementsCount > 0 && (
+                          <motion.span 
+                            className="absolute -top-2 -right-2 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-2 py-1 min-w-[20px] h-[20px] flex items-center justify-center shadow-lg"
+                            animate={{ 
+                              scale: [1, 1.2, 1],
+                              boxShadow: [
+                                '0 0 0 0 rgba(239, 68, 68, 0.4)',
+                                '0 0 0 8px rgba(239, 68, 68, 0)',
+                                '0 0 0 0 rgba(239, 68, 68, 0.4)'
+                              ]
+                            }}
+                            transition={{ 
+                              repeat: Infinity, 
+                              duration: 2
+                            }}
+                          >
+                            {announcementsCount > 99 ? '99+' : announcementsCount}
+                          </motion.span>
+                        )}
+                      </motion.button>
+                      
+                      <motion.button
+                        onClick={handleRefresh}
+                        className="p-3 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-300 hover:bg-slate-700/50 transition-all shadow-md"
+                        title="Refresh Dashboard"
+                        whileHover={{ scale: 1.1, y: -2, rotate: 90 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Action Cards Grid - Completely New Design */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {[
-                      { key: 'tasks', icon: <FiList className="w-6 h-6" />, onClick: () => navigate('/tasks?assignee=me'), label: 'My Tasks', color: 'text-blue-500' },
-                      { key: 'report', icon: <FiPlus className="w-6 h-6" />, onClick: handleNewReport, label: 'Add Report', color: 'text-emerald-500' },
-                      { key: 'projects', icon: <FiGrid className="w-6 h-6" />, onClick: () => navigate('/projects'), label: 'Projects', color: 'text-purple-500' },
-                      { key: 'team', icon: <FiUsers className="w-6 h-6" />, onClick: async () => {
-                          // First ensure we have userTeamId
+                      { 
+                        key: 'tasks', 
+                        icon: <FiList className="w-6 h-6" />, 
+                        onClick: () => navigate('/tasks?assignee=me'), 
+                        label: 'My Tasks', 
+                        gradient: 'from-blue-500 to-indigo-600',
+                        bg: 'bg-blue-500/10',
+                        border: 'border-blue-500/30',
+                        glow: 'shadow-blue-500/20'
+                      },
+                      { 
+                        key: 'report', 
+                        icon: <FiPlus className="w-6 h-6" />, 
+                        onClick: handleNewReport, 
+                        label: 'Add Report', 
+                        gradient: 'from-emerald-500 to-teal-600',
+                        bg: 'bg-emerald-500/10',
+                        border: 'border-emerald-500/30',
+                        glow: 'shadow-emerald-500/20'
+                      },
+                      { 
+                        key: 'projects', 
+                        icon: <FiGrid className="w-6 h-6" />, 
+                        onClick: () => navigate('/projects'), 
+                        label: 'Projects', 
+                        gradient: 'from-purple-500 to-fuchsia-600',
+                        bg: 'bg-purple-500/10',
+                        border: 'border-purple-500/30',
+                        glow: 'shadow-purple-500/20'
+                      },
+                      { 
+                        key: 'team', 
+                        icon: <FiUsers className="w-6 h-6" />, 
+                        onClick: async () => {
+                          // Ensure we have userTeamId
                           let currentTeamId = userTeamId;
                           if (!currentTeamId) {
-                            // If userTeamId is not available yet, try to get the current user's team info
                             const { data: { user } } = await supabase.auth.getUser();
                             if (user) {
                               const { data: userData, error } = await supabase
@@ -720,55 +782,148 @@ export default function Dashboard({ sidebarOpen }) {
                             }
                           }
                           
-                          // Fetch both available and on-leave members after ensuring we have the team ID
                           if (currentTeamId) {
                             await fetchOnLeaveMembers();
                           }
                           
-                          // Show modal after a small delay to ensure data is loaded
                           setTimeout(() => {
                             setShowOnLeaveModal(true);
                           }, 100);
-                        }, label: 'Team', color: 'text-teal-500' },
-                      { key: 'ach', icon: <FiFileText className="w-6 h-6" />, onClick: () => navigate('/achievements'), label: 'Achievements', color: 'text-amber-500' },
-                      { key: 'missing', icon: <FiAlertCircle className="w-6 h-6" />, onClick: scrollToMissingReports, label: 'Missing', color: 'text-rose-500' },
-                      { key: 'leaves', icon: <FiClock className="w-6 h-6" />, onClick: () => navigate('/leaves'), label: 'Leaves', color: 'text-cyan-500' },
-                      { key: 'announcements', icon: <FiBell className="w-6 h-6" />, onClick: () => navigate('/notifications'), label: 'Announcements', color: 'text-purple-500' },
-                      { key: 'refresh', icon: <FiRefreshCw className="w-6 h-6" />, onClick: handleRefresh, label: 'Refresh', color: 'text-slate-500' },
-                      { key: 'profile', icon: <FiUser className="w-6 h-6" />, onClick: () => navigate('/profile'), label: 'Profile', color: 'text-fuchsia-500' },
-                    ].map((tile) => (
-                      <div 
-                        key={tile.key} 
-                        className="relative group shrink-0 flex flex-col items-center"
+                        }, 
+                        label: 'Team', 
+                        gradient: 'from-teal-500 to-cyan-600',
+                        bg: 'bg-teal-500/10',
+                        border: 'border-teal-500/30',
+                        glow: 'shadow-teal-500/20'
+                      },
+                      { 
+                        key: 'ach', 
+                        icon: <FiAward className="w-6 h-6" />, 
+                        onClick: () => navigate('/achievements'), 
+                        label: 'Achievements', 
+                        gradient: 'from-amber-500 to-orange-600',
+                        bg: 'bg-amber-500/10',
+                        border: 'border-amber-500/30',
+                        glow: 'shadow-amber-500/20'
+                      },
+                      { 
+                        key: 'missing', 
+                        icon: <FiAlertCircle className="w-6 h-6" />, 
+                        onClick: scrollToMissingReports, 
+                        label: 'Missing', 
+                        gradient: 'from-rose-500 to-pink-600',
+                        bg: 'bg-rose-500/10',
+                        border: 'border-rose-500/30',
+                        glow: 'shadow-rose-500/20'
+                      },
+                      { 
+                        key: 'leaves', 
+                        icon: <FiClock className="w-6 h-6" />, 
+                        onClick: () => navigate('/leaves'), 
+                        label: 'Leaves', 
+                        gradient: 'from-cyan-500 to-blue-600',
+                        bg: 'bg-cyan-500/10',
+                        border: 'border-cyan-500/30',
+                        glow: 'shadow-cyan-500/20'
+                      },
+                      { 
+                        key: 'announcements', 
+                        icon: <FiBell className="w-6 h-6" />, 
+                        onClick: () => navigate('/notifications'), 
+                        label: 'Announcements', 
+                        gradient: 'from-violet-500 to-purple-600',
+                        bg: 'bg-violet-500/10',
+                        border: 'border-violet-500/30',
+                        glow: 'shadow-violet-500/20'
+                      },
+                      { 
+                        key: 'profile', 
+                        icon: <FiUser className="w-6 h-6" />, 
+                        onClick: () => navigate('/profile'), 
+                        label: 'Profile', 
+                        gradient: 'from-fuchsia-500 to-pink-600',
+                        bg: 'bg-fuchsia-500/10',
+                        border: 'border-fuchsia-500/30',
+                        glow: 'shadow-fuchsia-500/20'
+                      },
+                      { 
+                        key: 'calendar', 
+                        icon: <FiCalendar className="w-6 h-6" />, 
+                        onClick: () => navigate('/calendar'), 
+                        label: 'Calendar', 
+                        gradient: 'from-green-500 to-emerald-600',
+                        bg: 'bg-green-500/10',
+                        border: 'border-green-500/30',
+                        glow: 'shadow-green-500/20'
+                      }
+                    ].map((action, index) => (
+                      <motion.div
+                        key={action.key}
+                        className="group relative"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ y: -5, zIndex: 10 }}
                       >
-                        <button
-                          onClick={tile.onClick}
-                          className={`w-16 h-16 rounded-2xl bg-white/60 border border-white/70 backdrop-blur-sm shadow-sm flex items-center justify-center transition-all hover:shadow-md ${tile.color}`}
-                          title={tile.label}
+                        <motion.button
+                          onClick={action.onClick}
+                          className={`w-full h-28 rounded-2xl ${action.bg} border ${action.border} backdrop-blur-sm flex flex-col items-center justify-center gap-3 transition-all duration-300 relative overflow-hidden ${action.glow}`}
+                          whileHover={{ 
+                            scale: 1.05,
+                            boxShadow: `0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)`
+                          }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          {tile.icon}
-                        </button>
-                        <div className={`absolute -bottom-10 left-1/2 transform -translate-x-1/2 px-3.5 py-2 rounded-lg bg-gradient-to-r ${tile.color.includes('blue') ? 'from-blue-500 to-indigo-500' : 
-                          tile.color.includes('emerald') ? 'from-emerald-500 to-teal-500' : 
-                          tile.color.includes('purple') ? 'from-purple-500 to-fuchsia-500' : 
-                          tile.color.includes('teal') ? 'from-teal-500 to-cyan-500' : 
-                          tile.color.includes('amber') ? 'from-amber-500 to-orange-500' : 
-                          tile.color.includes('rose') ? 'from-rose-500 to-pink-500' : 
-                          tile.color.includes('cyan') ? 'from-cyan-500 to-blue-500' : 
-                          tile.color.includes('slate') ? 'from-slate-500 to-gray-500' : 
-                          'from-fuchsia-500 to-pink-500'} text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-[100] shadow-xl pointer-events-none`}>
-                          {tile.label}
-                          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 ${tile.color.includes('blue') ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 
-                            tile.color.includes('emerald') ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 
-                            tile.color.includes('purple') ? 'bg-gradient-to-r from-purple-500 to-fuchsia-500' : 
-                            tile.color.includes('teal') ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 
-                            tile.color.includes('amber') ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 
-                            tile.color.includes('rose') ? 'bg-gradient-to-r from-rose-500 to-pink-500' : 
-                            tile.color.includes('cyan') ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 
-                            tile.color.includes('slate') ? 'bg-gradient-to-r from-slate-500 to-gray-500' : 
-                            'bg-gradient-to-r from-fuchsia-500 to-pink-500'} rotate-45`}></div>
-                        </div>
-                      </div>
+                          {/* Animated background on hover */}
+                          <motion.div 
+                            className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300`}
+                          />
+                          
+                          {/* Icon container with gradient background */}
+                          <motion.div 
+                            className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient} text-white shadow-lg relative z-10`}
+                            whileHover={{ scale: 1.1, rotate: 5 }}
+                            transition={{ type: 'spring', stiffness: 400 }}
+                          >
+                            {action.icon}
+                          </motion.div>
+                          
+                          {/* Label with animated underline */}
+                          <div className="relative z-10">
+                            <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors">
+                              {action.label}
+                            </span>
+                            <motion.div 
+                              className={`h-0.5 bg-gradient-to-r ${action.gradient} rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity`}
+                              initial={{ width: 0 }}
+                              whileHover={{ width: '100%' }}
+                            />
+                          </div>
+                          
+                          {/* Pulse animation on hover */}
+                          <motion.div 
+                            className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100"
+                            animate={{ 
+                              scale: [1, 1.5, 1],
+                              opacity: [0, 0.3, 0]
+                            }}
+                            transition={{ 
+                              duration: 2, 
+                              repeat: Infinity
+                            }}
+                          />
+                        </motion.button>
+                        
+                        {/* Floating tooltip */}
+                        <motion.div 
+                          className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1.5 rounded-lg bg-gradient-to-r ${action.gradient} text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all z-20 shadow-xl pointer-events-none`}
+                          initial={{ y: 10 }}
+                          whileHover={{ opacity: 1, y: 0 }}
+                        >
+                          {action.label}
+                          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 ${action.gradient} rotate-45`}></div>
+                        </motion.div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
