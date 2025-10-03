@@ -105,6 +105,7 @@ export default function Dashboard({ sidebarOpen }) {
   
   // User state
   const [userId, setUserId] = useState(null);
+  const [user, setUser] = useState(null);
   const [userTeamId, setUserTeamId] = useState(null);
   
   // Missing reports state
@@ -141,14 +142,11 @@ export default function Dashboard({ sidebarOpen }) {
     quality: 0,
     happiness: 0
   });
-  const [showAnnouncementsList, setShowAnnouncementsList] = useState(true);
-  const [teamAvailability, setTeamAvailability] = useState({});
-  const [leaveData, setLeaveData] = useState([]);
+  
 
   // Add new state for modals and on-leave members
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
-  const [showTeamAvailabilityModal, setShowTeamAvailabilityModal] = useState(false);
   const [onLeaveMembers, setOnLeaveMembers] = useState([]);
   const [availableMembers, setAvailableMembers] = useState([]);
 
@@ -168,22 +166,26 @@ export default function Dashboard({ sidebarOpen }) {
       // Get current user information including their team
       const getUserInfo = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        setUserId(user.id);
-        setUserName(user.name );
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) return;
+        setUserId(authUser.id);
+        setUser(authUser); // Store full user object
 
         // Get user's info including avatar and team
         const { data, error } = await supabase
           .from('users')
           .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
-          .eq('id', user.id)
+          .eq('id', authUser.id)
           .single();
         
         if (!error && data) {
           setAvatarUrl(data.avatar_url || null);
           setUserTeamId(data.team_id);
+          setUserName(data.name || authUser.user_metadata?.name || authUser.email);
           fetchTeamMembers(data.team_id);
+        } else {
+          // Fallback if user not in our DB
+          setUserName(authUser.user_metadata?.name || authUser.email);
         }
       } catch (error) {
         console.error('Error getting user info:', error);
@@ -545,8 +547,8 @@ export default function Dashboard({ sidebarOpen }) {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Fetch on-leave members from the same team as the current user
-      let leaveQuery = supabase
+      // Fetch on-leave members
+      const { data: leaveData, error: leaveError } = await supabase
         .from('leave_plans')
         .select(`
           id,
@@ -556,12 +558,6 @@ export default function Dashboard({ sidebarOpen }) {
         .lte('start_date', today)
         .gte('end_date', today);
 
-      if (userTeamId) {
-        leaveQuery = leaveQuery.eq('users.team_id', userTeamId);
-      }
-
-      const { data: leaveData, error: leaveError } = await leaveQuery;
-
       if (leaveError) {
         console.error('Error fetching on-leave members:', leaveError);
         throw leaveError;
@@ -570,7 +566,7 @@ export default function Dashboard({ sidebarOpen }) {
       const onLeaveUserIds = leaveData.map(item => item.users?.id).filter(Boolean);
       setOnLeaveMembers(leaveData.map(item => item.users).filter(Boolean));
       
-      // Fetch all team members from the same team to determine available ones
+      // Fetch all team members to determine available ones
       if (userTeamId) {
         const { data: allMembers, error: membersError } = await supabase
           .from('users')
@@ -984,9 +980,16 @@ export default function Dashboard({ sidebarOpen }) {
                 <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent">
                   Good day, 
                 </h1>
-                <span className="text-lg font-bold text-indigo-600">
-                  {userName || 'User'}
-                </span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <span className="text-lg font-bold text-indigo-600">
+                    {userName || 'User'}
+                  </span>
+                  {user?.email && (
+                    <span className="text-xs text-gray-500 font-light italic hidden sm:inline">
+                      ({user.email})
+                    </span>
+                  )}
+                </div>
                 <motion.span 
                   className="text-2xl"
                   animate={{ rotate: [0, 5, 0, -5, 0] }}
@@ -1981,15 +1984,7 @@ export default function Dashboard({ sidebarOpen }) {
         )}
       </AnimatePresence>
 
-      {/* Replace old modal with new UserListModal */}
-      <UserListModal
-        isOpen={showOnLeaveModal}
-        onClose={() => setShowOnLeaveModal(false)}
-        title="Team Members on Leave Today"
-        subtitle={format(new Date(), 'MMMM d, yyyy')}
-        users={onLeaveMembers}
-        type="onLeave"
-      />
+      
 
       {/* Modal for Missing Reports */}
       <UserListModal
