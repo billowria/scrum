@@ -171,7 +171,7 @@ export default function Dashboard({ sidebarOpen }) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         setUserId(user.id);
-        setUserName(user.user_metadata.name || user.email);
+        setUserName(user.name );
 
         // Get user's info including avatar and team
         const { data, error } = await supabase
@@ -545,8 +545,8 @@ export default function Dashboard({ sidebarOpen }) {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Fetch on-leave members
-      const { data: leaveData, error: leaveError } = await supabase
+      // Fetch on-leave members from the same team as the current user
+      let leaveQuery = supabase
         .from('leave_plans')
         .select(`
           id,
@@ -556,6 +556,12 @@ export default function Dashboard({ sidebarOpen }) {
         .lte('start_date', today)
         .gte('end_date', today);
 
+      if (userTeamId) {
+        leaveQuery = leaveQuery.eq('users.team_id', userTeamId);
+      }
+
+      const { data: leaveData, error: leaveError } = await leaveQuery;
+
       if (leaveError) {
         console.error('Error fetching on-leave members:', leaveError);
         throw leaveError;
@@ -564,7 +570,7 @@ export default function Dashboard({ sidebarOpen }) {
       const onLeaveUserIds = leaveData.map(item => item.users?.id).filter(Boolean);
       setOnLeaveMembers(leaveData.map(item => item.users).filter(Boolean));
       
-      // Fetch all team members to determine available ones
+      // Fetch all team members from the same team to determine available ones
       if (userTeamId) {
         const { data: allMembers, error: membersError } = await supabase
           .from('users')
@@ -699,7 +705,35 @@ export default function Dashboard({ sidebarOpen }) {
                       { key: 'tasks', icon: <FiList className="w-6 h-6" />, onClick: () => navigate('/tasks?assignee=me'), label: 'My Tasks', color: 'text-blue-500' },
                       { key: 'report', icon: <FiPlus className="w-6 h-6" />, onClick: handleNewReport, label: 'Add Report', color: 'text-emerald-500' },
                       { key: 'projects', icon: <FiGrid className="w-6 h-6" />, onClick: () => navigate('/projects'), label: 'Projects', color: 'text-purple-500' },
-                      { key: 'team', icon: <FiUsers className="w-6 h-6" />, onClick: () => setShowTeamAvailabilityModal(true), label: 'Team', color: 'text-teal-500' },
+                      { key: 'team', icon: <FiUsers className="w-6 h-6" />, onClick: async () => {
+                          // First ensure we have userTeamId
+                          let currentTeamId = userTeamId;
+                          if (!currentTeamId) {
+                            // If userTeamId is not available yet, try to get the current user's team info
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (user) {
+                              const { data: userData, error } = await supabase
+                                .from('users')
+                                .select('team_id')
+                                .eq('id', user.id)
+                                .single();
+                              if (!error && userData) {
+                                currentTeamId = userData.team_id;
+                                setUserTeamId(currentTeamId);
+                              }
+                            }
+                          }
+                          
+                          // Fetch both available and on-leave members after ensuring we have the team ID
+                          if (currentTeamId) {
+                            await fetchOnLeaveMembers();
+                          }
+                          
+                          // Show modal after a small delay to ensure data is loaded
+                          setTimeout(() => {
+                            setShowOnLeaveModal(true);
+                          }, 100);
+                        }, label: 'Team', color: 'text-teal-500' },
                       { key: 'ach', icon: <FiFileText className="w-6 h-6" />, onClick: () => navigate('/achievements'), label: 'Achievements', color: 'text-amber-500' },
                       { key: 'missing', icon: <FiAlertCircle className="w-6 h-6" />, onClick: scrollToMissingReports, label: 'Missing', color: 'text-rose-500' },
                       { key: 'leaves', icon: <FiClock className="w-6 h-6" />, onClick: () => navigate('/leaves'), label: 'Leaves', color: 'text-cyan-500' },
@@ -1966,6 +2000,145 @@ export default function Dashboard({ sidebarOpen }) {
         emptyMessage="Everyone has submitted their reports today!"
       />
 
+      {/* Custom Team Availability Modal */}
+      <AnimatePresence>
+        {showOnLeaveModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowOnLeaveModal(false)}
+          >
+            <motion.div 
+              className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold text-gray-900">Team Availability</h2>
+                  <button 
+                    className="text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowOnLeaveModal(false)}
+                  >
+                    <FiX className="w-6 h-6" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+                  <span className="font-semibold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-full">
+                    {teams.find(t => t.id === userTeamId)?.name || 'Team'}
+                  </span>
+                  <span className="text-gray-600">•</span>
+                  <span className="font-medium text-gray-700">
+                    {format(new Date(), 'MMMM d, yyyy')}
+                  </span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-green-600 font-medium bg-green-100 px-2.5 py-1 rounded-full">
+                    {availableMembers.length} Available
+                  </span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-red-600 font-medium bg-red-100 px-2.5 py-1 rounded-full">
+                    {onLeaveMembers.length} On Leave
+                  </span>
+                </div>
+              </div>
+              
+              <div className="p-6 overflow-y-auto max-h-[60vh]">
+                {/* On Leave Members Section */}
+                {onLeaveMembers.length > 0 && (
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <h3 className="text-lg font-semibold text-gray-800">On Leave Today</h3>
+                      <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        {onLeaveMembers.length}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {onLeaveMembers.map((member) => (
+                        <div 
+                          key={member.id} 
+                          className="flex items-center gap-4 p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
+                          onClick={() => navigate(`/profile/${member.id}`)}
+                        >
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-red-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-medium text-sm shadow">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900">{member.name}</p>
+                            <p className="text-xs text-red-700 font-medium bg-red-100 px-2 py-1 rounded-full w-fit mt-1">
+                              On Leave Today
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Available Members Section */}
+                {availableMembers.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <h3 className="text-lg font-semibold text-gray-800">Available Today</h3>
+                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        {availableMembers.length}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {availableMembers.map((member) => (
+                        <div 
+                          key={member.id} 
+                          className="flex items-center gap-4 p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
+                          onClick={() => navigate(`/profile/${member.id}`)}
+                        >
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-green-200"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-medium text-sm shadow">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900">{member.name}</p>
+                            <p className="text-xs text-green-700 font-medium bg-green-100 px-2 py-1 rounded-full w-fit mt-1">
+                              Available Today
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* No members message */}
+                {onLeaveMembers.length === 0 && availableMembers.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <FiUsers className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <p>No team members found</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
    
     </motion.div>
   );
