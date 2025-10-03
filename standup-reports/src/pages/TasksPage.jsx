@@ -953,35 +953,7 @@ export default function TasksPage({ sidebarOpen }) {
             </div>
 
             {/* Compact Stats Row with Progress Indicator */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {/* Progress Indicator */}
-              {taskStats.total > 0 && (
-                <motion.div 
-                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg shadow"
-                  whileHover={{ scale: 1.03 }}
-                  transition={{ type: 'spring', stiffness: 400 }}
-                >
-                  <FiBarChart2 className="w-4 h-4" />
-                  <span className="text-sm font-medium">
-                    {Math.round((taskStats.completed / taskStats.total) * 100)}%
-                  </span>
-                </motion.div>
-              )}
-              
-              {/* Toggle Stats Visibility */}
-              <motion.button
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm transition-all"
-                onClick={() => setShowStats(!showStats)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                title={showStats ? 'Hide Detailed Statistics' : 'Show Detailed Statistics'}
-              >
-                {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                <span className="hidden xs:inline">
-                  {showStats ? 'Hide Stats' : 'Show Stats'}
-                </span>
-              </motion.button>
-            </div>
+           
           </div>
         </div>
       </motion.div>
