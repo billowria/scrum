@@ -243,14 +243,50 @@ export default function Dashboard({ sidebarOpen }) {
     };
   }, [date, cardControls]);
   
-  // Update time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  // Clock display component that only re-renders when necessary
+  const ClockDisplay = React.memo(() => {
+    const [time, setTime] = useState(new Date());
     
-    return () => clearInterval(timer);
-  }, []);
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setTime(new Date());
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }, []);
+    
+    return (
+      <motion.div 
+        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-3"
+        whileHover={{ scale: 1.03 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-xl blur opacity-30"></div>
+            <div className="relative bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1.5 rounded-xl text-center">
+              <div className="text-sm font-medium tracking-wider">
+                {format(time, 'h:mm')}
+              </div>
+            </div>
+          </div>
+          <motion.div 
+            className="text-2xl font-bold text-gray-800 min-w-[40px] text-center"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
+          >
+            {format(time, 'ss')}
+          </motion.div>
+          <div className="text-gray-500 text-sm font-medium px-2 py-1.5 bg-gray-100 rounded-lg">
+            {format(time, 'a')}
+          </div>
+        </div>
+        <div className="text-xs text-gray-500 text-center mt-1 font-medium uppercase tracking-wider">
+          {format(time, 'zzz')}
+        </div>
+      </motion.div>
+    );
+  });
 
   const fetchTeams = async () => {
     try {
