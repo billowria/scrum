@@ -5,7 +5,7 @@ import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, en
 import { supabase } from '../supabaseClient';
 
 // Icons
-import { FiFilter,FiAward,FiZap, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
+import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -763,6 +763,45 @@ export default function Dashboard({ sidebarOpen }) {
                       </motion.button>
                     </div>
                   </div>
+
+                  {/* Report Submission Reminder - Professional UI for users who haven't submitted today's report */}
+                  {isToday(date) && userId && !reports.some(report => report.users?.id === userId) && (
+                    <motion.div 
+                      className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-xl shadow-sm"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                          <FiAlertCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-amber-800">Daily Standup Reminder</h4>
+                          <p className="text-amber-700 text-sm mt-1">
+                            You haven't submitted your standup report for today yet.
+                            <br />
+                            <span className="font-medium">Complete your report to keep the team updated on your progress.</span>
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <motion.button
+                              onClick={handleNewReport}
+                              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow-md hover:from-amber-600 hover:to-orange-600 transition-all font-medium text-sm flex items-center gap-2"
+                              whileHover={{ scale: 1.03, boxShadow: "0 5px 15px -3px rgba(251, 146, 60, 0.2)" }}
+                              whileTap={{ scale: 0.97 }}
+                            >
+                              <FiPlus className="h-4 w-4" />
+                              Submit Your Report
+                            </motion.button>
+                            <span className="text-xs text-amber-600 mt-2 flex items-center">
+                              <FiInfo className="w-3 h-3 mr-1" />
+                              Reports are due by EOD
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
 
                   {/* Action Cards Grid - Completely New Design */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
