@@ -107,6 +107,7 @@ export default function Dashboard({ sidebarOpen }) {
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
   const [userTeamId, setUserTeamId] = useState(null);
+  const [userTeamName, setUserTeamName] = useState(null);
   
   // Missing reports state
   const [teamMembers, setTeamMembers] = useState([]);
@@ -181,6 +182,7 @@ export default function Dashboard({ sidebarOpen }) {
         if (!error && data) {
           setAvatarUrl(data.avatar_url || null);
           setUserTeamId(data.team_id);
+          setUserTeamName(data.teams?.name || null);
           setUserName(data.name || authUser.user_metadata?.name || authUser.email);
           fetchTeamMembers(data.team_id);
         } else {
@@ -764,45 +766,6 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                   </div>
 
-                  {/* Report Submission Reminder - Professional UI for users who haven't submitted today's report */}
-                  {isToday(date) && userId && !reports.some(report => report.users?.id === userId) && (
-                    <motion.div 
-                      className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-xl shadow-sm"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                          <FiAlertCircle className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-amber-800">Daily Standup Reminder</h4>
-                          <p className="text-amber-700 text-sm mt-1">
-                            You haven't submitted your standup report for today yet.
-                            <br />
-                            <span className="font-medium">Complete your report to keep the team updated on your progress.</span>
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <motion.button
-                              onClick={handleNewReport}
-                              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow-md hover:from-amber-600 hover:to-orange-600 transition-all font-medium text-sm flex items-center gap-2"
-                              whileHover={{ scale: 1.03, boxShadow: "0 5px 15px -3px rgba(251, 146, 60, 0.2)" }}
-                              whileTap={{ scale: 0.97 }}
-                            >
-                              <FiPlus className="h-4 w-4" />
-                              Submit Your Report
-                            </motion.button>
-                            <span className="text-xs text-amber-600 mt-2 flex items-center">
-                              <FiInfo className="w-3 h-3 mr-1" />
-                              Reports are due by EOD
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
                   {/* Action Cards Grid - Completely New Design */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                     {[
@@ -818,13 +781,31 @@ export default function Dashboard({ sidebarOpen }) {
                       },
                       { 
                         key: 'report', 
-                        icon: <FiPlus className="w-6 h-6" />, 
+                        icon: isToday(date) && userId && !reports.some(report => report.users?.id === userId) ? (
+                          <div className="relative">
+                            <FiPlus className="w-6 h-6" />
+                            <FiAlertCircle className="absolute -top-2 -right-2 w-4 h-4 text-amber-500" />
+                          </div>
+                        ) : (
+                          <FiPlus className="w-6 h-6" />
+                        ), 
                         onClick: handleNewReport, 
-                        label: 'Add Report', 
-                        gradient: 'from-emerald-500 to-teal-600',
-                        bg: 'bg-emerald-500/10',
-                        border: 'border-emerald-500/30',
-                        glow: 'shadow-emerald-500/20'
+                        label: isToday(date) && userId && !reports.some(report => report.users?.id === userId) ? 'Submit Report' : 'Add Report',
+                        gradient: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
+                          ? 'from-amber-500 to-orange-600' 
+                          : 'from-emerald-500 to-teal-600',
+                        bg: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
+                          ? 'bg-amber-500/10' 
+                          : 'bg-emerald-500/10',
+                        border: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
+                          ? 'border-amber-500/30' 
+                          : 'border-emerald-500/30',
+                        glow: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
+                          ? 'shadow-amber-500/20' 
+                          : 'shadow-emerald-500/20',
+                        hoverText: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
+                          ? 'Submit your daily standup report' 
+                          : 'Add a new report'
                       },
                       { 
                         key: 'projects', 
@@ -996,7 +977,7 @@ export default function Dashboard({ sidebarOpen }) {
                           initial={{ y: 10 }}
                           whileHover={{ opacity: 1, y: 0 }}
                         >
-                          {action.label}
+                          {action.hoverText || action.label}
                           <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 ${action.gradient} rotate-45`}></div>
                         </motion.div>
                       </motion.div>
@@ -1240,21 +1221,67 @@ export default function Dashboard({ sidebarOpen }) {
           
           {/* Right section - Animated time display */}
           <div className="flex items-center gap-6">
-            {/* Greeting badge */}
-            <motion.div 
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-full shadow-md"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <motion.div
-                animate={{ rotate: [0, 10, 0, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Team Name Card */}
+              <motion.div 
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full shadow-md cursor-pointer"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={async () => {
+                  // Ensure we have userTeamId
+                  let currentTeamId = userTeamId;
+                  if (!currentTeamId) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      const { data: userData, error } = await supabase
+                        .from('users')
+                        .select('team_id')
+                        .eq('id', user.id)
+                        .single();
+                      if (!error && userData) {
+                        currentTeamId = userData.team_id;
+                        setUserTeamId(currentTeamId);
+                      }
+                    }
+                  }
+                  
+                  if (currentTeamId) {
+                    await fetchOnLeaveMembers();
+                  }
+                  
+                  setTimeout(() => {
+                    setShowOnLeaveModal(true);
+                  }, 100);
+                }}
               >
-                <FiCheckCircle className="w-4 h-4" />
+                <motion.div
+                  animate={{ rotate: [0, 10, 0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <FiUsers className="w-4 h-4" />
+                </motion.div>
+                <span className="text-sm font-medium">{userTeamName || 'Your Team'}</span>
               </motion.div>
-              <span className="text-sm font-medium">Productive Day!</span>
-            </motion.div>
+              
+              {/* Compact Report Reminder */}
+              {isToday(date) && userId && !reports.some(report => report.users?.id === userId) && (
+                <motion.div 
+                  className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-md cursor-pointer"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNewReport}
+                >
+                  <FiAlertCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Submit Report</span>
+                </motion.div>
+              )}
+            </div>
             
             {/* Animated time display */}
             <motion.div 
