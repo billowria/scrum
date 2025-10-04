@@ -656,16 +656,16 @@ export default function Dashboard({ sidebarOpen }) {
               
               {/* Premium Quick Actions - Completely Redesigned */}
               <motion.div 
-                className="md:col-span-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700/50 relative overflow-hidden"
+                className="md:col-span-3 bg-white/20 backdrop-blur-lg rounded-3xl p-6 shadow-xl border border-white/30 relative overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 {/* Animated background elements */}
                 <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse" />
-                  <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl animate-pulse delay-1500" />
+                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/10 rounded-full blur-3xl animate-pulse" />
+                  <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-cyan-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-amber-400/10 to-rose-400/10 rounded-full blur-3xl animate-pulse delay-1500" />
                 </div>
 
                 <div className="relative z-10">
@@ -673,22 +673,22 @@ export default function Dashboard({ sidebarOpen }) {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-6">
                     <div className="flex items-center gap-4">
                       <motion.div 
-                        className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-xl shadow-cyan-500/20"
+                        className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 backdrop-blur-sm text-white shadow-xl shadow-cyan-500/20 border border-white/20"
                         whileHover={{ scale: 1.05, rotate: 5 }}
                         transition={{ type: 'spring', stiffness: 400 }}
                       >
                         <FiZap className="w-6 h-6" />
                       </motion.div>
                       <div>
-                        <h3 className="text-2xl font-bold text-white">Quick Actions</h3>
-                        <p className="text-slate-400 text-sm mt-1">Accelerate your workflow with one-click actions</p>
+                        <h3 className="text-2xl font-bold text-gray-800">Quick Actions</h3>
+                        <p className="text-gray-600 text-sm mt-1">Accelerate your workflow with one-click actions</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center gap-3">
                       <motion.button
                         onClick={() => navigate('/notifications')}
-                        className="relative p-3 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-300 hover:bg-slate-700/50 transition-all shadow-md"
+                        className="relative p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 transition-all shadow-md"
                         title="Notifications"
                         whileHover={{ scale: 1.1, y: -2 }}
                         whileTap={{ scale: 0.95 }}
@@ -696,7 +696,7 @@ export default function Dashboard({ sidebarOpen }) {
                         <FiBell className="w-5 h-5" />
                         {announcementsCount > 0 && (
                           <motion.span 
-                            className="absolute -top-2 -right-2 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-2 py-1 min-w-[20px] h-[20px] flex items-center justify-center shadow-lg"
+                            className="absolute -top-2 -right-2 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-2 py-1 min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border border-white/30 backdrop-blur-sm"
                             animate={{ 
                               scale: [1, 1.2, 1],
                               boxShadow: [
@@ -717,7 +717,7 @@ export default function Dashboard({ sidebarOpen }) {
                       
                       <motion.button
                         onClick={handleRefresh}
-                        className="p-3 rounded-xl bg-slate-800/50 border border-slate-700 text-slate-300 hover:bg-slate-700/50 transition-all shadow-md"
+                        className="p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 transition-all shadow-md"
                         title="Refresh Dashboard"
                         whileHover={{ scale: 1.1, y: -2, rotate: 90 }}
                         whileTap={{ scale: 0.95 }}
@@ -867,10 +867,11 @@ export default function Dashboard({ sidebarOpen }) {
                       >
                         <motion.button
                           onClick={action.onClick}
-                          className={`w-full h-28 rounded-2xl ${action.bg} border ${action.border} backdrop-blur-sm flex flex-col items-center justify-center gap-3 transition-all duration-300 relative overflow-hidden ${action.glow}`}
+                          className={`w-full h-28 rounded-2xl backdrop-blur-sm flex flex-col items-center justify-center gap-3 transition-all duration-300 relative overflow-hidden border border-white/30 shadow-md bg-white/20 hover:shadow-lg hover:bg-white/30`}
                           whileHover={{ 
                             scale: 1.05,
-                            boxShadow: `0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)`
+                            y: -5,
+                            boxShadow: `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.05)`
                           }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -881,7 +882,7 @@ export default function Dashboard({ sidebarOpen }) {
                           
                           {/* Icon container with gradient background */}
                           <motion.div 
-                            className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient} text-white shadow-lg relative z-10`}
+                            className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient} text-white shadow-lg relative z-10 border border-white/20 backdrop-blur-sm`}
                             whileHover={{ scale: 1.1, rotate: 5 }}
                             transition={{ type: 'spring', stiffness: 400 }}
                           >
@@ -890,7 +891,7 @@ export default function Dashboard({ sidebarOpen }) {
                           
                           {/* Label with animated underline */}
                           <div className="relative z-10">
-                            <span className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors">
+                            <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
                               {action.label}
                             </span>
                             <motion.div 
