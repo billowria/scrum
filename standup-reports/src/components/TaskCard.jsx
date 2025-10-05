@@ -112,6 +112,7 @@ export default function TaskCard({
   onEdit, 
   onUpdate,
   onDelete,
+  onView,
   onSprintAssign,
   isDragging = false,
   columnColor = null
@@ -169,7 +170,11 @@ export default function TaskCard({
       }}
       {...attributes}
       {...listeners}
-      onClick={() => onUpdate?.(task)}
+      onClick={(e) => {
+        // Only open detail view if clicking on the card itself, not buttons
+        if (e.target.closest('button')) return;
+        onView?.(task);
+      }}
     >
       {/* Glassmorphic Background Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm" />

@@ -93,7 +93,7 @@ const statusColumns = [
   }
 ];
 
-const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete }) => {
+const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete, onTaskView }) => {
   const {
     setNodeRef,
     isOver,
@@ -218,6 +218,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete 
                   onEdit={onTaskEdit}
                   onUpdate={onTaskUpdate}
                   onDelete={onTaskDelete}
+                  onView={onTaskView}
                   columnColor={column}
                 />
               </motion.div>
@@ -252,6 +253,7 @@ export default function TaskBoard({
   onTaskUpdate,
   onTaskEdit,
   onTaskDelete,
+  onTaskView,
   search = '',
   setSearch = () => {}
 }) {
@@ -429,6 +431,7 @@ export default function TaskBoard({
               onTaskUpdate={onTaskUpdate}
               onTaskEdit={onTaskEdit}
               onTaskDelete={onTaskDelete}
+              onTaskView={onTaskView}
             />
           ))}
         </div>

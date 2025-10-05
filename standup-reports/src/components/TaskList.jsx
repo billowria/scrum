@@ -69,7 +69,8 @@ export default function TaskList({
   tasks, 
   onTaskUpdate, 
   onTaskEdit, 
-  onTaskDelete 
+  onTaskDelete,
+  onTaskView
 }) {
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [selectedTasks, setSelectedTasks] = useState(new Set());
@@ -312,10 +313,10 @@ export default function TaskList({
                       </td>
                       
                       {/* Task Title & Description */}
-                      <td className="px-4 py-4">
+                      <td className="px-4 py-4 cursor-pointer hover:bg-gray-50" onClick={() => onTaskView?.(task)}>
                         <div className="flex items-start space-x-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium text-gray-900 truncate hover:text-emerald-600 transition-colors">
                               {task.title}
                             </p>
                             {task.description && (
@@ -394,9 +395,9 @@ export default function TaskList({
                       <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => onTaskUpdate(task)}
+                            onClick={() => onTaskView?.(task)}
                             className="text-blue-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50"
-                            title="View/Update task"
+                            title="View task details"
                           >
                             <FiEye className="w-4 h-4" />
                           </button>

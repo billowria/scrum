@@ -31,6 +31,8 @@ import {
 import { supabase } from '../supabaseClient';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
+import CreateTaskModalNew from '../components/tasks/CreateTaskModalNew';
+import TaskDetailModalEnhanced from '../components/tasks/TaskDetailModalEnhanced';
 import TaskBoard from '../components/TaskBoard';
 import TaskList from '../components/TaskList';
 import SprintBoard from '../components/SprintBoard';
@@ -82,8 +84,10 @@ export default function TasksPage({ sidebarOpen }) {
   const [error, setError] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [updatingTask, setUpdatingTask] = useState(null);
+  const [viewingTask, setViewingTask] = useState(null);
   const [showStats, setShowStats] = useState(true);
   const [compactMode, setCompactMode] = useState(false);
   const [filters, setFilters] = useState({
@@ -495,6 +499,11 @@ export default function TasksPage({ sidebarOpen }) {
   const handleTaskEdit = (task) => {
     setEditingTask(task);
     setShowCreateModal(true);
+  };
+  
+  const handleTaskView = (task) => {
+    setViewingTask(task);
+    setShowDetailModal(true);
   };
 
   const handleTaskDelete = async (task) => {
@@ -1023,6 +1032,7 @@ export default function TasksPage({ sidebarOpen }) {
                   onTaskUpdate={handleTaskUpdate}
                   onTaskEdit={handleTaskEdit}
                   onTaskDelete={handleTaskDelete}
+                  onTaskView={handleTaskView}
                   search={search}
                   setSearch={setSearch}
                 />
@@ -1032,6 +1042,7 @@ export default function TasksPage({ sidebarOpen }) {
                   onTaskUpdate={handleTaskUpdate}
                   onTaskEdit={handleTaskEdit}
                   onTaskDelete={handleTaskDelete}
+                  onTaskView={handleTaskView}
                 />
               ) : (
                 <div>
@@ -1073,7 +1084,7 @@ export default function TasksPage({ sidebarOpen }) {
       {/* Modals */}
       <AnimatePresence>
         {showCreateModal && userRole === 'manager' && (
-          <TaskForm
+          <CreateTaskModalNew
             isOpen={showCreateModal}
             onClose={() => {
               setShowCreateModal(false);
@@ -1101,6 +1112,22 @@ export default function TasksPage({ sidebarOpen }) {
               setUpdatingTask(null);
             }}
             task={updatingTask}
+          />
+        )}
+        
+        {showDetailModal && viewingTask && (
+          <TaskDetailModalEnhanced
+            isOpen={showDetailModal}
+            onClose={() => {
+              setShowDetailModal(false);
+              setViewingTask(null);
+            }}
+            taskId={viewingTask.id}
+            onUpdate={() => {
+              fetchTasks();
+            }}
+            currentUser={currentUser}
+            userRole={userRole}
           />
         )}
         
