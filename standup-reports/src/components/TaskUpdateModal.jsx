@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiMessageSquare, FiClock, FiUser, FiUsers, FiCalendar, FiCheckCircle, FiAlertCircle, FiTrendingUp, FiEdit2, FiSave, FiRotateCcw } from 'react-icons/fi';
 import { format, parseISO } from 'date-fns';
 import { supabase } from '../supabaseClient';
+import { createTaskNotification } from '../utils/notificationHelper';
 
 // Main Component
 export default function TaskUpdateModal({ 
@@ -137,6 +138,33 @@ export default function TaskUpdateModal({
       if (activityError) {
         console.error('Error saving activity:', activityError);
         // Don't throw error here as the task update was successful
+      }
+
+      // Create notification for the task assignee (if different from current user)
+      if (task.assignee_id && task.assignee_id !== user.id) {
+        try {
+          const actionText = selectedStatus === 'Completed' ? 'completed' : 
+                             selectedStatus === 'In Progress' ? 'started working on' : 
+                             selectedStatus === 'Review' ? 'sent for review' : 
+                             'updated';
+          
+          await createTaskNotification(
+            task.assignee_id,
+            task.id,
+            task.title,
+            'status_changed',
+            `${user.user_metadata?.name || 'Someone'} ${actionText} the task "${task.title}"`,
+            {
+              new_status: selectedStatus,
+              previous_status: task.status,
+              updater_id: user.id,
+              comment: comment.trim()
+            }
+          );
+        } catch (notificationError) {
+          console.error('Error creating task notification:', notificationError);
+          // Continue even if notification fails
+        }
       }
 
       onSuccess();

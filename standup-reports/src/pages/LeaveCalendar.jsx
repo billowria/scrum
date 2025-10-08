@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2 } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload } from 'react-icons/fi';
 
 // Import components
 import LeaveRequestForm from '../components/LeaveRequestForm';
@@ -171,7 +171,7 @@ const CompactTabHeader = ({
             
             <div className="flex items-center gap-3">
               <div>
-                <h2 className={`text-lg sm:text-xl font-bold ${scheme.text} flex items-center gap-2`}>
+                <h2 className={`text-lg sm:text-xl font-bold ${scheme.text} flex items-center gap-2 cursor-pointer hover:text-blue-300 transition-colors`} onClick={() => window.location.href = '/'}>
                   {title}
                   {badge && (
                     <span className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full">
@@ -263,6 +263,11 @@ export default function LeaveCalendar() {
   const [timesheetLoading, setTimesheetLoading] = useState(false);
   const [showTimesheetRangeModal, setShowTimesheetRangeModal] = useState(false);
   const [timesheetRange, setTimesheetRange] = useState({ start: null, end: null });
+  // New state for monthly timesheet view
+  const [showMonthlyTimesheetModal, setShowMonthlyTimesheetModal] = useState(false);
+  
+  // New state for holiday calendar view
+  const [showHolidayCalendarModal, setShowHolidayCalendarModal] = useState(false);
 
   // Timesheet approvals count for indicator
   const [pendingTimesheetCount, setPendingTimesheetCount] = useState(0);
@@ -611,11 +616,11 @@ export default function LeaveCalendar() {
     if (!start) return '';
     
     if (isSameDay(day, start)) {
-      return `ring-2 ring-${end ? 'primary' : 'accent'}-500`;
+      return end ? 'ring-4 ring-blue-500' : 'ring-4 ring-purple-500';
     }
     
     if (end && day >= start && day <= end) {
-      return 'ring-2 ring-primary-300';
+      return 'ring-4 ring-blue-300';
     }
     
     return '';
@@ -681,64 +686,67 @@ export default function LeaveCalendar() {
     return (
       <motion.div 
         key={dateStr}
-        whileHover={{ scale: 1.05, zIndex: 10, boxShadow: "0 8px 16px -2px rgba(0,0,0,0.1)" }}
+        whileHover={{ y: -5, boxShadow: "0 12px 24px -4px rgba(0,0,0,0.15)" }}
         whileTap={{ scale: 0.98 }}
         className={`
-          relative cursor-pointer rounded-lg p-2 sm:p-3 h-20 sm:h-24 
+          relative cursor-pointer rounded-2xl p-4 min-h-[120px] 
           flex flex-col justify-between
-          ${isSameMonthDay ? 'opacity-100' : 'opacity-40'}
-          ${isToday ? 'ring-2 ring-primary-500 ring-offset-2' : ''}
-          ${isWeekendDay ? 'bg-gray-50' : availability ? getDayColor(day) : 'bg-white'}
-          ${userHasLeave ? 'border-2 border-accent-500' : 'border border-gray-100'}
+          ${isSameMonthDay ? 'opacity-100' : 'opacity-60'}
+          ${isToday ? 'ring-4 ring-blue-500 ring-offset-2 transform' : ''}
+          ${isWeekendDay ? 'bg-gradient-to-b from-gray-50 to-gray-100' : availability ? getDayColor(day) : 'bg-gradient-to-b from-white to-gray-50'}
+          ${userHasLeave ? 'border-4 border-accent-500' : 'border border-gray-200'}
           ${getSelectedDateBorder(day)}
-          shadow-sm hover:shadow-md transition-all duration-200
+          ${selectedDates.start && isSameDay(selectedDates.start, day) ? 'bg-gradient-to-br from-blue-200 to-blue-300 shadow-lg' : ''}
+          ${selectedDates.end && isSameDay(selectedDates.end, day) ? 'bg-gradient-to-br from-blue-200 to-blue-300 shadow-lg' : ''}
+          ${selectedDates.start && selectedDates.end && day > selectedDates.start && day < selectedDates.end ? 'bg-gradient-to-br from-blue-100 to-blue-200' : ''}
+          shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out
         `}
         onClick={(e) => handleDayClick(day, e)}
       >
         <div className="flex justify-between items-start">
           <div className="flex flex-col items-center">
-            <span className={`text-xs uppercase font-medium text-gray-400 ${isToday ? 'text-primary-500' : ''}`}>
+            <span className={`text-xs uppercase font-semibold ${isToday ? 'text-blue-600' : 'text-gray-500'}`}>
               {format(day, 'EEE')}
             </span>
             <span className={`
               ${isToday 
-                ? 'bg-primary-500 text-white w-6 h-6 flex items-center justify-center rounded-full mt-0.5' 
-                : isWeekendDay ? 'text-gray-500' : 'text-gray-800'
-              } text-sm font-bold`}
+                ? 'bg-blue-500 text-white w-8 h-8 flex items-center justify-center rounded-full mt-1 shadow-md' 
+                : isWeekendDay ? 'text-gray-600' : 'text-gray-800'
+              } text-base font-bold`}
             >
               {format(day, 'd')}
             </span>
           </div>
           
-          <div className="flex flex-col items-end gap-0.5">
+          <div className="flex flex-col items-end gap-1">
             {hasLeave && (
               <motion.span 
-                className="text-xs px-1.5 py-0.5 bg-primary-100 text-primary-800 rounded-full inline-flex items-center cursor-pointer hover:bg-primary-200"
+                className="text-[0.65rem] px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-full inline-flex items-center cursor-pointer hover:from-blue-200 hover:to-blue-300 shadow-sm"
                 onClick={(e) => handleUsersIconClick(day, usersOnLeave, e)}
                 whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <FiUsers size={10} className="mr-1" /> 
+                <FiUsers size={9} className="mr-1" /> 
                 {usersOnLeave.length}
               </motion.span>
             )}
             
             {hasPendingRequests && (
-              <span className="text-xs px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded-full inline-flex items-center">
-                <FiClock size={10} className="mr-1" />
+              <span className="text-[0.65rem] px-2 py-1 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 rounded-full inline-flex items-center shadow-sm">
+                <FiClock size={9} className="mr-1" />
                 Pending
               </span>
             )}
 
             {/* Timesheet total hours badge */}
             <motion.span
-              className={`mt-0.5 text-xs px-1.5 py-0.5 ${totalHours > 0 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer'} rounded-full inline-flex items-center`}
+              className={`mt-1 text-[0.65rem] px-2 py-1 ${totalHours > 0 ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 hover:from-emerald-200 hover:to-emerald-300 cursor-pointer shadow-sm' : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 hover:from-gray-200 hover:to-gray-300 cursor-pointer shadow-sm'} rounded-full inline-flex items-center`}
               onClick={(e) => openTimesheetForDay(day, e)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title={totalHours > 0 ? `${totalHours}h logged` : 'Log time'}
             >
-              <FiClock size={10} className="mr-1" />
+              <FiClock size={9} className="mr-1" />
               {totalHours > 0 ? `${totalHours}h` : 'Log'}
             </motion.span>
           </div>
@@ -746,27 +754,27 @@ export default function LeaveCalendar() {
         
         {/* Availability indicator */}
         {availability && (
-          <div className="flex flex-col gap-1 mt-1">
+          <div className="flex flex-col gap-1 mt-auto">
             <div 
-              className={`h-1.5 w-full rounded-full overflow-hidden bg-gray-200`}
+              className={`h-2 w-full rounded-full overflow-hidden bg-gray-200 shadow-inner`}
               style={{ opacity: isSameMonthDay ? 1 : 0.3 }}
             >
               <div 
-                className={`h-full ${
-                  availability.status === 'high' ? 'bg-green-500' : 
-                  availability.status === 'medium' ? 'bg-yellow-500' : 
-                  'bg-red-500'
+                className={`h-full transition-all duration-500 ease-out ${
+                  availability.status === 'high' ? 'bg-gradient-to-r from-green-500 to-green-400' : 
+                  availability.status === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' : 
+                  'bg-gradient-to-r from-red-500 to-red-400'
                 }`}
                 style={{ width: `${availability.availablePercentage}%` }}
               ></div>
             </div>
             
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-500">Available:</span>
-              <span className={`font-medium ${
-                availability.status === 'high' ? 'text-green-600' : 
-                availability.status === 'medium' ? 'text-yellow-600' : 
-                'text-red-600'
+            <div className="flex justify-between items-center text-[0.65rem]">
+              <span className="font-medium text-gray-600">Avail:</span>
+              <span className={`font-bold ${
+                availability.status === 'high' ? 'text-green-700' : 
+                availability.status === 'medium' ? 'text-amber-700' : 
+                'text-red-700'
               }`}>
                 {availability.availablePercentage}%
               </span>
@@ -776,16 +784,16 @@ export default function LeaveCalendar() {
         
         {/* Status markers */}
         {userHasLeave && (
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent-500 rounded-full border-2 border-white"></div>
+          <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
         
         {/* Selected day indicator */}
         {selectedDates.start && isSameDay(selectedDates.start, day) && (
-          <div className="absolute -top-1 -left-1 w-3 h-3 bg-primary-500 rounded-full border-2 border-white"></div>
+          <div className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
         
         {selectedDates.end && isSameDay(selectedDates.end, day) && (
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-500 rounded-full border-2 border-white"></div>
+          <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
       </motion.div>
     );
@@ -801,8 +809,16 @@ export default function LeaveCalendar() {
         color="blue"
         badge="Active"
         quickStats={[
-          { label: "Month", value: format(currentMonth, 'MMM yyyy') },
-          { label: "Hours Logged", value: Object.values(timesheetTotalsByDate).reduce((a, b) => a + b, 0) }
+          { 
+            label: "Month", 
+            value: format(currentMonth, 'MMM yyyy'),
+            onClick: () => setShowHolidayCalendarModal(true)
+          },
+          { 
+            label: "Hours Logged", 
+            value: Object.values(timesheetTotalsByDate).reduce((a, b) => a + b, 0), 
+            onClick: () => setShowMonthlyTimesheetModal(true)
+          }
         ]}
         quickActions={[
           {
@@ -811,14 +827,14 @@ export default function LeaveCalendar() {
             tooltip: "Request Leave"
           },
           {
+            icon: <FiClock className="w-4 h-4" />,
+            onClick: () => setShowMonthlyTimesheetModal(true),
+            tooltip: "View Monthly Hours"
+          },
+          {
             icon: <FiRefreshCw className="w-4 h-4" />,
             onClick: () => window.location.reload(),
             tooltip: "Refresh"
-          },
-          {
-            icon: <FiClock className="w-4 h-4" />,
-            onClick: () => setShowTimesheetRangeModal(true),
-            tooltip: "Log Timesheet Range"
           }
         ]}
       />
@@ -845,7 +861,10 @@ export default function LeaveCalendar() {
                   <FiChevronLeft size={20} />
                 </motion.button>
                 
-                <div className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent">
+                <div 
+                  className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent cursor-pointer hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 transition-all duration-300 p-2 rounded-lg hover:bg-opacity-20"
+                  onClick={() => setShowHolidayCalendarModal(true)}
+                >
                   {format(currentMonth, 'MMMM yyyy')}
                 </div>
                 
@@ -1170,6 +1189,23 @@ export default function LeaveCalendar() {
         }}
       />
 
+      {/* Monthly Timesheet Modal */}
+      <MonthlyTimesheetModal
+        isOpen={showMonthlyTimesheetModal}
+        onClose={() => setShowMonthlyTimesheetModal(false)}
+        currentUser={currentUser}
+        timesheetsByDate={timesheetsByDate}
+        timesheetTotalsByDate={timesheetTotalsByDate}
+        currentMonth={currentMonth}
+      />
+
+      {/* Holiday Calendar Modal */}
+      <HolidayCalendarModal
+        isOpen={showHolidayCalendarModal}
+        onClose={() => setShowHolidayCalendarModal(false)}
+        currentMonth={currentMonth}
+      />
+
       {/* Users on leave modal */}
       <UserListModal
         isOpen={showOnLeaveModal}
@@ -1192,37 +1228,7 @@ export default function LeaveCalendar() {
         onDismiss={() => setHasUnreadAnnouncements(false)}
       />
       
-      {/* Announcement button */}
-      {calendarAnnouncement && (
-        <motion.button
-          className={`fixed bottom-5 right-5 p-3.5 ${
-            hasUnreadAnnouncements 
-              ? 'bg-gradient-to-r from-primary-600 to-primary-700' 
-              : 'bg-gray-600'
-          } text-white rounded-full shadow-lg`}
-          onClick={() => setShowAnnouncement(true)}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1, boxShadow: "0 10px 25px rgba(79, 70, 229, 0.3)" }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <FiBell size={24} />
-          {pendingTimesheetCount > 0 && (
-            <span className="absolute -bottom-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500 border-2 border-white">
-              {pendingTimesheetCount}
-            </span>
-          )}
-          {hasUnreadAnnouncements && (
-            <motion.span 
-              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white"
-              initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.2, 1] }}
-              transition={{ duration: 0.5 }}
-            />
-          )}
-        </motion.button>
-      )}
-      
+     
       {/* Custom scrollbar styles */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -1633,6 +1639,448 @@ const TimesheetRangeModal = ({ isOpen, onClose, defaultStart, defaultEnd, curren
                 </div>
               ) : (
                 <div className="text-sm text-gray-500">Select a start and end date to preview.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+
+// Monthly Timesheet Modal Component
+const MonthlyTimesheetModal = ({ isOpen, onClose, currentUser, timesheetsByDate, timesheetTotalsByDate, currentMonth }) => {
+  // Calculate monthly totals
+  const monthlyTotal = Object.values(timesheetTotalsByDate).reduce((sum, hours) => sum + hours, 0);
+  
+  // Get all dates with entries
+  const datesWithEntries = Object.keys(timesheetsByDate)
+    .filter(date => timesheetsByDate[date].length > 0)
+    .sort(); // Sort dates chronologically
+
+  // If not open, return null
+  if (!isOpen) return null;
+
+  // Get status for a timesheet entry
+  const getStatusInfo = (entry) => {
+    // The submission status would typically come from the timesheet_submissions table
+    // For now, we'll return status based on common possible states
+    // In a real implementation, you would pass submission statuses from the parent component
+    if (!entry.submission_id) {
+      return { status: 'draft', label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: '📝' };
+    } else if (entry.status === 'approved') {
+      return { status: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800', icon: '✓' };
+    } else if (entry.status === 'rejected') {
+      return { status: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800', icon: '✗' };
+    } else {
+      // Default to pending if submission exists but status is not set to approved/rejected
+      return { status: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' };
+    }
+  };
+
+  // Function to export data as Excel
+  const exportToExcel = () => {
+    // Create a CSV string
+    let csvContent = "Date,Day,Total Hours,Status,Project,Hours,Notes\n";
+    
+    datesWithEntries.forEach(dateStr => {
+      const date = parseISO(dateStr);
+      const entries = timesheetsByDate[dateStr] || [];
+      const totalHours = timesheetTotalsByDate[dateStr] || 0;
+      const statusInfo = getStatusInfo(entries[0] || {});
+      
+      if (entries.length > 0) {
+        // Add a row for each entry on this date
+        entries.forEach((entry, idx) => {
+          const project = entry.projects?.name || '';
+          const notes = entry.notes || '';
+          const row = [
+            format(date, 'yyyy-MM-dd'),
+            format(date, 'EEE'),
+            totalHours.toFixed(2),
+            statusInfo.label,
+            project,
+            entry.hours,
+            `"${notes.replace(/"/g, '""')}"` // Escape quotes and wrap in quotes
+          ].join(',');
+          
+          csvContent += row + '\n';
+        });
+      } else {
+        // If no entries, still add a row for the date
+        const row = [
+          format(date, 'yyyy-MM-dd'),
+          format(date, 'EEE'),
+          totalHours.toFixed(2),
+          'No entries',
+          '',
+          '',
+          ''
+        ].join(',');
+        
+        csvContent += row + '\n';
+      }
+    });
+    
+    // Create a Blob and download it
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `timesheet_${format(currentMonth, 'yyyy-MM')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/30 flex items-end sm:items-center justify-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="w-full sm:max-w-4xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[90vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-white">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
+                <FiClock />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">Your Monthly Timesheet</h3>
+                <p className="text-sm text-gray-500">Hours logged by {currentUser?.name || 'you'} for {format(currentMonth, 'MMMM yyyy')}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700 flex items-center gap-1"
+                onClick={exportToExcel}
+                aria-label="Export to Excel"
+              >
+                <FiDownload />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+              <button 
+                className="p-2 rounded-lg hover:bg-gray-100" 
+                onClick={onClose}
+                aria-label="Close modal"
+              >
+                <FiX />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6">
+            {/* Monthly Summary */}
+            <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-800">Monthly Summary</h4>
+                  <p className="text-sm text-gray-600">Total hours logged by you</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-emerald-700">{monthlyTotal.toFixed(2)}h</div>
+                  <div className="text-sm text-gray-600">{datesWithEntries.length} days with entries</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Timesheet Entries by Date */}
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="overflow-y-auto max-h-[60vh] custom-scrollbar">
+                {datesWithEntries.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <FiClock className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <p>No timesheet entries for this month</p>
+                    <p className="text-sm mt-1">Start by logging your hours for each day</p>
+                  </div>
+                ) : (
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entries</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {datesWithEntries.map((dateStr, index) => {
+                        const date = parseISO(dateStr);
+                        const entries = timesheetsByDate[dateStr] || [];
+                        const totalHours = timesheetTotalsByDate[dateStr] || 0;
+                        
+                        return (
+                          <motion.tr 
+                            key={dateStr}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.02 }}
+                            className="hover:bg-gray-50"
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {format(date, 'MMM dd')}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                              {format(date, 'EEE')}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-emerald-700">
+                              {totalHours.toFixed(2)}h
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusInfo(entries[0] || {}).color}`}>
+                                {getStatusInfo(entries[0] || {}).icon} {getStatusInfo(entries[0] || {}).label}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="space-y-1">
+                                {entries.map((entry) => (
+                                  <div key={entry.id} className="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg">
+                                    <div>
+                                      <div className="font-medium">{entry.hours}h</div>
+                                      {entry.projects?.name && (
+                                        <div className="text-xs text-gray-500">{entry.projects.name}</div>
+                                      )}
+                                      {entry.notes && (
+                                        <div className="text-xs text-gray-600 italic">{entry.notes}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+
+
+// Holiday Calendar Modal Component
+const HolidayCalendarModal = ({ isOpen, onClose, currentMonth }) => {
+  const [holidays, setHolidays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // In a real application, this would fetch from an API
+  const fetchHolidaysForMonth = async (month) => {
+    setLoading(true);
+    try {
+      // Simulate API call or fetch from a holiday API in a real implementation
+      // For demo purposes, I'll create realistic holidays based on the actual month
+      const year = new Date(currentMonth).getFullYear();
+      const monthNum = new Date(currentMonth).getMonth();
+      
+      // Create some realistic holidays for the given month
+      const monthHolidays = [];
+      
+      // Add some common recurring holidays based on the month
+      if (monthNum === 0) { // January
+        monthHolidays.push({ date: format(new Date(year, 0, 1), 'yyyy-MM-dd'), name: 'New Year\'s Day', type: 'Public' });
+        if (year === new Date().getFullYear()) {
+          monthHolidays.push({ date: format(new Date(year, 0, 15), 'yyyy-MM-dd'), name: 'Martin Luther King Jr. Day', type: 'Federal' });
+        }
+      } else if (monthNum === 1) { // February
+        monthHolidays.push({ date: format(new Date(year, 1, 14), 'yyyy-MM-dd'), name: 'Valentine\'s Day', type: 'Observance' });
+        if (year === new Date().getFullYear()) {
+          monthHolidays.push({ date: format(new Date(year, 1, 20), 'yyyy-MM-dd'), name: 'Presidents\' Day', type: 'Federal' });
+        }
+      } else if (monthNum === 6) { // July
+        monthHolidays.push({ date: format(new Date(year, 6, 4), 'yyyy-MM-dd'), name: 'Independence Day', type: 'Public' });
+      } else if (monthNum === 11) { // December
+        monthHolidays.push({ date: format(new Date(year, 11, 25), 'yyyy-MM-dd'), name: 'Christmas Day', type: 'Public' });
+      }
+      
+      // Add a few more random holidays for demonstration
+      if (new Date().getMonth() === monthNum) {
+        // Add weekend holidays for demonstration
+        const daysInMonth = eachDayOfInterval({
+          start: startOfMonth(currentMonth),
+          end: endOfMonth(currentMonth)
+        });
+        
+        daysInMonth.forEach(day => {
+          if (isWeekend(day) && Math.random() > 0.7) { // Random weekends as sample holidays
+            monthHolidays.push({
+              date: format(day, 'yyyy-MM-dd'),
+              name: 'Weekend Holiday',
+              type: 'Observance'
+            });
+          }
+        });
+      }
+      
+      // Sort holidays by date
+      monthHolidays.sort((a, b) => parseISO(a.date) - parseISO(b.date));
+      
+      setHolidays(monthHolidays);
+    } catch (error) {
+      console.error('Error fetching holidays:', error);
+      // Set some default holidays in case of error
+      setHolidays([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchHolidaysForMonth(currentMonth);
+    }
+  }, [isOpen, currentMonth]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/30 flex items-end sm:items-center justify-center"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="w-full sm:max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Enhanced Header with Professional Gradient */}
+          <div className="p-5 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                  <FiCalendar className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Holiday Calendar</h3>
+                  <p className="text-indigo-100 text-sm">Holidays for {format(currentMonth, 'MMMM yyyy')}</p>
+                </div>
+              </div>
+              <button 
+                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all"
+                onClick={onClose}
+                aria-label="Close modal"
+              >
+                <FiX className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-5 sm:p-6">
+            {/* Enhanced Holiday Summary Card */}
+            <div className="mb-6 p-5 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-bold text-gray-800 text-lg">Holidays Summary</h4>
+                  <p className="text-gray-600">Public and special holidays for the month</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-indigo-700">{holidays.length}</div>
+                    <div className="text-sm text-gray-500">Total</div>
+                  </div>
+                  <div className="h-10 w-px bg-gray-200"></div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-700">
+                      {holidays.filter(h => h.type === 'Public' || h.type === 'Federal').length}
+                    </div>
+                    <div className="text-sm text-gray-500">Public</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Holiday List */}
+            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+              {loading ? (
+                <div className="p-12 text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-10 h-10 border-t-2 border-indigo-600 border-solid rounded-full animate-spin"></div>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-1">Loading Holidays</h3>
+                  <p className="text-gray-500">Retrieving holiday information for {format(currentMonth, 'MMMM yyyy')}</p>
+                </div>
+              ) : holidays.length === 0 ? (
+                <div className="p-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <FiCalendar className="w-8 h-8 text-indigo-600" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-700 mb-1">No Holidays This Month</h3>
+                  <p className="text-gray-500">There are no holidays scheduled for {format(currentMonth, 'MMMM yyyy')}</p>
+                </div>
+              ) : (
+                <div className="overflow-y-auto max-h-[50vh] custom-scrollbar pr-2">
+                  <div className="divide-y divide-gray-100">
+                    {holidays.map((holiday, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-5 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <div className="flex items-start gap-4">
+                          {/* Date Circle */}
+                          <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-col items-center justify-center text-white text-sm font-bold">
+                              <div>{format(parseISO(holiday.date), 'dd')}</div>
+                              <div className="text-xs opacity-80">{format(parseISO(holiday.date), 'MMM')}</div>
+                            </div>
+                          </div>
+                          
+                          {/* Holiday Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h4 className="font-bold text-gray-800 text-lg">{holiday.name}</h4>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-gray-600 flex items-center gap-1">
+                                    <FiCalendar className="w-4 h-4" />
+                                    {format(parseISO(holiday.date), 'EEEE, MMMM d, yyyy')}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className={`px-3 py-1.5 text-xs font-semibold rounded-full capitalize ${
+                                holiday.type === 'Public' || holiday.type === 'Federal' 
+                                  ? 'bg-red-100 text-red-800 border border-red-200' 
+                                  : holiday.type === 'Observance'
+                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                  : 'bg-purple-100 text-purple-800 border border-purple-200'
+                              }`}>
+                                {holiday.type}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>

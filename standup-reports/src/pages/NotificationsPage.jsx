@@ -8,7 +8,8 @@ import {
   FiMessageSquare, FiInbox, FiAlertCircle, FiUser, 
   FiChevronDown, FiStar, FiTag, FiPaperclip, FiMapPin,
   FiArchive, FiCheckCircle, FiAlertTriangle, FiInfo,
-  FiSettings, FiTrendingUp, FiUsers, FiEye, FiShare2, FiDownload
+  FiSettings, FiTrendingUp, FiUsers, FiEye, FiShare2, FiDownload,
+  FiTarget
 } from 'react-icons/fi';
 
 // Enhanced Modal for notification details (restored from previous version)
@@ -176,7 +177,8 @@ const NotificationModal = ({ notification, onClose }) => {
                     </span>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium border border-white/30 bg-white/20`}>
                       {notification.type === 'leave_request' ? 'Leave Request' : 
-                       notification.type === 'timesheet' ? 'Timesheet' : 'Announcement'}
+                       notification.type === 'timesheet' ? 'Timesheet' : 
+                       notification.type === 'task_update' ? 'Task Update' : 'Announcement'}
                     </span>
                     {notification.is_expired && (
                       <span className="flex items-center gap-1 text-xs bg-red-500/30 px-3 py-1 rounded-full border border-red-400/40">
@@ -343,6 +345,7 @@ const PremiumNotificationCard = ({
       case "announcement": return <FiMessageSquare className="w-5 h-5" />;
       case "leave_request": return <FiCalendar className="w-5 h-5" />;
       case "timesheet": return <FiClock className="w-5 h-5" />;
+      case "task_update": return <FiTarget className="w-5 h-5" />;
       default: return <FiBell className="w-5 h-5" />;
     }
   };
@@ -433,6 +436,32 @@ const PremiumNotificationCard = ({
       );
     }
     
+    if (notification.type === 'task_update') {
+      return (
+        <div className="space-y-3">
+          <p className="text-gray-700 leading-relaxed">{notification.message}</p>
+          {notification.data?.task?.title && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <FiTarget className="w-4 h-4" />
+              <span>Task: {notification.data.task.title}</span>
+            </div>
+          )}
+          {notification.data?.from_status && notification.data?.to_status && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <FiTrendingUp className="w-4 h-4" />
+              <span>Status: {notification.data.from_status} → {notification.data.to_status}</span>
+            </div>
+          )}
+          {notification.data?.comment && (
+            <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="text-xs text-gray-500 uppercase font-medium mb-1">Comment</div>
+              <p className="text-sm text-gray-700">{notification.data.comment}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
     return (
       <div className="space-y-3">
         <p className="text-gray-700 leading-relaxed">{notification.message}</p>
@@ -484,7 +513,8 @@ const PremiumNotificationCard = ({
                 </h3>
                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${config.badge} border`}>
                   {notification.type === 'leave_request' ? 'Leave Request' : 
-                   notification.type === 'timesheet' ? 'Timesheet' : 'Announcement'}
+                   notification.type === 'timesheet' ? 'Timesheet' : 
+                   notification.type === 'task_update' ? 'Task Update' : 'Announcement'}
                 </span>
                 {getStatusBadge(notification)}
                 {notification.is_expired && (
@@ -737,6 +767,59 @@ export default function NotificationsPage() {
         allNotifications = [...allNotifications, ...tsNotifications];
       }
 
+      // Fetch task updates for the current user
+      const { data: taskActivities, error: taskActivityError } = await supabase
+        .from('task_activities')
+        .select(`
+          id, task_id, user_id, action, from_status, to_status, comment, created_at,
+          task:task_id (id, title, status, assignee_id, reporter_id),
+          user:user_id (id, name)
+        `)
+        .eq('task.assignee_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (taskActivityError) {
+        console.error('Error fetching task activities:', taskActivityError);
+        // Continue without throwing error
+      } else {
+        const taskNotifications = (taskActivities || []).map(activity => {
+          let message = '';
+          let title = 'Task Update';
+          
+          if (activity.action === 'status_changed') {
+            title = 'Task Status Changed';
+            message = `${activity.user?.name || 'Someone'} changed the status of "${activity.task?.title}" from ${activity.from_status} to ${activity.to_status}`;
+          } else if (activity.action === 'assigned') {
+            title = 'Task Assigned';
+            message = `You were assigned to the task "${activity.task?.title}"`;
+          } else {
+            message = `${activity.user?.name || 'Someone'} updated the task "${activity.task?.title}"`;
+          }
+          
+          return {
+            id: `task-${activity.id}`,
+            type: 'task_update',
+            title: title,
+            message: message,
+            fullMessage: activity.comment ? `${message}\n\nComment: ${activity.comment}` : message,
+            created_at: activity.created_at,
+            is_read: false,
+            priority: 'medium',
+            data: activity,
+            metadata: {
+              task_id: activity.task_id,
+              task_title: activity.task?.title,
+              from_status: activity.from_status,
+              to_status: activity.to_status,
+              updater: activity.user?.name
+            }
+          };
+        });
+        
+        allNotifications = [...allNotifications, ...taskNotifications];
+      }
+
       // Fetch announcements
       const { data: announcements, error: announcementError } = await supabase
         .from('announcements')
@@ -833,8 +916,19 @@ export default function NotificationsPage() {
   const filteredAndSortedNotifications = useMemo(() => {
     let result = [...notifications];
     
-    // Apply type filter
-    if (notificationType !== 'all') {
+    // Apply type filter for new tabs
+    if (notificationType === 'all') {
+      // Show all notifications
+    } else if (notificationType === 'task_updates') {
+      result = result.filter(notification => 
+        notification.type === 'leave_request' || 
+        notification.type === 'timesheet' ||
+        notification.type === 'task_update'
+      );
+    } else if (notificationType === 'announcements') {
+      result = result.filter(notification => notification.type === 'announcement');
+    } else {
+      // For backward compatibility (e.g. if notificationType is still 'leave_request' or 'timesheet')
       result = result.filter(notification => notification.type === notificationType);
     }
     
@@ -1126,59 +1220,91 @@ export default function NotificationsPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className={`flex-1 ${sidebarOpen ? 'lg:w-3/4' : 'w-full'}`}>
-            {/* Search and Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="relative flex-1 max-w-md">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiSearch className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search notifications..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-1">
+            {/* Tab Navigation */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+              <div className="border-b border-gray-200">
+                <nav className="flex space-x-8 px-6">
+                  {[
+                    { key: 'all', label: 'All Notifications', count: totalCount },
+                    { key: 'task_updates', label: 'Task Updates', count: notifications.filter(n => n.type === 'leave_request' || n.type === 'timesheet' || n.type === 'task_update').length },
+                    { key: 'announcements', label: 'Announcements', count: notifications.filter(n => n.type === 'announcement').length }
+                  ].map((tab) => (
                     <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+                      key={tab.key}
+                      onClick={() => handleTypeChange(tab.key)}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                        notificationType === tab.key
+                          ? 'border-indigo-500 text-indigo-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
                     >
-                      <FiList className="w-5 h-5" />
+                      {tab.label}
+                      <span className={`ml-2 inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        notificationType === tab.key
+                          ? 'bg-indigo-100 text-indigo-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {tab.count}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
-                    >
-                      <FiGrid className="w-5 h-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="appearance-none bg-white border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                      <option value="unread">Unread first</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                      <FiChevronDown className="h-4 w-4 text-gray-400" />
+                  ))}
+                </nav>
+              </div>
+              
+              {/* Search and Filters */}
+              <div className="p-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="relative flex-1 max-w-md">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiSearch className="h-5 w-5 text-gray-400" />
                     </div>
+                    <input
+                      type="text"
+                      placeholder="Search notifications..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                   
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <FiFilter className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+                      >
+                        <FiList className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-100'}`}
+                      >
+                        <FiGrid className="w-5 h-5" />
+                      </button>
+                    </div>
+                    
+                    <div className="relative">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="appearance-none bg-white border border-gray-300 rounded-lg py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="unread">Unread first</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <FiChevronDown className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <FiFilter className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1265,15 +1391,14 @@ export default function NotificationsPage() {
                   </div>
                   
                   <div className="space-y-6">
-                    {/* Type Filter */}
+                    {/* Type Filter - Updated for new tabs */}
                     <div>
                       <h3 className="text-sm font-medium text-gray-900 mb-2">Type</h3>
                       <div className="space-y-2">
                         {[
                           { key: 'all', label: 'All Notifications' },
-                          { key: 'announcement', label: 'Announcements' },
-                          { key: 'leave_request', label: 'Leave Requests' },
-                          { key: 'timesheet', label: 'Timesheets' }
+                          { key: 'task_updates', label: 'Task Updates' },
+                          { key: 'announcements', label: 'Announcements' }
                         ].map((type) => (
                           <button
                             key={type.key}
@@ -1288,7 +1413,9 @@ export default function NotificationsPage() {
                             <span className="bg-gray-200 text-gray-700 rounded-full px-2 py-0.5 text-xs">
                               {type.key === 'all' 
                                 ? totalCount 
-                                : notifications.filter(n => n.type === type.key).length}
+                                : type.key === 'task_updates'
+                                ? notifications.filter(n => n.type === 'leave_request' || n.type === 'timesheet' || n.type === 'task_update').length
+                                : notifications.filter(n => n.type === 'announcement').length}
                             </span>
                           </button>
                         ))}

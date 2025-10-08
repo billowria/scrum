@@ -29,10 +29,11 @@ import {
   FiLayers
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
+import { createTaskNotification } from '../utils/notificationHelper';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
 import CreateTaskModalNew from '../components/tasks/CreateTaskModalNew';
-import TaskDetailModalEnhanced from '../components/tasks/TaskDetailModalEnhanced';
+import TaskDetailView from '../components/tasks/TaskDetailView';
 import TaskBoard from '../components/TaskBoard';
 import TaskList from '../components/TaskList';
 import SprintBoard from '../components/SprintBoard';
@@ -686,149 +687,254 @@ export default function TasksPage({ sidebarOpen }) {
       >
         <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
           <div className="px-4 sm:px-6 py-4">
-            {/* Main Header Row */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              {/* Left Section: Title and Key Stats */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <motion.div 
-                    className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
-                    whileHover={{ scale: 1.05, rotate: 5 }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                  >
-                    <FiGrid className="w-6 h-6 text-white" />
-                  </motion.div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-                    <p className="text-sm text-gray-600">{format(new Date(), 'EEEE, MMM d, yyyy')}</p>
+            {/* Responsive Header */}
+            <div className="px-4 sm:px-6 py-4">
+              {/* Mobile Header */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {/* Mobile Title & Actions Row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow"
+                      whileHover={{ scale: 1.05, rotate: 5 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <FiGrid className="w-4 h-4 text-white" />
+                    </motion.div>
+                    <div>
+                      <h1 className="text-lg font-bold text-gray-900">Tasks</h1>
+                      <p className="text-xs text-gray-500">{format(new Date(), 'MMM d, yyyy')}</p>
+                    </div>
+                  </div>
+
+                  {/* Mobile Action Buttons */}
+                  <div className="flex items-center gap-1">
+                    <motion.button
+                      className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow"
+                      onClick={fetchTasks}
+                      whileTap={{ scale: 0.95 }}
+                      title="Refresh"
+                    >
+                      <FiRefreshCw className="w-4 h-4" />
+                    </motion.button>
+
+                    <motion.button
+                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow"
+                      onClick={() => {
+                        setShowCreateModal(true);
+                        setEditingTask(null);
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                      title="New Task"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                    </motion.button>
                   </div>
                 </div>
 
-                {/* Key Stats Cards */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <FiGrid className="w-4 h-4" />
-                    <span className="text-sm font-medium">{taskStats.total}</span>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <FiClock className="w-4 h-4" />
-                    <span className="text-sm font-medium">{taskStats.inProgress}</span>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg shadow"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <FiCheckCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">{taskStats.completed}</span>
-                  </motion.div>
-                  
+                {/* Mobile Stats Row */}
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-md text-xs">
+                    <FiGrid className="w-3 h-3" />
+                    <span className="font-medium">{taskStats.total}</span>
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md text-xs">
+                    <FiClock className="w-3 h-3" />
+                    <span className="font-medium">{taskStats.inProgress}</span>
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-md text-xs">
+                    <FiCheckCircle className="w-3 h-3" />
+                    <span className="font-medium">{taskStats.completed}</span>
+                  </div>
                   {taskStats.overdue > 0 && (
-                    <motion.div 
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-lg shadow"
-                      whileHover={{ scale: 1.03 }}
-                      animate={{ 
-                        boxShadow: ['0 0 0 0 rgba(244, 63, 94, 0.4)', '0 0 0 6px rgba(244, 63, 94, 0)', '0 0 0 0 rgba(244, 63, 94, 0.4)']
-                      }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <FiAlertCircle className="w-4 h-4" />
-                      <span className="text-sm font-medium">{taskStats.overdue}</span>
-                    </motion.div>
+                    <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-md text-xs animate-pulse">
+                      <FiAlertCircle className="w-3 h-3" />
+                      <span className="font-medium">{taskStats.overdue}</span>
+                    </div>
                   )}
+                </div>
+
+                {/* Mobile View Toggle */}
+                <div className="flex items-center justify-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                  <button
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      view === 'board'
+                        ? 'bg-white text-indigo-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setView('board')}
+                  >
+                    <FiGrid className="w-4 h-4 mx-auto md:mr-2" />
+                    <span className="sr-only md:not-sr-only md:ml-1">Board</span>
+                  </button>
+                  <button
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      view === 'list'
+                        ? 'bg-white text-indigo-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setView('list')}
+                  >
+                    <FiList className="w-4 h-4 mx-auto md:mr-2" />
+                    <span className="sr-only md:not-sr-only md:ml-1">List</span>
+                  </button>
+                  <button
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                      view === 'sprint'
+                        ? 'bg-white text-indigo-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    onClick={() => setView('sprint')}
+                  >
+                    <FiTarget className="w-4 h-4 mx-auto md:mr-2" />
+                    <span className="sr-only md:not-sr-only md:ml-1">Sprints</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Right Section: Primary Actions */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* View Toggle */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
-                <motion.button
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                    view === 'board' 
-                      ? 'bg-white text-indigo-700 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setView('board')}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiGrid className="w-4 h-4" />
-                  <span className="hidden xs:inline">Board</span>
-                </motion.button>
-                <motion.button
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                    view === 'list' 
-                      ? 'bg-white text-indigo-700 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setView('list')}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiList className="w-4 h-4" />
-                  <span className="hidden xs:inline">List</span>
-                </motion.button>
-                <motion.button
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                    view === 'sprint' 
-                      ? 'bg-white text-indigo-700 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setView('sprint')}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiTarget className="w-4 h-4" />
-                  <span className="hidden xs:inline">Sprints</span>
-                </motion.button>
-              </div>
+              {/* Desktop Header - Hidden on Mobile */}
+              <div className="hidden md:flex md:items-center md:justify-between gap-4">
+                {/* Desktop Left Section: Title and Stats */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                      whileHover={{ scale: 1.05, rotate: 5 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <FiGrid className="w-6 h-6 text-white" />
+                    </motion.div>
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
+                      <p className="text-sm text-gray-600">{format(new Date(), 'EEEE, MMM d, yyyy')}</p>
+                    </div>
+                  </div>
 
-                {/* Refresh Button */}
-                <motion.button
-                  className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow-sm hover:shadow transition-all"
-                  onClick={fetchTasks}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95, rotate: 180 }}
-                  title="Refresh Tasks"
-                >
-                  <FiRefreshCw className="w-4 h-4" />
-                </motion.button>
+                  {/* Desktop Stats */}
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow"
+                      whileHover={{ scale: 1.03 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      <FiGrid className="w-4 h-4" />
+                      <span className="text-sm font-medium">{taskStats.total}</span>
+                    </motion.div>
 
-                {/* Export Button */}
-                <motion.button
-                  className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
-                  onClick={exportTasksToCSV}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  title="Export Tasks to CSV"
-                >
-                  <FiDownload className="w-4 h-4" />
-                  <span className="hidden sm:inline">Export</span>
-                </motion.button>
+                    <motion.div
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow"
+                      whileHover={{ scale: 1.03 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      <FiClock className="w-4 h-4" />
+                      <span className="text-sm font-medium">{taskStats.inProgress}</span>
+                    </motion.div>
 
-                {/* Create Task Button - Only for Managers */}
-                {userRole === 'manager' && (
+                    <motion.div
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg shadow"
+                      whileHover={{ scale: 1.03 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >
+                      <FiCheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">{taskStats.completed}</span>
+                    </motion.div>
+
+                    {taskStats.overdue > 0 && (
+                      <motion.div
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-lg shadow"
+                        whileHover={{ scale: 1.03 }}
+                        animate={{
+                          boxShadow: ['0 0 0 0 rgba(244, 63, 94, 0.4)', '0 0 0 6px rgba(244, 63, 94, 0)', '0 0 0 0 rgba(244, 63, 94, 0.4)']
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <FiAlertCircle className="w-4 h-4" />
+                        <span className="text-sm font-medium">{taskStats.overdue}</span>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Desktop Right Section */}
+                <div className="flex items-center gap-2">
+                  {/* Desktop View Toggle */}
+                  <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                    <motion.button
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                        view === 'board'
+                          ? 'bg-white text-indigo-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      onClick={() => setView('board')}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiGrid className="w-4 h-4" />
+                      <span className="hidden xs:inline">Board</span>
+                    </motion.button>
+                    <motion.button
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                        view === 'list'
+                          ? 'bg-white text-indigo-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      onClick={() => setView('list')}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiList className="w-4 h-4" />
+                      <span className="hidden xs:inline">List</span>
+                    </motion.button>
+                    <motion.button
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+                        view === 'sprint'
+                          ? 'bg-white text-indigo-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      onClick={() => setView('sprint')}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiTarget className="w-4 h-4" />
+                      <span className="hidden xs:inline">Sprints</span>
+                    </motion.button>
+                  </div>
+
+                  {/* Desktop Actions */}
                   <motion.button
-                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
-                    onClick={() => {
-                      setShowCreateModal(true);
-                      setEditingTask(null);
-                    }}
+                    className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow-sm hover:shadow transition-all"
+                    onClick={fetchTasks}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95, rotate: 180 }}
+                    title="Refresh Tasks"
+                  >
+                    <FiRefreshCw className="w-4 h-4" />
+                  </motion.button>
+
+                  <motion.button
+                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                    onClick={exportTasksToCSV}
                     whileHover={{ scale: 1.03, y: -2 }}
                     whileTap={{ scale: 0.98 }}
+                    title="Export Tasks to CSV"
                   >
-                    <FiPlus className="w-4 h-4" />
-                    <span className="hidden sm:inline">New Task</span>
+                    <FiDownload className="w-4 h-4" />
+                    <span className="hidden lg:inline">Export</span>
                   </motion.button>
-                )}
+
+                  {/* Create Task Button */}
+                  {userRole === 'manager' && (
+                    <motion.button
+                      className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                      onClick={() => {
+                        setShowCreateModal(true);
+                        setEditingTask(null);
+                      }}
+                      whileHover={{ scale: 1.03, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span className="hidden lg:inline">New Task</span>
+                    </motion.button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1116,7 +1222,7 @@ export default function TasksPage({ sidebarOpen }) {
         )}
         
         {showDetailModal && viewingTask && (
-          <TaskDetailModalEnhanced
+          <TaskDetailView
             isOpen={showDetailModal}
             onClose={() => {
               setShowDetailModal(false);
@@ -1128,6 +1234,19 @@ export default function TasksPage({ sidebarOpen }) {
             }}
             currentUser={currentUser}
             userRole={userRole}
+            parentTaskId={viewingTask.parentTaskId} // Pass parent task ID if available
+            onNavigateToTask={(taskId) => {
+              // Close current detail view and open new one for the clicked task
+              setShowDetailModal(false);
+              setViewingTask(null);
+              
+              // Find the task and open its detail view, passing current task as parent
+              const clickedTask = tasks.find(t => t.id === taskId);
+              if (clickedTask) {
+                setViewingTask({...clickedTask, parentTaskId: viewingTask?.id}); // Pass current task ID as parent
+                setShowDetailModal(true);
+              }
+            }}
           />
         )}
         

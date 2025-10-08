@@ -157,14 +157,14 @@ export default function TaskCard({
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`group relative bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden ${
+      className={`group relative bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden h-auto min-h-[160px] w-full ${
         isDragging ? 'shadow-2xl scale-105 rotate-2' : 'hover:scale-[1.02] hover:-translate-y-1'
       }`}
       layout
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ 
+      whileHover={{
         y: -4,
         transition: { duration: 0.2 }
       }}
@@ -183,7 +183,7 @@ export default function TaskCard({
       <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${statusConfig.gradient}`} />
       
       {/* Card Content */}
-      <div className="relative p-4">
+      <div className="relative p-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
@@ -213,51 +213,119 @@ export default function TaskCard({
           </div>
         </div>
         
-        {/* Task Meta */}
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-          <div className="flex items-center gap-3">
-            {/* Assignee */}
-            {assignee && (
-              <div className="flex items-center gap-1">
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                  {assignee.name?.charAt(0)?.toUpperCase()}
+        {/* Enhanced Task Meta - Responsive Layout */}
+        <div className="mb-3">
+          {/* Top Row: Primary Info */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {/* Assignee */}
+              {assignee && (
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                    {assignee.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                  <span className="font-medium text-gray-700 text-xs truncate max-w-[70px] hidden sm:inline">
+                    {assignee.name}
+                  </span>
                 </div>
-                <span className="font-medium text-gray-700 truncate max-w-[80px]">
-                  {assignee.name}
-                </span>
-              </div>
-            )}
-            
-            {/* Team */}
-            {team && (
-              <div className="flex items-center gap-1">
-                <FiUsers className="w-3 h-3 text-gray-400" />
-                <span className="font-medium text-gray-600 truncate max-w-[60px]">
-                  {team.name}
-                </span>
-              </div>
-            )}
-            
-            {/* Sprint */}
-          {task.metadata?.sprint_id && (
-            <div className="flex items-center gap-1">
-              <FiTarget className="w-3 h-3 text-purple-500" />
-              <span className="font-medium text-gray-600 truncate max-w-[60px]">
-                Sprint
-              </span>
+              )}
+
+              {/* Reporter - New Feature */}
+              {task.reporter && task.reporter.name && task.reporter.name !== assignee?.name && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <FiUser className="w-3 h-3 text-gray-400" />
+                  <span className="font-medium text-gray-600 text-xs truncate max-w-[60px] hidden sm:inline">
+                    Rep: {task.reporter.name.split(' ')[0]}
+                  </span>
+                </div>
+              )}
+
+              {/* Sprint Badge - Enhanced */}
+              {task.sprint_id && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse"></div>
+                  <span className="font-medium text-purple-600 text-xs truncate max-w-[50px] hidden sm:inline">
+                    Sprint
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Due Date - Enhanced */}
+            {due_date && (
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${dueDateStatus.bg} backdrop-blur-sm flex-shrink-0`}>
+                <FiCalendar className={`w-3 h-3 ${dueDateStatus.color}`} />
+                <span className={`text-xs font-bold ${dueDateStatus.color}`}>
+                  {format(new Date(due_date), 'MMM d')}
+                  {dueDateStatus.status === 'today' && ' • Today'}
+                  {dueDateStatus.status === 'tomorrow' && ' • Tomorrow'}
+                  {dueDateStatus.status === 'overdue' && ' • OVERDUE'}
+                </span>
+              </div>
+            )}
           </div>
-          
-          {/* Due Date */}
-          {due_date && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${dueDateStatus.bg} backdrop-blur-sm`}>
-              <FiCalendar className={`w-3 h-3 ${dueDateStatus.color}`} />
-              <span className={`text-xs font-bold ${dueDateStatus.color}`}>
-                {format(new Date(due_date), 'MMM d')}
-              </span>
+
+          {/* Bottom Row: Secondary Info */}
+          <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* Team */}
+              {team && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <FiUsers className="w-3 h-3 text-gray-400" />
+                  <span className="font-medium text-gray-600 truncate max-w-[60px]">
+                    {team.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Department - New Feature */}
+              {team?.department_name && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <FiTag className="w-3 h-3 text-gray-400" />
+                  <span className="font-medium text-gray-600 truncate max-w-[50px] hidden md:inline">
+                    {team.department_name}
+                  </span>
+                </div>
+              )}
+
+              {/* Updated Date - New Feature */}
+              {task.updated_at && new Date(task.updated_at) > new Date(task.created_at) && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <FiTrendingUp className="w-3 h-3 text-green-400" />
+                  <span className="font-medium text-gray-600 hidden md:inline">
+                    Updated {format(new Date(task.updated_at), 'MMM d')}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Comments Count - Enhanced */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Activity Stats */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <FiMessageSquare className="w-3 h-3" />
+                  <span>{task.comment_count || 0}</span>
+                </div>
+
+                {/* Attachment Indicator */}
+                {task.attachment_count > 0 && (
+                  <div className="flex items-center gap-1">
+                    <FiTarget className="w-3 h-3 text-blue-400" />
+                    <span>{task.attachment_count}</span>
+                  </div>
+                )}
+
+                {/* Subtasks Indicator */}
+                {task.subtask_count > 0 && (
+                  <div className="flex items-center gap-1">
+                    <FiZap className="w-3 h-3 text-orange-400" />
+                    <span>{task.subtask_count}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
         
         {/* Quick Actions - Shown on Hover */}

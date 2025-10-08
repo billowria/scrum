@@ -43,7 +43,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
       <div className="w-24"></div>
 
       {/* Brand - Centered */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center">
+      <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>
         {/* Cool Animated Logo */}
         <div className="flex items-center gap-3">
           {/* Dynamic Animated Logo */}
