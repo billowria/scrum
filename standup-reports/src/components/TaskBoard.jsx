@@ -121,7 +121,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
   return (
     <motion.div
       ref={setNodeRef}
-      className={`flex-1 min-w-[280px] max-w-[350px] flex flex-col backdrop-blur-sm rounded-2xl border ${column.borderColor} transition-all duration-300 ${
+      className={`flex-1 min-w-[320px] max-w-[420px] flex flex-col backdrop-blur-sm rounded-2xl border ${column.borderColor} transition-all duration-300 ${
         isOver ? 'ring-2 ring-opacity-50 scale-105' : 'hover:scale-[1.02]'
       }`}
       style={{
@@ -191,7 +191,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
       </div>
 
       {/* Task List */}
-      <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <SortableContext
           items={columnTasks.map(task => task.id)}
           strategy={verticalListSortingStrategy}
@@ -422,7 +422,7 @@ export default function TaskBoard({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex gap-6 h-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="flex gap-8 h-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {statusColumns.map(column => (
             <SortableColumn
               key={column.id}

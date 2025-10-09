@@ -255,22 +255,8 @@ export default function LeaveCalendar() {
   const [teamAvailability, setTeamAvailability] = useState({});
   const [usersOnLeaveToday, setUsersOnLeaveToday] = useState([]);
 
-  // Timesheet state
-  const [timesheetsByDate, setTimesheetsByDate] = useState({}); // { 'yyyy-MM-dd': [entries] }
-  const [timesheetTotalsByDate, setTimesheetTotalsByDate] = useState({}); // { 'yyyy-MM-dd': totalHours }
-  const [showTimesheetModal, setShowTimesheetModal] = useState(false);
-  const [timesheetDate, setTimesheetDate] = useState(null);
-  const [timesheetLoading, setTimesheetLoading] = useState(false);
-  const [showTimesheetRangeModal, setShowTimesheetRangeModal] = useState(false);
-  const [timesheetRange, setTimesheetRange] = useState({ start: null, end: null });
-  // New state for monthly timesheet view
-  const [showMonthlyTimesheetModal, setShowMonthlyTimesheetModal] = useState(false);
-  
   // New state for holiday calendar view
   const [showHolidayCalendarModal, setShowHolidayCalendarModal] = useState(false);
-
-  // Timesheet approvals count for indicator
-  const [pendingTimesheetCount, setPendingTimesheetCount] = useState(0);
 
   // Animation controls
   const controls = useAnimation();
@@ -284,8 +270,6 @@ export default function LeaveCalendar() {
       fetchUsers();
       fetchLeaveData();
       fetchAnnouncements();
-      fetchTimesheets();
-      fetchPendingTimesheetCount();
     }
     
     // Animate the calendar on initial load
@@ -295,29 +279,10 @@ export default function LeaveCalendar() {
   useEffect(() => {
     if (currentUser) {
       fetchLeaveData();
-      fetchTimesheets();
-      fetchPendingTimesheetCount();
     }
   }, [currentMonth, currentUser]);
 
-  const fetchPendingTimesheetCount = async () => {
-    if (!currentUser) return;
-    try {
-      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
-      const { count, error } = await supabase
-        .from('timesheet_submissions')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', currentUser.id)
-        .eq('status', 'pending')
-        .gte('start_date', start)
-        .lte('end_date', end);
-      if (error) throw error;
-      setPendingTimesheetCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching pending timesheet count:', error.message);
-    }
-  };
+
   
   // Calculate team availability whenever leave data changes
   useEffect(() => {
@@ -460,40 +425,7 @@ export default function LeaveCalendar() {
     }
   };
 
-  // Fetch timesheets for the current month for the logged-in user
-  const fetchTimesheets = async () => {
-    if (!currentUser) return;
-    try {
-      setTimesheetLoading(true);
-      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
-      const { data, error } = await supabase
-        .from('timesheets')
-        .select(`id, date, hours, notes, project_id, projects:project_id (id, name)`) 
-        .gte('date', start)
-        .lte('date', end)
-        .eq('user_id', currentUser.id)
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-
-      const byDate = {};
-      const totals = {};
-      (data || []).forEach((entry) => {
-        const key = entry.date;
-        if (!byDate[key]) byDate[key] = [];
-        byDate[key].push(entry);
-        totals[key] = (totals[key] || 0) + Number(entry.hours || 0);
-      });
-      setTimesheetsByDate(byDate);
-      setTimesheetTotalsByDate(totals);
-    } catch (error) {
-      console.error('Error fetching timesheets:', error.message);
-    } finally {
-      setTimesheetLoading(false);
-    }
-  };
   
   // Fetch announcements from the database
   const fetchAnnouncements = async () => {
@@ -640,11 +572,7 @@ export default function LeaveCalendar() {
     setShowOnLeaveModal(true);
   };
 
-  const openTimesheetForDay = (day, event) => {
-    if (event) event.stopPropagation();
-    setTimesheetDate(day);
-    setShowTimesheetModal(true);
-  };
+
 
   // Function to render the calendar day
   const renderCalendarDay = (day) => {
@@ -653,7 +581,6 @@ export default function LeaveCalendar() {
     const isSameMonthDay = isSameMonth(day, currentMonth);
     const availability = teamAvailability[dateStr];
     const isToday = isSameDay(new Date(), day);
-    const totalHours = timesheetTotalsByDate[dateStr] || 0;
     
     // Check if this day has leave data
     const usersOnLeave = leaveData
@@ -737,18 +664,6 @@ export default function LeaveCalendar() {
                 Pending
               </span>
             )}
-
-            {/* Timesheet total hours badge */}
-            <motion.span
-              className={`mt-1 text-[0.65rem] px-2 py-1 ${totalHours > 0 ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 hover:from-emerald-200 hover:to-emerald-300 cursor-pointer shadow-sm' : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 hover:from-gray-200 hover:to-gray-300 cursor-pointer shadow-sm'} rounded-full inline-flex items-center`}
-              onClick={(e) => openTimesheetForDay(day, e)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title={totalHours > 0 ? `${totalHours}h logged` : 'Log time'}
-            >
-              <FiClock size={9} className="mr-1" />
-              {totalHours > 0 ? `${totalHours}h` : 'Log'}
-            </motion.span>
           </div>
         </div>
         
@@ -813,11 +728,6 @@ export default function LeaveCalendar() {
             label: "Month", 
             value: format(currentMonth, 'MMM yyyy'),
             onClick: () => setShowHolidayCalendarModal(true)
-          },
-          { 
-            label: "Hours Logged", 
-            value: Object.values(timesheetTotalsByDate).reduce((a, b) => a + b, 0), 
-            onClick: () => setShowMonthlyTimesheetModal(true)
           }
         ]}
         quickActions={[
@@ -825,11 +735,6 @@ export default function LeaveCalendar() {
             icon: <FiPlus className="w-4 h-4" />,
             onClick: () => setShowLeaveForm(true),
             tooltip: "Request Leave"
-          },
-          {
-            icon: <FiClock className="w-4 h-4" />,
-            onClick: () => setShowMonthlyTimesheetModal(true),
-            tooltip: "View Monthly Hours"
           },
           {
             icon: <FiRefreshCw className="w-4 h-4" />,
@@ -898,18 +803,6 @@ export default function LeaveCalendar() {
                   whileTap="tap"
                 >
                   <FiPlus className="mr-2" /> Request Leave
-                </motion.button>
-                <motion.button
-                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:from-emerald-700 hover:to-teal-700 flex items-center justify-center transition-all shadow-sm"
-                  onClick={() => {
-                    setTimesheetDate(new Date());
-                    setShowTimesheetRangeModal(true);
-                  }}
-                  variants={overlayButtonVariants}
-                  whileHover={{ scale: 1.03, boxShadow: "0 4px 12px rgba(16, 185, 129, 0.2)" }}
-                  whileTap="tap"
-                >
-                  <FiPlus className="mr-2" /> Log Timesheet Range
                 </motion.button>
               </div>
             </div>
@@ -1160,44 +1053,7 @@ export default function LeaveCalendar() {
         />
       )}
 
-      {/* Timesheet range modal */}
-      <TimesheetRangeModal
-        isOpen={showTimesheetRangeModal}
-        onClose={() => setShowTimesheetRangeModal(false)}
-        defaultStart={selectedDates.start || new Date()}
-        defaultEnd={selectedDates.end || new Date()}
-        currentUser={currentUser}
-        onSubmitted={async () => {
-          setShowTimesheetRangeModal(false);
-          await fetchTimesheets();
-          setMessage({ type: 'success', text: 'Timesheet submitted for approval' });
-          setTimeout(() => setMessage(null), 2500);
-        }}
-      />
-      
-      {/* Timesheet Modal */}
-      <TimesheetModal 
-        isOpen={showTimesheetModal}
-        onClose={() => setShowTimesheetModal(false)}
-        date={timesheetDate}
-        currentUser={currentUser}
-        entries={(timesheetDate ? timesheetsByDate[format(timesheetDate, 'yyyy-MM-dd')] : []) || []}
-        onChanged={async () => {
-          await fetchTimesheets();
-          setMessage({ type: 'success', text: 'Timesheet updated' });
-          setTimeout(() => setMessage(null), 2500);
-        }}
-      />
 
-      {/* Monthly Timesheet Modal */}
-      <MonthlyTimesheetModal
-        isOpen={showMonthlyTimesheetModal}
-        onClose={() => setShowMonthlyTimesheetModal(false)}
-        currentUser={currentUser}
-        timesheetsByDate={timesheetsByDate}
-        timesheetTotalsByDate={timesheetTotalsByDate}
-        currentMonth={currentMonth}
-      />
 
       {/* Holiday Calendar Modal */}
       <HolidayCalendarModal
@@ -1250,631 +1106,7 @@ export default function LeaveCalendar() {
   );
 }
 
-// Timesheet Modal Component
-const TimesheetModal = ({ isOpen, onClose, date, currentUser, entries, onChanged }) => {
-  const [hours, setHours] = useState('');
-  const [notes, setNotes] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [projects, setProjects] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [editingId, setEditingId] = useState(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchProjects();
-      resetForm();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, date]);
-
-  const fetchProjects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('id, name')
-        .order('name', { ascending: true });
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (error) {
-      console.error('Error fetching projects:', error.message);
-    }
-  };
-
-  const resetForm = () => {
-    setHours('');
-    setNotes('');
-    setProjectId('');
-    setEditingId(null);
-  };
-
-  const handleSubmit = async (e) => {
-    e?.preventDefault?.();
-    if (!currentUser || !date) return;
-    const hoursValue = Number(hours);
-    if (Number.isNaN(hoursValue) || hoursValue <= 0) return;
-
-    try {
-      setSubmitting(true);
-      const payload = {
-        user_id: currentUser.id,
-        date: format(date, 'yyyy-MM-dd'),
-        hours: hoursValue,
-        notes: notes || null,
-        project_id: projectId || null,
-      };
-
-      if (editingId) {
-        const { error } = await supabase
-          .from('timesheets')
-          .update(payload)
-          .eq('id', editingId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('timesheets')
-          .insert([payload]);
-        if (error) throw error;
-      }
-
-      resetForm();
-      await onChanged?.();
-    } catch (error) {
-      console.error('Error saving timesheet:', error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleEdit = (entry) => {
-    setEditingId(entry.id);
-    setHours(String(entry.hours || ''));
-    setNotes(entry.notes || '');
-    setProjectId(entry.project_id || '');
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      setSubmitting(true);
-      const { error } = await supabase.from('timesheets').delete().eq('id', id);
-      if (error) throw error;
-      if (editingId === id) resetForm();
-      await onChanged?.();
-    } catch (error) {
-      console.error('Error deleting timesheet:', error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary-100 text-primary-700">
-                <FiClock />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">{date ? format(date, 'MMM dd, yyyy') : 'Timesheet'}</h3>
-                <p className="text-sm text-gray-500">Log and review your time entries</p>
-              </div>
-            </div>
-            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={onClose}>
-              <FiX />
-            </button>
-          </div>
-
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-              <div className="mb-3">
-                <label className="block text-sm text-gray-600 mb-1">Project</label>
-                <select
-                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                >
-                  <option value="">Unassigned</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm text-gray-600 mb-1">Hours</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.25"
-                  placeholder="e.g. 1.5"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm text-gray-600 mb-1">Notes</label>
-                <textarea
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="What did you work on?"
-                  className="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-60"
-                >
-                  {editingId ? 'Update Entry' : 'Add Entry'}
-                </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-
-            {/* Entries list */}
-            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-800">Entries</h4>
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">{entries.length} item(s)</span>
-              </div>
-              {entries.length === 0 ? (
-                <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-4">No entries yet. Log your first one!</div>
-              ) : (
-                <ul className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
-                  {entries.map((entry) => (
-                    <li key={entry.id} className="flex items-start justify-between p-3 rounded-lg border border-gray-100 bg-white hover:bg-gray-50">
-                      <div>
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-800">
-                          <FiClock className="text-emerald-600" /> {Number(entry.hours)}h
-                          {entry.projects?.name && (
-                            <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{entry.projects.name}</span>
-                          )}
-                        </div>
-                        {entry.notes && <div className="text-sm text-gray-600 mt-1">{entry.notes}</div>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
-                          onClick={() => handleEdit(entry)}
-                          title="Edit"
-                        >
-                          <FiEdit3 />
-                        </button>
-                        <button
-                          className="p-2 rounded-lg hover:bg-red-50 text-red-600"
-                          onClick={() => handleDelete(entry.id)}
-                          title="Delete"
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-// Timesheet Range Modal: submit multiple days and create a submission for approval
-const TimesheetRangeModal = ({ isOpen, onClose, defaultStart, defaultEnd, currentUser, onSubmitted }) => {
-  const [startDate, setStartDate] = useState(defaultStart || null);
-  const [endDate, setEndDate] = useState(defaultEnd || null);
-  const [hoursPerDay, setHoursPerDay] = useState('8');
-  const [notes, setNotes] = useState('');
-  const [projectId, setProjectId] = useState('');
-  const [projects, setProjects] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    (async () => {
-      try {
-        const { data } = await supabase.from('projects').select('id, name').order('name');
-        setProjects(data || []);
-      } catch {}
-    })();
-  }, [isOpen]);
-
-  useEffect(() => {
-    setStartDate(defaultStart || new Date());
-    setEndDate(defaultEnd || new Date());
-  }, [defaultStart, defaultEnd, isOpen]);
-
-  if (!isOpen) return null;
-
-  const createRangeEntries = async () => {
-    if (!currentUser || !startDate || !endDate) return;
-    const start = startDate <= endDate ? startDate : endDate;
-    const end = endDate >= startDate ? endDate : startDate;
-    const days = eachDayOfInterval({ start, end });
-    const hoursValue = Number(hoursPerDay);
-    if (Number.isNaN(hoursValue) || hoursValue <= 0) return;
-
-    try {
-      setSubmitting(true);
-      // Create a submission record
-      const submissionPayload = {
-        user_id: currentUser.id,
-        start_date: format(start, 'yyyy-MM-dd'),
-        end_date: format(end, 'yyyy-MM-dd'),
-        status: 'pending',
-        notes: notes || null,
-      };
-      const { data: subRows, error: subErr } = await supabase
-        .from('timesheet_submissions')
-        .insert([submissionPayload])
-        .select('id')
-        .single();
-      if (subErr) throw subErr;
-
-      const submissionId = subRows.id;
-      const rows = days.map((d) => ({
-        user_id: currentUser.id,
-        date: format(d, 'yyyy-MM-dd'),
-        hours: hoursValue,
-        notes: notes || null,
-        project_id: projectId || null,
-        submission_id: submissionId,
-      }));
-
-      const { error } = await supabase.from('timesheets').insert(rows);
-      if (error) throw error;
-
-      await onSubmitted?.();
-    } catch (error) {
-      console.error('Error submitting timesheet range:', error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-40 bg-black/30 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
-                <FiClock />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">Submit Timesheet Range</h3>
-                <p className="text-sm text-gray-500">Create entries for a date range and send for approval</p>
-              </div>
-            </div>
-            <button className="p-2 rounded-lg hover:bg-gray-100" onClick={onClose}>
-              <FiX />
-            </button>
-          </div>
-
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-              <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Start Date</label>
-                  <input type="date" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={startDate ? format(startDate, 'yyyy-MM-dd') : ''} onChange={(e) => setStartDate(e.target.value ? parseISO(e.target.value) : null)} />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">End Date</label>
-                  <input type="date" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={endDate ? format(endDate, 'yyyy-MM-dd') : ''} onChange={(e) => setEndDate(e.target.value ? parseISO(e.target.value) : null)} />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Hours per day</label>
-                  <input type="number" min="0" step="0.25" className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={hoursPerDay} onChange={(e) => setHoursPerDay(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Project</label>
-                  <select className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                    <option value="">Unassigned</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">Notes</label>
-                  <textarea rows={3} className="w-full border border-gray-200 rounded-lg p-2 text-sm" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the submission" />
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <button disabled={submitting} className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700" onClick={createRangeEntries}>
-                  Submit for Approval
-                </button>
-                <button className="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50" onClick={onClose}>Cancel</button>
-              </div>
-            </div>
-
-            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
-              <h4 className="font-semibold text-gray-800 mb-2">Preview</h4>
-              {startDate && endDate ? (
-                <div className="text-sm text-gray-600">
-                  {format(startDate, 'MMM dd, yyyy')} → {format(endDate, 'MMM dd, yyyy')} ({differenceInDays((endDate >= startDate ? endDate : startDate), (startDate <= endDate ? startDate : endDate)) + 1} days)
-                  <div className="mt-2 p-2 rounded bg-gray-50 border border-gray-100">{hoursPerDay}h/day, {projectId ? 'Assigned to selected project' : 'Unassigned'}</div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-500">Select a start and end date to preview.</div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-
-// Monthly Timesheet Modal Component
-const MonthlyTimesheetModal = ({ isOpen, onClose, currentUser, timesheetsByDate, timesheetTotalsByDate, currentMonth }) => {
-  // Calculate monthly totals
-  const monthlyTotal = Object.values(timesheetTotalsByDate).reduce((sum, hours) => sum + hours, 0);
-  
-  // Get all dates with entries
-  const datesWithEntries = Object.keys(timesheetsByDate)
-    .filter(date => timesheetsByDate[date].length > 0)
-    .sort(); // Sort dates chronologically
-
-  // If not open, return null
-  if (!isOpen) return null;
-
-  // Get status for a timesheet entry
-  const getStatusInfo = (entry) => {
-    // The submission status would typically come from the timesheet_submissions table
-    // For now, we'll return status based on common possible states
-    // In a real implementation, you would pass submission statuses from the parent component
-    if (!entry.submission_id) {
-      return { status: 'draft', label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: '📝' };
-    } else if (entry.status === 'approved') {
-      return { status: 'approved', label: 'Approved', color: 'bg-green-100 text-green-800', icon: '✓' };
-    } else if (entry.status === 'rejected') {
-      return { status: 'rejected', label: 'Rejected', color: 'bg-red-100 text-red-800', icon: '✗' };
-    } else {
-      // Default to pending if submission exists but status is not set to approved/rejected
-      return { status: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' };
-    }
-  };
-
-  // Function to export data as Excel
-  const exportToExcel = () => {
-    // Create a CSV string
-    let csvContent = "Date,Day,Total Hours,Status,Project,Hours,Notes\n";
-    
-    datesWithEntries.forEach(dateStr => {
-      const date = parseISO(dateStr);
-      const entries = timesheetsByDate[dateStr] || [];
-      const totalHours = timesheetTotalsByDate[dateStr] || 0;
-      const statusInfo = getStatusInfo(entries[0] || {});
-      
-      if (entries.length > 0) {
-        // Add a row for each entry on this date
-        entries.forEach((entry, idx) => {
-          const project = entry.projects?.name || '';
-          const notes = entry.notes || '';
-          const row = [
-            format(date, 'yyyy-MM-dd'),
-            format(date, 'EEE'),
-            totalHours.toFixed(2),
-            statusInfo.label,
-            project,
-            entry.hours,
-            `"${notes.replace(/"/g, '""')}"` // Escape quotes and wrap in quotes
-          ].join(',');
-          
-          csvContent += row + '\n';
-        });
-      } else {
-        // If no entries, still add a row for the date
-        const row = [
-          format(date, 'yyyy-MM-dd'),
-          format(date, 'EEE'),
-          totalHours.toFixed(2),
-          'No entries',
-          '',
-          '',
-          ''
-        ].join(',');
-        
-        csvContent += row + '\n';
-      }
-    });
-    
-    // Create a Blob and download it
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `timesheet_${format(currentMonth, 'yyyy-MM')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/30 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="w-full sm:max-w-4xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[90vh]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-white">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
-                <FiClock />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">Your Monthly Timesheet</h3>
-                <p className="text-sm text-gray-500">Hours logged by {currentUser?.name || 'you'} for {format(currentMonth, 'MMMM yyyy')}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button 
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700 flex items-center gap-1"
-                onClick={exportToExcel}
-                aria-label="Export to Excel"
-              >
-                <FiDownload />
-                <span className="hidden sm:inline">Export</span>
-              </button>
-              <button 
-                className="p-2 rounded-lg hover:bg-gray-100" 
-                onClick={onClose}
-                aria-label="Close modal"
-              >
-                <FiX />
-              </button>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-6">
-            {/* Monthly Summary */}
-            <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-semibold text-gray-800">Monthly Summary</h4>
-                  <p className="text-sm text-gray-600">Total hours logged by you</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-emerald-700">{monthlyTotal.toFixed(2)}h</div>
-                  <div className="text-sm text-gray-600">{datesWithEntries.length} days with entries</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Timesheet Entries by Date */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="overflow-y-auto max-h-[60vh] custom-scrollbar">
-                {datesWithEntries.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500">
-                    <FiClock className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                    <p>No timesheet entries for this month</p>
-                    <p className="text-sm mt-1">Start by logging your hours for each day</p>
-                  </div>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entries</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {datesWithEntries.map((dateStr, index) => {
-                        const date = parseISO(dateStr);
-                        const entries = timesheetsByDate[dateStr] || [];
-                        const totalHours = timesheetTotalsByDate[dateStr] || 0;
-                        
-                        return (
-                          <motion.tr 
-                            key={dateStr}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.02 }}
-                            className="hover:bg-gray-50"
-                          >
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {format(date, 'MMM dd')}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                              {format(date, 'EEE')}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-emerald-700">
-                              {totalHours.toFixed(2)}h
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusInfo(entries[0] || {}).color}`}>
-                                {getStatusInfo(entries[0] || {}).icon} {getStatusInfo(entries[0] || {}).label}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <div className="space-y-1">
-                                {entries.map((entry) => (
-                                  <div key={entry.id} className="flex items-center justify-between p-2 bg-white border border-gray-100 rounded-lg">
-                                    <div>
-                                      <div className="font-medium">{entry.hours}h</div>
-                                      {entry.projects?.name && (
-                                        <div className="text-xs text-gray-500">{entry.projects.name}</div>
-                                      )}
-                                      {entry.notes && (
-                                        <div className="text-xs text-gray-600 italic">{entry.notes}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </td>
-                          </motion.tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
 
 
 
