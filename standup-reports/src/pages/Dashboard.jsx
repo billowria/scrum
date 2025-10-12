@@ -196,7 +196,7 @@ function RichTextDisplay({ content, onTaskClick }) {
       if (target && target.classList && target.classList.contains('task-ref')) {
         e.preventDefault();
         const taskId = target.getAttribute('data-task-id');
-        if (taskId) onTaskClick?.(taskId);
+        if (taskId && onTaskClick) onTaskClick(taskId);
       }
     };
     el.addEventListener('click', onClick);
@@ -240,6 +240,12 @@ const [reports, setReports] = useState([]);
   // On-leave count and announcements count
   const [onLeaveCount, setOnLeaveCount] = useState(0);
   const [announcementsCount, setAnnouncementsCount] = useState(0);
+  
+  // New messages count
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  
+  // Project count
+  const [projectCount, setProjectCount] = useState(0);
 
   // Animation controls
   const cardControls = useAnimation();
@@ -305,12 +311,12 @@ const [reports, setReports] = useState([]);
         if (!error && data) {
           setAvatarUrl(data.avatar_url || null);
           setUserTeamId(data.team_id);
-          setUserTeamName(data.teams?.name || null);
-          setUserName(data.name || authUser.user_metadata?.name || authUser.email);
+          setUserTeamName(data.teams && data.teams.name || null);
+          setUserName(data.name || authUser.user_metadata && authUser.user_metadata.name || authUser.email);
           fetchTeamMembers(data.team_id);
         } else {
           // Fallback if user not in our DB
-          setUserName(authUser.user_metadata?.name || authUser.email);
+          setUserName(authUser.user_metadata && authUser.user_metadata.name || authUser.email);
         }
       } catch (error) {
         console.error('Error getting user info:', error);
@@ -453,7 +459,7 @@ const [reports, setReports] = useState([]);
       }
       
       // Reset refs array to match new reports length
-      reportRefs.current = Array(data?.length || 0).fill().map((_, i) => reportRefs.current[i] || null);
+      reportRefs.current = Array(data && data.length || 0).fill().map((_, i) => reportRefs.current[i] || null);
     } catch (error) {
       setError('Error fetching reports: ' + error.message);
       console.error('Error fetching reports:', error);
@@ -524,7 +530,7 @@ const [reports, setReports] = useState([]);
   
   // Utility function to check if a team member has submitted a report
   const hasSubmittedReport = (userId) => {
-    return reports.some(report => report.users?.id === userId);
+    return reports.some(report => report.users && report.users.id === userId);
   };
   
   const identifyMissingReports = (reportsList, teamId) => {
@@ -532,7 +538,7 @@ const [reports, setReports] = useState([]);
     if (date !== new Date().toISOString().split('T')[0]) return;
     
     // Get IDs of users who have submitted reports
-    const submittedUserIds = reportsList.map(report => report.users?.id).filter(Boolean);
+    const submittedUserIds = reportsList.map(report => report.users && report.users.id).filter(Boolean);
     
     // Make sure we have team members loaded
     if (teamMembers.length === 0) {
@@ -625,7 +631,7 @@ const [reports, setReports] = useState([]);
   // Filter reports by team
   const filteredReports = selectedTeam === 'all'
     ? reports
-    : reports.filter(report => report.users?.teams?.id === selectedTeam);
+    : reports.filter(report => report.users && report.users.teams && report.users.teams.id === selectedTeam);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -686,6 +692,30 @@ const [reports, setReports] = useState([]);
   useEffect(() => {
     fetchOnLeaveCount();
     fetchAnnouncementsCount();
+    fetchNewMessagesCount();
+    fetchProjectCount();
+    
+    // Set up interval to refresh message count every 30 seconds
+    const messageCountInterval = setInterval(fetchNewMessagesCount, 30000);
+    
+    // Add event listener to update counts when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page is now visible, refresh counts
+        fetchNewMessagesCount();
+        fetchAnnouncementsCount();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Cleanup interval and event listener on unmount
+    return () => {
+      if (messageCountInterval) {
+        clearInterval(messageCountInterval);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Fetch available and on-leave members when userTeamId is available
@@ -694,6 +724,120 @@ const [reports, setReports] = useState([]);
       fetchOnLeaveMembers();
     }
   }, [userTeamId]);
+  
+  // Function to fetch new messages count for the user
+  const fetchNewMessagesCount = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setNewMessagesCount(0);
+
+      // Query to get unread messages for user
+      // This will count messages where:
+      // - The message is in a conversation the user is part of
+      // - The message was sent after the user's last read timestamp
+      const { data: conversations, error: convError } = await supabase
+        .from('conversations_users')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+
+      if (convError) {
+        console.error('Error fetching conversations for user:', convError);
+        setNewMessagesCount(0);
+        return;
+      }
+
+      if (conversations.length === 0) {
+        setNewMessagesCount(0);
+        return;
+      }
+
+      // Get the latest read timestamp for each conversation for this user
+      const { data: lastReads, error: readError } = await supabase
+        .from('conversation_read_status')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user.id);
+
+      if (readError) {
+        console.error('Error fetching read status:', readError);
+        // If there's an error, we'll count all messages as unread (except user's own messages)
+      }
+
+      // For each conversation, count messages after the last read timestamp
+      let totalCount = 0;
+      for (const conv of conversations) {
+        const convId = conv.conversation_id;
+        
+        // Find the last read time for this conversation
+        const lastReadRecord = lastReads && lastReads.find(lr => lr.conversation_id === convId);
+        const lastReadTime = lastReadRecord && lastReadRecord.last_read_at;
+
+        // Count messages in this conversation after last read time
+        let query = supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true });
+
+        if (lastReadTime) {
+          query = query.gt('created_at', lastReadTime);
+        } else {
+          // If no read time recorded, consider all messages in the conversation as unread
+          // (but exclude the user's own messages)
+        }
+
+        const { count, error: msgError } = await query
+          .eq('conversation_id', convId)
+          .neq('user_id', user.id); // Exclude messages sent by the user themselves
+
+        if (msgError) {
+          console.error(`Error fetching messages for conversation ${convId}:`, msgError);
+        } else if (count !== null) {
+          totalCount += count;
+        }
+      }
+
+      setNewMessagesCount(totalCount);
+    } catch (error) {
+      console.error('Error fetching new messages count:', error);
+      setNewMessagesCount(0);
+    }
+  };
+  
+  // Function to fetch project count for the user
+  const fetchProjectCount = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return setProjectCount(0);
+
+      // Query to get projects assigned to the user
+      const { count, error } = await supabase
+        .from('project_assignments')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching project assignments:', error);
+        // Try alternative query: get projects where user is a team member
+        const { count: altCount, error: altError } = await supabase
+          .from('project_teams')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+        
+        if (altError) {
+          console.error('Error fetching project teams:', altError);
+          setProjectCount(0);
+          return;
+        }
+        
+        setProjectCount(altCount || 0);
+      } else {
+        setProjectCount(count || 0);
+      }
+    } catch (error) {
+      console.error('Error in fetchProjectCount:', error);
+      setProjectCount(0);
+    }
+  };
 
   // Function to scroll to missing reports section
   const scrollToMissingReports = () => {
@@ -724,7 +868,7 @@ const [reports, setReports] = useState([]);
         throw leaveError;
       }
       
-      const onLeaveUserIds = leaveData.map(item => item.users?.id).filter(Boolean);
+      const onLeaveUserIds = leaveData.map(item => item.users && item.users.id).filter(Boolean);
       setOnLeaveMembers(leaveData.map(item => item.users).filter(Boolean));
       
       // Fetch all team members to determine available ones
@@ -821,23 +965,61 @@ const [reports, setReports] = useState([]);
                     </div>
                     
                     <div className="flex items-center gap-3">
-                      {/* Compact Team Availability Indicators */}
-                      <motion.div 
-                        className="p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 shadow-md flex items-center gap-2"
+                      {/* Enhanced Team Availability Indicators - Clickable to open modal */}
+                      <motion.button
+                        className="p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 shadow-md flex items-center gap-2 cursor-pointer group"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        title="Team Availability"
+                        title="Click to view team availability details"
+                        onClick={async () => {
+                          // Ensure we have userTeamId
+                          let currentTeamId = userTeamId;
+                          if (!currentTeamId) {
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (user) {
+                              const { data: userData, error } = await supabase
+                                .from('users')
+                                .select('team_id')
+                                .eq('id', user.id)
+                                .single();
+                              if (!error && userData) {
+                                currentTeamId = userData.team_id;
+                                setUserTeamId(currentTeamId);
+                              }
+                            }
+                          }
+                          
+                          if (currentTeamId) {
+                            await fetchOnLeaveMembers();
+                          }
+                          
+                          setTimeout(() => {
+                            setShowOnLeaveModal(true);
+                          }, 100);
+                        }}
                       >
+                        {/* Available members indicator */}
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                          <div 
+                            className="w-3 h-3 rounded-full bg-emerald-500"
+                            title={`Available: ${availableMembers.length} team members`}
+                          >
+                          </div>
                           <span className="text-xs font-bold text-emerald-700">{availableMembers.length}</span>
                         </div>
+                        
                         <div className="w-0.5 h-4 bg-gray-300"></div>
+                        
+                        {/* On leave members indicator */}
                         <div className="flex items-center gap-1.5">
-                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                          <div 
+                            className="w-3 h-3 rounded-full bg-amber-500"
+                            title={`On Leave: ${onLeaveMembers.length} team members`}
+                          >
+                          </div>
                           <span className="text-xs font-bold text-amber-700">{onLeaveMembers.length}</span>
                         </div>
-                      </motion.div>
+                      </motion.button>
                       
                       <motion.button
                         onClick={() => navigate('/notifications')}
@@ -884,24 +1066,27 @@ const [reports, setReports] = useState([]);
                   {/* Action Cards Row - Horizontal scroll, no wrapping */}
 <div className="flex flex-nowrap gap-4 overflow-x-auto pt-6 pb-10 snap-x snap-mandatory no-scrollbar">
                     {[
-                               { 
-                        key: 'conversations', 
+                      { 
+                        key: 'chat', 
                         icon: (
                           <motion.div
-                            initial={{ rotate: -10 }}
-                            animate={{ rotate: [ -10, 10, -10 ] }}
-                            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                            initial={{ rotate: -15 }}
+                            animate={{ rotate: [ -15, 15, -15 ] }}
+                            transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
                           >
-                            <FiMessageSquare className="w-6 h-6" />
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
                           </motion.div>
                         ), 
                         onClick: () => navigate('/chat'), 
-                        label: 'Conversations', 
-                        gradient: 'from-cyan-500 to-indigo-600',
-                        bg: 'bg-cyan-500/10',
-                        border: 'border-cyan-500/30',
-                        glow: 'shadow-cyan-500/20',
-                        hoverText: 'Open team chat & DMs'
+                        label: 'Communications', 
+                        gradient: 'from-indigo-600 to-purple-600',
+                        bg: 'bg-indigo-500/15',
+                        border: 'border-indigo-500/40',
+                        glow: 'shadow-indigo-500/30',
+                        hoverText: 'Open communications center',
+                        count: newMessagesCount > 0 ? newMessagesCount : null
                       },
                       { 
                         key: 'tasks', 
@@ -913,34 +1098,7 @@ const [reports, setReports] = useState([]);
                         border: 'border-blue-500/30',
                         glow: 'shadow-blue-500/20'
                       },
-                      { 
-                        key: 'report', 
-                        icon: isToday(date) && userId && !reports.some(report => report.users?.id === userId) ? (
-                          <div className="relative">
-                            <FiPlus className="w-6 h-6" />
-                            <FiAlertCircle className="absolute -top-2 -right-2 w-4 h-4 text-amber-500" />
-                          </div>
-                        ) : (
-                          <FiPlus className="w-6 h-6" />
-                        ), 
-                        onClick: handleNewReport, 
-                        label: isToday(date) && userId && !reports.some(report => report.users?.id === userId) ? 'Submit Report' : 'Add Report',
-                        gradient: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
-                          ? 'from-amber-500 to-orange-600' 
-                          : 'from-emerald-500 to-teal-600',
-                        bg: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
-                          ? 'bg-amber-500/10' 
-                          : 'bg-emerald-500/10',
-                        border: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
-                          ? 'border-amber-500/30' 
-                          : 'border-emerald-500/30',
-                        glow: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
-                          ? 'shadow-amber-500/20' 
-                          : 'shadow-emerald-500/20',
-                        hoverText: isToday(date) && userId && !reports.some(report => report.users?.id === userId) 
-                          ? 'Submit your daily standup report' 
-                          : 'Add a new report'
-                      },
+                      // Removed 'report' card as requested
                       { 
                         key: 'projects', 
                         icon: <FiGrid className="w-6 h-6" />, 
@@ -949,43 +1107,11 @@ const [reports, setReports] = useState([]);
                         gradient: 'from-purple-500 to-fuchsia-600',
                         bg: 'bg-purple-500/10',
                         border: 'border-purple-500/30',
-                        glow: 'shadow-purple-500/20'
+                        glow: 'shadow-purple-500/20',
+                        count: projectCount,
+                        hoverText: `You are assigned to ${projectCount} project${projectCount !== 1 ? 's' : ''}`
                       },
-                      { 
-                        key: 'team', 
-                        icon: <FiUsers className="w-6 h-6" />, 
-                        onClick: async () => {
-                          // Ensure we have userTeamId
-                          let currentTeamId = userTeamId;
-                          if (!currentTeamId) {
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (user) {
-                              const { data: userData, error } = await supabase
-                                .from('users')
-                                .select('team_id')
-                                .eq('id', user.id)
-                                .single();
-                              if (!error && userData) {
-                                currentTeamId = userData.team_id;
-                                setUserTeamId(currentTeamId);
-                              }
-                            }
-                          }
-                          
-                          if (currentTeamId) {
-                            await fetchOnLeaveMembers();
-                          }
-                          
-                          setTimeout(() => {
-                            setShowOnLeaveModal(true);
-                          }, 100);
-                        }, 
-                        label: 'Team', 
-                        gradient: 'from-teal-500 to-cyan-600',
-                        bg: 'bg-teal-500/10',
-                        border: 'border-teal-500/30',
-                        glow: 'shadow-teal-500/20'
-                      },
+
                       { 
                         key: 'ach', 
                         icon: <FiAward className="w-6 h-6" />, 
@@ -997,6 +1123,17 @@ const [reports, setReports] = useState([]);
                         glow: 'shadow-amber-500/20'
                       },                 
                      
+                      {
+                        key: 'analytics',
+                        icon: <FiBarChart2 className="w-6 h-6" />,
+                        onClick: () => navigate('/analytics-dashboard'),
+                        label: 'Analytics',
+                        gradient: 'from-rose-500 to-red-600',
+                        bg: 'bg-rose-500/10',
+                        border: 'border-rose-500/30',
+                        glow: 'shadow-rose-500/20',
+                        hoverText: 'View my analytics'
+                      },
                       { 
                         key: 'profile', 
                         icon: <FiUser className="w-6 h-6" />, 
@@ -1007,7 +1144,7 @@ const [reports, setReports] = useState([]);
                         border: 'border-fuchsia-500/30',
                         glow: 'shadow-fuchsia-500/20'
                       }
-                    ].map((action, index) => (
+                    ].filter(Boolean).map((action, index) => (
                       <motion.div
                         key={action.key}
                         className="group relative flex-none w-48 sm:w-56 md:w-60 snap-start"
@@ -1038,13 +1175,32 @@ const [reports, setReports] = useState([]);
                             transition={{ type: 'spring', stiffness: 400 }}
                           >
                             {action.icon}
+                            {/* Show count badge for actions that have counts */}
+                            {action.count !== undefined && action.count !== null && (
+                              <motion.span 
+                                className="absolute -top-1 -right-1 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-1.5 py-0.5 min-w-[18px] h-[18px] flex items-center justify-center shadow-lg border border-white/30 backdrop-blur-sm"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                              >
+                                {action.count > 99 ? '99+' : action.count}
+                              </motion.span>
+                            )}
                           </motion.div>
                           
                           {/* Label with animated underline */}
-                          <div className="relative z-10">
+                          <div className="relative z-10 w-full flex flex-col items-center">
                             <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
                               {action.label}
                             </span>
+                            
+                            {/* Subtext for team status */}
+                            {action.subText && (
+                              <span className="text-[10px] text-gray-500 mt-0.5">
+                                {action.subText}
+                              </span>
+                            )}
+                            
+                            {/* Animated underline */}
                             <motion.div 
                               className={`h-0.5 bg-gradient-to-r ${action.gradient} rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity`}
                               initial={{ width: 0 }}
@@ -1291,7 +1447,7 @@ const [reports, setReports] = useState([]);
                   <span className="text-lg font-bold text-indigo-600">
                     {userName || 'User'}
                   </span>
-                  {user?.email && (
+                  {user && user.email && (
                     <span className="text-xs text-gray-500 font-light italic hidden sm:inline">
                       ({user.email})
                     </span>
@@ -1362,7 +1518,7 @@ const [reports, setReports] = useState([]);
               </motion.div>
               
               {/* Compact Report Reminder */}
-              {isToday(date) && userId && !reports.some(report => report.users?.id === userId) && (
+              {isToday(date) && userId && !reports.some(report => report.users && report.users.id === userId) && (
                 <motion.div 
                   className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full shadow-md cursor-pointer"
                   initial={{ opacity: 0, x: 20 }}
@@ -1776,20 +1932,20 @@ const [reports, setReports] = useState([]);
                       <div className="bg-gradient-to-b from-indigo-50/50 to-transparent rounded-xl overflow-hidden p-5 shadow-sm">
                         <div className="flex flex-col sm:flex-row gap-4 items-start mb-6">
                           <div className="flex items-center gap-3">
-                            {filteredReports[currentReportIndex].users?.image_url ? (
+                            {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.image_url ? (
                               <img
                                 src={filteredReports[currentReportIndex].users.image_url}
-                                alt={filteredReports[currentReportIndex].users?.name}
+                                alt={filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name}
                                 className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
                               />
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
-                                {filteredReports[currentReportIndex].users?.name?.charAt(0) || "U"}
+                                {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name && filteredReports[currentReportIndex].users.name.charAt(0) || "U"}
                         </div>
                             )}
                         <div>
                               <h3 className="font-semibold text-gray-900">
-                                {filteredReports[currentReportIndex].users?.name || "Unknown User"}
+                                {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name || "Unknown User"}
                               </h3>
                               <div className="text-sm text-gray-500 flex items-center gap-1.5">
                                 <FiClock className="h-3 w-3" />
@@ -1803,7 +1959,7 @@ const [reports, setReports] = useState([]);
                       </div>
                       
                           <div className="ml-auto flex flex-wrap gap-2 items-center">
-                            {filteredReports[currentReportIndex].users?.teams?.name && (
+                            {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name && (
                               <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
                                 <FiUsers className="mr-1 h-3 w-3" />
                                 {filteredReports[currentReportIndex].users.teams.name}
@@ -1969,19 +2125,19 @@ const [reports, setReports] = useState([]);
                     >
                       <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 pb-4 border-b border-gray-100">
                         <div className="flex items-center gap-3">
-                          {report.users?.image_url ? (
+                          {report.users && report.users.image_url ? (
                             <img
                               src={report.users.image_url}
-                              alt={report.users?.name}
+                              alt={report.users && report.users.name}
                               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
-                              {report.users?.name?.charAt(0) || "U"}
+                              {report.users && report.users.name && report.users.name.charAt(0) || "U"}
                     </div>
                             )}
                     <div>
-                            <h3 className="font-medium text-gray-900">{report.users?.name || "Unknown User"}</h3>
+                            <h3 className="font-medium text-gray-900">{report.users && report.users.name || "Unknown User"}</h3>
                             <div className="text-xs text-gray-500 flex items-center gap-1">
                               <FiClock className="h-3 w-3" />
                               <span>{report.created_at ? format(new Date(report.created_at), "MMM d, h:mm a") : "Unknown time"}</span>
@@ -1990,7 +2146,7 @@ const [reports, setReports] = useState([]);
                 </div>
                 
                         <div className="flex flex-wrap gap-2 items-center">
-                          {report.users?.teams?.name && (
+                          {report.users && report.users.teams && report.users.teams.name && (
                             <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
                               <FiUsers className="mr-1 h-3 w-3" />
                               {report.users.teams.name}
@@ -2202,7 +2358,7 @@ const [reports, setReports] = useState([]);
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-800 truncate">{member.name}</p>
-                              <p className="text-xs text-gray-600 truncate">{member.teams?.name || 'No Team'}</p>
+                              <p className="text-xs text-gray-600 truncate">{member.teams && member.teams.name || 'No Team'}</p>
                             </div>
                             <FiAlertCircle className="text-amber-500 ml-2" />
                             <FiChevronRight className="w-4 h-4 text-gray-400 ml-1" />
@@ -2290,12 +2446,12 @@ const [reports, setReports] = useState([]);
                       {/* Current report content */}
                       <div className="flex items-center gap-5 mb-8 pb-5 border-b border-gray-200">
                         <div className="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-3xl shadow-md">
-                          {filteredReports[currentReportIndex].users?.name?.charAt(0) || '?'}
+                          {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name && filteredReports[currentReportIndex].users.name.charAt(0) || '?'}
                       </div>
                       <div>
-                          <h3 className="text-3xl font-bold text-gray-900 mb-1">{filteredReports[currentReportIndex].users?.name || 'Unknown User'}</h3>
+                          <h3 className="text-3xl font-bold text-gray-900 mb-1">{filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name || 'Unknown User'}</h3>
                           <div className="text-gray-500 flex items-center gap-3 text-lg">
-                          <span className="font-medium">{filteredReports[currentReportIndex].users?.teams?.name || 'Unassigned'}</span>
+                          <span className="font-medium">{filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name || 'Unassigned'}</span>
                             <span>&bull;</span>
                             <span className="flex items-center">
                               <FiClock className="mr-1.5" />
@@ -2451,7 +2607,10 @@ const [reports, setReports] = useState([]);
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
                   <span className="font-semibold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-full">
-                    {teams.find(t => t.id === userTeamId)?.name || 'Team'}
+                    {(() => {
+                      const team = teams.find(t => t.id === userTeamId);
+                      return team && team.name || 'Team';
+                    })()}
                   </span>
                   <span className="text-gray-600">•</span>
                   <span className="font-medium text-gray-700">

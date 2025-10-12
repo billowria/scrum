@@ -29,6 +29,8 @@ import NotificationCenterV2 from './pages/NotificationCenterV2';
 import ProjectsPage from './pages/ProjectsPage';
 import ChatPage from './pages/ChatPage';
 
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -302,6 +304,13 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/projects" element={
                   <PageTransition>
                     <ProjectsPage />
+                  </PageTransition>
+                } />
+                <Route path="/analytics-dashboard" element={
+                  <PageTransition>
+                    <div className="w-full py-6">
+                      <AnalyticsDashboard />
+                    </div>
                   </PageTransition>
                 } />
                 

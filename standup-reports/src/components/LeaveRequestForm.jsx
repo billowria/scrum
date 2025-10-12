@@ -1,24 +1,45 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { FiCalendar, FiX, FiCheck, FiLoader, FiInfo, FiAlertCircle, FiTag, FiEdit3 } from 'react-icons/fi';
+import { 
+  FiCalendar, 
+  FiX, 
+  FiCheck, 
+  FiLoader, 
+  FiAlertCircle, 
+  FiTag, 
+  FiEdit3, 
+  FiSun, 
+  FiHeart, 
+  FiUser, 
+  FiActivity,
+  FiBriefcase,
+  FiZap
+} from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { notifyLeaveRequest } from '../utils/notificationHelper';
 
 const modalVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
+  hidden: { 
+    opacity: 0, 
+    scale: 0.8,
+    y: 20
+  },
   visible: { 
     opacity: 1, 
     scale: 1,
+    y: 0,
     transition: { 
       type: 'spring',
-      stiffness: 300,
-      damping: 30
+      stiffness: 400,
+      damping: 30,
+      duration: 0.4
     }
   },
   exit: { 
     opacity: 0,
-    scale: 0.9,
+    scale: 0.8,
+    y: 20,
     transition: { duration: 0.2 }
   }
 };
@@ -38,7 +59,7 @@ const overlayVariants = {
 const buttonVariants = {
   hover: { scale: 1.03, transition: { duration: 0.2 } },
   tap: { scale: 0.97 },
-  disabled: { opacity: 0.6 }
+  disabled: { opacity: 0.6, scale: 1 }
 };
 
 const LeaveRequestForm = ({ 
@@ -54,12 +75,61 @@ const LeaveRequestForm = ({
   const [success, setSuccess] = useState(false);
   const [leaveType, setLeaveType] = useState('vacation');
   const [showDatePopover, setShowDatePopover] = useState(false);
+  const [hoveredType, setHoveredType] = useState(null);
+  
+  const leaveTypeConfig = {
+    vacation: {
+      label: 'Vacation',
+      icon: <FiSun className="w-5 h-5" />,
+      color: 'from-amber-400 to-orange-500',
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+      text: 'text-amber-700'
+    },
+    sick: {
+      label: 'Sick Leave',
+      icon: <FiActivity className="w-5 h-5" />,
+      color: 'from-red-400 to-pink-500',
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      text: 'text-red-700'
+    },
+    personal: {
+      label: 'Personal',
+      icon: <FiUser className="w-5 h-5" />,
+      color: 'from-blue-400 to-cyan-500',
+      bg: 'bg-blue-50',
+      border: 'border-blue-200',
+      text: 'text-blue-700'
+    },
+    family: {
+      label: 'Family Care',
+      icon: <FiHeart className="w-5 h-5" />,
+      color: 'from-pink-400 to-rose-500',
+      bg: 'bg-pink-50',
+      border: 'border-pink-200',
+      text: 'text-pink-700'
+    },
+    other: {
+      label: 'Other',
+      icon: <FiBriefcase className="w-5 h-5" />,
+      color: 'from-purple-400 to-violet-500',
+      bg: 'bg-purple-50',
+      border: 'border-purple-200',
+      text: 'text-purple-700'
+    }
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!selectedDates.start || !selectedDates.end) {
       setError('Please select both start and end dates');
+      return;
+    }
+    
+    if (leaveType === "other" && !reason.trim()) {
+      setError('Please enter a reason for other leave types');
       return;
     }
     
@@ -87,7 +157,8 @@ const LeaveRequestForm = ({
             start_date: startDate,
             end_date: endDate,
             reason: reason,
-            status: 'pending'
+            status: 'pending',
+            type: leaveType
           }
         ]);
       
@@ -102,7 +173,7 @@ const LeaveRequestForm = ({
       
       if (userData?.manager_id) {
         await notifyLeaveRequest(
-          { start_date: startDate, end_date: endDate, user_id: user.id },
+          { start_date: startDate, end_date: endDate, user_id: user.id, type: leaveType },
           userData.name,
           userData.manager_id
         );
@@ -124,9 +195,25 @@ const LeaveRequestForm = ({
       
     } catch (error) {
       console.error('Error submitting leave request:', error);
-      setError(`Error: ${error.message}`);
+      setError(`Error: ${error.message || 'Failed to submit leave request'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatDateRange = () => {
+    if (!selectedDates.start || !selectedDates.end) {
+      return 'Select dates';
+    }
+    const start = format(selectedDates.start, 'MMM dd');
+    const end = format(selectedDates.end, 'MMM dd');
+    const startYear = format(selectedDates.start, 'yyyy');
+    const endYear = format(selectedDates.end, 'yyyy');
+    
+    if (startYear === endYear) {
+      return `${start} - ${end}, ${startYear}`;
+    } else {
+      return `${start}, ${startYear} - ${end}, ${endYear}`;
     }
   };
   
@@ -134,180 +221,311 @@ const LeaveRequestForm = ({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Remove Backdrop overlay */}
-          {/* Animated background blobs */}
           <motion.div
-            className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center p-4"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
+            onClick={onClose}
           >
-            {/* Animated background blobs */}
-            <div className="absolute inset-0 pointer-events-none z-0">
-              <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-primary-400 via-indigo-400 to-blue-300 opacity-30 blur-2xl rounded-full animate-pulse" />
-              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tr from-blue-400 via-indigo-300 to-primary-300 opacity-20 blur-2xl rounded-full animate-pulse delay-2000" />
-            </div>
             <motion.div
-              className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl w-full max-w-sm mx-auto overflow-hidden border border-white/30 z-10"
+              className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl w-full max-w-md mx-auto overflow-hidden border border-gray-200/30 z-50"
               variants={modalVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Floating close button */}
-              <motion.button
-                className="absolute top-3 right-3 bg-white/60 backdrop-blur-lg rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all z-20"
-                onClick={onClose}
-                whileHover={{ scale: 1.15, rotate: 90 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiX className="w-5 h-5 text-primary-700" />
-              </motion.button>
-              {/* Floating icon header */}
-              <div className="flex flex-col items-center pt-7 pb-2 px-6 relative">
-                <div className="relative mb-2">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 via-indigo-500 to-blue-400 flex items-center justify-center shadow-xl ring-4 ring-white/60">
-                    <FiCalendar className="w-8 h-8 text-white drop-shadow-lg" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-extrabold text-primary-900 text-center tracking-tight">Request Time Off</h3>
-                <p className="text-xs text-primary-500 text-center mt-1 mb-2">Submit your leave request below</p>
+              {/* Animated background elements */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-br from-blue-100/40 to-indigo-100/30 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-gradient-to-tr from-amber-100/30 to-cyan-100/40 rounded-full blur-3xl animate-pulse delay-1000" />
               </div>
+              
+              {/* Header Section */}
+              <div className="relative z-10 px-6 pt-8 pb-4">
+                <motion.div 
+                  className="flex items-center justify-between"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ 
+                          type: "spring",
+                          stiffness: 300,
+                          delay: 0.15
+                        }}
+                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg"
+                      >
+                        <FiCalendar className="text-white" />
+                      </motion.div>
+                      Request Time Off
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">Submit your leave request</p>
+                  </div>
+                  <motion.button
+                    className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm shadow-lg border border-gray-200/50 flex items-center justify-center hover:bg-gray-50 transition-all z-20"
+                    onClick={onClose}
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <FiX className="text-gray-600 w-5 h-5" />
+                  </motion.button>
+                </motion.div>
+              </div>
+
               {/* Form */}
-              <form onSubmit={handleSubmit} className="px-6 pb-6 pt-2 flex flex-col gap-4">
-                {/* Custom Date Range Field */}
-                <div className="relative group">
-                  <label className="block text-xs font-bold text-primary-700 mb-1 ml-1">Date Range</label>
-                  <div className="flex items-center gap-2 bg-white/90 border-2 border-primary-100 rounded-xl px-3 py-2 shadow-inner focus-within:border-primary-400 transition-all cursor-pointer" onClick={e => { e.preventDefault(); setShowDatePopover(true); }}>
-                    <FiCalendar className="text-primary-400 mr-2" />
-                    <span className={`font-semibold text-primary-800 ${!selectedDates.start ? 'opacity-50' : ''}`}>{selectedDates.start ? format(selectedDates.start, 'MMM dd, yyyy') : 'Start'}</span>
-                    <span className="mx-1 text-primary-300">—</span>
-                    <span className={`font-semibold text-primary-800 ${!selectedDates.end ? 'opacity-50' : ''}`}>{selectedDates.end ? format(selectedDates.end, 'MMM dd, yyyy') : 'End'}</span>
-                  </div>
-                  {/* Date popover (simple, not a full calendar grid for brevity) */}
-                  {showDatePopover && (
-                    <div className="absolute left-0 top-12 bg-white rounded-2xl shadow-xl border border-primary-100 p-4 flex gap-4 z-30 animate-fade-in">
-                      <div className="flex flex-col items-center">
-                        <span className="text-xs font-semibold text-primary-600 mb-1">Start</span>
-                        <input
-                          type="date"
-                          className="w-32 px-2 py-2 rounded-lg border-2 border-primary-200 bg-white/90 text-primary-800 font-bold shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all text-center text-sm"
-                          value={selectedDates.start ? format(selectedDates.start, 'yyyy-MM-dd') : ''}
-                          min={format(new Date(), 'yyyy-MM-dd')}
-                          onChange={e => setSelectedDates({ start: new Date(e.target.value), end: selectedDates.end })}
-                        />
-                      </div>
-                      <div className="flex flex-col items-center">
-                        <span className="text-xs font-semibold text-primary-600 mb-1">End</span>
-                        <input
-                          type="date"
-                          className="w-32 px-2 py-2 rounded-lg border-2 border-primary-200 bg-white/90 text-primary-800 font-bold shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all text-center text-sm"
-                          value={selectedDates.end ? format(selectedDates.end, 'yyyy-MM-dd') : ''}
-                          min={selectedDates.start ? format(selectedDates.start, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
-                          onChange={e => setSelectedDates({ ...selectedDates, end: new Date(e.target.value) })}
-                          disabled={!selectedDates.start}
-                        />
-                      </div>
-                      <button type="button" className="ml-2 text-xs text-primary-500 hover:text-primary-700 font-bold" onClick={() => setShowDatePopover(false)}>Done</button>
+              <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5 relative z-10">
+                {/* Date Range Selection */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FiCalendar className="inline mr-2 text-indigo-500" />
+                    Date Range
+                  </label>
+                  <div 
+                    className="flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-2xl p-4 border-2 border-gray-200/50 shadow-sm cursor-pointer hover:border-indigo-300/50 transition-all"
+                    onClick={e => { e.preventDefault(); setShowDatePopover(true); }}
+                  >
+                    <div className="p-2 bg-indigo-100/50 rounded-lg">
+                      <FiCalendar className="text-indigo-600 w-5 h-5" />
                     </div>
-                  )}
-                </div>
-                {/* Leave Type Field */}
-                <div className="relative group">
-                  <label htmlFor="leaveType" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Leave Type</label>
-                  <div className="relative">
-                    <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
-                    <select
-                      id="leaveType"
-                      className="w-full border-2 border-indigo-100 rounded-xl p-2 pl-9 bg-white/90 text-indigo-700 font-semibold focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 transition-all shadow-sm text-sm"
-                      value={leaveType}
-                      onChange={(e) => setLeaveType(e.target.value)}
-                    >
-                      <option value="vacation">Vacation</option>
-                      <option value="sick">Sick Leave</option>
-                      <option value="personal">Personal Leave</option>
-                      <option value="family">Family Care</option>
-                      <option value="other">Other</option>
-                    </select>
+                    <div className="flex-1 text-left">
+                      <p className="text-gray-800 font-medium">{formatDateRange()}</p>
+                      {selectedDates.start && selectedDates.end && (
+                        <p className="text-xs text-gray-500">
+                          {Math.ceil((new Date(selectedDates.end) - new Date(selectedDates.start))/(1000*60*60*24)) + 1} days selected
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  
+                  {/* Date Picker Popover */}
+                  {showDatePopover && (
+                    <motion.div 
+                      className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 p-4 mt-2 z-30"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                          <input
+                            type="date"
+                            className="w-full p-3 rounded-xl border-2 border-gray-200 bg-white/90 text-gray-800 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                            value={selectedDates.start ? format(selectedDates.start, 'yyyy-MM-dd') : ''}
+                            min={format(new Date(), 'yyyy-MM-dd')}
+                            onChange={e => setSelectedDates({ start: new Date(e.target.value), end: selectedDates.end })}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                          <input
+                            type="date"
+                            className="w-full p-3 rounded-xl border-2 border-gray-200 bg-white/90 text-gray-800 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                            value={selectedDates.end ? format(selectedDates.end, 'yyyy-MM-dd') : ''}
+                            min={selectedDates.start ? format(selectedDates.start, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
+                            onChange={e => setSelectedDates({ ...selectedDates, end: new Date(e.target.value) })}
+                            disabled={!selectedDates.start}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-4">
+                        <motion.button
+                          type="button"
+                          className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl font-medium hover:bg-indigo-200 transition-colors"
+                          onClick={() => setShowDatePopover(false)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          Done
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+
+                {/* Leave Type Selection */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    <FiTag className="inline mr-2 text-indigo-500" />
+                    Leave Type
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(leaveTypeConfig).map(([key, config]) => (
+                      <motion.button
+                        key={key}
+                        type="button"
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-2 ${
+                          leaveType === key 
+                            ? `border-indigo-500 bg-gradient-to-br ${config.color} bg-opacity-10 shadow-lg` 
+                            : 'border-gray-200/50 bg-white/50 hover:border-gray-300/50'
+                        }`}
+                        onClick={() => setLeaveType(key)}
+                        onMouseEnter={() => setHoveredType(key)}
+                        onMouseLeave={() => setHoveredType(null)}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <motion.div
+                          className={`p-3 rounded-xl ${
+                            leaveType === key 
+                              ? `bg-gradient-to-br ${config.color} text-white shadow-lg` 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                          animate={{
+                            scale: hoveredType === key ? 1.1 : 1
+                          }}
+                        >
+                          {config.icon}
+                        </motion.div>
+                        <span className={`font-semibold ${leaveType === key ? 'text-gray-800' : 'text-gray-600'}`}>
+                          {config.label}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+
                 {/* Reason Field */}
-                <div className="relative group">
-                  <label htmlFor="reason" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Reason {leaveType === "other" ? "(Required)" : "(Optional)"}</label>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <label htmlFor="reason" className="block text-sm font-semibold text-gray-700 mb-2">
+                    <FiEdit3 className="inline mr-2 text-indigo-500" />
+                    Reason {leaveType === "other" ? "(Required)" : "(Optional)"}
+                  </label>
                   <div className="relative">
-                    <FiEdit3 className="absolute left-3 top-3 text-blue-400" />
                     <textarea
                       id="reason"
-                      className="w-full border-2 border-blue-100 rounded-xl p-2 pl-9 bg-white/90 text-blue-700 font-semibold focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition-all shadow-sm text-sm"
-                      rows="2"
-                      placeholder="Enter reason for leave..."
+                      className="w-full p-4 rounded-2xl border-2 border-gray-200/50 bg-white/80 backdrop-blur-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+                      rows="3"
+                      placeholder={`Enter reason for your ${leaveTypeConfig[leaveType].label}...`}
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       required={leaveType === "other"}
                     />
                   </div>
-                </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {reason.length}/200 characters
+                  </p>
+                </motion.div>
+
                 {/* Error message */}
-                {error && (
-                  <motion.div 
-                    className="mb-2 p-2 bg-red-100 text-red-800 rounded-xl border border-red-200 flex items-start gap-2 shadow animate-pulse text-xs"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <FiAlertCircle className="mt-0.5 flex-shrink-0 text-red-500" />
-                    <span>{error}</span>
-                  </motion.div>
-                )}
-                {/* Success overlay (unchanged) */}
-                {success && (
-                  <motion.div 
-                    className="absolute inset-0 bg-green-600 bg-opacity-95 z-10 flex flex-col items-center justify-center text-white"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: [0, 1.2, 1] }}
-                      transition={{ duration: 0.5 }}
-                      className="bg-white bg-opacity-20 rounded-full p-4 mb-4"
+                <AnimatePresence>
+                  {error && (
+                    <motion.div 
+                      className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
                     >
-                      <FiCheck className="w-16 h-16" />
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <FiAlertCircle className="text-red-600 w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-red-800 font-medium text-sm">{error}</p>
+                      </div>
                     </motion.div>
-                    <h3 className="text-2xl font-bold mb-2">Request Submitted!</h3>
-                    <p className="text-white text-opacity-90">Your leave request has been sent for approval</p>
-                  </motion.div>
-                )}
-                {/* Action Button */}
-                <motion.button
-                  type="submit"
-                  className="mt-2 w-full py-3 bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 text-white rounded-2xl font-extrabold shadow-xl hover:from-primary-700 hover:to-blue-700 flex items-center justify-center gap-2 text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading || !selectedDates.start || !selectedDates.end || (leaveType === "other" && !reason)}
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                  animate={loading || !selectedDates.start || !selectedDates.end ? "disabled" : ""}
-                >
-                  {loading ? (
-                    <>
-                      <FiLoader className="animate-spin" />
-                      Submitting...
-                    </>
-                  ) : success ? (
-                    <>
-                      <FiCheck />
-                      Submitted!
-                    </>
-                  ) : (
-                    <>
-                      <FiCalendar />
-                      Submit Request
-                    </>
                   )}
-                </motion.button>
+                </AnimatePresence>
+
+                {/* Submit Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <motion.button
+                    type="submit"
+                    className="w-full py-4 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 text-base transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={loading || !selectedDates.start || !selectedDates.end || (leaveType === "other" && !reason.trim())}
+                    variants={buttonVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    {loading ? (
+                      <>
+                        <FiLoader className="animate-spin" />
+                        Processing...
+                      </>
+                    ) : success ? (
+                      <>
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="p-1 bg-white/20 rounded-full"
+                        >
+                          <FiCheck className="w-5 h-5" />
+                        </motion.div>
+                        Submitted!
+                      </>
+                    ) : (
+                      <>
+                        <FiZap className="w-5 h-5" />
+                        Submit Request
+                      </>
+                    )}
+                  </motion.button>
+                </motion.div>
               </form>
+
+              {/* Success overlay */}
+              {success && (
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-600 z-40 flex flex-col items-center justify-center text-white"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ 
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 20
+                    }}
+                    className="mb-6"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+                      <FiCheck className="w-12 h-12" />
+                    </div>
+                  </motion.div>
+                  <motion.h3 
+                    className="text-2xl font-bold mb-2"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    Request Submitted!
+                  </motion.h3>
+                  <motion.p 
+                    className="text-white/90 text-center max-w-xs"
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Your leave request has been sent for approval and will be processed shortly.
+                  </motion.p>
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         </>
@@ -315,23 +533,5 @@ const LeaveRequestForm = ({
     </AnimatePresence>
   );
 };
-
-const FiArrow = ({ className }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="24" 
-    height="24" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <line x1="5" y1="12" x2="19" y2="12"></line>
-    <polyline points="12 5 19 12 12 19"></polyline>
-  </svg>
-);
 
 export default LeaveRequestForm;

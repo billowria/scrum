@@ -83,7 +83,7 @@ export const ScrollableMessageArea = ({
     <div
       ref={scrollContainerRef}
       onScroll={handleScroll}
-      className="h-full overflow-y-auto px-4 py-4 space-y-1 bg-white/50"
+      className="h-full overflow-y-auto px-4 py-4 space-y-1 bg-white/50 no-scrollbar"
       style={{ scrollBehavior: 'smooth' }}
     >
       {/* Loading indicator at top */}

@@ -114,7 +114,7 @@ export const ChatPage = () => {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
+    <div className="h-screen flex overflow-hidden bg-gray-50" style={{ height: '100vh', maxHeight: '100vh' }}>
       {/* Mobile back button overlay */}
       {isMobile && !showSidebar && activeConversation && (
         <motion.button
@@ -136,6 +136,7 @@ export const ChatPage = () => {
         }}
         transition={{ type: 'spring', damping: 20 }}
         className={isMobile ? 'absolute inset-y-0 left-0 z-20 w-full' : 'relative'}
+        style={{ minHeight: 0 }}
       >
         <ChatSidebar
           conversations={conversations}
@@ -157,6 +158,7 @@ export const ChatPage = () => {
         }}
         transition={{ type: 'spring', damping: 20 }}
         className="flex-1 h-full overflow-hidden"
+        style={{ minHeight: 0 }}
       >
         <ChatWindow
           conversation={activeConversation}

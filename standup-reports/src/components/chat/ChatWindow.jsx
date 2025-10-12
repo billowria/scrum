@@ -57,38 +57,45 @@ export const ChatWindow = ({ conversation, currentUser, isOnline = false }) => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="h-full w-full flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative" style={{ minHeight: 0, paddingBottom: '80px' }}>
       {/* FIXED HEADER - Always visible at top */}
-      <div className="flex-shrink-0 border-b border-indigo-100 bg-white/90 backdrop-blur-sm z-20 shadow-sm">
-        <ChatHeader 
-          conversation={conversation} 
-          currentUser={currentUser} 
-          isOnline={isOnline} 
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-        />
-      </div>
-
-      {/* SCROLLABLE MESSAGE AREA - Only this scrolls */}
-      <div className="flex-1 min-h-0">
-      <div className="flex-1 max-w-5xl w-full mx-auto px-4 py-4">
-          <div className="h-full rounded-2xl border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden">
-            <ScrollableMessageArea
-              messages={messages} 
-              typingUsers={typingUsers} 
-              onEdit={handleStartEdit} 
-              onDelete={handleDelete} 
-              onLoadMore={loadMore} 
-              hasMore={hasMore} 
-              loading={loading} 
-            />
-          </div>
+      <div 
+        className="flex-shrink-0 border-b border-indigo-100 bg-white/90 backdrop-blur-sm z-20 shadow-sm sticky top-0"
+      >
+        <div className="max-w-5xl w-full mx-auto px-4">
+          <ChatHeader 
+            conversation={conversation} 
+            currentUser={currentUser} 
+            isOnline={isOnline} 
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
         </div>
       </div>
 
-      {/* FIXED INPUT - Always visible at bottom */}
-      <div className="flex-shrink-0 border-t border-indigo-100 bg-white/90 backdrop-blur-sm shadow-lg z-10">
-        <div className="max-w-5xl w-full mx-auto py-3 px-4">
+      {/* SCROLLABLE MESSAGE AREA - Only this scrolls */}
+      <div 
+        className="flex-1 overflow-y-auto min-h-0 max-w-5xl w-full mx-auto px-4 py-4 flex flex-col no-scrollbar pb-16"
+        style={{ minHeight: 0 }}
+      >
+        <div className="flex-1 rounded-2xl border border-indigo-100 bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden flex flex-col">
+          <ScrollableMessageArea
+            messages={messages} 
+            typingUsers={typingUsers} 
+            onEdit={handleStartEdit} 
+            onDelete={handleDelete} 
+            onLoadMore={loadMore} 
+            hasMore={hasMore} 
+            loading={loading} 
+          />
+        </div>
+      </div>
+
+      {/* FIXED INPUT - Always visible at bottom within right pane */}
+      <div 
+        className="absolute bottom-0 w-full border-t border-indigo-100 bg-white/90 backdrop-blur-sm shadow-lg z-10"
+      >
+        <div className="max-w-5xl w-full mx-auto px-4 py-3">
           <MessageInput 
             onSend={handleSend} 
             onTyping={startTyping} 

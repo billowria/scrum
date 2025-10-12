@@ -116,12 +116,20 @@ const createManagerPortalSubtasks = (counts, user) => [
   },
   { 
     label: 'Report History', 
-    icon: <FiTrendingUp />, 
+    icon: <FiList />, 
     to: '/manager-dashboard?tab=report-history',
     gradient: 'from-emerald-500 to-teal-600',
     description: 'Performance insights',
     status: 'normal',
     badge: counts.reports
+  },
+  { 
+    label: 'Analytics', 
+    icon: <FiTrendingUp />, 
+    to: '/analytics-dashboard',
+    gradient: 'from-rose-500 to-red-600',
+    description: 'Deep performance insights',
+    status: 'normal'
   },
   { 
     label: 'Projects', 
