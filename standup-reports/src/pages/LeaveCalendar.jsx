@@ -201,6 +201,7 @@ const CompactTabHeader = ({
                     transition={{ delay: 0.1 + index * 0.05 }}
                     whileHover={stat.onClick ? { scale: 1.02 } : {}}
                   >
+                    {stat.icon && <span className="mr-1">{stat.icon}</span>}
                     <span className={`text-xs ${scheme.text} opacity-80`}>{stat.label}:</span>
                     <span className={`text-sm font-bold ${scheme.text}`}>{stat.value}</span>
                   </motion.div>
@@ -284,10 +285,13 @@ export default function LeaveCalendar() {
 
 
   
-  // Calculate team availability whenever leave data changes
+  // Calculate team availability and stats whenever leave data changes
   useEffect(() => {
     if (leaveData.length > 0 && users.length > 0) {
       calculateTeamAvailability();
+      calculateStats();
+    } else if (users.length > 0) {
+      // Calculate stats even if no leave data to show 0 on leave
       calculateStats();
     }
   }, [leaveData, users]);
@@ -541,18 +545,28 @@ export default function LeaveCalendar() {
     return colors.neutral.lighter;
   };
   
-  // Get border color for selected dates
-  const getSelectedDateBorder = (day) => {
+  // Get styling for selected dates in range
+  const getSelectedDateStyling = (day) => {
     const { start, end } = selectedDates;
     
     if (!start) return '';
     
-    if (isSameDay(day, start)) {
-      return end ? 'ring-4 ring-blue-500' : 'ring-4 ring-purple-500';
-    }
+    const isStart = isSameDay(day, start);
+    const isEnd = end && isSameDay(day, end);
+    const isInRange = start && end && day > start && day < end;
     
-    if (end && day >= start && day <= end) {
-      return 'ring-4 ring-blue-300';
+    if (isStart && isEnd) {
+      // Single day selection
+      return 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl ring-4 ring-blue-400';
+    } else if (isStart) {
+      // Start date of range
+      return 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg ring-4 ring-blue-300';
+    } else if (isEnd) {
+      // End date of range
+      return 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg ring-4 ring-blue-300';
+    } else if (isInRange) {
+      // Middle dates in range
+      return 'bg-gradient-to-br from-blue-100 to-indigo-100 shadow-md ring-2 ring-blue-200';
     }
     
     return '';
@@ -620,12 +634,8 @@ export default function LeaveCalendar() {
           flex flex-col justify-between
           ${isSameMonthDay ? 'opacity-100' : 'opacity-60'}
           ${isToday ? 'ring-4 ring-blue-500 ring-offset-2 transform' : ''}
-          ${isWeekendDay ? 'bg-gradient-to-b from-gray-50 to-gray-100' : availability ? getDayColor(day) : 'bg-gradient-to-b from-white to-gray-50'}
-          ${userHasLeave ? 'border-4 border-accent-500' : 'border border-gray-200'}
-          ${getSelectedDateBorder(day)}
-          ${selectedDates.start && isSameDay(selectedDates.start, day) ? 'bg-gradient-to-br from-blue-200 to-blue-300 shadow-lg' : ''}
-          ${selectedDates.end && isSameDay(selectedDates.end, day) ? 'bg-gradient-to-br from-blue-200 to-blue-300 shadow-lg' : ''}
-          ${selectedDates.start && selectedDates.end && day > selectedDates.start && day < selectedDates.end ? 'bg-gradient-to-br from-blue-100 to-blue-200' : ''}
+          ${getSelectedDateStyling(day) || (isWeekendDay ? 'bg-gradient-to-b from-gray-50 to-gray-100' : availability ? getDayColor(day) : 'bg-gradient-to-b from-white to-gray-50')}
+          ${userHasLeave && !getSelectedDateStyling(day) ? 'border-4 border-accent-500' : !getSelectedDateStyling(day) ? 'border border-gray-200' : ''}
           shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out
         `}
         onClick={(e) => handleDayClick(day, e)}
@@ -702,13 +712,26 @@ export default function LeaveCalendar() {
           <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
         
-        {/* Selected day indicator */}
-        {selectedDates.start && isSameDay(selectedDates.start, day) && (
+        {/* Selected day indicator - only show if not fully styled */}
+        {!getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && (
           <div className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
         
-        {selectedDates.end && isSameDay(selectedDates.end, day) && (
+        {!getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && (
           <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
+        )}
+        
+        {/* Special indicators for start/end of range when fully styled */}
+        {getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
+          <div className="absolute -top-1 -left-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          </div>
+        )}
+        
+        {getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
+          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner">
+            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+          </div>
         )}
       </motion.div>
     );
@@ -728,11 +751,36 @@ export default function LeaveCalendar() {
             label: "Month", 
             value: format(currentMonth, 'MMM yyyy'),
             onClick: () => setShowHolidayCalendarModal(true)
+          },
+          { 
+            label: "On Leave Today", 
+            value: usersOnLeaveToday.length,
+            onClick: () => {
+              setSelectedDate(new Date());
+              setSelectedUsers(usersOnLeaveToday);
+              setShowOnLeaveModal(true);
+            },
+            icon: <FiUser className="w-3 h-3" />
           }
         ]}
         quickActions={[
           {
-            icon: <FiPlus className="w-4 h-4" />,
+            icon: (
+              <motion.div
+                animate={{ 
+                  rotate: [0, 0, 360],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  repeatType: "reverse",
+                  repeatDelay: 2
+                }}
+              >
+                <FiPlus className="w-4 h-4" />
+              </motion.div>
+            ),
             onClick: () => setShowLeaveForm(true),
             tooltip: "Request Leave"
           },
@@ -795,14 +843,30 @@ export default function LeaveCalendar() {
               </div>
               
               <div className="flex items-center gap-2">
+               
+                
+                {/* Request Leave button */}
                 <motion.button
-                  className="px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 flex items-center justify-center transition-all shadow-sm"
+                  className="px-5 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white rounded-xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-600 flex items-center justify-center transition-all shadow-lg font-semibold relative overflow-hidden group"
                   onClick={() => setShowLeaveForm(true)}
                   variants={overlayButtonVariants}
-                  whileHover={{ scale: 1.03, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)" }}
-                  whileTap="tap"
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(139, 92, 246, 0.4)" }}
+                  whileTap={{ scale: 0.98 }}
+                  initial="rest"
+                  animate="rest"
                 >
-                  <FiPlus className="mr-2" /> Request Leave
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out delay-100"></div>
+                  <span className="relative z-10 flex items-center">
+                    <motion.div 
+                      className="mr-3"
+                      animate={{ rotate: [0, 0, 360] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", repeatDelay: 2 }}
+                    >
+                      <FiPlus className="w-5 h-5" />
+                    </motion.div>
+                    Request Leave
+                  </span>
                 </motion.button>
               </div>
             </div>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { FiCalendar, FiX, FiCheck, FiLoader, FiInfo, FiAlertCircle, FiTag, FiEdit3 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
+import { notifyLeaveRequest } from '../utils/notificationHelper';
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.9 },
@@ -91,6 +92,21 @@ const LeaveRequestForm = ({
         ]);
       
       if (error) throw error;
+      
+      // Fetch user info and notify manager
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name, manager_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData?.manager_id) {
+        await notifyLeaveRequest(
+          { start_date: startDate, end_date: endDate, user_id: user.id },
+          userData.name,
+          userData.manager_id
+        );
+      }
       
       // Show success animation
       setSuccess(true);

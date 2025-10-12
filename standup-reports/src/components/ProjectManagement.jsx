@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFolder, FiUsers, FiCalendar, FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
+import { notifyProjectUpdate } from '../utils/notificationHelper';
 
 export default function ProjectManagement() {
   const [projects, setProjects] = useState([]);
@@ -105,6 +106,8 @@ export default function ProjectManagement() {
         end_date: projectForm.end_date || null,
         status: projectForm.status,
       };
+      let isUpdate = !!projectForm.id;
+      
       if (projectForm.id) {
         const { error } = await supabase.from('projects').update(projectData).eq('id', projectForm.id);
         if (error) throw error;
@@ -113,6 +116,32 @@ export default function ProjectManagement() {
         const { error } = await supabase.from('projects').insert(projectData);
         if (error) throw error;
       }
+      
+      // Send notification about project creation/update
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('team_id')
+          .eq('id', user.id)
+          .single();
+        
+        if (userData?.team_id) {
+          const message = isUpdate 
+            ? `Project "${projectForm.name}" has been updated.`
+            : `New project "${projectForm.name}" has been created.`;
+          
+          await notifyProjectUpdate(
+            projectForm.name,
+            message,
+            userData.team_id,
+            user.id
+          );
+        }
+      } catch (notificationError) {
+        console.error('Error sending project notification:', notificationError);
+        // Continue even if notification fails
+      }
+      
       setShowCreateProjectModal(false);
       setProjectForm({ id: null, name: '', description: '', start_date: '', end_date: '', status: 'active' });
       fetchProjects();

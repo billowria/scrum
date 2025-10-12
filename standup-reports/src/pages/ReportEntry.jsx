@@ -3,6 +3,9 @@ import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiCheckCircle, FiAlertCircle, FiClipboard, FiList, FiUsers, FiSend, FiArrowRight, FiStar, FiBold, FiItalic, FiCode, FiLink, FiAtSign, FiFileText, FiPlus, FiCheck, FiEdit, FiEye } from 'react-icons/fi';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import '../tiptap.css';
 
 // Animation variants
 const containerVariants = {
@@ -325,11 +328,47 @@ export default function ReportEntry() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showFormattingOptions, setShowFormattingOptions] = useState({ yesterday: false, today: false, blockers: false });
+  // Mentions and task updates
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [showMentionPicker, setShowMentionPicker] = useState(false);
+  const [activeField, setActiveField] = useState('today');
+  const [taskSearchId, setTaskSearchId] = useState('');
+  const [taskUpdates, setTaskUpdates] = useState([]); // {id,title,status,update}
+  const [taskLoading, setTaskLoading] = useState(false);
+  const [myTasks, setMyTasks] = useState([]);
+  const [myTasksLoading, setMyTasksLoading] = useState(false);
+  const [myTaskQuery, setMyTaskQuery] = useState('');
   
-  // Refs for form elements
+  // Refs for form elements (Tiptap editors)
   const yesterdayRef = useRef(null);
   const todayRef = useRef(null);
   const blockersRef = useRef(null);
+
+  // Tiptap editors
+  const yesterdayEditor = useEditor({
+    extensions: [StarterKit],
+    content: yesterday,
+    onUpdate: ({ editor }) => {
+      setYesterday(editor.getHTML());
+    },
+  });
+
+  const todayEditor = useEditor({
+    extensions: [StarterKit],
+    content: today,
+    onUpdate: ({ editor }) => {
+      setToday(editor.getHTML());
+    },
+  });
+
+  const blockersEditor = useEditor({
+    extensions: [StarterKit],
+    content: blockers,
+    onUpdate: ({ editor }) => {
+      setBlockers(editor.getHTML());
+    },
+  });
   
   // Controls for animations
   const controls = useAnimation();
@@ -363,6 +402,30 @@ export default function ReportEntry() {
 
         if (!userDataError && userData?.team_id) {
           setSelectedTeam(userData.team_id);
+          // Preload team members for mentions
+          const { data: members } = await supabase
+            .from('users')
+            .select('id, name')
+            .eq('team_id', userData.team_id)
+            .order('name');
+          setTeamMembers(members || []);
+        }
+
+        // Fetch tasks assigned to the current user for quick insertion
+        setMyTasksLoading(true);
+        try {
+          const { data: assigned } = await supabase
+            .from('tasks')
+            .select('id, title, status, updated_at')
+            .eq('assignee_id', user.id)
+            .order('updated_at', { ascending: false })
+            .limit(100);
+          setMyTasks(assigned || []);
+        } catch (e) {
+          console.error('Failed to load assigned tasks', e);
+          setMyTasks([]);
+        } finally {
+          setMyTasksLoading(false);
         }
 
         // Check for existing report
@@ -381,9 +444,12 @@ export default function ReportEntry() {
         if (data) {
           // Found existing report, populate form
           setExistingReport(data);
-          setYesterday(data.yesterday || '');
-          setToday(data.today || '');
-          setBlockers(data.blockers || '');
+          const yesterdayContent = data.yesterday || '';
+          const todayContent = data.today || '';
+          const blockersContent = data.blockers || '';
+          setYesterday(yesterdayContent);
+          setToday(todayContent);
+          setBlockers(blockersContent);
           setMessage({ type: 'info', text: 'Editing existing report for this date.' });
         } else {
           // No existing report
@@ -401,6 +467,37 @@ export default function ReportEntry() {
     initializeData();
     setCurrentStep(0);
   }, [date]);
+
+  // Sync editor content when state changes from data loading
+  useEffect(() => {
+    if (yesterdayEditor?.view && yesterday !== yesterdayEditor.getHTML()) {
+      try {
+        yesterdayEditor.commands.setContent(yesterday);
+      } catch (error) {
+        console.warn('Error setting yesterday content:', error);
+      }
+    }
+  }, [yesterday, yesterdayEditor]);
+
+  useEffect(() => {
+    if (todayEditor?.view && today !== todayEditor.getHTML()) {
+      try {
+        todayEditor.commands.setContent(today);
+      } catch (error) {
+        console.warn('Error setting today content:', error);
+      }
+    }
+  }, [today, todayEditor]);
+
+  useEffect(() => {
+    if (blockersEditor?.view && blockers !== blockersEditor.getHTML()) {
+      try {
+        blockersEditor.commands.setContent(blockers);
+      } catch (error) {
+        console.warn('Error setting blockers content:', error);
+      }
+    }
+  }, [blockers, blockersEditor]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -456,12 +553,21 @@ export default function ReportEntry() {
         }
       }
 
+      // Append any pending task updates to 'today' before saving (as HTML paragraphs)
+      let finalToday = today;
+      if (taskUpdates.length > 0) {
+        const block = taskUpdates
+          .map(t => `<p>- [TASK:${t.id}|${t.title}] ${t.update ? String(t.update).replace(/</g,'&lt;') : ''}</p>`)
+          .join('');
+        finalToday = finalToday ? finalToday + block : block;
+      }
+
       // Prepare report data
       const reportData = {
         user_id: user.id,
         date,
         yesterday,
-        today,
+        today: finalToday,
         blockers,
         updated_at: new Date().toISOString()
       };
@@ -494,6 +600,14 @@ export default function ReportEntry() {
           : 'Your report has been submitted successfully!'
       });
       
+      // Append any task updates not already inserted
+      if (taskUpdates.length > 0) {
+        const notInserted = taskUpdates
+          .map(t => `- [TASK:${t.id}|${t.title}] ${t.update || ''}`)
+          .join('\n');
+        setToday(prev => (prev ? prev + '\n' + notInserted : notInserted));
+      }
+
       // Show success animation and navigate back to dashboard
       setShowSuccess(true);
       
@@ -511,14 +625,23 @@ export default function ReportEntry() {
   
   // Focus correct field when step changes
   useEffect(() => {
-    if (currentStep === 0 && yesterdayRef.current) {
-      yesterdayRef.current.focus();
-    } else if (currentStep === 1 && todayRef.current) {
-      todayRef.current.focus();
-    } else if (currentStep === 2 && blockersRef.current) {
-      blockersRef.current.focus();
-    }
-  }, [currentStep]);
+    // Add a small delay to ensure editors are mounted
+    const timeoutId = setTimeout(() => {
+      try {
+        if (currentStep === 0 && yesterdayEditor?.view) {
+          yesterdayEditor.commands.focus();
+        } else if (currentStep === 1 && todayEditor?.view) {
+          todayEditor.commands.focus();
+        } else if (currentStep === 2 && blockersEditor?.view) {
+          blockersEditor.commands.focus();
+        }
+      } catch (error) {
+        console.warn('Editor focus error:', error);
+      }
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [currentStep, yesterdayEditor, todayEditor, blockersEditor]);
   
   // Handle next step
   const handleNextStep = () => {
@@ -536,9 +659,23 @@ export default function ReportEntry() {
   
   // Check if current step is valid and can proceed
   const canProceed = () => {
-    if (currentStep === 0) return yesterday.trim().length > 0;
-    if (currentStep === 1) return today.trim().length > 0;
-    return true; // Blockers can be empty
+    try {
+      if (currentStep === 0) {
+        const text = yesterdayEditor?.getText() || '';
+        return text.trim().length > 0;
+      }
+      if (currentStep === 1) {
+        const text = todayEditor?.getText() || '';
+        return text.trim().length > 0;
+      }
+      return true; // Blockers can be empty
+    } catch (error) {
+      console.warn('canProceed error:', error);
+      // Fallback to checking state values
+      if (currentStep === 0) return yesterday.trim().length > 0;
+      if (currentStep === 1) return today.trim().length > 0;
+      return true;
+    }
   };
 
   // Handle keyboard shortcuts
@@ -552,26 +689,78 @@ export default function ReportEntry() {
     }
   };
 
-  // Handle formatting
-  const handleFormattedTextChange = (setText, newText) => {
-    setText(newText);
-  };
-
-  const handleFormat = (ref, setText) => (newText, start, end) => {
-    setText(newText);
-    setTimeout(() => {
-      if (ref.current) {
-        ref.current.focus();
-        ref.current.setSelectionRange(start, end);
-      }
-    }, 0);
-  };
-
   const toggleFormattingOptions = (field) => {
     setShowFormattingOptions(prev => ({
       ...prev,
       [field]: !prev[field]
     }));
+  };
+
+  // Insert mention into active field
+  const insertMention = (member) => {
+    const token = `@${member.name}{id:${member.id}} `;
+    const editor = activeField === 'yesterday' ? yesterdayEditor : activeField === 'blockers' ? blockersEditor : todayEditor;
+    if (editor?.view) {
+      try {
+        editor.commands.insertContent(token);
+        editor.commands.focus();
+      } catch (error) {
+        console.warn('Insert mention error:', error);
+      }
+    }
+    setShowMentionPicker(false);
+    setMentionQuery('');
+  };
+
+  // Fetch task by ID and add to updates list
+  const addTaskById = async () => {
+    if (!taskSearchId) return;
+    setTaskLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('id, title, status')
+        .eq('id', taskSearchId)
+        .single();
+      if (error) throw error;
+      if (data) {
+        setTaskUpdates(prev => {
+          if (prev.some(t => t.id === data.id)) return prev;
+          return [...prev, { id: data.id, title: data.title, status: data.status, update: '' }];
+        });
+        setTaskSearchId('');
+      }
+    } catch (err) {
+      console.error('Task fetch failed', err);
+      setMessage({ type: 'error', text: 'Task not found. Check Task ID.' });
+    } finally {
+      setTaskLoading(false);
+    }
+  };
+
+  // Insert task token at cursor (no description)
+  const insertTaskToken = (task) => {
+    if (todayEditor?.view) {
+      try {
+        todayEditor.commands.insertContent(`[TASK:${task.id}|${task.title}] `);
+        todayEditor.commands.focus();
+      } catch (error) {
+        console.warn('Insert task token error:', error);
+      }
+    }
+  };
+
+  // Insert all pending task updates
+  const insertAllTaskUpdates = () => {
+    const lines = taskUpdates.map(t => `<p>- [TASK:${t.id}|${t.title}] ${t.update || ''}</p>`).join('');
+    if (todayEditor?.view) {
+      try {
+        todayEditor.commands.insertContent(lines);
+        todayEditor.commands.focus();
+      } catch (error) {
+        console.warn('Insert task updates error:', error);
+      }
+    }
   };
 
   return (
@@ -725,28 +914,15 @@ export default function ReportEntry() {
                 </motion.div>
                 
                 <div className="relative">
-                  <FormattingToolbar 
-                    onFormat={handleFormat(yesterdayRef, setYesterday)} 
-                    textRef={yesterdayRef} 
-                  />
-                  
                   <motion.div
                     initial="rest"
                     whileFocus="focus"
                     variants={inputFocusVariants}
                     className="relative mt-2"
                   >
-                    <textarea
-                      ref={yesterdayRef}
-                      id="yesterday"
-                      value={yesterday}
-                      onChange={(e) => handleFormattedTextChange(setYesterday, e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      rows="6"
-                      className="w-full px-5 py-4 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm resize-none"
-                      placeholder="List your completed tasks from yesterday... (Shift+Enter to continue)"
-                      required
-                    />
+                    <div className="mt-2 border border-gray-300/50 rounded-xl overflow-hidden tiptap-editor">
+                      <EditorContent editor={yesterdayEditor} ref={yesterdayRef} />
+                    </div>
                     <div className="absolute inset-0 pointer-events-none rounded-xl border-2 border-indigo-500 opacity-0 focus-within:opacity-30 transition-opacity"></div>
                   </motion.div>
                 </div>
@@ -780,7 +956,19 @@ export default function ReportEntry() {
                         What will you work on today?
                       </label>
                     </div>
-                    <span className="text-sm text-gray-500">{today.length} characters</span>
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        type="button"
+                        className="px-2.5 py-1.5 bg-indigo-100 text-indigo-700 rounded-md text-xs font-semibold hover:bg-indigo-200"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setToday(yesterday)}
+                        title="Copy yesterday → today"
+                      >
+                        Copy from Yesterday
+                      </motion.button>
+                      <span className="text-sm text-gray-500">{today.length} characters</span>
+                    </div>
                   </div>
                   
                   <p className="text-gray-500 text-sm mb-4">
@@ -789,30 +977,166 @@ export default function ReportEntry() {
                 </motion.div>
                 
                 <div className="relative">
-                  <FormattingToolbar 
-                    onFormat={handleFormat(todayRef, setToday)} 
-                    textRef={todayRef} 
-                  />
-                  
                   <motion.div
                     initial="rest"
                     whileFocus="focus"
                     variants={inputFocusVariants}
                     className="relative mt-2"
                   >
-                    <textarea
-                      ref={todayRef}
-                      id="today"
-                      value={today}
-                      onChange={(e) => handleFormattedTextChange(setToday, e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      rows="6"
-                      className="w-full px-5 py-4 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm resize-none"
-                      placeholder="List your planned tasks for today... (Shift+Enter to continue)"
-                      required
-                    />
+                    <div className="mt-2 border border-gray-300/50 rounded-xl overflow-hidden tiptap-editor">
+                      <EditorContent editor={todayEditor} ref={todayRef} />
+                    </div>
                     <div className="absolute inset-0 pointer-events-none rounded-xl border-2 border-indigo-500 opacity-0 focus-within:opacity-30 transition-opacity"></div>
                   </motion.div>
+                </div>
+
+                {/* Task Updates panel */}
+                <div className="mt-4 bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <FiList className="h-4 w-4" /> Task Updates
+                    </h5>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={taskSearchId}
+                        onChange={(e) => setTaskSearchId(e.target.value)}
+                        placeholder="Enter Task ID (UUID)"
+                        className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                      <motion.button
+                        type="button"
+                        onClick={addTaskById}
+                        disabled={taskLoading || !taskSearchId}
+                        className="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-semibold disabled:opacity-50"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {taskLoading ? 'Adding...' : 'Add'}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* My Tasks quick picker */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h6 className="text-sm font-semibold text-gray-700">My Tasks</h6>
+                      <input
+                        type="text"
+                        value={myTaskQuery}
+                        onChange={(e) => setMyTaskQuery(e.target.value)}
+                        placeholder="Search my tasks..."
+                        className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white divide-y">
+                      {myTasksLoading ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>
+                      ) : (
+                        (myTasks || [])
+                          .filter(t => {
+                            const q = (myTaskQuery || '').toLowerCase();
+                            return !q || t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q);
+                          })
+                          .slice(0, 20)
+                          .map(t => (
+                            <div key={t.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
+                              <div className="text-sm text-gray-800 truncate pr-3">{t.title}</div>
+                              <button
+                                type="button"
+                                className="text-xs text-indigo-600 hover:underline flex-shrink-0"
+                                onClick={() => insertTaskToken(t)}
+                              >
+                                Insert token
+                              </button>
+                            </div>
+                          ))
+                      )}
+                    </div>
+                  </div>
+
+                  {taskUpdates.length === 0 ? (
+                    <p className="text-sm text-gray-500">No tasks added yet. Search by Task ID to add.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {taskUpdates.map((t, idx) => (
+                        <div key={t.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold text-gray-800 truncate">{t.title}</div>
+                            <button
+                              type="button"
+                              className="text-xs text-indigo-600 hover:underline"
+                              onClick={() => insertTaskUpdate(t)}
+                              title="Insert into Today"
+                            >
+                              Insert into Today
+                            </button>
+                          </div>
+                          <div className="mt-2">
+                            <input
+                              type="text"
+                              value={t.update}
+                              onChange={(e) => setTaskUpdates(prev => prev.map((it,i) => i===idx ? { ...it, update: e.target.value } : it))}
+                              placeholder="Write your update for this task..."
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={insertAllTaskUpdates}
+                          className="text-xs font-semibold text-white bg-indigo-600 px-3 py-1.5 rounded-md"
+                        >
+                          Insert All Task Updates
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Mentions helper */}
+                <div className="mt-3 bg-purple-50/60 p-3 rounded-lg border border-purple-100/50 text-sm text-purple-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FiAtSign className="h-4 w-4" />
+                      <span>Insert @mention</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-indigo-600 hover:underline"
+                      onClick={() => setShowMentionPicker(!showMentionPicker)}
+                    >
+                      {showMentionPicker ? 'Close' : 'Open'}
+                    </button>
+                  </div>
+                  {showMentionPicker && (
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={mentionQuery}
+                        onChange={(e) => setMentionQuery(e.target.value)}
+                        placeholder="Search team members..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                      <div className="max-h-40 overflow-y-auto mt-2 border border-gray-200 rounded-md bg-white">
+                        {(teamMembers || []).filter(m => m.name.toLowerCase().includes((mentionQuery||'').toLowerCase())).map(m => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => insertMention(m)}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                          >
+                            @{m.name}
+                          </button>
+                        ))}
+                        {teamMembers.length === 0 && (
+                          <div className="px-3 py-2 text-sm text-gray-500">No team members found</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="mt-3 bg-purple-50/60 p-3 rounded-lg border border-purple-100/50 text-sm text-purple-700 flex items-center">
@@ -853,27 +1177,15 @@ export default function ReportEntry() {
                 </motion.div>
                 
                 <div className="relative">
-                  <FormattingToolbar 
-                    onFormat={handleFormat(blockersRef, setBlockers)} 
-                    textRef={blockersRef} 
-                  />
-                  
                   <motion.div
                     initial="rest"
                     whileFocus="focus"
                     variants={inputFocusVariants}
                     className="relative mt-2"
                   >
-                    <textarea
-                      ref={blockersRef}
-                      id="blockers"
-                      value={blockers}
-                      onChange={(e) => handleFormattedTextChange(setBlockers, e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      rows="6"
-                      className="w-full px-5 py-4 border border-gray-300/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm resize-none"
-                      placeholder="Describe any blockers or issues preventing your progress (leave empty if none)... (Shift+Enter to submit)"
-                    />
+                    <div className="mt-2 border border-gray-300/50 rounded-xl overflow-hidden tiptap-editor">
+                      <EditorContent editor={blockersEditor} ref={blockersRef} />
+                    </div>
                     <div className="absolute inset-0 pointer-events-none rounded-xl border-2 border-indigo-500 opacity-0 focus-within:opacity-30 transition-opacity"></div>
                   </motion.div>
                 </div>

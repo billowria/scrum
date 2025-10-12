@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
@@ -38,7 +38,10 @@ import {
   FiRefreshCw,
   FiZap,
   FiTarget,
-  FiSearch
+  FiSearch,
+  FiX,
+  FiChevronDown,
+  FiFolder
 } from 'react-icons/fi';
 import TaskCard from './TaskCard';
 
@@ -226,21 +229,46 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
           </AnimatePresence>
         </SortableContext>
 
-        {/* Enhanced Empty State */}
+        {/* Enhanced Empty State with Status Info */}
         {columnTasks.length === 0 && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-12 text-gray-400"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-8 px-4 mx-2 my-4 rounded-xl bg-gradient-to-br from-gray-50/50 to-gray-100/50 border border-gray-200/50"
           >
-            <div className={`w-16 h-16 ${column.glassColor} rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm`}>
+            <div className={`w-16 h-16 ${column.glassColor} rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm shadow-lg`}>
               <ColumnIcon className="w-8 h-8" />
             </div>
-            <p className="text-sm font-medium mb-2">No tasks in {column.label}</p>
-            <p className="text-xs text-gray-400 text-center">
-              Drag tasks here to move them<br />
-              or create new ones
-            </p>
+            <p className="text-sm font-medium mb-2 text-gray-700">No tasks in {column.label}</p>
+            {tasks.length > 0 ? (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-center"
+              >
+                <p className="text-xs text-gray-500 mb-2">
+                  Tasks are available but none match the current filters
+                </p>
+                <p className="text-xs text-gray-400">
+                  Try adjusting your filters or drag tasks here
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-center"
+              >
+                <p className="text-xs text-gray-500 mb-2">
+                  No tasks have been created yet
+                </p>
+                <p className="text-xs text-gray-400">
+                  Create a task or drag tasks here when available
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         )}
       </div>
@@ -255,10 +283,102 @@ export default function TaskBoard({
   onTaskDelete,
   onTaskView,
   search = '',
-  setSearch = () => {}
+  setSearch = () => {},
+  filters = { status: 'all', assignee: 'all' },
+  setFilters = () => {},
+  employees = [],
+  sprints = [],
+  selectedSprintId = 'all',
+  setSelectedSprintId = () => {},
+  selectedProjectId = 'all',
+  setSelectedProjectId = () => {},
+  projects = [],
+  getStatusConfig = () => ({}),
+  onClearAllFilters = null,
+  onOpenSprintManagement = () => {}
 }) {
   const [activeId, setActiveId] = useState(null);
   const [showStats, setShowStats] = useState(true);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSprintDropdown, setShowSprintDropdown] = useState(false);
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  
+  const statusDropdownRef = useRef(null);
+  const sprintDropdownRef = useRef(null);
+  const assigneeDropdownRef = useRef(null);
+  const projectDropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+        setShowStatusDropdown(false);
+      }
+      if (sprintDropdownRef.current && !sprintDropdownRef.current.contains(event.target)) {
+        setShowSprintDropdown(false);
+      }
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target)) {
+        setShowAssigneeDropdown(false);
+      }
+      if (projectDropdownRef.current && !projectDropdownRef.current.contains(event.target)) {
+        setShowProjectDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Don't trigger if typing in an input
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
+      
+      switch(event.key) {
+        case '?':
+          setShowShortcuts(!showShortcuts);
+          break;
+        case '/':
+          event.preventDefault();
+          searchInputRef.current?.focus();
+          break;
+        case 'c':
+          if (event.ctrlKey || event.metaKey) return; // Don't interfere with copy
+          if (onClearAllFilters && typeof onClearAllFilters === 'function') {
+            // Use the robust clear function from parent if available
+            onClearAllFilters();
+          } else {
+            // Fallback to local clear logic
+            try {
+              setFilters(prevFilters => ({
+                ...prevFilters,
+                status: 'all',
+                assignee: 'all',
+                team: 'all',
+                dueDate: 'all',
+                sprint: 'all',
+                search: ''
+              }));
+              setSelectedProjectId('all');
+              setSelectedSprintId('all');
+              setSearch('');
+            } catch (err) {
+              console.error('Error clearing filters:', err);
+            }
+          }
+          break;
+        case 'Escape':
+          setShowShortcuts(false);
+          break;
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [showShortcuts]);
   
   // Filter tasks by search
   const filteredTasks = tasks.filter(task => {
@@ -351,59 +471,505 @@ export default function TaskBoard({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Enhanced Board Statistics */}
-      
+    <div className="space-y-4">
+      {/* Stunning Modern Header with Integrated Filters */}
+      <div className="relative z-[40] mb-4 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 backdrop-blur-md rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="p-4">
+          {/* Top Row: Filters and Search */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            {/* Project Filter Dropdown - Beautiful & Animated */}
+            <div className="relative" ref={projectDropdownRef}>
+              <motion.button
+                onClick={() => {
+                  setShowProjectDropdown(!showProjectDropdown);
+                  setShowStatusDropdown(false);
+                  setShowSprintDropdown(false);
+                  setShowAssigneeDropdown(false);
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
+                  selectedProjectId !== 'all'
+                    ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-2 border-indigo-400 shadow-indigo-200'
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-indigo-50 hover:to-indigo-100 hover:border-indigo-200'
+                }`}
+              >
+                <FiFolder className="w-4 h-4" />
+                <span>
+                  {selectedProjectId === 'all' 
+                    ? 'Project' 
+                    : projects.find(p => p.id === selectedProjectId)?.name || 'Project'
+                  }
+                </span>
+                <motion.div
+                  animate={{ rotate: showProjectDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FiChevronDown className="w-3.5 h-3.5" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {showProjectDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                    className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-indigo-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                    style={{ boxShadow: '0 20px 60px rgba(99, 102, 241, 0.2)' }}
+                  >
+                    <motion.button
+                      onClick={() => {
+                        setSelectedProjectId('all');
+                        setShowProjectDropdown(false);
+                      }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(238, 242, 255, 1)' }}
+                      className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                        selectedProjectId === 'all' 
+                          ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-500' 
+                          : 'text-gray-700 font-medium hover:font-semibold'
+                      }`}
+                    >
+                      <FiGrid className="w-4 h-4" />
+                      All Projects
+                    </motion.button>
+                    {projects.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="flex flex-col items-center gap-2 py-2">
+                          <FiFolder className="w-8 h-8 text-gray-400" />
+                          <p>No projects available</p>
+                        </div>
+                      </div>
+                    ) : projects.map((project, index) => (
+                      <motion.button
+                        key={project.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => {
+                          setSelectedProjectId(project.id);
+                          setShowProjectDropdown(false);
+                        }}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(238, 242, 255, 1)' }}
+                        className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                          selectedProjectId === project.id 
+                            ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-500' 
+                            : 'text-gray-700 font-medium hover:font-semibold'
+                        }`}
+                      >
+                        <FiFolder className="w-4 h-4" />
+                        {project.name}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-      {/* Integrated Board Header with Search and Progress */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/60 p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Search Section */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
+            {/* Status Filter Dropdown - Amber Themed */}
+            <div className="relative" ref={statusDropdownRef}>
+              <motion.button
+                onClick={() => {
+                  setShowStatusDropdown(!showStatusDropdown);
+                  setShowProjectDropdown(false);
+                  setShowSprintDropdown(false);
+                  setShowAssigneeDropdown(false);
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
+                  filters.status !== 'all'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-2 border-amber-400 shadow-amber-200'
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-amber-50 hover:to-orange-50 hover:border-amber-200'
+                }`}
+              >
+                <FiFilter className="w-4 h-4" />
+                <span>{filters.status === 'all' ? 'Status' : filters.status}</span>
+                <motion.div
+                  animate={{ rotate: showStatusDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FiChevronDown className="w-3.5 h-3.5" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {showStatusDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                    className="absolute z-[90] mt-2 w-56 bg-white rounded-2xl shadow-2xl border-2 border-amber-100 py-2 backdrop-blur-xl"
+                    style={{ boxShadow: '0 20px 60px rgba(245, 158, 11, 0.2)' }}
+                  >
+                    {['all', 'To Do', 'In Progress', 'Review', 'Completed'].map((status, index) => {
+                      const config = getStatusConfig(status);
+                      const Icon = config.icon;
+                      return (
+                        <motion.button
+                          key={status}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          onClick={() => {
+                            setFilters({ ...filters, status });
+                            setShowStatusDropdown(false);
+                          }}
+                          whileHover={{ x: 4, backgroundColor: 'rgba(254, 243, 199, 1)' }}
+                          className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                            filters.status === status 
+                              ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-bold border-l-4 border-amber-500' 
+                              : 'text-gray-700 font-medium hover:font-semibold'
+                          }`}
+                        >
+                          {Icon && <Icon className="w-4 h-4" />}
+                          <span>{status === 'all' ? 'All Statuses' : status}</span>
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Sprint Filter Dropdown - Fuchsia Themed */}
+            <div className="relative" ref={sprintDropdownRef}>
+              <motion.button
+                onClick={() => {
+                  setShowSprintDropdown(!showSprintDropdown);
+                  setShowProjectDropdown(false);
+                  setShowStatusDropdown(false);
+                  setShowAssigneeDropdown(false);
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
+                  selectedSprintId !== 'all'
+                    ? 'bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white border-2 border-fuchsia-400 shadow-fuchsia-200'
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-fuchsia-50 hover:to-pink-50 hover:border-fuchsia-200'
+                }`}
+              >
+                <FiTarget className="w-4 h-4" />
+                <span>
+                  {selectedSprintId === 'all'
+                    ? 'Sprint'
+                    : sprints.find(s => s.id === selectedSprintId)?.name || 'Sprint'
+                  }
+                </span>
+                <motion.div
+                  animate={{ rotate: showSprintDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FiChevronDown className="w-3.5 h-3.5" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {showSprintDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                    className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-fuchsia-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                    style={{ boxShadow: '0 20px 60px rgba(217, 70, 239, 0.2)' }}
+                  >
+                    <motion.button
+                      onClick={() => {
+                        setSelectedSprintId('all');
+                        setShowSprintDropdown(false);
+                      }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(250, 232, 255, 1)' }}
+                      className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                        selectedSprintId === 'all' 
+                          ? 'bg-gradient-to-r from-fuchsia-50 to-pink-50 text-fuchsia-700 font-bold border-l-4 border-fuchsia-500' 
+                          : 'text-gray-700 font-medium hover:font-semibold'
+                      }`}
+                    >
+                      <FiZap className="w-4 h-4" />
+                      All Sprints
+                    </motion.button>
+                    {sprints.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="flex flex-col items-center gap-2 py-2">
+                          <FiTarget className="w-8 h-8 text-gray-400" />
+                          <p>No sprints available</p>
+                        </div>
+                      </div>
+                    ) : sprints.map((sprint, index) => (
+                      <motion.button
+                        key={sprint.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => {
+                          setSelectedSprintId(sprint.id);
+                          setShowSprintDropdown(false);
+                        }}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(250, 232, 255, 1)' }}
+                        className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                          selectedSprintId === sprint.id 
+                            ? 'bg-gradient-to-r from-fuchsia-50 to-pink-50 text-fuchsia-700 font-bold border-l-4 border-fuchsia-500' 
+                            : 'text-gray-700 font-medium hover:font-semibold'
+                        }`}
+                      >
+                        <FiTarget className="w-4 h-4" />
+                        <span>{sprint.name}</span>
+                        {sprint.status === 'Active' && (
+                          <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-bold">Active</span>
+                        )}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Assignee Filter Dropdown - Emerald Themed */}
+            <div className="relative" ref={assigneeDropdownRef}>
+              <motion.button
+                onClick={() => {
+                  setShowAssigneeDropdown(!showAssigneeDropdown);
+                  setShowProjectDropdown(false);
+                  setShowStatusDropdown(false);
+                  setShowSprintDropdown(false);
+                }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${
+                  filters.assignee !== 'all'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-2 border-emerald-400 shadow-emerald-200'
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-200'
+                }`}
+              >
+                <FiUsers className="w-4 h-4" />
+                <span>
+                  {filters.assignee === 'all'
+                    ? 'Assignee'
+                    : employees.find(e => e.id === filters.assignee)?.name || 'Assignee'
+                  }
+                </span>
+                <motion.div
+                  animate={{ rotate: showAssigneeDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FiChevronDown className="w-3.5 h-3.5" />
+                </motion.div>
+              </motion.button>
+              <AnimatePresence>
+                {showAssigneeDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                    className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-emerald-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                    style={{ boxShadow: '0 20px 60px rgba(16, 185, 129, 0.2)' }}
+                  >
+                    <motion.button
+                      onClick={() => {
+                        setFilters({ ...filters, assignee: 'all' });
+                        setShowAssigneeDropdown(false);
+                      }}
+                      whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
+                      className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                        filters.assignee === 'all' 
+                          ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500' 
+                          : 'text-gray-700 font-medium hover:font-semibold'
+                      }`}
+                    >
+                      <FiUsers className="w-4 h-4" />
+                      All Assignees
+                    </motion.button>
+                    {employees.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="flex flex-col items-center gap-2 py-2">
+                          <FiUsers className="w-8 h-8 text-gray-400" />
+                          <p>No team members available</p>
+                        </div>
+                      </div>
+                    ) : employees.map((emp, index) => (
+                      <motion.button
+                        key={emp.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => {
+                          setFilters({ ...filters, assignee: emp.id });
+                          setShowAssigneeDropdown(false);
+                        }}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
+                        className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${
+                          filters.assignee === emp.id 
+                            ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500' 
+                            : 'text-gray-700 font-medium hover:font-semibold'
+                        }`}
+                      >
+                        {emp.avatar_url ? (
+                          <img src={emp.avatar_url} alt={emp.name} className="w-6 h-6 rounded-full ring-2 ring-emerald-100" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
+                            {emp.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                        )}
+                        <span>{emp.name}</span>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Clear Filters - Animated */}
+            <AnimatePresence>
+              {(selectedProjectId !== 'all' || filters.status !== 'all' || selectedSprintId !== 'all' || filters.assignee !== 'all' || search) && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    if (onClearAllFilters && typeof onClearAllFilters === 'function') {
+                      // Use the robust clear function from parent if available
+                      onClearAllFilters();
+                    } else {
+                      // Fallback to local clear logic
+                      try {
+                        setFilters(prevFilters => ({
+                          ...prevFilters,
+                          status: 'all',
+                          assignee: 'all',
+                          team: 'all',
+                          dueDate: 'all',
+                          sprint: 'all',
+                          search: ''
+                        }));
+                        setSelectedProjectId('all');
+                        setSelectedSprintId('all');
+                        setSearch('');
+                      } catch (err) {
+                        console.error('Error clearing filters:', err);
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-red-50 to-rose-50 text-red-600 border-2 border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300 transition-all shadow-md hover:shadow-lg"
+                >
+                  <FiX className="w-4 h-4" />
+                  <span>Clear All</span>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            {/* Manage Sprints - Prominent Button */}
+            <motion.button
+              onClick={() => onOpenSprintManagement()}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-2 border-indigo-500/70 shadow-lg hover:shadow-xl hover:from-indigo-500 hover:to-purple-500 transition-all"
+              whileHover={{ scale: 1.06, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              title="Open Sprint Management"
+            >
+              <FiTarget className="w-4 h-4" />
+              <span className="hidden sm:inline">Manage Sprints</span>
+              <span className="sm:hidden">Sprints</span>
+            </motion.button>
+
+            {/* Spacer */}
+            <div className="flex-1"></div>
+
+            {/* Search Bar - Enhanced */}
+            <motion.div 
+              className="relative flex-1 min-w-[200px] max-w-xs"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
               <input
+                ref={searchInputRef}
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search tasks by title, description, or assignee..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white/90 backdrop-blur-sm"
+                placeholder="Search tasks... (Press / to focus)"
+                className="w-full pl-10 pr-10 py-2 text-sm border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-blue-300 shadow-sm"
               />
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               {search && (
-                <button
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                <motion.button
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                  whileHover={{ scale: 1.2 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
                   onClick={() => setSearch('')}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                  <FiX className="w-4 h-4" />
+                </motion.button>
               )}
-            </div>
+            </motion.div>
           </div>
 
-          {/* Progress Section */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-600">Progress</span>
-            </div>
-            <div className="flex items-center gap-2 min-w-[120px]">
-              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+          {/* Compact Progress & Stats Row */}
+          <div className="flex items-center gap-3">
+            {/* Compact Progress Bar */}
+            <div className="flex-1 flex items-center gap-2">
+              <div className="relative w-24 h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full relative"
+                  className="h-full rounded-full relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(90deg, 
+                      ${boardStats.completionRate < 30 ? '#ef4444, #f97316' : 
+                        boardStats.completionRate < 70 ? '#3b82f6, #8b5cf6' : 
+                        '#10b981, #059669'})`
+                  }}
                   initial={{ width: 0 }}
                   animate={{ width: `${boardStats.completionRate}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  style={{
-                    backgroundSize: '200% 100%',
-                    animation: 'progress-shimmer 3s ease-in-out infinite'
-                  }}
-                />
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                >
+                  <motion.div
+                    className="absolute inset-0 opacity-30"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)'
+                    }}
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  />
+                </motion.div>
               </div>
-              <span className="text-sm font-bold text-gray-700 min-w-[2.5rem] text-right">
+              <motion.span 
+                className="text-xs font-bold min-w-[3rem] text-right"
+                style={{
+                  background: boardStats.completionRate < 30 ? 'linear-gradient(to right, #ef4444, #f97316)' :
+                        boardStats.completionRate < 70 ? 'linear-gradient(to right, #3b82f6, #8b5cf6)' :
+                        'linear-gradient(to right, #10b981, #059669)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+                key={boardStats.completionRate}
+                initial={{ scale: 1.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 {boardStats.completionRate}%
-              </span>
+              </motion.span>
+            </div>
+
+            {/* Compact Stats Badges */}
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5 bg-blue-50 border border-blue-200 rounded-full px-2 py-1 text-xs">
+                <FiGrid className="w-2.5 h-2.5 text-blue-600" />
+                <span className="text-blue-700 font-bold">{boardStats.total}</span>
+              </div>
+              {boardStats.dueToday > 0 && (
+                <div className="flex items-center gap-0.5 bg-orange-50 border border-orange-200 rounded-full px-2 py-1 text-xs">
+                  <FiClock className="w-2.5 h-2.5 text-orange-600" />
+                  <span className="text-orange-700 font-bold">{boardStats.dueToday}</span>
+                </div>
+              )}
+              {boardStats.overdue > 0 && (
+                <div className="flex items-center gap-0.5 bg-red-50 border border-red-200 rounded-full px-2 py-1 text-xs">
+                  <FiAlertCircle className="w-2.5 h-2.5 text-red-600" />
+                  <span className="text-red-700 font-bold">{boardStats.overdue}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -448,35 +1014,144 @@ export default function TaskBoard({
         </DragOverlay>
       </DndContext>
 
-      {/* Enhanced Board Footer */}
+      {/* Beautiful Board Footer with Stats */}
       <motion.div 
-        className="bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/60 p-4 shadow-sm"
-        whileHover={{ y: -2 }}
+        className="bg-gradient-to-r from-white via-purple-50/20 to-blue-50/20 backdrop-blur-md rounded-2xl border border-gray-200/60 px-5 py-3 shadow-lg hover:shadow-xl transition-all"
+        whileHover={{ y: -3, scale: 1.01 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <FiZap className="w-4 h-4 text-blue-500" />
-              <span className="font-medium">Total Tasks: {boardStats.total}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <FiTarget className="w-4 h-4 text-green-500" />
-              <span className="font-medium">Completion Rate: {boardStats.completionRate}%</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <FiAlertCircle className="w-4 h-4 text-red-500" />
-              <span className="font-medium">Overdue: {boardStats.overdue}</span>
-            </div>
+            <motion.div 
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100">
+                <FiZap className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <span className="font-bold text-gray-800">{boardStats.total}</span>
+                <span className="text-gray-500 ml-1">Tasks</span>
+              </div>
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100">
+                <FiCheckCircle className="w-4 h-4 text-green-600" />
+              </div>
+              <div>
+                <span className="font-bold text-gray-800">{boardStats.completed}</span>
+                <span className="text-gray-500 ml-1">Done</span>
+              </div>
+            </motion.div>
+            <motion.div 
+              className="flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100">
+                <FiTrendingUp className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <span className="font-bold text-gray-800">{boardStats.inProgress}</span>
+                <span className="text-gray-500 ml-1">Active</span>
+              </div>
+            </motion.div>
           </div>
-          <button
-            onClick={() => setShowStats(!showStats)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100/50 transition-colors"
+          
+          {/* Keyboard Shortcuts Hint - Clickable */}
+          <motion.button
+            onClick={() => setShowShortcuts(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer"
+            whileHover={{ scale: 1.08, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            title="Click to view all shortcuts"
           >
-            {showStats ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-          </button>
+            <span className="text-indigo-700 font-bold text-xs">⚡ Press</span>
+            <kbd className="px-2 py-0.5 bg-white rounded text-indigo-700 font-mono text-xs shadow-sm border-2 border-indigo-300 font-bold">?</kbd>
+            <span className="text-indigo-700 font-bold text-xs">for shortcuts</span>
+          </motion.button>
         </div>
       </motion.div>
+
+      {/* Keyboard Shortcuts Modal */}
+      <AnimatePresence>
+        {showShortcuts && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowShortcuts(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full mx-4 border-2 border-gray-200"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-2xl">⚡</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Keyboard Shortcuts</h2>
+                    <p className="text-sm text-gray-600">Speed up your workflow</p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={() => setShowShortcuts(false)}
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <FiX className="w-6 h-6 text-gray-600" />
+                </motion.button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { key: '?', description: 'Show/hide shortcuts', icon: '❓' },
+                  { key: '/', description: 'Focus search bar', icon: '🔍' },
+                  { key: 'c', description: 'Clear all filters', icon: '🧹' },
+                  { key: 'Esc', description: 'Close modals', icon: '❌' },
+                ].map((shortcut, index) => (
+                  <motion.div
+                    key={shortcut.key}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:shadow-md transition-all"
+                  >
+                    <div className="text-2xl">{shortcut.icon}</div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">{shortcut.description}</p>
+                    </div>
+                    <kbd className="px-3 py-2 bg-white rounded-lg text-gray-700 font-mono text-sm shadow-sm border-2 border-gray-300 font-bold">
+                      {shortcut.key}
+                    </kbd>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
+              >
+                <p className="text-xs text-center text-blue-900">
+                  <strong>💡 Pro Tip:</strong> More shortcuts coming soon! These features help you work faster.
+                </p>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-} 
+}

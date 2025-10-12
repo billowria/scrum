@@ -4,7 +4,8 @@ import {
   FiChevronRight, FiBriefcase, FiUsers, FiClipboard, FiClock, 
   FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
   FiTrendingUp, FiShield, FiZap, FiHeart, FiSearch, FiStar,
-  FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX
+  FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX,
+  FiMessageSquare
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -404,6 +405,7 @@ export default function Sidebar({ open, setOpen, user }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [managerDropdown, setManagerDropdown] = useState(false);
+  const [chatDropdown, setChatDropdown] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCollapsing, setIsCollapsing] = useState(false);
@@ -416,12 +418,13 @@ export default function Sidebar({ open, setOpen, user }) {
     projects: 0,
     achievements: 0,
     teamMembers: 0,
-    reports: 0
+    reports: 0,
+    unreadMessages: 0
   });
   
   // Fetch counts function
   const fetchCounts = useCallback(async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     try {
       const countsData = {};
@@ -489,6 +492,19 @@ export default function Sidebar({ open, setOpen, user }) {
         .gte('created_at', since)
         .eq('user_id', user.id);
       countsData.reports = reportsData?.length || 0;
+
+      // Fetch unread messages count
+      try {
+        const { data: conversationsData } = await supabase
+          .from('chat_conversation_list')
+          .select('unread_count')
+          .eq('participant_user_id', user.id);
+        
+        countsData.unreadMessages = conversationsData?.reduce((sum, conv) => sum + (conv.unread_count || 0), 0) || 0;
+      } catch (err) {
+        // If chat tables don't exist yet, set to 0
+        countsData.unreadMessages = 0;
+      }
 
       setCounts(countsData);
     } catch (error) {
@@ -880,6 +896,90 @@ export default function Sidebar({ open, setOpen, user }) {
               repeatDelay: 2
             }}
           />
+        </motion.div>
+
+        {/* Chat Portal - Always visible */}
+        <motion.div 
+          variants={itemVariants} 
+          className="relative"
+          onHoverStart={() => setHoveredItem('chat-portal')}
+          onHoverEnd={() => setHoveredItem(null)}
+        >
+          <motion.button
+            type="button"
+            onClick={() => {
+              navigate('/chat');
+            }}
+            className={`
+              group relative w-full flex items-center p-4 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-cyan-400/50
+              ${location.pathname === '/chat'
+                ? 'bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 text-white shadow-2xl' 
+                : 'text-slate-600 hover:text-slate-800 hover:bg-white/10'
+              }
+            `}
+            whileHover={{ 
+              scale: 1.02, 
+              y: -2,
+              transition: { type: 'spring', stiffness: 400, damping: 30 }
+            }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              boxShadow: location.pathname === '/chat'
+                ? '0 12px 40px rgba(34, 211, 238, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)' 
+                : undefined
+            }}
+          >
+            {/* Animated background */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+
+            <motion.div
+              className={`
+                relative z-10 flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-300
+                ${location.pathname === '/chat'
+                  ? 'bg-white/20 shadow-lg' 
+                  : 'bg-white/5 group-hover:bg-white/15'
+                }
+              `}
+              whileHover={{ 
+                rotate: 5,
+                scale: 1.1,
+                transition: { type: 'spring', stiffness: 400 }
+              }}
+            >
+              <FiMessageSquare className="text-xl" />
+              {/* Unread badge */}
+              {counts.unreadMessages > 0 && (
+                <motion.div
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                >
+                  {counts.unreadMessages > 9 ? '9+' : counts.unreadMessages}
+                </motion.div>
+              )}
+            </motion.div>
+
+            <AnimatePresence>
+              {open && (
+                <motion.div
+                  variants={itemVariants}
+                  className="ml-4 flex-1 text-left"
+                >
+                  <div className="font-bold text-base tracking-wide">
+                    Chat
+                  </div>
+                  <div className={`text-sm mt-1 transition-colors ${
+                    location.pathname === '/chat' ? 'text-white/80' : 'text-slate-500 group-hover:text-slate-600'
+                  }`}>
+                    Team messaging & DMs
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </motion.div>
 
         {/* Enhanced Manager Portal (hidden for non-manager/admin) */}

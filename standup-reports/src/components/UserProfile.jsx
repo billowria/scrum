@@ -1,155 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FiUser, 
-  FiMail, 
-  FiBriefcase, 
-  FiCalendar, 
-  FiPhone, 
-  FiHash, 
-  FiLinkedin, 
-  FiEdit2, 
-  FiSave, 
-  FiX, 
-  FiAlertCircle,
-  FiChevronRight,
-  FiUsers,
-  FiClock,
-  FiCheck,
-  FiArrowLeft,
-  FiMapPin,
-  FiGlobe,
-  FiTwitter,
-  FiGithub,
-  FiSlack,
-  FiStar,
-  FiAward,
-  FiTrendingUp,
-  FiActivity,
-  FiSettings,
-  FiCamera,
-  FiSearch,
-  FiFilter,
-  FiGrid,
-  FiList,
-  FiRefreshCw,
-  FiDownload,
-  FiUpload,
-  FiEye,
-  FiEyeOff,
-  FiUserCheck,
-  FiUserPlus,
-  FiUserMinus,
-  FiBook,
-  FiTarget,
-  FiZap,
-  FiHeart,
-  FiShield,
-  FiLock,
-  FiUnlock,
-  FiDollarSign,
-  FiBarChart2,
-  FiFolder,
-  FiTag,
-  FiUserX,
-  FiBell,
-  FiCompass,
-  FiHome,
-  FiNavigation,
-  FiFlag,
-  FiMessageSquare,
-  FiFileText,
-  FiClipboard,
-  FiBox,
-  FiDatabase,
-  FiServer,
-  FiCode,
-  FiLayout,
-  FiImage,
-  FiVideo,
-  FiMusic,
-  FiFilm,
-  FiHeadphones,
-  FiMic,
-  FiMonitor,
-  FiSmartphone,
-  FiTablet,
-  FiWatch,
-  FiPrinter,
-  FiCpu,
-  FiHardDrive,
-  FiKey,
-  FiCreditCard,
-  FiPercent,
-  FiShoppingCart,
-  FiGift,
-  FiPackage,
-  FiTruck,
-  FiMap,
-  FiAnchor,
-  FiAtSign,
-  FiDroplet,
-  FiSun,
-  FiMoon,
-  FiCloud,
-  FiCloudRain,
-  FiCloudSnow,
-  FiCloudLightning,
-  FiWind,
-  FiSunrise,
-  FiSunset,
-  FiThermometer,
-  FiUmbrella,
-  FiFeather,
-  FiFrown,
-  FiMeh,
-  FiSmile,
-  FiThumbsUp,
-  FiThumbsDown,
-  FiBookmark,
-  FiShare,
-  FiShare2,
-  FiPaperclip,
-  FiScissors,
-  FiCopy,
-  FiCrop,
-  FiEdit,
-  FiEdit3,
-  FiPenTool,
-  FiType,
-  FiBold,
-  FiItalic,
-  FiUnderline,
-  FiAlignLeft,
-  FiAlignCenter,
-  FiAlignRight,
-  FiAlignJustify,
-  FiLink,
-  FiLink2
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line
+} from 'recharts';
+import {
+  FiUser, FiMail, FiBriefcase, FiCalendar, FiPhone, FiLinkedin,
+  FiEdit2, FiSave, FiX, FiAlertCircle, FiChevronRight, FiUsers,
+  FiClock, FiCheck, FiArrowLeft, FiTwitter, FiGithub, FiSlack,
+  FiStar, FiAward, FiTrendingUp, FiActivity, FiSettings,
+  FiCamera, FiSearch, FiDownload, FiUpload, FiBook, FiTarget,
+  FiZap, FiHeart, FiShield, FiBarChart2, FiFolder, FiTag,
+  FiBell, FiHome, FiMessageSquare, FiFileText, FiGrid,
+  FiShare2, FiCopy, FiEdit, FiMenu, FiRefreshCw, FiPlus,
+  FiMinus, FiMaximize2, FiMinimize2, FiCommand,
+  FiMoon, FiSun
 } from 'react-icons/fi';
+
+// Command palette commands
+const COMMANDS = [
+  { id: 'edit', label: 'Toggle Edit Mode', icon: FiEdit2, action: 'toggleEdit' },
+  { id: 'share', label: 'Share Profile', icon: FiShare2, action: 'share' },
+  { id: 'export', label: 'Export Data', icon: FiDownload, action: 'export' },
+  { id: 'overview', label: 'Go to Overview', icon: FiUser, action: 'navigate', target: 'overview' },
+  { id: 'team', label: 'Go to Team', icon: FiUsers, action: 'navigate', target: 'team' },
+  { id: 'projects', label: 'Go to Projects', icon: FiBriefcase, action: 'navigate', target: 'projects' },
+  { id: 'activity', label: 'Go to Activity', icon: FiActivity, action: 'navigate', target: 'activity' },
+  { id: 'achievements', label: 'Go to Achievements', icon: FiAward, action: 'navigate', target: 'achievements' },
+  { id: 'timesheets', label: 'Go to Timesheets', icon: FiClock, action: 'navigate', target: 'timesheets' },
+  { id: 'skills', label: 'Go to Skills', icon: FiZap, action: 'navigate', target: 'skills' }
+];
 
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const commandPaletteRef = useRef(null);
+  
+  // Core state
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [saving, setSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [canEditProfile, setCanEditProfile] = useState(false);
+  
+  // UI state
   const [activeTab, setActiveTab] = useState('overview');
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [commandSearch, setCommandSearch] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  
+  // Form data
+  const [formData, setFormData] = useState({});
+  
+  // Data state
   const [teamMembers, setTeamMembers] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [timesheets, setTimesheets] = useState([]);
   const [leavePlans, setLeavePlans] = useState([]);
+  const [skills, setSkills] = useState([]);
 
+  // Command palette handlers
+  const executeCommand = useCallback((command) => {
+    setShowCommandPalette(false);
+    setCommandSearch('');
+    
+    switch (command.action) {
+      case 'toggleEdit':
+        if (canEditProfile) setIsEditing(!isEditing);
+        break;
+      case 'share':
+        setShowShareModal(true);
+        break;
+      case 'export':
+        handleExport();
+        break;
+      case 'navigate':
+        setActiveTab(command.target);
+        break;
+    }
+  }, [canEditProfile, isEditing]);
+  
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+      if (e.key === 'Escape') {
+        setShowCommandPalette(false);
+        setShowShareModal(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -157,7 +116,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (currentUser) {
       setIsOwnProfile(!userId || userId === currentUser.id);
-      setCanEditProfile(currentUser.role === 'manager');
+      setCanEditProfile(currentUser.role === 'manager' || !userId || userId === currentUser.id);
       const id = userId || currentUser.id;
       fetchProfile(id);
       fetchTeamMembers(id);
@@ -166,6 +125,7 @@ const UserProfile = () => {
       fetchTasks(id);
       fetchTimesheets(id);
       fetchLeavePlans(id);
+      fetchSkills(id);
     }
   }, [userId, currentUser]);
 
@@ -193,7 +153,6 @@ const UserProfile = () => {
     setError(null);
     
     try {
-      // First get the basic user data with avatar_url from users table (like navbar does)
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id, name, role, avatar_url, team_id, teams(name)')
@@ -202,26 +161,21 @@ const UserProfile = () => {
         
       if (userError) throw userError;
       
-      // Then get the detailed profile data from the RPC
       const { data: profileData, error: profileError } = await supabase
         .rpc('get_user_profile', { p_user_id: id });
         
       if (profileError) throw profileError;
       
       if (profileData && profileData.length > 0) {
-        // Merge the user data (with avatar_url) with profile data
         const mergedProfile = {
           ...profileData[0],
-          avatar_url: userData.avatar_url, // Use avatar_url from users table
-          name: userData.name, // Use name from users table
-          role: userData.role, // Use role from users table
-          team_id: userData.team_id, // Use team_id from users table
-          team_name: userData.teams?.name // Use team_name from teams table
+          avatar_url: userData.avatar_url,
+          name: userData.name,
+          role: userData.role,
+          team_id: userData.team_id,
+          team_name: userData.teams?.name
         };
         
-        console.log('Profile data:', mergedProfile);
-        console.log('Avatar URL:', mergedProfile.avatar_url);
-        console.log('All profile fields:', Object.keys(mergedProfile));
         setProfile(mergedProfile);
         setFormData(mergedProfile);
       } else {
@@ -237,7 +191,6 @@ const UserProfile = () => {
 
   const fetchTeamMembers = async (id) => {
     try {
-      // Get user's team_id first
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('team_id')
@@ -318,7 +271,7 @@ const UserProfile = () => {
         .select('*')
         .eq('assignee_id', id)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
         
       if (error) throw error;
       setTasks(data || []);
@@ -334,7 +287,7 @@ const UserProfile = () => {
         .select('*')
         .eq('user_id', id)
         .order('date', { ascending: false })
-        .limit(10);
+        .limit(30);
         
       if (error) throw error;
       setTimesheets(data || []);
@@ -357,21 +310,111 @@ const UserProfile = () => {
       console.error('Error fetching leave plans:', error);
     }
   };
+  
+  const fetchSkills = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_skills')
+        .select('*')
+        .eq('user_id', id)
+        .order('skill_name', { ascending: true });
+        
+      if (error) throw error;
+      setSkills(data || []);
+    } catch (error) {
+      console.error('Error fetching skills:', error);
+    }
+  };
 
+  // Form validation
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name?.trim()) {
+      errors.name = 'Name is required';
+    }
+    
+    if (!formData.email?.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+    
+    if (formData.phone && !/^[\+]?[0-9\s\-\(\)]+$/.test(formData.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+    }
+    
+    if (formData.linkedin_url && !formData.linkedin_url.includes('linkedin.com')) {
+      errors.linkedin_url = 'Please enter a valid LinkedIn URL';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
+  };
+  
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !profile) return;
+    
+    setUploadingAvatar(true);
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}-${Math.random()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      const publicUrl = data.publicUrl;
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', profile.id);
+      
+      if (updateError) throw updateError;
+      
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      setError('Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleSave = async () => {
+    if (!validateForm()) return;
+    
     setSaving(true);
     setError(null);
     
     try {
-      // Update user data in users table
       const { error: userError } = await supabase
         .from('users')
         .update({
@@ -382,7 +425,6 @@ const UserProfile = () => {
         
       if (userError) throw userError;
       
-      // Update profile data in user_profiles table
       const { error: profileError } = await supabase
         .rpc('upsert_user_profile', {
           p_user_id: profile.id,
@@ -397,7 +439,6 @@ const UserProfile = () => {
         
       if (profileError) throw profileError;
       
-      // Refresh the profile
       await fetchProfile(profile.id);
       setIsEditing(false);
     } catch (error) {
@@ -411,6 +452,7 @@ const UserProfile = () => {
   const handleCancel = () => {
     setFormData({ ...profile });
     setIsEditing(false);
+    setValidationErrors({});
     setError(null);
   };
 
@@ -421,61 +463,145 @@ const UserProfile = () => {
       navigate('/dashboard');
     }
   };
+  
+  const handleExport = () => {
+    const data = {
+      profile,
+      projects,
+      tasks: tasks.slice(0, 10),
+      achievements,
+      timesheets: timesheets.slice(0, 20),
+      skills,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `profile_${profile?.name?.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+  
+  const addSkill = async (skillName, proficiency = 'intermediate') => {
+    if (!profile || !skillName.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_skills')
+        .upsert({
+          user_id: profile.id,
+          skill_name: skillName.trim(),
+          proficiency_level: proficiency
+        });
+      
+      if (error) throw error;
+      await fetchSkills(profile.id);
+    } catch (error) {
+      console.error('Error adding skill:', error);
+    }
+  };
+  
+  const removeSkill = async (skillId) => {
+    try {
+      const { error } = await supabase
+        .from('user_skills')
+        .delete()
+        .eq('id', skillId);
+      
+      if (error) throw error;
+      await fetchSkills(profile.id);
+    } catch (error) {
+      console.error('Error removing skill:', error);
+    }
+  };
 
-  // Stats cards data with more colorful and diverse icons
-  const stats = [
-    { name: 'Projects', value: projects.length, icon: <FiFolder className="w-6 h-6" />, color: 'from-blue-500 to-indigo-600', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
-    { name: 'Tasks Completed', value: tasks.filter(t => t.status === 'Completed').length, icon: <FiCheck className="w-6 h-6" />, color: 'from-green-500 to-emerald-600', bgColor: 'bg-green-100', textColor: 'text-green-600' },
-    { name: 'Achievements', value: achievements.length, icon: <FiAward className="w-6 h-6" />, color: 'from-purple-500 to-fuchsia-600', bgColor: 'bg-purple-100', textColor: 'text-purple-600' },
-    { name: 'Attendance', value: `${100 - (leavePlans.length > 0 ? Math.round((leavePlans.filter(l => l.status === 'approved').length / 365) * 100) : 0)}%`, icon: <FiTrendingUp className="w-6 h-6" />, color: 'from-amber-500 to-orange-600', bgColor: 'bg-amber-100', textColor: 'text-amber-600' },
-    { name: 'Team Members', value: teamMembers.length, icon: <FiUsers className="w-6 h-6" />, color: 'from-cyan-500 to-teal-600', bgColor: 'bg-cyan-100', textColor: 'text-cyan-600' },
-    { name: 'Hours Logged', value: timesheets.reduce((sum, t) => sum + (t.hours || 0), 0), icon: <FiClock className="w-6 h-6" />, color: 'from-rose-500 to-pink-600', bgColor: 'bg-rose-100', textColor: 'text-rose-600' },
-  ];
-
-  // Social links data with more diverse icons
-  const socialLinks = [
-    { name: 'LinkedIn', icon: <FiLinkedin className="w-5 h-5" />, url: formData.linkedin_url, color: 'bg-blue-600', bgColor: 'bg-blue-100' },
-    { name: 'GitHub', icon: <FiGithub className="w-5 h-5" />, url: '#', color: 'bg-gray-800', bgColor: 'bg-gray-100' },
-    { name: 'Twitter', icon: <FiTwitter className="w-5 h-5" />, url: '#', color: 'bg-sky-500', bgColor: 'bg-sky-100' },
-    { name: 'Slack', icon: <FiSlack className="w-5 h-5" />, value: formData.slack_handle, color: 'bg-purple-500', bgColor: 'bg-purple-100' },
-  ];
-
-  // Team members excluding current user
+  // Filtered data
+  const filteredCommands = COMMANDS.filter(cmd => 
+    cmd.label.toLowerCase().includes(commandSearch.toLowerCase())
+  );
+  
   const filteredTeamMembers = teamMembers.filter(member => member.id !== profile?.id);
-
-  // Project status colors
+  
+  // Stats calculation
+  const stats = [
+    { name: 'Projects', value: projects.length, icon: FiFolder, color: 'bg-blue-500', bgColor: 'bg-blue-50' },
+    { name: 'Completed', value: tasks.filter(t => t.status === 'Completed').length, icon: FiCheck, color: 'bg-green-500', bgColor: 'bg-green-50' },
+    { name: 'Achievements', value: achievements.length, icon: FiAward, color: 'bg-purple-500', bgColor: 'bg-purple-50' },
+    { name: 'Skills', value: skills.length, icon: FiZap, color: 'bg-amber-500', bgColor: 'bg-amber-50' },
+    { name: 'Team Size', value: teamMembers.length, icon: FiUsers, color: 'bg-cyan-500', bgColor: 'bg-cyan-50' },
+    { name: 'Hours', value: timesheets.reduce((sum, t) => sum + (t.hours || 0), 0), icon: FiClock, color: 'bg-rose-500', bgColor: 'bg-rose-50' }
+  ];
+  
+  // Chart data processing
+  const timesheetChartData = timesheets.slice(0, 7).reverse().map(ts => ({
+    date: new Date(ts.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    hours: ts.hours || 0
+  }));
+  
+  const taskStatusData = [
+    { name: 'To Do', value: tasks.filter(t => t.status === 'To Do').length, color: '#94A3B8' },
+    { name: 'In Progress', value: tasks.filter(t => t.status === 'In Progress').length, color: '#3B82F6' },
+    { name: 'Review', value: tasks.filter(t => t.status === 'Review').length, color: '#F59E0B' },
+    { name: 'Completed', value: tasks.filter(t => t.status === 'Completed').length, color: '#10B981' }
+  ];
+  
+  // Utility functions
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'on hold': return 'bg-amber-100 text-amber-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors = {
+      'active': 'bg-green-100 text-green-800',
+      'completed': 'bg-blue-100 text-blue-800',
+      'on hold': 'bg-amber-100 text-amber-800',
+      'cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  // Task status colors
   const getTaskStatusColor = (status) => {
-    switch (status) {
-      case 'To Do': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-blue-100 text-blue-800';
-      case 'Review': return 'bg-amber-100 text-amber-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors = {
+      'To Do': 'bg-gray-100 text-gray-800',
+      'In Progress': 'bg-blue-100 text-blue-800',
+      'Review': 'bg-amber-100 text-amber-800',
+      'Completed': 'bg-green-100 text-green-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   };
+  
+  const getProficiencyColor = (proficiency) => {
+    const colors = {
+      'beginner': 'bg-red-100 text-red-800',
+      'intermediate': 'bg-yellow-100 text-yellow-800',
+      'advanced': 'bg-green-100 text-green-800',
+      'expert': 'bg-purple-100 text-purple-800'
+    };
+    return colors[proficiency] || 'bg-gray-100 text-gray-800';
+  };
+  
+  // Sidebar navigation items
+  const sidebarItems = [
+    { id: 'overview', name: 'Overview', icon: FiUser },
+    { id: 'team', name: 'Team', icon: FiUsers },
+    { id: 'projects', name: 'Projects', icon: FiBriefcase },
+    { id: 'activity', name: 'Activity', icon: FiActivity },
+    { id: 'achievements', name: 'Achievements', icon: FiAward },
+    { id: 'timesheets', name: 'Timesheets', icon: FiClock },
+    { id: 'skills', name: 'Skills', icon: FiZap }
+  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <motion.div
-            className="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-6"
+            className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <h3 className="text-2xl font-bold text-gray-800 mb-3">Loading Profile</h3>
-          <p className="text-gray-600">Please wait while we fetch your profile information...</p>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Profile</h3>
+          <p className="text-gray-600">Please wait...</p>
         </div>
       </div>
     );
@@ -483,31 +609,21 @@ const UserProfile = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <motion.div
-          className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
         >
-          <motion.div
-            className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <FiAlertCircle className="w-12 h-12 text-red-600" />
-          </motion.div>
-          <h3 className="text-3xl font-bold text-red-800 mb-4">Something went wrong</h3>
-          <p className="text-red-600 mb-8 text-lg">{error}</p>
-          <motion.button
+          <FiAlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Error</h3>
+          <p className="text-red-600 mb-6">{error}</p>
+          <button
             onClick={handleGoBack}
-            className="px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 transition-all duration-300 font-medium text-lg shadow-lg"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            <FiArrowLeft className="inline mr-2" />
             Go Back
-          </motion.button>
+          </button>
         </motion.div>
       </div>
     );
@@ -515,765 +631,632 @@ const UserProfile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <motion.div
-          className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl"
-          initial={{ opacity: 0, y: 30 }}
+          className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
         >
-          <motion.div
-            className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
-            animate={{ scale: [1, 1.05, 1] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <FiUser className="w-12 h-12 text-gray-400" />
-          </motion.div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-4">Profile Not Found</h3>
-          <p className="text-gray-600 mb-8 text-lg">The requested profile could not be found.</p>
-          <motion.button
+          <FiUser className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h3>
+          <p className="text-gray-600 mb-6">The requested profile could not be found.</p>
+          <button
             onClick={handleGoBack}
-            className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-medium text-lg shadow-lg"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
-            <FiArrowLeft className="inline mr-2" />
             Go Back
-          </motion.button>
+          </button>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <motion.div 
+        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg flex flex-col transition-all duration-300`}
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+      >
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <h2 className={`font-bold text-gray-900 ${sidebarOpen ? 'block' : 'hidden'}`}>Profile</h2>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <FiMenu className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+        
+        <nav className="flex-1 p-4">
+          <div className="space-y-2">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                    activeTab === item.id 
+                      ? 'bg-indigo-100 text-indigo-700' 
+                      : 'hover:bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className={`${sidebarOpen ? 'block' : 'hidden'} font-medium`}>
+                    {item.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </motion.div>
 
-      <div className="py-8 px-4">
-        {/* Profile Header */}
-        <motion.div
-          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-3xl shadow-2xl overflow-hidden mb-8 relative"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
-          <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 bg-gradient-to-br from-cyan-400/30 to-fuchsia-400/30 blur-3xl rounded-full"></div>
-          <div className="pointer-events-none absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-tr from-amber-300/25 to-rose-400/25 blur-3xl rounded-full"></div>
-          
-          <div className="relative h-96">
-            <div className="absolute inset-0 bg-black/10"></div>
-            {/* Animated accents */}
-            <motion.div
-              className="absolute left-10 top-8 w-28 h-28 rounded-full bg-white/10"
-              animate={{ y: [0, -8, 0], opacity: [0.85, 1, 0.85] }}
-              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <motion.div
-              className="absolute right-10 bottom-10 w-36 h-36 rounded-full bg-white/10"
-              animate={{ y: [0, 10, 0], opacity: [0.7, 0.95, 0.7] }}
-              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
-            />
-            <div className="absolute top-5 right-5 z-10 flex items-center gap-2">
-              {(profile?.email) && (
-                <a href={`mailto:${profile.email}`} className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
-                  Email
-                </a>
-              )}
-              {(profile?.phone) && (
-                <a href={`tel:${profile.phone}`} className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
-                  Call
-                </a>
-              )}
-              {(profile?.slack_handle || profile?.linkedin_url) && (
-                <a href={profile?.linkedin_url || '#'} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-xl bg-white/15 backdrop-blur border border-white/20 text-white text-sm hover:bg-white/25 transition-colors shadow">
-                  Connect
-                </a>
-              )}
-            </div>
-            
-            {/* Profile Picture */}
-            <div className="absolute -bottom-28 left-1/2 -translate-x-1/2 z-10">
-              <div className="relative">
-                <div className="p-[3px] rounded-3xl bg-gradient-to-br from-white/70 via-rose-200 to-indigo-300 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-                  <div className="w-60 h-60 sm:w-64 sm:h-64 rounded-3xl bg-white p-2 shadow-2xl">
-                    {(() => {
-                      const avatarUrl = profile?.avatar_url || profile?.avatar || profile?.image_url;
-                      const userInitial = profile?.name?.charAt(0)?.toUpperCase() || 'U';
-                      return avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt={profile.name}
-                          className="w-full h-full rounded-xl object-cover shadow-md border-2 border-white"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.nextElementSibling;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                      ) : null;
-                    })()}
-                    <div style={{ display: (profile?.avatar_url || profile?.avatar || profile?.image_url) ? 'none' : 'flex' }} className="w-full h-full rounded-xl bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-bold text-5xl sm:text-6xl shadow-md border-2 border-white">
-                      {profile?.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <div className="bg-white shadow-sm border-b p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleGoBack}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <FiArrowLeft className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-3">
+                {profile.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt={profile.name} 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    {profile.name?.charAt(0)?.toUpperCase()}
                   </div>
-                </div>
-                {isEditing && (
-                  <button className="absolute bottom-3 right-3 w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-indigo-700 transition-colors">
-                    <FiCamera className="w-5 h-5" />
-                  </button>
                 )}
+                <div>
+                  <h1 className="font-bold text-gray-900">{profile.name}</h1>
+                  <p className="text-sm text-gray-600">{profile.job_title || profile.role}</p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {/* Profile Info */}
-          <div className="pt-24 pb-8 px-8">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between">
-              <div className="flex-1">
-                <div className="flex flex-col md:flex-row md:items-end md:space-x-6">
-                  <div className="mt-4">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="text-4xl font-extrabold bg-white/20 rounded-xl px-4 py-2 mb-2 w-full text-white placeholder-white/70"
-                      />
-                    ) : (
-                      <h1 className="text-4xl font-extrabold text-white">{profile.name}</h1>
-                    )}
-                    
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="job_title"
-                        value={formData.job_title}
-                        onChange={handleInputChange}
-                        placeholder="Job title"
-                        className="text-xl text-white/90 bg-white/20 rounded-lg px-4 py-1 w-full"
-                      />
-                    ) : (
-                      <p className="text-xl text-white/90">{profile.job_title || profile.role}</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
-              <span className="px-4 py-1.5 bg-white/20 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                {profile.role}
-              </span>
-              {profile.team_name && (
-                <span className="px-4 py-1.5 bg-purple-500/30 text-white rounded-full text-sm font-medium backdrop-blur-sm">
-                  {profile.team_name}
-                </span>
-              )}
-              {isOwnProfile && (
-                <span className="px-4 py-1.5 bg-green-500/30 text-white rounded-full text-sm font-medium flex items-center backdrop-blur-sm">
-                  <FiCheck className="mr-1" />
-                  You
-                </span>
-              )}
-              {canEditProfile && !isEditing && (
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowCommandPalette(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <FiCommand className="w-4 h-4" />
+                <span className="hidden sm:inline">Command Palette</span>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 text-xs bg-white rounded border">
+                  ⌘K
+                </kbd>
+              </button>
+              
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <FiShare2 className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={handleExport}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <FiDownload className="w-5 h-5" />
+              </button>
+              
+              {canEditProfile && (
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-colors shadow-md"
-                  title="Edit Profile"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isEditing ? 'bg-red-100 text-red-700' : 'hover:bg-gray-100'
+                  }`}
                 >
-                  <FiEdit2 className="w-4 h-4" />
+                  {isEditing ? <FiX className="w-5 h-5" /> : <FiEdit2 className="w-5 h-5" />}
                 </button>
               )}
-              {isEditing && (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleCancel}
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 p-6 overflow-auto">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div 
+                  key={index} 
+                  className={`${stat.bgColor} rounded-xl p-4 border`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={`p-2 rounded-lg ${stat.color} text-white`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-sm text-gray-600">{stat.name}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Edit Mode Banner */}
+          {isEditing && (
+            <motion.div 
+              className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-indigo-900">Edit Mode Active</h3>
+                  <p className="text-sm text-indigo-700">Make your changes and save when ready</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleCancel} 
                     disabled={saving}
-                    className="p-2 border-2 border-white/30 text-white rounded-full hover:bg-white/20 transition-colors flex items-center justify-center"
-                    title="Cancel"
+                    className="px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
                   >
-                    <FiX className="w-4 h-4" />
+                    Cancel
                   </button>
-                  <button
-                    onClick={handleSave}
+                  <button 
+                    onClick={handleSave} 
                     disabled={saving}
-                    className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md flex items-center justify-center"
-                    title="Save Changes"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
                   >
                     {saving ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <FiSave className="w-4 h-4" />
                     )}
+                    Save
                   </button>
-                </div>
-              )}
-            </div>
-                </div>
-                
-                {isEditing ? (
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleInputChange}
-                    placeholder="Tell us about yourself..."
-                    rows={2}
-                    className="mt-6 w-full p-4 bg-white/20 rounded-xl text-white placeholder-white/70 backdrop-blur-sm"
-                  />
-                ) : (
-                  <p className="mt-6 text-white/90 max-w-3xl text-lg">
-                    {profile.bio || 'No bio available.'}
-                  </p>
-                )}
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {profile?.email && (
-                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
-                      {profile.email}
-                    </span>
-                  )}
-                  {profile?.phone && (
-                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
-                      {profile.phone}
-                    </span>
-                  )}
-                  {profile?.linkedin_url && (
-                    <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20 hover:bg-white/25 transition-colors">
-                      LinkedIn
-                    </a>
-                  )}
-                  {profile?.start_date && (
-                    <span className="px-3 py-1.5 rounded-full text-sm bg-white/15 text-white border border-white/20">
-                      Started: {new Date(profile.start_date).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6 md:mt-0">
-                <div className="flex space-x-3">
-                  {socialLinks.map((social, index) => 
-                    (social.url || social.value) ? (
-                      <a
-                        key={index}
-                        href={social.url || '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`w-12 h-12 ${social.color} rounded-xl flex items-center justify-center text-white hover:opacity-90 transition-opacity shadow-lg`}
-                      >
-                        {social.icon}
-                      </a>
-                    ) : null
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
-              className="bg-white rounded-2xl shadow-lg p-5 hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              onClick={() => {
-                // Navigate to the corresponding section
-                switch(stat.name) {
-                  case 'Projects':
-                    setActiveTab('projects');
-                    break;
-                  case 'Tasks Completed':
-                    setActiveTab('activity');
-                    break;
-                  case 'Achievements':
-                    setActiveTab('achievements');
-                    break;
-                  case 'Team Members':
-                    setActiveTab('team');
-                    break;
-                  case 'Hours Logged':
-                    setActiveTab('timesheets');
-                    break;
-                  default:
-                    setActiveTab('overview');
-                }
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className={`p-3 rounded-xl ${stat.bgColor} ${stat.textColor}`}>
-                  {stat.icon}
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  <p className="text-sm text-gray-600">{stat.name}</p>
                 </div>
               </div>
             </motion.div>
-          ))}
-        </div>
+          )}
 
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex flex-wrap -mb-px">
-              {[
-                { id: 'overview', name: 'Overview', icon: <FiUser className="mr-2 w-4 h-4" /> },
-                { id: 'team', name: 'Team', icon: <FiUsers className="mr-2 w-4 h-4" /> },
-                { id: 'projects', name: 'Projects', icon: <FiBriefcase className="mr-2 w-4 h-4" /> },
-                { id: 'activity', name: 'Activity', icon: <FiActivity className="mr-2 w-4 h-4" /> },
-                { id: 'achievements', name: 'Achievements', icon: <FiAward className="mr-2 w-4 h-4" /> },
-                { id: 'timesheets', name: 'Timesheets', icon: <FiClock className="mr-2 w-4 h-4" /> }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-4 px-6 text-sm font-medium border-b-2 transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.name}
-                </button>
-              ))}
-            </nav>
-          </div>
-          
-          <div className="p-6">
+          {/* Tab Content */}
+          <div className="bg-white rounded-xl shadow-sm border p-6">
             {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="space-y-6">
                 {/* Personal Information */}
-                <div className="lg:col-span-2">
-                  <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo-100 p-6 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                      <div className="p-2 bg-indigo-100 rounded-lg">
-                        <FiUser className="w-5 h-5 text-indigo-600" />
-                      </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FiUser className="w-5 h-5 text-indigo-600" />
                       Personal Information
                     </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiUser className="w-4 h-4 text-indigo-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                        </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         {isEditing ? (
-                          <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
+                          <div>
+                            <input
+                              type="text"
+                              name="name"
+                              value={formData.name || ''}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                                validationErrors.name ? 'border-red-300' : 'border-gray-300'
+                              }`}
+                            />
+                            {validationErrors.name && (
+                              <p className="text-red-600 text-sm mt-1">{validationErrors.name}</p>
+                            )}
+                          </div>
                         ) : (
                           <p className="text-gray-900 font-medium">{profile.name}</p>
                         )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiMail className="w-4 h-4 text-indigo-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         {isEditing ? (
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
+                          <div>
+                            <input
+                              type="email"
+                              name="email"
+                              value={formData.email || ''}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                                validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                              }`}
+                            />
+                            {validationErrors.email && (
+                              <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
+                            )}
+                          </div>
                         ) : (
-                          <p className="text-gray-900 font-medium">{profile.email}</p>
+                          <p className="text-gray-900">{profile.email}</p>
                         )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiBriefcase className="w-4 h-4 text-indigo-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Job Title</label>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
                         {isEditing ? (
                           <input
                             type="text"
                             name="job_title"
                             value={formData.job_title || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="Your job title"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : (
-                          <p className="text-gray-900 font-medium">{profile.job_title || 'Not specified'}</p>
+                          <p className="text-gray-900">{profile.job_title || 'Not specified'}</p>
                         )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiCalendar className="w-4 h-4 text-indigo-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        {isEditing ? (
+                          <div>
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone || ''}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                                validationErrors.phone ? 'border-red-300' : 'border-gray-300'
+                              }`}
+                            />
+                            {validationErrors.phone && (
+                              <p className="text-red-600 text-sm mt-1">{validationErrors.phone}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-gray-900">{profile.phone || 'Not specified'}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                         {isEditing ? (
                           <input
                             type="date"
                             name="start_date"
                             value={formData.start_date || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        ) : profile.start_date ? (
-                          <p className="text-gray-900 font-medium">
-                            {new Date(profile.start_date).toLocaleDateString()}
-                          </p>
-                        ) : (
-                          <p className="text-gray-900 font-medium">Not specified</p>
-                        )}
-                      </div>
-                      
-                      <div className="md:col-span-2 bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiBook className="w-4 h-4 text-indigo-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Bio</label>
-                        </div>
-                        {isEditing ? (
-                          <textarea
-                            name="bio"
-                            value={formData.bio || ''}
-                            onChange={handleInputChange}
-                            rows={3}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="Tell us about yourself..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : (
-                          <p className="text-gray-900 whitespace-pre-wrap">
-                            {profile.bio || 'No bio provided'}
+                          <p className="text-gray-900">
+                            {profile.start_date ? new Date(profile.start_date).toLocaleDateString() : 'Not specified'}
                           </p>
                         )}
                       </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contact & Team Information */}
-                <div className="space-y-6">
-                  <div className="bg-gradient-to-br from-cyan-50 to-white rounded-2xl border border-cyan-100 p-6 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                      <div className="p-2 bg-cyan-100 rounded-lg">
-                        <FiMail className="w-5 h-5 text-cyan-600" />
-                      </div>
-                      Contact Information
-                    </h3>
-                    
-                    <div className="space-y-5">
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiPhone className="w-4 h-4 text-cyan-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
                         {isEditing ? (
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone || ''}
-                            onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                            placeholder="Your phone number"
-                          />
+                          <div>
+                            <input
+                              type="url"
+                              name="linkedin_url"
+                              value={formData.linkedin_url || ''}
+                              onChange={handleInputChange}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                                validationErrors.linkedin_url ? 'border-red-300' : 'border-gray-300'
+                              }`}
+                            />
+                            {validationErrors.linkedin_url && (
+                              <p className="text-red-600 text-sm mt-1">{validationErrors.linkedin_url}</p>
+                            )}
+                          </div>
                         ) : (
-                          <p className="text-gray-900 font-medium">{profile.phone || 'Not provided'}</p>
+                          <p className="text-gray-900">{profile.linkedin_url || 'Not specified'}</p>
                         )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiSlack className="w-4 h-4 text-cyan-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Slack Handle</label>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Slack Handle</label>
                         {isEditing ? (
                           <input
                             type="text"
                             name="slack_handle"
                             value={formData.slack_handle || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                            placeholder="Your Slack handle"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         ) : (
-                          <p className="text-gray-900 font-medium">
-                            {profile.slack_handle ? `@${profile.slack_handle}` : 'Not provided'}
-                          </p>
+                          <p className="text-gray-900">{profile.slack_handle || 'Not specified'}</p>
                         )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiLinkedin className="w-4 h-4 text-cyan-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">LinkedIn</label>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                         {isEditing ? (
-                          <input
-                            type="url"
-                            name="linkedin_url"
-                            value={formData.linkedin_url || ''}
+                          <textarea
+                            name="bio"
+                            value={formData.bio || ''}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                            placeholder="https://linkedin.com/in/username"
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
-                        ) : profile.linkedin_url ? (
-                          <a 
-                                href={profile.linkedin_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-cyan-600 hover:underline font-medium flex items-center"
-                              >
-                                View LinkedIn Profile
-                                <FiLink2 className="ml-1" />
-                              </a>
                         ) : (
-                          <p className="text-gray-900 font-medium">Not provided</p>
+                          <p className="text-gray-900 whitespace-pre-wrap">{profile.bio || 'No bio provided'}</p>
                         )}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl border border-purple-100 p-6 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <FiUsers className="w-5 h-5 text-purple-600" />
-                      </div>
-                      Team Information
+                  {/* Avatar Upload */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FiCamera className="w-5 h-5 text-indigo-600" />
+                      Profile Picture
                     </h3>
-                    
-                    <div className="space-y-5">
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiUsers className="w-4 h-4 text-purple-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Team</label>
-                        </div>
-                        <p className="text-gray-900 font-medium">{profile.team_name || 'Not assigned'}</p>
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-4">
+                        {profile.avatar_url ? (
+                          <img
+                            src={profile.avatar_url}
+                            alt={profile.name}
+                            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                          />
+                        ) : (
+                          <div className="w-32 h-32 bg-indigo-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
+                            {profile.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                        )}
+                        {uploadingAvatar && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        )}
                       </div>
                       
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiHome className="w-4 h-4 text-purple-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Department</label>
+                      {canEditProfile && (
+                        <div>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarUpload}
+                            className="hidden"
+                          />
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingAvatar}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                          >
+                            {uploadingAvatar ? 'Uploading...' : 'Change Picture'}
+                          </button>
                         </div>
-                        <p className="text-gray-900 font-medium">{profile.department_name || 'Not specified'}</p>
-                      </div>
-                      
-                      <div className="bg-white rounded-xl p-4 border border-gray-200">
-                        <div className="flex items-center mb-2">
-                          <FiUserCheck className="w-4 h-4 text-purple-500 mr-2" />
-                          <label className="block text-sm font-medium text-gray-700">Manager</label>
-                        </div>
-                        <p className="text-gray-900 font-medium">{profile.manager_name || 'Not assigned'}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Skills */}
-                  <div className="bg-gradient-to-br from-amber-50 to-white rounded-2xl border border-amber-100 p-6 shadow-sm">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                      <div className="p-2 bg-amber-100 rounded-lg">
-                        <FiStar className="w-5 h-5 text-amber-600" />
-                      </div>
-                      Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {['React', 'Node.js', 'UI/UX', 'Project Management', 'JavaScript', 'Python', 'SQL', 'Agile'].map((skill, index) => (
-                        <span 
-                          key={index}
-                          className="px-3 py-1.5 bg-amber-100 text-amber-800 rounded-full text-sm font-medium flex items-center"
-                        >
-                          <FiStar className="w-3 h-3 mr-1" />
-                          {skill}
-                        </span>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>
+                
+                {/* Analytics Charts */}
+                {timesheetChartData.length > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Hours Logged (Last 7 days)</h3>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={timesheetChartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="hours" stroke="#6366f1" fill="#e0e7ff" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Distribution</h3>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={taskStatusData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {taskStatusData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-            
+
             {activeTab === 'team' && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FiUsers className="w-6 h-6 text-indigo-600" />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Team Members</h3>
+                  <span className="text-sm text-gray-600">{filteredTeamMembers.length} members</span>
+                </div>
+                
+                {profile.team_name && (
+                  <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                    <h4 className="font-semibold text-indigo-900 mb-2">Team: {profile.team_name}</h4>
+                    <p className="text-sm text-indigo-700">
+                      Department: {profile.department_name || 'Not specified'}
+                    </p>
+                    {profile.manager_name && (
+                      <p className="text-sm text-indigo-700">
+                        Manager: {profile.manager_name}
+                      </p>
+                    )}
                   </div>
-                  Team Members
-                </h3>
+                )}
                 
                 {filteredTeamMembers.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {filteredTeamMembers.map((member, index) => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredTeamMembers.map((member) => (
                       <motion.div
                         key={member.id}
-                        className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer"
-                        whileHover={{ y: -5 }}
+                        className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
+                        whileHover={{ y: -2 }}
                         onClick={() => navigate(`/profile/${member.id}`)}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
                       >
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-3">
                           {member.avatar_url ? (
-                        <img
-                          src={member.avatar_url}
-                          alt={member.name}
-                          className="w-12 h-12 rounded-full object-cover shadow border-2 border-indigo-100"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
-                          {member.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-900 text-lg">{member.name}</h4>
-                            <p className="text-gray-600 text-sm mb-1">{member.job_title || member.role}</p>
-                            <div className="flex items-center text-xs text-gray-500">
-                              <FiBriefcase className="w-3 h-3 mr-1" />
-                              {member.team_name || 'Team'}
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-medium">
+                              {member.name?.charAt(0)?.toUpperCase()}
                             </div>
+                          )}
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900">{member.name}</h4>
+                            <p className="text-sm text-gray-600">{member.job_title || member.role}</p>
                           </div>
-                          <FiChevronRight className="w-5 h-5 text-gray-400" />
+                          <FiChevronRight className="w-4 h-4 text-gray-400" />
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                    <FiUsers className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Team Members</h4>
+                  <div className="text-center py-12">
+                    <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Team Members</h4>
                     <p className="text-gray-500">There are no other members in your team.</p>
                   </div>
                 )}
               </div>
             )}
-            
+
             {activeTab === 'projects' && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FiBriefcase className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  Projects
-                </h3>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Projects</h3>
+                  <span className="text-sm text-gray-600">{projects.length} projects</span>
+                </div>
                 
                 {projects.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {projects.map((project, index) => (
                       <motion.div
                         key={project.id}
-                        className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all"
-                        whileHover={{ y: -3 }}
+                        className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-all"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-lg flex items-center">
-                              <FiFolder className="w-5 h-5 text-indigo-500 mr-2" />
-                              {project.name}
-                            </h4>
-                            <p className="text-gray-600 text-sm mt-1">{project.description || 'No description available'}</p>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">{project.name}</h4>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {project.description || 'No description available'}
+                            </p>
+                            <p className="text-sm font-medium text-indigo-600">Role: {project.role}</p>
                           </div>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                             {project.status}
                           </span>
                         </div>
                         
-                        <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
-                          <div className="text-sm">
-                            <p className="text-gray-700 font-medium">Role: <span className="text-gray-900">{project.role}</span></p>
-                            <div className="flex items-center text-gray-500 mt-1">
-                              <FiCalendar className="w-4 h-4 mr-1" />
-                              <span>
-                                {project.start_date && new Date(project.start_date).toLocaleDateString()} - 
-                                {project.end_date && new Date(project.end_date).toLocaleDateString()}
-                              </span>
-                            </div>
+                        <div className="border-t border-gray-200 pt-4">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <FiCalendar className="w-4 h-4 mr-2" />
+                            <span>
+                              {project.start_date && new Date(project.start_date).toLocaleDateString()} - 
+                              {project.end_date && new Date(project.end_date).toLocaleDateString()}
+                            </span>
                           </div>
-                          
-                          <button className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium flex items-center">
-                            View Details
-                            <FiChevronRight className="w-4 h-4 ml-1" />
-                          </button>
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                    <FiBriefcase className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Projects Assigned</h4>
-                    <p className="text-gray-500">You haven't been assigned to any projects yet.</p>
+                  <div className="text-center py-12">
+                    <FiBriefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Projects</h4>
+                    <p className="text-gray-500">No projects have been assigned yet.</p>
                   </div>
                 )}
               </div>
             )}
-            
+
             {activeTab === 'activity' && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FiActivity className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  Recent Activity
-                </h3>
+              <div className="space-y-6">
+                <h3 className="text-xl font-semibold text-gray-900">Recent Activity</h3>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Tasks */}
                   {tasks.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                      <h4 className="font-bold text-gray-900 text-lg mb-5 flex items-center">
-                        <FiTarget className="w-5 h-5 text-blue-500 mr-2" />
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FiTarget className="w-5 h-5 text-blue-500" />
                         Recent Tasks
                       </h4>
-                      <div className="space-y-4">
-                        {tasks.slice(0, 5).map((task) => (
-                          <div key={task.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{task.title}</p>
-                              <p className="text-sm text-gray-600 mt-1">{task.description?.substring(0, 60)}...</p>
-                              <div className="flex items-center text-xs text-gray-500 mt-2">
-                                <FiCalendar className="w-3 h-3 mr-1" />
-                                <span>{new Date(task.created_at).toLocaleDateString()}</span>
+                      <div className="space-y-3">
+                        {tasks.slice(0, 8).map((task) => (
+                          <div key={task.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h5 className="font-medium text-gray-900">{task.title}</h5>
+                                {task.description && (
+                                  <p className="text-sm text-gray-600 mt-1">
+                                    {task.description.substring(0, 80)}...
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-2">
+                                  {new Date(task.created_at).toLocaleDateString()}
+                                </p>
                               </div>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${getTaskStatusColor(task.status)}`}>
+                                {task.status}
+                              </span>
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ml-3 ${getTaskStatusColor(task.status)}`}>
-                              {task.status}
-                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                   
-                  {/* Timesheets */}
                   {timesheets.length > 0 && (
-                    <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                      <h4 className="font-bold text-gray-900 text-lg mb-5 flex items-center">
-                        <FiClock className="w-5 h-5 text-purple-500 mr-2" />
+                    <div className="bg-gray-50 rounded-lg p-6">
+                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FiClock className="w-5 h-5 text-purple-500" />
                         Recent Timesheets
                       </h4>
-                      <div className="space-y-4">
-                        {timesheets.slice(0, 5).map((timesheet) => (
-                          <div key={timesheet.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <div>
-                              <p className="font-medium text-gray-900">{new Date(timesheet.date).toLocaleDateString()}</p>
-                              <p className="text-sm text-gray-600 mt-1">{timesheet.notes?.substring(0, 40) || 'No notes'}...</p>
+                      <div className="space-y-3">
+                        {timesheets.slice(0, 8).map((ts) => (
+                          <div key={ts.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {new Date(ts.date).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {ts.notes?.substring(0, 50) || 'No notes'}...
+                                </p>
+                              </div>
+                              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                                {ts.hours}h
+                              </span>
                             </div>
-                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                              {timesheet.hours} hrs
-                            </span>
                           </div>
                         ))}
                       </div>
@@ -1282,91 +1265,94 @@ const UserProfile = () => {
                 </div>
               </div>
             )}
-            
+
             {activeTab === 'achievements' && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FiAward className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  Achievements
-                </h3>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Achievements</h3>
+                  <span className="text-sm text-gray-600">{achievements.length} achievements</span>
+                </div>
                 
                 {achievements.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {achievements.map((achievement, index) => (
                       <motion.div
                         key={achievement.id}
-                        className="bg-gradient-to-br from-amber-50 to-white border border-amber-100 rounded-2xl p-6 hover:shadow-lg transition-all"
-                        whileHover={{ y: -3 }}
+                        className="bg-amber-50 border border-amber-200 rounded-lg p-6"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <div className="flex items-start">
-                          <div className="p-3 bg-amber-100 rounded-xl mr-4">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 bg-amber-100 rounded-lg">
                             <FiAward className="w-6 h-6 text-amber-600" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-bold text-gray-900 text-lg">{achievement.title}</h4>
-                            <p className="text-gray-600 mt-2">{achievement.description || 'No description available'}</p>
-                            <div className="flex items-center text-sm text-gray-500 mt-3">
-                              <FiCalendar className="w-4 h-4 mr-1" />
-                              <span>Awarded on {new Date(achievement.awarded_at).toLocaleDateString()}</span>
-                            </div>
+                            <h4 className="font-semibold text-gray-900 mb-2">{achievement.title}</h4>
+                            <p className="text-gray-600 text-sm mb-3">
+                              {achievement.description || 'No description available'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Awarded on {new Date(achievement.awarded_at).toLocaleDateString()}
+                            </p>
                           </div>
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                    <FiAward className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Achievements Yet</h4>
-                    <p className="text-gray-500">You haven't received any achievements yet. Keep up the good work!</p>
+                  <div className="text-center py-12">
+                    <FiAward className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Achievements</h4>
+                    <p className="text-gray-500">Keep working hard to earn achievements!</p>
                   </div>
                 )}
               </div>
             )}
-            
+
             {activeTab === 'timesheets' && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <FiClock className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  Timesheets
-                </h3>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Timesheets</h3>
+                  <span className="text-sm text-gray-600">{timesheets.length} entries</span>
+                </div>
                 
                 {timesheets.length > 0 ? (
-                  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Date
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Hours
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Project
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Notes
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {timesheets.map((timesheet) => (
-                            <tr key={timesheet.id} className="hover:bg-gray-50">
+                          {timesheets.map((ts) => (
+                            <tr key={ts.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {new Date(timesheet.date).toLocaleDateString()}
+                                {new Date(ts.date).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                                  {timesheet.hours} hrs
+                                  {ts.hours}h
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {timesheet.project_id ? 'Project Name' : 'General'}
+                                {ts.project_id ? 'Project' : 'General'}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-900">
-                                {timesheet.notes?.substring(0, 50) || 'No notes'}
-                                {timesheet.notes && timesheet.notes.length > 50 ? '...' : ''}
+                                {ts.notes?.substring(0, 60) || 'No notes'}...
                               </td>
                             </tr>
                           ))}
@@ -1375,10 +1361,90 @@ const UserProfile = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
-                    <FiClock className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                    <h4 className="text-xl font-bold text-gray-700 mb-2">No Timesheets Recorded</h4>
-                    <p className="text-gray-500">You haven't recorded any timesheets yet.</p>
+                  <div className="text-center py-12">
+                    <FiClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Timesheets</h4>
+                    <p className="text-gray-500">No time entries have been recorded yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'skills' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Skills</h3>
+                  <span className="text-sm text-gray-600">{skills.length} skills</span>
+                </div>
+                
+                {canEditProfile && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 mb-3">Add a new skill:</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Skill name"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const skillName = e.target.value.trim();
+                            if (skillName) {
+                              addSkill(skillName);
+                              e.target.value = '';
+                            }
+                          }
+                        }}
+                      />
+                      <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate" selected>Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="expert">Expert</option>
+                      </select>
+                      <button
+                        onClick={(e) => {
+                          const input = e.target.parentElement.querySelector('input');
+                          const select = e.target.parentElement.querySelector('select');
+                          const skillName = input.value.trim();
+                          if (skillName) {
+                            addSkill(skillName, select.value);
+                            input.value = '';
+                          }
+                        }}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {skills.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {skills.map((skill) => (
+                      <div key={skill.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{skill.skill_name}</h4>
+                          {canEditProfile && (
+                            <button
+                              onClick={() => removeSkill(skill.id)}
+                              className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
+                            >
+                              <FiMinus className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getProficiencyColor(skill.proficiency_level)}`}>
+                          {skill.proficiency_level}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <FiZap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Skills Listed</h4>
+                    <p className="text-gray-500">Add some skills to showcase your expertise.</p>
                   </div>
                 )}
               </div>
@@ -1386,6 +1452,128 @@ const UserProfile = () => {
           </div>
         </div>
       </div>
+      
+      {/* Command Palette */}
+      <AnimatePresence>
+        {showCommandPalette && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowCommandPalette(false)}
+          >
+            <motion.div
+              className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4"
+              initial={{ scale: 0.95, y: -20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: -20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b">
+                <div className="relative">
+                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    ref={commandPaletteRef}
+                    type="text"
+                    placeholder="Search commands..."
+                    value={commandSearch}
+                    onChange={(e) => setCommandSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              
+              <div className="max-h-64 overflow-y-auto">
+                {filteredCommands.map((command) => {
+                  const Icon = command.icon;
+                  return (
+                    <button
+                      key={command.id}
+                      onClick={() => executeCommand(command)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                    >
+                      <Icon className="w-5 h-5 text-gray-500" />
+                      <span className="font-medium text-gray-900">{command.label}</span>
+                    </button>
+                  );
+                })}
+                
+                {filteredCommands.length === 0 && (
+                  <div className="p-4 text-center text-gray-500">
+                    No commands found
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-3 border-t bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
+                <span>Use ↑↓ to navigate, Enter to select</span>
+                <span>Press Esc to close</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl"
+              initial={{ scale: 0.95, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <FiShare2 className="w-5 h-5" />
+                Share Profile
+              </h3>
+              <p className="text-gray-600 mb-6">Share this profile with others</p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    });
+                  }}
+                  className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <FiCopy className="w-5 h-5 text-gray-600" />
+                  <span className="font-medium text-gray-900">
+                    {copied ? 'Copied!' : 'Copy Link'}
+                  </span>
+                </button>
+                
+                <a
+                  href={`mailto:?subject=Check out ${profile.name}'s profile&body=${encodeURIComponent(window.location.href)}`}
+                  className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <FiMail className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">Share via Email</span>
+                </a>
+              </div>
+              
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-full mt-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

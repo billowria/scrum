@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../supabaseClient';
+import { notifySprintUpdate } from '../utils/notificationHelper';
 import { format, addWeeks, parseISO, isWithinInterval } from 'date-fns';
 import { 
   FiGrid, 
@@ -26,9 +28,9 @@ import {
   FiFlag,
   FiTarget,
   FiBarChart2,
-  FiLayers
+  FiLayers,
+  FiX
 } from 'react-icons/fi';
-import { supabase } from '../supabaseClient';
 import { createTaskNotification } from '../utils/notificationHelper';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
@@ -38,7 +40,8 @@ import TaskBoard from '../components/TaskBoard';
 import TaskList from '../components/TaskList';
 import SprintBoard from '../components/SprintBoard';
 import SprintModal from '../components/SprintModal';
-import SprintAssignmentModal from '../components/SprintAssignmentModal';
+import SprintManagement from '../components/sprint/SprintManagement';
+import SprintDetailView from '../components/sprint/SprintDetailView';
 
 // Animation variants
 const containerVariants = {
@@ -77,6 +80,124 @@ const statVariants = {
   }
 };
 
+const getStatusConfig = (status) => {
+  switch (status) {
+    case 'To Do':
+      return {
+        color: 'text-gray-700',
+        bgColor: 'bg-gray-100/80',
+        borderColor: 'border-gray-200/60',
+        icon: FiClock,
+        gradient: 'from-gray-400 to-gray-600',
+        glassColor: 'bg-gray-500/10',
+        accentColor: 'bg-gray-500/20'
+      };
+    case 'In Progress':
+      return {
+        color: 'text-blue-700',
+        bgColor: 'bg-blue-100/80',
+        borderColor: 'border-blue-200/60',
+        icon: FiTrendingUp,
+        gradient: 'from-blue-400 to-indigo-600',
+        glassColor: 'bg-blue-500/10',
+        accentColor: 'bg-blue-500/20'
+      };
+    case 'Review':
+      return {
+        color: 'text-amber-700',
+        bgColor: 'bg-amber-100/80',
+        borderColor: 'border-amber-200/60',
+        icon: FiAlertCircle,
+        gradient: 'from-amber-400 to-orange-600',
+        glassColor: 'bg-amber-500/10',
+        accentColor: 'bg-amber-500/20'
+      };
+    case 'Completed':
+      return {
+        color: 'text-green-700',
+        bgColor: 'bg-green-100/80',
+        borderColor: 'border-green-200/60',
+        icon: FiCheckCircle,
+        gradient: 'from-green-400 to-emerald-600',
+        glassColor: 'bg-green-500/10',
+        accentColor: 'bg-green-500/20'
+      };
+    default:
+      return {
+        color: 'text-gray-700',
+        bgColor: 'bg-gray-100/80',
+        borderColor: 'border-gray-200/60',
+        icon: FiClock,
+        gradient: 'from-gray-400 to-gray-600',
+        glassColor: 'bg-gray-500/10',
+        accentColor: 'bg-gray-500/20'
+      };
+  }
+};
+
+// Expandable Filter Button Component
+const FilterButton = ({ icon: Icon, label, color, isActive, expandedContent, onClick }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const ref = useRef();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsExpanded(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const buttonClass = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
+    isActive 
+      ? `${color} text-white shadow-lg` 
+      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
+  }`;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        className={buttonClass}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <Icon className="w-4 h-4" />
+        <span className="text-sm font-medium">{label}</span>
+        {isActive && (
+          <motion.div
+            className="w-2 h-2 rounded-full bg-white"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+          />
+        )}
+      </button>
+      {isExpanded && expandedContent}
+    </div>
+  );
+};
+
+// Active Filter Tag Component
+const FilterTag = ({ label, color, onRemove }) => (
+  <motion.div
+    className={`px-3 py-1.5 rounded-full ${color} border flex items-center gap-2 text-sm font-medium`}
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+  >
+    <span>{label}</span>
+    <button 
+      onClick={onRemove}
+      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10"
+    >
+      <FiX className="w-3 h-3" />
+    </button>
+  </motion.div>
+);
+
 export default function TasksPage({ sidebarOpen }) {
   // State management
   const [view, setView] = useState('board'); // 'board' or 'list'
@@ -105,6 +226,7 @@ export default function TasksPage({ sidebarOpen }) {
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('all');
+  const [showHeader, setShowHeader] = useState(true);
   
   // Sprint planning state
   const [sprints, setSprints] = useState([]);
@@ -112,6 +234,8 @@ export default function TasksPage({ sidebarOpen }) {
   const [showSprintModal, setShowSprintModal] = useState(false);
   const [editingSprint, setEditingSprint] = useState(null);
   const [sprintLoading, setSprintLoading] = useState(false);
+  const [showSprintDetailView, setShowSprintDetailView] = useState(false);
+  const [selectedSprintForDetail, setSelectedSprintForDetail] = useState(null);
   // Fetch sprints
   const fetchSprints = async () => {
     try {
@@ -214,6 +338,9 @@ export default function TasksPage({ sidebarOpen }) {
   // Start sprint
   const startSprint = async (sprintId) => {
     try {
+      // Get sprint details
+      const sprint = sprints.find(s => s.id === sprintId);
+      
       const { error } = await supabase
         .from('sprints')
         .update({
@@ -223,6 +350,29 @@ export default function TasksPage({ sidebarOpen }) {
         .eq('id', sprintId);
         
       if (error) throw error;
+      
+      // Send notification about sprint start
+      if (sprint && sprint.project_id) {
+        try {
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('team_id')
+            .eq('id', sprint.project_id)
+            .single();
+          
+          if (projectData?.team_id && currentUser) {
+            await notifySprintUpdate(
+              sprint.name,
+              'started',
+              projectData.team_id,
+              currentUser.id
+            );
+          }
+        } catch (notificationError) {
+          console.error('Error sending sprint notification:', notificationError);
+          // Continue even if notification fails
+        }
+      }
       
       // Refresh sprints
       fetchSprints();
@@ -235,6 +385,9 @@ export default function TasksPage({ sidebarOpen }) {
   // Complete sprint
   const completeSprint = async (sprintId) => {
     try {
+      // Get sprint details
+      const sprint = sprints.find(s => s.id === sprintId);
+      
       const { error } = await supabase
         .from('sprints')
         .update({
@@ -245,11 +398,84 @@ export default function TasksPage({ sidebarOpen }) {
         
       if (error) throw error;
       
+      // Send notification about sprint completion
+      if (sprint && sprint.project_id) {
+        try {
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('team_id')
+            .eq('id', sprint.project_id)
+            .single();
+          
+          if (projectData?.team_id && currentUser) {
+            await notifySprintUpdate(
+              sprint.name,
+              'completed',
+              projectData.team_id,
+              currentUser.id
+            );
+          }
+        } catch (notificationError) {
+          console.error('Error sending sprint notification:', notificationError);
+          // Continue even if notification fails
+        }
+      }
+      
       // Refresh sprints
       fetchSprints();
     } catch (err) {
       console.error('Error completing sprint:', err);
       setError('Failed to complete sprint. Please try again.');
+    }
+  };
+
+  // Delete sprint
+  const deleteSprint = async (sprintId) => {
+    try {
+      const { error } = await supabase
+        .from('sprints')
+        .delete()
+        .eq('id', sprintId);
+        
+      if (error) throw error;
+      
+      // Refresh sprints
+      fetchSprints();
+    } catch (err) {
+      console.error('Error deleting sprint:', err);
+      setError('Failed to delete sprint. Please try again.');
+    }
+  };
+
+  // Handle sprint selection for detail view
+  const handleSprintSelect = (sprint) => {
+    setSelectedSprintForDetail(sprint);
+    setShowSprintDetailView(true);
+  };
+
+  // Clear all filters with proper state management
+  const handleClearAllFilters = () => {
+    try {
+      // Reset all filter states systematically
+      setFilters({
+        status: 'all',
+        assignee: 'all',
+        team: 'all',
+        dueDate: 'all',
+        search: '',
+        sprint: 'all'
+      });
+      setSelectedProjectId('all');
+      setSelectedSprintId('all');
+      setSearch('');
+      
+      // Clear any error state
+      setError(null);
+      
+      console.log('All filters cleared successfully');
+    } catch (err) {
+      console.error('Error clearing filters:', err);
+      setError('Failed to clear filters. Please refresh the page.');
     }
   };
 
@@ -338,11 +564,17 @@ export default function TasksPage({ sidebarOpen }) {
     fetchEmployees();
   }, [currentUser, userRole]);
 
-  // Fetch tasks
+  // Fetch tasks with enhanced validation and error handling
   const fetchTasks = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Validate required dependencies before proceeding
+      if (!currentUser || !userRole) {
+        console.warn('fetchTasks: Missing current user or role data');
+        return;
+      }
 
       let query = supabase
         .from('tasks')
@@ -366,7 +598,7 @@ export default function TasksPage({ sidebarOpen }) {
           assignee_id
         `);
 
-      // Role-based filtering
+      // Role-based filtering with validation
       if (userRole === 'manager' && currentUser) {
         // Manager: show tasks assigned to any member in their team
         if (currentUser.team_id) {
@@ -377,42 +609,124 @@ export default function TasksPage({ sidebarOpen }) {
         query = query.eq('assignee_id', currentUser.id);
       }
 
-      // Project filter
-      if (selectedProjectId !== 'all') {
-        query = query.eq('project_id', selectedProjectId);
+      // Project filter with validation using debounced value
+      const currentProjectId = debouncedSelectedProjectId || selectedProjectId;
+      if (currentProjectId && currentProjectId !== 'all' && currentProjectId.trim() !== '') {
+        // Validate that currentProjectId is a valid UUID/identifier
+        try {
+          query = query.eq('project_id', currentProjectId);
+        } catch (projectError) {
+          console.warn('Invalid project ID in filter:', currentProjectId);
+        }
       }
 
-      // Apply filters
-      if (filters.status !== 'all') {
-        query = query.eq('status', filters.status);
-      }
-      if (filters.assignee !== 'all') {
-        query = query.eq('assignee_id', filters.assignee);
-      }
-      if (filters.team !== 'all') {
-        query = query.eq('team_id', filters.team);
-      }
-      if (filters.search) {
-        query = query.ilike('title', `%${filters.search}%`);
+      // Apply filters with validation using debounced values
+      const currentFilters = debouncedFilters || filters;
+      const currentSearch = debouncedSearch || search;
+      
+      if (currentFilters && typeof currentFilters === 'object') {
+        if (currentFilters.status && currentFilters.status !== 'all' && currentFilters.status.trim() !== '') {
+          const validStatuses = ['To Do', 'In Progress', 'Review', 'Completed'];
+          if (validStatuses.includes(currentFilters.status)) {
+            query = query.eq('status', currentFilters.status);
+          }
+        }
+        
+        if (currentFilters.assignee && currentFilters.assignee !== 'all' && currentFilters.assignee.trim() !== '') {
+          try {
+            query = query.eq('assignee_id', currentFilters.assignee);
+          } catch (assigneeError) {
+            console.warn('Invalid assignee ID in filter:', currentFilters.assignee);
+          }
+        }
+        
+        if (currentFilters.team && currentFilters.team !== 'all' && currentFilters.team.trim() !== '') {
+          try {
+            query = query.eq('team_id', currentFilters.team);
+          } catch (teamError) {
+            console.warn('Invalid team ID in filter:', currentFilters.team);
+          }
+        }
       }
       
-      // Sprint filter
-      if (selectedSprintId !== 'all') {
-        query = query.eq('sprint_id', selectedSprintId);
+      // Apply search filter with validation
+      if (currentSearch && typeof currentSearch === 'string' && currentSearch.trim() !== '') {
+        const searchTerm = currentSearch.trim();
+        if (searchTerm.length >= 1) { // Minimum search length
+          query = query.ilike('title', `%${searchTerm}%`);
+        }
+      }
+      
+      // Sprint filter with validation using debounced value
+      const currentSprintId = debouncedSelectedSprintId || selectedSprintId;
+      if (currentSprintId && currentSprintId !== 'all' && currentSprintId.trim() !== '') {
+        try {
+          query = query.eq('sprint_id', currentSprintId);
+        } catch (sprintError) {
+          console.warn('Invalid sprint ID in filter:', currentSprintId);
+        }
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      setTasks(data);
+      
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+      
+      // Validate data before setting
+      const validatedTasks = Array.isArray(data) ? data : [];
+      setTasks(validatedTasks);
+      
     } catch (err) {
       console.error('Error fetching tasks:', err);
-      setError('Failed to load tasks. Please try again.');
+      setError(`Failed to load tasks: ${err.message || 'Please try again.'}`); 
+      setTasks([]); // Set empty array as fallback
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial fetch and real-time subscription
+  // Debounced fetch tasks to prevent rapid successive calls
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [debouncedSelectedProjectId, setDebouncedSelectedProjectId] = useState(selectedProjectId);
+  const [debouncedSelectedSprintId, setDebouncedSelectedSprintId] = useState(selectedSprintId);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Debounce filter changes to prevent excessive API calls
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 150);
+
+    return () => clearTimeout(debounceTimer);
+  }, [filters]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setDebouncedSelectedProjectId(selectedProjectId);
+    }, 150);
+
+    return () => clearTimeout(debounceTimer);
+  }, [selectedProjectId]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setDebouncedSelectedSprintId(selectedSprintId);
+    }, 150);
+
+    return () => clearTimeout(debounceTimer);
+  }, [selectedSprintId]);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300); // Longer debounce for search
+
+    return () => clearTimeout(debounceTimer);
+  }, [search]);
+
+  // Initial fetch and real-time subscription using debounced values
   useEffect(() => {
     // Only fetch tasks if we have user data
     if (currentUser && userRole) {
@@ -432,7 +746,10 @@ export default function TasksPage({ sidebarOpen }) {
           console.log('Change received!', payload);
           // Only refetch if we have user data
           if (currentUser && userRole) {
-            fetchTasks();
+            // Debounce real-time updates too
+            setTimeout(() => {
+              fetchTasks();
+            }, 100);
           }
         }
       )
@@ -441,7 +758,7 @@ export default function TasksPage({ sidebarOpen }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [filters, userRole, currentUser, selectedProjectId]);
+  }, [debouncedFilters, userRole, currentUser, debouncedSelectedProjectId, debouncedSelectedSprintId, debouncedSearch]);
   
   // Fetch sprints when project changes
   useEffect(() => {
@@ -568,570 +885,164 @@ export default function TasksPage({ sidebarOpen }) {
       initial="hidden"
       animate="visible"
     >
-      {/* Sprint Planning Modal */}
-      <AnimatePresence>
-        {showSprintModal && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div 
-              className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-            >
-              <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">{editingSprint ? 'Edit Sprint' : 'Create New Sprint'}</h2>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.target);
-                  const sprintData = {
-                    name: formData.get('name'),
-                    goal: formData.get('goal'),
-                    start_date: formData.get('start_date'),
-                    end_date: formData.get('end_date'),
-                    project_id: formData.get('project_id')
-                  };
-                  handleSprintSubmit(sprintData);
-                }}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Name</label>
-                    <input 
-                      type="text" 
-                      name="name" 
-                      defaultValue={editingSprint?.name || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint Goal</label>
-                    <textarea 
-                      name="goal" 
-                      defaultValue={editingSprint?.goal || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      rows="3"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                      <input 
-                        type="date" 
-                        name="start_date" 
-                        defaultValue={editingSprint?.start_date || format(new Date(), 'yyyy-MM-dd')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                      <input 
-                        type="date" 
-                        name="end_date" 
-                        defaultValue={editingSprint?.end_date || format(addWeeks(new Date(), 2), 'yyyy-MM-dd')}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Project</label>
-                    <select 
-                      name="project_id" 
-                      defaultValue={editingSprint?.project_id || selectedProjectId !== 'all' ? selectedProjectId : ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      required
-                    >
-                      <option value="">Select a project</option>
-                      {projects.map(project => (
-                        <option key={project.id} value={project.id}>{project.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="flex justify-end gap-3">
-                    <button 
-                      type="button" 
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                      onClick={() => {
-                        setShowSprintModal(false);
-                        setEditingSprint(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                    >
-                      {editingSprint ? 'Update Sprint' : 'Create Sprint'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* Professional Responsive Header */}
-      <motion.div
-        className={`sticky top-16 z-30 transition-all duration-300 w-full`}
-        id="tasks-header"
-      >
-        <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
-          <div className="px-4 sm:px-6 py-4">
-            {/* Responsive Header */}
-            <div className="px-4 sm:px-6 py-4">
-              {/* Mobile Header */}
-              <div className="flex flex-col gap-3 md:hidden">
-                {/* Mobile Title & Actions Row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <motion.div
-                      className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow"
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <FiGrid className="w-4 h-4 text-white" />
-                    </motion.div>
-                    <div>
-                      <h1 className="text-lg font-bold text-gray-900">Tasks</h1>
-                      <p className="text-xs text-gray-500">{format(new Date(), 'MMM d, yyyy')}</p>
-                    </div>
-                  </div>
-
-                  {/* Mobile Action Buttons */}
-                  <div className="flex items-center gap-1">
-                    <motion.button
-                      className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow"
-                      onClick={fetchTasks}
-                      whileTap={{ scale: 0.95 }}
-                      title="Refresh"
-                    >
-                      <FiRefreshCw className="w-4 h-4" />
-                    </motion.button>
-
-                    <motion.button
-                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow"
-                      onClick={() => {
-                        setShowCreateModal(true);
-                        setEditingTask(null);
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                      title="New Task"
-                    >
-                      <FiPlus className="w-4 h-4" />
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Mobile Stats Row */}
-                <div className="flex items-center justify-center gap-2">
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-md text-xs">
-                    <FiGrid className="w-3 h-3" />
-                    <span className="font-medium">{taskStats.total}</span>
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-md text-xs">
-                    <FiClock className="w-3 h-3" />
-                    <span className="font-medium">{taskStats.inProgress}</span>
-                  </div>
-                  <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-md text-xs">
-                    <FiCheckCircle className="w-3 h-3" />
-                    <span className="font-medium">{taskStats.completed}</span>
-                  </div>
-                  {taskStats.overdue > 0 && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-md text-xs animate-pulse">
-                      <FiAlertCircle className="w-3 h-3" />
-                      <span className="font-medium">{taskStats.overdue}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile View Toggle */}
-                <div className="flex items-center justify-center bg-gray-100 rounded-lg p-1 shadow-inner">
-                  <button
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      view === 'board'
-                        ? 'bg-white text-indigo-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setView('board')}
-                  >
-                    <FiGrid className="w-4 h-4 mx-auto md:mr-2" />
-                    <span className="sr-only md:not-sr-only md:ml-1">Board</span>
-                  </button>
-                  <button
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      view === 'list'
-                        ? 'bg-white text-indigo-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setView('list')}
-                  >
-                    <FiList className="w-4 h-4 mx-auto md:mr-2" />
-                    <span className="sr-only md:not-sr-only md:ml-1">List</span>
-                  </button>
-                  <button
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                      view === 'sprint'
-                        ? 'bg-white text-indigo-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={() => setView('sprint')}
-                  >
-                    <FiTarget className="w-4 h-4 mx-auto md:mr-2" />
-                    <span className="sr-only md:not-sr-only md:ml-1">Sprints</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Desktop Header - Hidden on Mobile */}
-              <div className="hidden md:flex md:items-center md:justify-between gap-4">
-                {/* Desktop Left Section: Title and Stats */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
-                      whileHover={{ scale: 1.05, rotate: 5 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <FiGrid className="w-6 h-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h1 className="text-2xl font-bold text-gray-900">Tasks</h1>
-                      <p className="text-sm text-gray-600">{format(new Date(), 'EEEE, MMM d, yyyy')}</p>
-                    </div>
-                  </div>
-
-                  {/* Desktop Stats */}
-                  <div className="flex items-center gap-2">
-                    <motion.div
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg shadow"
-                      whileHover={{ scale: 1.03 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
-                    >
-                      <FiGrid className="w-4 h-4" />
-                      <span className="text-sm font-medium">{taskStats.total}</span>
-                    </motion.div>
-
-                    <motion.div
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg shadow"
-                      whileHover={{ scale: 1.03 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
-                    >
-                      <FiClock className="w-4 h-4" />
-                      <span className="text-sm font-medium">{taskStats.inProgress}</span>
-                    </motion.div>
-
-                    <motion.div
-                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-lg shadow"
-                      whileHover={{ scale: 1.03 }}
-                      transition={{ type: 'spring', stiffness: 400 }}
-                    >
-                      <FiCheckCircle className="w-4 h-4" />
-                      <span className="text-sm font-medium">{taskStats.completed}</span>
-                    </motion.div>
-
-                    {taskStats.overdue > 0 && (
-                      <motion.div
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-rose-500 to-red-500 text-white rounded-lg shadow"
-                        whileHover={{ scale: 1.03 }}
-                        animate={{
-                          boxShadow: ['0 0 0 0 rgba(244, 63, 94, 0.4)', '0 0 0 6px rgba(244, 63, 94, 0)', '0 0 0 0 rgba(244, 63, 94, 0.4)']
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <FiAlertCircle className="w-4 h-4" />
-                        <span className="text-sm font-medium">{taskStats.overdue}</span>
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Desktop Right Section */}
+      {/* Compact Minimal Header */}
+      {showHeader && (
+        <motion.div
+          className="sticky top-16 z-[30] w-full -mt-4"
+          id="tasks-header"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -20, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
+          <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+            <div className="px-4 sm:px-6 py-2">
+              <div className="flex items-center justify-between gap-4">
+                {/* Left: Title */}
                 <div className="flex items-center gap-2">
-                  {/* Desktop View Toggle */}
-                  <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                  <motion.div
+                    className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <FiGrid className="w-4 h-4 text-white" />
+                  </motion.div>
+                  <h1 className="text-lg font-bold text-gray-900">Tasks</h1>
+                </div>
+                
+                {/* Right: Actions */}
+                <div className="flex items-center gap-2">
+                  {/* View Toggle */}
+                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
                     <motion.button
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                        view === 'board'
-                          ? 'bg-white text-indigo-700 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                        view === 'board' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
                       }`}
                       onClick={() => setView('board')}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <FiGrid className="w-4 h-4" />
-                      <span className="hidden xs:inline">Board</span>
+                      <FiGrid className="w-3 h-3" />
+                      <span className="hidden sm:inline">Board</span>
                     </motion.button>
                     <motion.button
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                        view === 'list'
-                          ? 'bg-white text-indigo-700 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                        view === 'list' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
                       }`}
                       onClick={() => setView('list')}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <FiList className="w-4 h-4" />
-                      <span className="hidden xs:inline">List</span>
+                      <FiList className="w-3 h-3" />
+                      <span className="hidden sm:inline">List</span>
                     </motion.button>
                     <motion.button
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
-                        view === 'sprint'
-                          ? 'bg-white text-indigo-700 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                        view === 'sprint' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
                       }`}
                       onClick={() => setView('sprint')}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <FiTarget className="w-4 h-4" />
-                      <span className="hidden xs:inline">Sprints</span>
+                      <FiTarget className="w-3 h-3" />
+                      <span className="hidden sm:inline">Sprint</span>
                     </motion.button>
                   </div>
 
-                  {/* Desktop Actions */}
+                  {/* Quick Stats */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                      <FiGrid className="w-3 h-3" />
+                      {taskStats.total}
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">
+                      <FiClock className="w-3 h-3" />
+                      {taskStats.inProgress}
+                    </div>
+                    <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
+                      <FiCheckCircle className="w-3 h-3" />
+                      {taskStats.completed}
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
                   <motion.button
-                    className="p-2.5 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg shadow-sm hover:shadow transition-all"
+                    className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg"
                     onClick={fetchTasks}
                     whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95, rotate: 180 }}
-                    title="Refresh Tasks"
+                    whileTap={{ scale: 0.95 }}
+                    title="Refresh"
                   >
-                    <FiRefreshCw className="w-4 h-4" />
+                    <FiRefreshCw className="w-3.5 h-3.5" />
                   </motion.button>
 
-                  <motion.button
-                    className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
-                    onClick={exportTasksToCSV}
-                    whileHover={{ scale: 1.03, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    title="Export Tasks to CSV"
-                  >
-                    <FiDownload className="w-4 h-4" />
-                    <span className="hidden lg:inline">Export</span>
-                  </motion.button>
-
-                  {/* Create Task Button */}
                   {userRole === 'manager' && (
                     <motion.button
-                      className="flex items-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+                      className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium text-xs flex items-center gap-1.5"
                       onClick={() => {
                         setShowCreateModal(true);
                         setEditingTask(null);
                       }}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <FiPlus className="w-4 h-4" />
-                      <span className="hidden lg:inline">New Task</span>
-                    </motion.button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Secondary Row: Filters and Search */}
-            <div className="mt-4 flex flex-col gap-4">
-              {/* Filters Section - colorful pill controls */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Project Filter */}
-                <div className="relative group">
-                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-indigo-600 text-white shadow-sm">Project</label>
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-sm focus-within:ring-2 focus-within:ring-indigo-400">
-                    <div className="p-2 rounded-lg bg-indigo-100 text-indigo-700"><FiFolder className="w-4 h-4" /></div>
-                    <select
-                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
-                      value={selectedProjectId}
-                      onChange={(e) => {
-                        setSelectedProjectId(e.target.value);
-                        setSelectedSprintId('all');
-                      }}
-                    >
-                      <option value="all">All Projects</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div className="relative group">
-                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-amber-600 text-white shadow-sm">Status</label>
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 shadow-sm focus-within:ring-2 focus-within:ring-amber-400">
-                    <div className="p-2 rounded-lg bg-amber-100 text-amber-700"><FiFilter className="w-4 h-4" /></div>
-                    <select
-                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
-                      value={filters.status}
-                      onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-                    >
-                      <option value="all">All Statuses</option>
-                      <option value="To Do">To Do</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Review">Review</option>
-                      <option value="Completed">Completed</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Sprint Filter */}
-                <div className="relative group">
-                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-fuchsia-600 text-white shadow-sm">Sprint</label>
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-fuchsia-50 to-pink-50 border border-fuchsia-200 shadow-sm focus-within:ring-2 focus-within:ring-fuchsia-400">
-                    <div className="p-2 rounded-lg bg-fuchsia-100 text-fuchsia-700"><FiTarget className="w-4 h-4" /></div>
-                    <select
-                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
-                      value={selectedSprintId}
-                      onChange={e => setSelectedSprintId(e.target.value)}
-                    >
-                      <option value="all">All Sprints</option>
-                      {sprints.map(sprint => (
-                        <option key={sprint.id} value={sprint.id}>
-                          {sprint.name} {sprint.status === 'Active' ? '(Active)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Employee Filter */}
-                <div className="relative group">
-                  <label className="absolute -top-2 left-3 text-xs px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-sm">Assignee</label>
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm focus-within:ring-2 focus-within:ring-emerald-400">
-                    <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700"><FiUsers className="w-4 h-4" /></div>
-                    <select
-                      className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none"
-                      value={filters.assignee}
-                      onChange={e => setFilters(f => ({ ...f, assignee: e.target.value }))}
-                    >
-                      <option value="all">All Employees</option>
-                      {employees.map(emp => (
-                        <option key={emp.id} value={emp.id}>{emp.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick actions and search */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  {currentUser && (
-                    <motion.button
-                      className={`px-3 py-2 rounded-xl text-sm font-medium transition-all shadow-sm ${
-                        filters.assignee === currentUser.id 
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-indigo-200' 
-                          : 'bg-white/80 backdrop-blur border border-gray-200 text-gray-700 hover:bg-white'
-                      }`}
-                      onClick={() => setFilters(f => ({ ...f, assignee: f.assignee === currentUser.id ? 'all' : currentUser.id }))}
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
-                      title="Toggle Assigned to Me"
                     >
-                      <FiUser className="inline w-3 h-3 mr-1" />
-                      My Tasks
+                      <FiPlus className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">New</span>
                     </motion.button>
                   )}
 
+                  {/* Hide Header Button */}
                   <motion.button
-                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 shadow-sm"
-                    onClick={() => { setFilters({ status: 'all', assignee: 'all', team: 'all', dueDate: 'all', search: '' }); setSearch(''); setSelectedProjectId('all'); }}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    title="Clear All Filters"
+                    className="p-2 bg-gray-100 text-gray-600 hover:text-indigo-600 rounded-lg"
+                    onClick={() => setShowHeader(false)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title="Hide Header"
                   >
-                    Clear
+                    <FiEyeOff className="w-3.5 h-3.5" />
                   </motion.button>
-                </div>
-
-                {/* Search */}
-                <div className="relative w-full md:w-auto">
-                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <motion.input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full md:w-64 text-sm rounded-xl border border-gray-200 bg-white/90 backdrop-blur focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                    whileFocus={{ scale: 1.02 }}
-                  />
                 </div>
               </div>
             </div>
-
-            {/* Compact Stats Row with Progress Indicator */}
-           
           </div>
-        </div>
-      </motion.div>
-      {/* Active Filters Bar */}
-      <div className="px-6 pt-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {selectedProjectId !== 'all' && (
-            <span className="text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">Project: {projects.find(p => p.id === selectedProjectId)?.name || selectedProjectId}</span>
-          )}
-          {filters.status !== 'all' && (
-            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Status: {filters.status}</span>
-          )}
-          {filters.assignee !== 'all' && (
-            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Assignee: {employees.find(e => e.id === filters.assignee)?.name || 'Me'}</span>
-          )}
-          {filters.search && (
-            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full border">Search: {filters.search}</span>
-          )}
-        </div>
-      </div>
+        </motion.div>
+      )}
       
       {/* Main Content */}
-      <div className="pt-4">
+      <div className="pt-0">
+        {/* Header Toggle Button - appears when header is hidden */}
+        {!showHeader && (
+          <motion.button
+            className="fixed top-20 right-4 z-[99999] w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all"
+            onClick={() => setShowHeader(true)}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            title="Show Header"
+          >
+            <FiEye className="w-3 h-3" />
+          </motion.button>
+        )}
+        
+
+        
         {/* Content */}
-        <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <motion.div 
+          variants={itemVariants} 
+          className="bg-transparent overflow-hidden"
+        >
           {loading ? (
-            <div className="p-12 text-center">
+            <div className="p-12 text-center bg-white rounded-xl">
               <div className="inline-flex items-center space-x-2">
                 <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-gray-600">Loading tasks...</span>
               </div>
             </div>
           ) : error ? (
-            <div className="p-12 text-center text-red-500">
+            <div className="p-12 text-center text-red-500 bg-white rounded-xl">
               <FiAlertCircle className="w-12 h-12 mx-auto mb-4" />
               {error}
             </div>
-          ) : tasks.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiGrid className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
-              <p className="text-gray-600 mb-6">
-                {search || filters.status !== 'all' 
-                  ? 'Try adjusting your filters or search terms.'
-                  : 'Get started by creating your first task.'
-                }
-              </p>
-              {userRole === 'manager' && (
-                <motion.button
-                  className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
-                  onClick={() => setShowCreateModal(true)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiPlus className="mr-2" />
-                  Create Your First Task
-                </motion.button>
-              )}
-            </div>
           ) : (
-            <div className={compactMode ? 'p-2' : 'p-6'}>
+            <div className="p-0">
               {view === 'board' ? (
                 <TaskBoard
                   tasks={tasks}
@@ -1141,47 +1052,75 @@ export default function TasksPage({ sidebarOpen }) {
                   onTaskView={handleTaskView}
                   search={search}
                   setSearch={setSearch}
+                  filters={filters}
+                  setFilters={setFilters}
+                  employees={employees}
+                  sprints={sprints}
+                  selectedSprintId={selectedSprintId}
+                  setSelectedSprintId={setSelectedSprintId}
+                  selectedProjectId={selectedProjectId}
+                  setSelectedProjectId={setSelectedProjectId}
+                  projects={projects}
+                  getStatusConfig={getStatusConfig}
+                  onClearAllFilters={handleClearAllFilters}
+                  onOpenSprintManagement={() => setView('sprint')}
                 />
               ) : view === 'list' ? (
-                <TaskList
-                  tasks={tasks}
-                  onTaskUpdate={handleTaskUpdate}
-                  onTaskEdit={handleTaskEdit}
-                  onTaskDelete={handleTaskDelete}
-                  onTaskView={handleTaskView}
-                />
-              ) : (
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-800">Sprint Board</h2>
+                tasks.length === 0 ? (
+                  <div className="p-12 text-center bg-white rounded-xl">
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FiGrid className="w-12 h-12 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+                    <p className="text-gray-600 mb-6">
+                      {search || filters.status !== 'all' 
+                        ? 'Try adjusting your filters or search terms.'
+                        : 'Get started by creating your first task.'
+                      }
+                    </p>
                     {userRole === 'manager' && (
                       <motion.button
-                        onClick={() => {
-                          setEditingSprint(null);
-                          setShowSprintModal(true);
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
+                        className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                        onClick={() => setShowCreateModal(true)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <FiPlus className="w-4 h-4" />
-                        <span>New Sprint</span>
+                        <FiPlus className="mr-2" />
+                        Create Your First Task
                       </motion.button>
                     )}
                   </div>
-                  
-                  <SprintBoard
-                    sprints={sprints}
-                    onEditSprint={(sprint) => {
-                      setEditingSprint(sprint);
-                      setShowSprintModal(true);
-                    }}
-                    onStartSprint={startSprint}
-                    onCompleteSprint={completeSprint}
-                    selectedSprintId={selectedSprintId}
-                    onSelectSprint={(sprintId) => setSelectedSprintId(sprintId === selectedSprintId ? 'all' : sprintId)}
+                ) : (
+                  <TaskList
+                    tasks={tasks}
+                    onTaskUpdate={handleTaskUpdate}
+                    onTaskEdit={handleTaskEdit}
+                    onTaskDelete={handleTaskDelete}
+                    onTaskView={handleTaskView}
                   />
-                </div>)}
+                )
+              ) : (
+                <SprintManagement
+                  sprints={sprints}
+                  tasks={tasks}
+                  onCreateSprint={() => {
+                    setEditingSprint(null);
+                    setShowSprintModal(true);
+                  }}
+                  onEditSprint={(sprint) => {
+                    setEditingSprint(sprint);
+                    setShowSprintModal(true);
+                  }}
+                  onDeleteSprint={deleteSprint}
+                  onSelectSprint={handleSprintSelect}
+                  onStartSprint={startSprint}
+                  onCompleteSprint={completeSprint}
+                  selectedSprintId={selectedSprintForDetail?.id}
+                  userRole={userRole}
+                  projects={projects}
+                  selectedProjectId={selectedProjectId}
+                  setSelectedProjectId={setSelectedProjectId}
+                />)}
             </div>
           )}
         </motion.div>
@@ -1265,7 +1204,7 @@ export default function TasksPage({ sidebarOpen }) {
         {/* Sprint Assignment Modal */}
         {showSprintAssignModal && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+            className="fixed inset-0 z-[99997] flex items-center justify-center p-4 bg-black bg-opacity-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1353,6 +1292,35 @@ export default function TasksPage({ sidebarOpen }) {
               </div>
             </motion.div>
           </motion.div>
+        )}
+        
+        {/* Sprint Detail View Modal */}
+        {showSprintDetailView && selectedSprintForDetail && (
+          <SprintDetailView
+            sprint={selectedSprintForDetail}
+            isOpen={showSprintDetailView}
+            onClose={() => {
+              setShowSprintDetailView(false);
+              setSelectedSprintForDetail(null);
+            }}
+            onUpdate={() => {
+              fetchTasks();
+              fetchSprints();
+            }}
+            onEdit={() => {
+              setEditingSprint(selectedSprintForDetail);
+              setShowSprintModal(true);
+              setShowSprintDetailView(false);
+            }}
+            onStart={startSprint}
+            onComplete={completeSprint}
+            onAddTasks={() => {
+              // Close detail view and show task assignment
+              setShowSprintDetailView(false);
+              setShowSprintAssignModal(true);
+            }}
+            userRole={userRole}
+          />
         )}
       </AnimatePresence>
     </motion.div>

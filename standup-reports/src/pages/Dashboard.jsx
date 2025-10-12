@@ -3,9 +3,10 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '../supabaseClient';
+import TaskDetailView from '../components/tasks/TaskDetailView';
 
 // Icons
-import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2 } from 'react-icons/fi';
+import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -89,8 +90,130 @@ const statCardVariants = {
   }
 };
 
+// Utility: basic HTML escaping
+const escapeHtml = (str) => String(str)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
+// Convert lightweight markdown and tokens to safe HTML
+function formatReportContent(raw) {
+  if (!raw) return '';
+  const input = String(raw);
+
+  // Detect if content is Tiptap/HTML (basic check)
+  const isHtml = /<\s*(p|ul|ol|li|br|strong|em|span|div|a)[\s>]/i.test(input);
+
+  if (isHtml) {
+    // Minimal sanitize: strip scripts and inline event handlers
+    let html = input
+      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+      .replace(/ on\w+\s*=\s*\"[^\"]*\"/gi, '')
+      .replace(/ on\w+\s*=\s*\'[^\']*\'/gi, '');
+
+    // Replace [TASK:{id}|{title}] tokens inside HTML - show truncated task title
+    html = html.replace(/\[TASK:([^|\]]+)\|([^\]]+)\]/g, (m, id, title) => {
+      const safeTitle = escapeHtml(title);
+      return `<span class="task-ref-wrapper inline-block max-w-xs align-baseline"><a href="#" class="task-ref text-indigo-600 hover:text-indigo-800 underline hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors cursor-pointer font-medium truncate block" data-task-id="${id}" title="${safeTitle}">${safeTitle}</a></span>`;
+    });
+
+    // Mentions: @Name{id:uuid} -> link to profile; fallback @word -> query link
+    html = html.replace(/@([^\{\s]+)\{id:([a-f0-9\-]+)\}/gi, (m, name, id) => {
+      const safeName = escapeHtml(name);
+      return `<a href="/profile/${id}" class="mention text-blue-600 hover:underline">@${safeName}</a>`;
+    });
+    html = html.replace(/(^|\s)@([A-Za-z0-9_\.\-]+)/g, (m, pre, name) => {
+      return `${pre}<a href="/profile?name=${name}" class="mention text-blue-600 hover:underline">@${name}</a>`;
+    });
+
+    // Hashtags within HTML text
+    html = html.replace(/(^|\s)#([A-Za-z0-9_\-]+)/g, (m, pre, tag) => {
+      return `${pre}<span class="hashtag text-purple-600">#${tag}</span>`;
+    });
+
+    return html;
+  }
+
+  // Plain text path: escape and transform to simple HTML
+  let text = escapeHtml(input);
+
+  // Inline code `code`
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Bold and italic (simple)
+  text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  // Lists
+  const blocks = text.split(/\n\n+/);
+  const formattedBlocks = blocks.map(block => {
+    const lines = block.split(/\n/);
+    if (lines.every(l => /^\s*-\s+/.test(l))) {
+      const items = lines.map(l => `<li>${l.replace(/^\s*-\s+/, '')}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    }
+    if (lines.every(l => /^\s*\d+\.\s+/.test(l))) {
+      const items = lines.map(l => `<li>${l.replace(/^\s*\d+\.\s+/, '')}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    }
+    return block.replace(/\n/g, '<br/>');
+  });
+  let html = formattedBlocks.join('\n');
+
+  // Tokens and linkify - show truncated task title
+  html = html.replace(/\[TASK:([^|\]]+)\|([^\]]+)\]/g, (m, id, title) => {
+    const safeTitle = escapeHtml(title);
+    return `<span class=\"task-ref-wrapper inline-block max-w-xs align-baseline\"><a href=\"#\" class=\"task-ref text-indigo-600 hover:text-indigo-800 underline hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors cursor-pointer font-medium truncate block\" data-task-id=\"${id}\" title=\"${safeTitle}\">${safeTitle}</a></span>`;
+  });
+  html = html.replace(/@([^\{\s]+)\{id:([a-f0-9\-]+)\}/gi, (m, name, id) => {
+    const safeName = escapeHtml(name);
+    return `<a href=\"/profile/${id}\" class=\"mention text-blue-600 hover:underline\">@${safeName}</a>`;
+  });
+  html = html.replace(/(^|\s)@([A-Za-z0-9_\.\-]+)/g, (m, pre, name) => {
+    return `${pre}<a href=\"/profile?name=${name}\" class=\"mention text-blue-600 hover:underline\">@${name}</a>`;
+  });
+  html = html.replace(/(^|\s)#([A-Za-z0-9_\-]+)/g, (m, pre, tag) => {
+    return `${pre}<span class=\"hashtag text-purple-600\">#${tag}</span>`;
+  });
+  html = html.replace(/(https?:\/\/[^\s<]+)/g, (m, url) => {
+    const safe = escapeHtml(url);
+    return `<a href=\"${safe}\" target=\"_blank\" rel=\"noopener\" class=\"text-indigo-600 underline\">${safe}</a>`;
+  });
+
+  return html;
+}
+
+// Display component that binds click handlers for task refs
+function RichTextDisplay({ content, onTaskClick }) {
+  const containerRef = React.useRef(null);
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onClick = (e) => {
+      const target = e.target;
+      if (target && target.classList && target.classList.contains('task-ref')) {
+        e.preventDefault();
+        const taskId = target.getAttribute('data-task-id');
+        if (taskId) onTaskClick?.(taskId);
+      }
+    };
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
+  }, [onTaskClick]);
+
+  const html = React.useMemo(() => formatReportContent(content), [content]);
+  return (
+    <div ref={containerRef} className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
+  );
+}
+
 export default function Dashboard({ sidebarOpen }) {
-  const [reports, setReports] = useState([]);
+const [reports, setReports] = useState([]);
+  // Task modal state
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -643,33 +766,7 @@ export default function Dashboard({ sidebarOpen }) {
     // Removed auto-scrolling effect
   }, [showMissingHeader]);
 
-  // Dashboard stat cards
-  const dashboardStats = [
-    {
-      label: 'Reports Today',
-      value: reports.length,
-      icon: <FiFileText className="w-5 h-5" />,
-      color: 'from-blue-500 to-indigo-500',
-    },
-    {
-      label: 'Present',
-      value: teamMembers.length - onLeaveCount,
-      icon: <FiUsers className="w-5 h-5" />,
-      color: 'from-emerald-500 to-teal-500',
-    },
-    {
-      label: 'On Leave',
-      value: onLeaveCount,
-      icon: <FiClock className="w-5 h-5" />,
-      color: 'from-yellow-400 to-orange-400',
-    },
-    {
-      label: 'Announcements',
-      value: announcementsCount,
-      icon: <FiBell className="w-5 h-5" />,
-      color: 'from-pink-500 to-purple-500',
-    },
-  ];
+
 
   // Professional Dashboard Header component with Missing Reports summary
   const DashboardHeader = () => {
@@ -724,6 +821,24 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                     
                     <div className="flex items-center gap-3">
+                      {/* Compact Team Availability Indicators */}
+                      <motion.div 
+                        className="p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 shadow-md flex items-center gap-2"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        title="Team Availability"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                          <span className="text-xs font-bold text-emerald-700">{availableMembers.length}</span>
+                        </div>
+                        <div className="w-0.5 h-4 bg-gray-300"></div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                          <span className="text-xs font-bold text-amber-700">{onLeaveMembers.length}</span>
+                        </div>
+                      </motion.div>
+                      
                       <motion.button
                         onClick={() => navigate('/notifications')}
                         className="relative p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 transition-all shadow-md"
@@ -766,9 +881,28 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                   </div>
 
-                  {/* Action Cards Grid - Completely New Design */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  {/* Action Cards Row - Horizontal scroll, no wrapping */}
+<div className="flex flex-nowrap gap-4 overflow-x-auto pt-6 pb-10 snap-x snap-mandatory no-scrollbar">
                     {[
+                               { 
+                        key: 'conversations', 
+                        icon: (
+                          <motion.div
+                            initial={{ rotate: -10 }}
+                            animate={{ rotate: [ -10, 10, -10 ] }}
+                            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                          >
+                            <FiMessageSquare className="w-6 h-6" />
+                          </motion.div>
+                        ), 
+                        onClick: () => navigate('/chat'), 
+                        label: 'Conversations', 
+                        gradient: 'from-cyan-500 to-indigo-600',
+                        bg: 'bg-cyan-500/10',
+                        border: 'border-cyan-500/30',
+                        glow: 'shadow-cyan-500/20',
+                        hoverText: 'Open team chat & DMs'
+                      },
                       { 
                         key: 'tasks', 
                         icon: <FiList className="w-6 h-6" />, 
@@ -861,37 +995,8 @@ export default function Dashboard({ sidebarOpen }) {
                         bg: 'bg-amber-500/10',
                         border: 'border-amber-500/30',
                         glow: 'shadow-amber-500/20'
-                      },
-                      { 
-                        key: 'missing', 
-                        icon: <FiAlertCircle className="w-6 h-6" />, 
-                        onClick: scrollToMissingReports, 
-                        label: 'Missing', 
-                        gradient: 'from-rose-500 to-pink-600',
-                        bg: 'bg-rose-500/10',
-                        border: 'border-rose-500/30',
-                        glow: 'shadow-rose-500/20'
-                      },
-                      { 
-                        key: 'leaves', 
-                        icon: <FiClock className="w-6 h-6" />, 
-                        onClick: () => navigate('/leaves'), 
-                        label: 'Leaves', 
-                        gradient: 'from-cyan-500 to-blue-600',
-                        bg: 'bg-cyan-500/10',
-                        border: 'border-cyan-500/30',
-                        glow: 'shadow-cyan-500/20'
-                      },
-                      { 
-                        key: 'announcements', 
-                        icon: <FiBell className="w-6 h-6" />, 
-                        onClick: () => navigate('/notifications'), 
-                        label: 'Announcements', 
-                        gradient: 'from-violet-500 to-purple-600',
-                        bg: 'bg-violet-500/10',
-                        border: 'border-violet-500/30',
-                        glow: 'shadow-violet-500/20'
-                      },
+                      },                 
+                     
                       { 
                         key: 'profile', 
                         icon: <FiUser className="w-6 h-6" />, 
@@ -901,21 +1006,11 @@ export default function Dashboard({ sidebarOpen }) {
                         bg: 'bg-fuchsia-500/10',
                         border: 'border-fuchsia-500/30',
                         glow: 'shadow-fuchsia-500/20'
-                      },
-                      { 
-                        key: 'calendar', 
-                        icon: <FiCalendar className="w-6 h-6" />, 
-                        onClick: () => navigate('/calendar'), 
-                        label: 'Calendar', 
-                        gradient: 'from-green-500 to-emerald-600',
-                        bg: 'bg-green-500/10',
-                        border: 'border-green-500/30',
-                        glow: 'shadow-green-500/20'
                       }
                     ].map((action, index) => (
                       <motion.div
                         key={action.key}
-                        className="group relative"
+                        className="group relative flex-none w-48 sm:w-56 md:w-60 snap-start"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
@@ -1281,6 +1376,8 @@ export default function Dashboard({ sidebarOpen }) {
                   <span className="text-sm font-medium">Submit Report</span>
                 </motion.div>
               )}
+              
+              
             </div>
             
             {/* Animated time display */}
@@ -1359,6 +1456,25 @@ export default function Dashboard({ sidebarOpen }) {
                     Daily Standup Reports
                   </span>
                 </motion.h2>
+                
+                {/* Quick Stats Bar */}
+                <div className="hidden md:flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-medium">
+                    <FiFileText className="w-3 h-3" />
+                    <span>{reports.length}</span>
+                    <span className="text-blue-600 ml-1">Reports</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-medium">
+                    <FiCheckCircle className="w-3 h-3" />
+                    <span>{teamMembers.length - missingReports.length}</span>
+                    <span className="text-emerald-600 ml-1">Submitted</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-xs font-medium">
+                    <FiAlertCircle className="w-3 h-3" />
+                    <span>{missingReports.length}</span>
+                    <span className="text-amber-600 ml-1">Missing</span>
+                  </div>
+                </div>
                 
                 <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
                   {/* Filter button moved here from top section */}
@@ -1721,13 +1837,18 @@ export default function Dashboard({ sidebarOpen }) {
                           </h4>
                             </div>
                             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[210px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
-                                {filteredReports[currentReportIndex].yesterday || 
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                                {filteredReports[currentReportIndex].yesterday ? (
+                                  <RichTextDisplay 
+                                    content={filteredReports[currentReportIndex].yesterday}
+                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                  />
+                                ) : (
                                   <span className="italic text-gray-400 flex items-center gap-2">
                                     <FiInfo className="h-4 w-4" />
                                     No update provided
                                   </span>
-                                }
+                                )}
                               </div>
                           </div>
                         </motion.div>
@@ -1743,13 +1864,18 @@ export default function Dashboard({ sidebarOpen }) {
                           </h4>
                             </div>
                             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[210px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose prose-sm">
-                                {filteredReports[currentReportIndex].today || 
+                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                                {filteredReports[currentReportIndex].today ? (
+                                  <RichTextDisplay 
+                                    content={filteredReports[currentReportIndex].today}
+                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                  />
+                                ) : (
                                   <span className="italic text-gray-400 flex items-center gap-2">
                                     <FiInfo className="h-4 w-4" />
                                     No update provided
                                   </span>
-                                }
+                                )}
                               </div>
                           </div>
                         </motion.div>
@@ -1769,11 +1895,18 @@ export default function Dashboard({ sidebarOpen }) {
                                 ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50' 
                                 : 'bg-gradient-to-br from-blue-50 to-blue-100/50 group-hover:from-blue-100 group-hover:to-blue-50'
                             }`}>
-                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'}`}>
-                                {filteredReports[currentReportIndex].blockers || <span className="italic text-emerald-600 flex items-center gap-1">
-                                  <FiCheckCircle className="h-3 w-3" />
-                                  No blockers
-                                </span>}
+                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 ${filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'}`}>
+                                {filteredReports[currentReportIndex].blockers ? (
+                                  <RichTextDisplay 
+                                    content={filteredReports[currentReportIndex].blockers}
+                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                  />
+                                ) : (
+                                  <span className="italic text-emerald-600 flex items-center gap-1">
+                                    <FiCheckCircle className="h-3 w-3" />
+                                    No blockers
+                                  </span>
+                                )}
                               </div>
                           </div>
                         </motion.div>
@@ -1885,9 +2018,13 @@ export default function Dashboard({ sidebarOpen }) {
                             <span className="w-5 h-5 rounded-full bg-indigo-200 flex items-center justify-center text-xs font-bold text-indigo-700">1</span>
                             Yesterday:
                           </span>
-                          <span className="text-gray-700 break-words text-sm">
-                            {report.yesterday || <span className="italic text-gray-400">No update</span>}
-                          </span>
+                          <div className="text-gray-700 break-words text-sm">
+                            {report.yesterday ? (
+                              <RichTextDisplay content={report.yesterday} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
+                              <span className="italic text-gray-400">No update</span>
+                            )}
+                          </div>
                       </div>
                         
                         <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
@@ -1895,9 +2032,13 @@ export default function Dashboard({ sidebarOpen }) {
                             <span className="w-5 h-5 rounded-full bg-emerald-200 flex items-center justify-center text-xs font-bold text-emerald-700">2</span>
                             Today:
                           </span>
-                          <span className="text-gray-700 break-words text-sm">
-                            {report.today || <span className="italic text-gray-400">No update</span>}
-                          </span>
+                          <div className="text-gray-700 break-words text-sm">
+                            {report.today ? (
+                              <RichTextDisplay content={report.today} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
+                              <span className="italic text-gray-400">No update</span>
+                            )}
+                          </div>
                     </div>
                     
                         <div className={`rounded-lg p-3 hover:bg-opacity-70 transition-colors ${
@@ -1915,16 +2056,18 @@ export default function Dashboard({ sidebarOpen }) {
                             </span>
                             Blockers:
                           </span>
-                          <span className={`break-words text-sm ${
+                          <div className={`break-words text-sm ${
                             report.blockers ? 'text-amber-700' : 'text-blue-700'
                           }`}>
-                            {report.blockers || 
+                            {report.blockers ? (
+                              <RichTextDisplay content={report.blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
                               <span className="italic text-emerald-600 flex items-center gap-1">
                                 <FiCheckCircle className="h-3 w-3" />
                                 No blockers
                               </span>
-                            }
-                          </span>
+                            )}
+                          </div>
                       </div>
                     </div>
                     </motion.div>
@@ -2174,8 +2317,12 @@ export default function Dashboard({ sidebarOpen }) {
                             <span className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3 text-sm font-bold">1</span>
                           Yesterday
                         </h4>
-                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
-                            {filteredReports[currentReportIndex].yesterday || <span className="italic text-gray-400">No update</span>}
+                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                            {filteredReports[currentReportIndex].yesterday ? (
+                              <RichTextDisplay content={filteredReports[currentReportIndex].yesterday} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
+                              <span className="italic text-gray-400">No update</span>
+                            )}
                         </div>
                         </div>
                         
@@ -2184,8 +2331,12 @@ export default function Dashboard({ sidebarOpen }) {
                             <span className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3 text-sm font-bold">2</span>
                           Today
                         </h4>
-                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1 prose">
-                            {filteredReports[currentReportIndex].today || <span className="italic text-gray-400">No update</span>}
+                          <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                            {filteredReports[currentReportIndex].today ? (
+                              <RichTextDisplay content={filteredReports[currentReportIndex].today} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
+                              <span className="italic text-gray-400">No update</span>
+                            )}
                         </div>
                         </div>
                         
@@ -2194,11 +2345,15 @@ export default function Dashboard({ sidebarOpen }) {
                             <span className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
                           Blockers
                         </h4>
-                          <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 prose ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
-                            {filteredReports[currentReportIndex].blockers || <span className="italic text-emerald-600 flex items-center gap-1">
-                              <FiCheckCircle className="h-3 w-3" />
-                              No blockers
-                            </span>}
+                          <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
+                            {filteredReports[currentReportIndex].blockers ? (
+                              <RichTextDisplay content={filteredReports[currentReportIndex].blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            ) : (
+                              <span className="italic text-emerald-600 flex items-center gap-1">
+                                <FiCheckCircle className="h-3 w-3" />
+                                No blockers
+                              </span>
+                            )}
                           </div>
                     </div>
                   </div>
@@ -2252,6 +2407,20 @@ export default function Dashboard({ sidebarOpen }) {
         users={missingReports}
         emptyMessage="Everyone has submitted their reports today!"
       />
+
+      {/* Task Detail Modal for clickable task IDs in reports */}
+      <AnimatePresence>
+        {showTaskModal && activeTaskId && (
+          <motion.div className="fixed inset-0 z-[9998]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <TaskDetailView
+              isOpen={showTaskModal}
+              onClose={() => { setShowTaskModal(false); setActiveTaskId(null); }}
+              taskId={activeTaskId}
+              onUpdate={() => { /* no-op */ }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Custom Team Availability Modal */}
       <AnimatePresence>

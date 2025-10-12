@@ -190,7 +190,7 @@ npm run dev
 ## 🎯 Features Ready to Implement (Phase 2)
 
 ### CreateTaskModalNew Enhancements:
-1. Rich Text Editor for description (TinyMCE or Quill)
+1. Rich Text Editor for description (Tiptap or TinyMCE)
 2. File Upload for attachments
 3. @mentions autocomplete in description
 4. Estimated time input with h/m format

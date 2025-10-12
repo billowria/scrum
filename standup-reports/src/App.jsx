@@ -16,7 +16,7 @@ import ManagerUserProfile from './components/ManagerUserProfile';
 // Pages
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
-import ReportEntry from './pages/ReportEntry';
+import ReportEntry from './pages/ReportEntryNew';
 import History from './pages/History';
 import LeaveCalendar from './pages/LeaveCalendar';
 import ManagerDashboard from './pages/ManagerDashboard';
@@ -25,8 +25,9 @@ import AchievementsPage from './pages/AchievementsPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
 import DepartmentManagement from './pages/DepartmentManagement';
 import TasksPage from './pages/TasksPage';
-import NotificationsPage from './pages/NotificationsPage';
+import NotificationCenterV2 from './pages/NotificationCenterV2';
 import ProjectsPage from './pages/ProjectsPage';
+import ChatPage from './pages/ChatPage';
 
 // Animation variants
 const pageVariants = {
@@ -260,11 +261,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                   </>
                 )}
                 <Route path="/report" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <ReportEntry />
-                    </div>
-                  </PageTransition>
+                  <ReportEntry />
                 } />
                 <Route path="/leave-calendar" element={
                   <PageTransition>
@@ -296,8 +293,8 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 } />
                 <Route path="/notifications" element={
                   <PageTransition>
-                    <div className="w-full py-6">
-                      <NotificationsPage />
+                    <div className="w-full h-full">
+                      <NotificationCenterV2 realTimeEnabled={true} />
                     </div>
                   </PageTransition>
                 } />
@@ -307,6 +304,9 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <ProjectsPage />
                   </PageTransition>
                 } />
+                
+                {/* Chat Route */}
+                <Route path="/chat" element={<ChatPage />} />
                 
                 {/* Profile Routes */}
                 <Route path="/profile" element={

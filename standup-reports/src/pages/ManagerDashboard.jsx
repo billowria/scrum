@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
+import { notifyLeaveStatus } from '../utils/notificationHelper';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
   FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
   FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock, FiFolder } from 'react-icons/fi';
@@ -554,12 +555,29 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   
   const handleLeaveAction = async (leaveId, status) => {
     try {
+      // Get leave request details before updating
+      const leaveRequest = leaveRequests.find(req => req.id === leaveId);
+      
       const { error } = await supabase
         .from('leave_plans')
         .update({ status })
         .eq('id', leaveId);
       
       if (error) throw error;
+      
+      // Send notification to the user about their leave status
+      if (leaveRequest && leaveRequest.users?.id) {
+        try {
+          await notifyLeaveStatus(
+            leaveRequest,
+            status,
+            leaveRequest.users.id
+          );
+        } catch (notificationError) {
+          console.error('Error sending leave notification:', notificationError);
+          // Continue even if notification fails
+        }
+      }
       
       setMessage({ 
         type: 'success', 

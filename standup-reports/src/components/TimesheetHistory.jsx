@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { FiClock, FiCheck, FiX, FiEye, FiRefreshCw } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
+import { notifyTimesheetStatus } from '../utils/notificationHelper';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -79,6 +80,9 @@ export default function TimesheetHistory() {
 
   const handleAction = async (id, action) => {
     try {
+      // Get submission details before updating
+      const submission = submissions.find(s => s.id === id);
+      
       const updates = {
         status: action,
         updated_at: new Date().toISOString(),
@@ -88,6 +92,22 @@ export default function TimesheetHistory() {
         .update(updates)
         .eq('id', id);
       if (upErr) throw upErr;
+      
+      // Send notification to the user about timesheet status
+      if (submission && submission.user_id) {
+        try {
+          await notifyTimesheetStatus(
+            action,
+            submission.start_date,
+            submission.end_date,
+            submission.user_id
+          );
+        } catch (notificationError) {
+          console.error('Error sending timesheet notification:', notificationError);
+          // Continue even if notification fails
+        }
+      }
+      
       await fetchSubmissions();
     } catch (e) {
       console.error(`Error ${action} submission:`, e);

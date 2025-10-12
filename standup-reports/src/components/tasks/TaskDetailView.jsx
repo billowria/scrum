@@ -72,6 +72,7 @@ const TaskDetailView = ({
     description: true,
     details: true
   });
+  const [statusExpanded, setStatusExpanded] = useState(false);
   
   // Data states
   const [task, setTask] = useState(null);
@@ -681,22 +682,30 @@ const TaskDetailView = ({
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-      >
+    <AnimatePresence mode="wait">
+      {isOpen && (
         <motion.div
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl max-h-[95vh] flex overflow-hidden"
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          onClick={onClose}
         >
+          <motion.div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-[92rem] max-h-[95vh] flex overflow-hidden"
+            initial={{ scale: 0.85, opacity: 0, y: 40 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            transition={{
+              type: 'spring',
+              stiffness: 260,
+              damping: 25,
+              mass: 0.8,
+              opacity: { duration: 0.2 },
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
           {loading ? (
             <LoadingSkeleton variant="card" />
           ) : error ? (
@@ -712,125 +721,346 @@ const TaskDetailView = ({
             </div>
           ) : task ? (
             <>
-              {/* Vertical Navigation Sidebar */}
-              <div className="w-80 bg-gradient-to-b from-indigo-900 to-purple-900 text-white flex flex-col">
-                {/* Header */}
-                <div className="p-6 border-b border-indigo-700">
-                  <div className="flex items-center justify-between mb-4">
+              {/* Vertical Navigation Sidebar - Fully Scrollable */}
+              <div className="w-80 bg-gradient-to-br from-slate-50 to-gray-100 flex flex-col">
+                {/* Fixed Header */}
+                <div className="flex-shrink-0 p-4 bg-white border-b border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h2 className="text-2xl font-bold">Task Details</h2>
-                      <p className="text-indigo-200 text-sm">Manage your task efficiently</p>
+                      <h2 className="text-lg font-bold text-gray-900">Task Details</h2>
+                      <p className="text-xs text-gray-500">ID: {task.id?.slice(0, 8).toUpperCase()}</p>
                     </div>
                     <button
                       onClick={onClose}
-                      className="p-2 rounded-full hover:bg-indigo-800 transition-colors"
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900"
+                      aria-label="Close modal"
                     >
-                      <FiX className="w-6 h-6" />
+                      <FiX className="w-5 h-5" />
                     </button>
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <Badge type="type" value={task.type} size="md" />
-                    <span className="text-sm opacity-80">Task-{task.id?.slice(0, 8).toUpperCase()}</span>
-                  </div>
+                  <Badge type="type" value={task.type} size="sm" />
                 </div>
 
-                {/* Task Title */}
-                <div className="p-6 border-b border-indigo-700">
-                  <h1 className="text-xl font-bold mb-3 line-clamp-3">{task.title}</h1>
-                  <div className="flex items-center gap-2">
-                    <Badge type="status" value={task.status} size="sm" />
-                    <Badge type="priority" value={task.priority} size="sm" />
-                  </div>
-                </div>
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                  {/* Task Title Card */}
+                  <motion.div 
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <h1 className="text-base font-semibold text-gray-900 mb-2 leading-tight">{task.title}</h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge type="status" value={task.status} size="sm" />
+                      <Badge type="priority" value={task.priority} size="sm" />
+                    </div>
+                  </motion.div>
 
-                {/* Status Summary */}
-                <div className="p-6 border-b border-indigo-700">
-                  <div className="mb-4">
-                    <div className="text-xs uppercase font-semibold opacity-80 mb-1">Status</div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left ${getStatusColorClass(task.status)} hover:opacity-90 transition-opacity`}
+                  {/* Status Card */}
+                  <motion.div 
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <button
+                      onClick={() => setStatusExpanded(!statusExpanded)}
+                      className="w-full flex items-center gap-2 p-4 hover:bg-gray-50 transition-colors"
+                      aria-expanded={statusExpanded}
+                      aria-label="Toggle status section"
+                    >
+                      <FiActivity className="w-4 h-4 text-blue-600" />
+                      <h3 className="text-xs font-semibold uppercase text-gray-700 flex-1 text-left">Status</h3>
+                      <Badge type="status" value={task.status} size="xs" />
+                      <motion.div
+                        animate={{ rotate: statusExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <span className="font-medium">{task.status}</span>
-                        <FiChevronDown className="w-4 h-4" />
-                      </button>
-                      
-                      {showStatusDropdown && (
-                        <div className="status-dropdown absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-                          {statusOptions.map((status) => (
-                            <button
-                              key={status.value}
-                              onClick={() => {
-                                handleStatusChange(status.value);
-                                setShowStatusDropdown(false);
-                              }}
-                              className={`w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-gray-50 ${status.color} ${task.status === status.value ? 'font-bold' : ''}`}
-                            >
-                              {React.createElement(status.icon, { className: "w-4 h-4" })}
-                              <span>{status.label}</span>
-                            </button>
-                          ))}
+                        <FiChevronDown className="w-4 h-4 text-gray-500" />
+                      </motion.div>
+                    </button>
+                    
+                    <AnimatePresence>
+                      {statusExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="px-4 pb-4 space-y-2">
+                            {statusOptions.map((status) => {
+                              const Icon = status.icon;
+                              const isActive = task.status === status.value;
+                              const statusColors = {
+                                'To Do': 'bg-gray-100 text-gray-700 border-gray-300',
+                                'In Progress': 'bg-blue-50 text-blue-700 border-blue-300',
+                                'Review': 'bg-amber-50 text-amber-700 border-amber-300',
+                                'Completed': 'bg-emerald-50 text-emerald-700 border-emerald-300',
+                                'Blocked': 'bg-rose-50 text-rose-700 border-rose-300',
+                              };
+                              
+                              return (
+                                <motion.button
+                                  key={status.value}
+                                  onClick={() => handleStatusChange(status.value)}
+                                  disabled={updatingStatus}
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border-2 transition-all ${
+                                    isActive
+                                      ? statusColors[status.value] + ' shadow-sm font-medium'
+                                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                  whileHover={!isActive ? { x: 3, scale: 1.01 } : {}}
+                                  whileTap={{ scale: 0.98 }}
+                                  aria-label={`Set status to ${status.label}`}
+                                  aria-pressed={isActive}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: statusOptions.indexOf(status) * 0.05 }}
+                                >
+                                  <Icon className={`w-4 h-4 flex-shrink-0 ${
+                                    isActive ? '' : 'opacity-60'
+                                  }`} />
+                                  <span className="text-sm flex-1 text-left">{status.label}</span>
+                                  {isActive && (
+                                    <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="w-2 h-2 rounded-full bg-current"
+                                    />
+                                  )}
+                                </motion.button>
+                              );
+                            })}
+                            {updatingStatus && (
+                              <div className="flex items-center gap-2 mt-2 text-xs text-blue-600">
+                                <FiLoader className="w-3 h-3 animate-spin" />
+                                <span>Updating...</span>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Priority Card */}
+                  <motion.div 
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiTrendingUp className="w-4 h-4 text-orange-600" />
+                      <h3 className="text-xs font-semibold uppercase text-gray-700">Priority</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const priorityConfig = {
+                          'Low': { icon: FiCheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+                          'Medium': { icon: FiClock, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
+                          'High': { icon: FiAlertCircle, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
+                          'Critical': { icon: FiXOctagon, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+                        };
+                        const config = priorityConfig[task.priority] || priorityConfig['Medium'];
+                        const PriorityIcon = config.icon;
+                        
+                        return (
+                          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${config.bg} ${config.border}`}>
+                            <PriorityIcon className={`w-4 h-4 ${config.color}`} />
+                            <span className={`text-sm font-medium ${config.color}`}>{task.priority}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </motion.div>
+
+                  {/* Assignee Card */}
+                  <motion.div 
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiUser className="w-4 h-4 text-purple-600" />
+                      <h3 className="text-xs font-semibold uppercase text-gray-700">Assignee</h3>
+                    </div>
+                    {task.assignee ? (
+                      <div className="flex items-center gap-3">
+                        <Avatar user={task.assignee} size="md" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{task.assignee.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{task.assignee.email}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 py-2">No assignee</div>
+                    )}
+                    {task.assignee?.id !== currentUser?.id && (
+                      <motion.button
+                        onClick={async () => {
+                          try {
+                            await supabase.from('tasks').update({ assignee_id: currentUser.id }).eq('id', taskId);
+                            await logActivity('assigned', `Assigned to ${currentUser?.name || 'me'}`);
+                            await fetchTaskData();
+                          } catch (e) { console.error(e); }
+                        }}
+                        className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors text-sm font-medium"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        aria-label="Assign this task to me"
+                      >
+                        <FiUserPlus className="w-4 h-4" />
+                        <span>Assign to me</span>
+                      </motion.button>
+                    )}
+                  </motion.div>
+
+                  {/* Dates Card */}
+                  <motion.div 
+                    className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiCalendar className="w-4 h-4 text-indigo-600" />
+                      <h3 className="text-xs font-semibold uppercase text-gray-700">Timeline</h3>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {task.due_date && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Due Date:</span>
+                          <span className="font-medium text-gray-900">{format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
                         </div>
                       )}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <div className="text-xs uppercase font-semibold opacity-80 mb-1">Priority</div>
-                    <div className="font-medium">{task.priority}</div>
-                  </div>
-                  
-                  {task.assignee && (
-                    <div>
-                      <div className="text-xs uppercase font-semibold opacity-80 mb-1">Assignee</div>
-                      <div className="flex items-center gap-2">
-                        <Avatar user={task.assignee} size="sm" />
-                        <span className="font-medium">{task.assignee.name}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Created:</span>
+                        <span className="font-medium text-gray-900">{format(new Date(task.created_at), 'MMM dd, yyyy')}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600">Updated:</span>
+                        <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(task.updated_at), { addSuffix: true })}</span>
                       </div>
                     </div>
+                  </motion.div>
+
+                  {/* Navigation Sections */}
+                  <motion.div 
+                    className="bg-white rounded-xl p-3 shadow-sm border border-gray-200"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <FiLayers className="w-4 h-4 text-gray-600" />
+                      <h3 className="text-xs font-semibold uppercase text-gray-700">Sections</h3>
+                    </div>
+                    <nav className="space-y-1">
+                      {sections.map((section) => {
+                        const SectionIcon = section.icon;
+                        return (
+                          <motion.button
+                            key={section.id}
+                            onClick={() => setActiveSection(section.id)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-all ${
+                              activeSection === section.id
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                            whileHover={{ x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                            aria-label={`Navigate to ${section.label}`}
+                            aria-current={activeSection === section.id ? 'page' : undefined}
+                          >
+                            <SectionIcon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-sm font-medium flex-1">{section.label}</span>
+                            {section.count !== undefined && section.count > 0 && (
+                              <span className={`text-xs rounded-full min-w-[20px] h-5 px-2 flex items-center justify-center font-semibold ${
+                                activeSection === section.id
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {section.count}
+                              </span>
+                            )}
+                          </motion.button>
+                        );
+                      })}
+                    </nav>
+                  </motion.div>
+
+                  {/* Reporter Card */}
+                  {task.reporter && (
+                    <motion.div 
+                      className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <FiFileText className="w-4 h-4 text-teal-600" />
+                        <h3 className="text-xs font-semibold uppercase text-gray-700">Reporter</h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Avatar user={task.reporter} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{task.reporter.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{task.reporter.email}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Team & Project Card */}
+                  {(task.team || task.project) && (
+                    <motion.div 
+                      className="bg-white rounded-xl p-4 shadow-sm border border-gray-200"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <FiFolder className="w-4 h-4 text-cyan-600" />
+                        <h3 className="text-xs font-semibold uppercase text-gray-700">Context</h3>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        {task.team && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Team:</span>
+                            <span className="font-medium text-gray-900">{task.team.name}</span>
+                          </div>
+                        )}
+                        {task.project && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Project:</span>
+                            <span className="font-medium text-gray-900">{task.project.name}</span>
+                          </div>
+                        )}
+                        {task.sprint && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-gray-600">Sprint:</span>
+                            <span className="font-medium text-gray-900">{task.sprint.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
                   )}
                 </div>
 
-                {/* Navigation Sections */}
-                <div className="flex-1 py-4 overflow-y-auto">
-                  <nav className="px-4 space-y-1">
-                    {sections.map((section) => {
-                      const SectionIcon = section.icon;
-                      return (
-                        <motion.button
-                          key={section.id}
-                          onClick={() => setActiveSection(section.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all ${
-                            activeSection === section.id
-                              ? 'bg-white/20 text-white shadow-lg'
-                              : 'text-indigo-200 hover:bg-white/10 hover:text-white'
-                          }`}
-                          whileHover={{ x: 4, scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <SectionIcon className="w-5 h-5 flex-shrink-0" />
-                          <span className="font-medium flex-1">{section.label}</span>
-                          {section.count !== undefined && section.count > 0 && (
-                            <span className="bg-white/20 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium">
-                              {section.count}
-                            </span>
-                          )}
-                        </motion.button>
-                      );
-                    })}
-                  </nav>
-                </div>
-
                 {/* Action Buttons */}
-                <div className="p-6 border-t border-indigo-700 space-y-3">
+                <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white space-y-2">
                   {editMode ? (
                     <div className="flex gap-2">
-                      <button
+                      <motion.button
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-md"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
                         {saving ? (
                           <>
@@ -843,156 +1073,147 @@ const TaskDetailView = ({
                             Save
                           </>
                         )}
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={handleEditToggle}
-                        className="px-4 py-2.5 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+                        className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
                         Cancel
-                      </button>
+                      </motion.button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleEditToggle}
-                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2 shadow-lg"
+                    <>
+                      <div className="flex gap-2">
+                        <motion.button
+                          onClick={handleEditToggle}
+                          className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          aria-label="Edit task"
+                        >
+                          <FiEdit2 className="w-4 h-4" />
+                          Edit
+                        </motion.button>
+                        <motion.button
+                          onClick={handleToggleWatch}
+                          className="p-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          title={watchingTask ? 'Stop watching' : 'Watch task'}
+                          aria-label={watchingTask ? 'Stop watching task' : 'Watch task'}
+                        >
+                          {watchingTask ? (
+                            <FiBell className="w-5 h-5" />
+                          ) : (
+                            <FiBellOff className="w-5 h-5" />
+                          )}
+                        </motion.button>
+                        <motion.button
+                          onClick={copyTaskLink}
+                          className="p-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          title="Copy task link"
+                          aria-label="Copy task link to clipboard"
+                        >
+                          <FiCopy className="w-5 h-5" />
+                        </motion.button>
+                      </div>
+                      
+                      <motion.button
+                        onClick={handleDeleteTask}
+                        className="w-full px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        aria-label="Delete task"
                       >
-                        <FiEdit2 className="w-4 h-4" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={handleToggleWatch}
-                        className="p-2.5 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
-                        title={watchingTask ? 'Stop watching' : 'Watch task'}
-                      >
-                        {watchingTask ? (
-                          <FiBell className="w-5 h-5" />
-                        ) : (
-                          <FiBellOff className="w-5 h-5" />
-                        )}
-                      </button>
-                      <button
-                        onClick={copyTaskLink}
-                        className="p-2.5 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
-                        title="Copy task link"
-                      >
-                        <FiCopy className="w-5 h-5" />
-                      </button>
-                    </div>
+                        <FiTrash2 className="w-4 h-4" />
+                        Delete Task
+                      </motion.button>
+                    </>
                   )}
-                  
-                  <button
-                    onClick={handleDeleteTask}
-                    className="w-full px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 text-white rounded-lg hover:from-rose-700 hover:to-red-700 transition-all flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <FiTrash2 className="w-4 h-4" />
-                    Delete Task
-                  </button>
                 </div>
               </div>
 
               {/* Main Content Area */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Enhanced Header with Status Update Button */}
-                <div className="border-b border-gray-200 p-6 bg-gradient-to-r from-gray-50 to-white">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      {parentTaskId && (
-                        <motion.button
-                          onClick={() => onNavigateToTask && onNavigateToTask(parentTaskId)}
-                          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                          title="Go back to parent task"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <FiArrowLeft className="w-5 h-5" />
-                        </motion.button>
-                      )}
-                      <div className="flex-1">
-                        {editMode ? (
-                          <input
-                            type="text"
-                            value={editData.title}
-                            onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                            className="w-full text-3xl font-bold text-gray-900 border-2 border-indigo-500 rounded-lg px-4 py-2 focus:outline-none"
-                          />
-                        ) : (
-                          <h1 className="text-3xl font-bold text-gray-900">{task.title}</h1>
+              <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+                {/* Enhanced Header */}
+                <div className="border-b border-gray-200 bg-white shadow-sm">
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3 flex-1">
+                        {parentTaskId && (
+                          <motion.button
+                            onClick={() => onNavigateToTask && onNavigateToTask(parentTaskId)}
+                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                            title="Go back to parent task"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            aria-label="Go back to parent task"
+                          >
+                            <FiArrowLeft className="w-5 h-5" />
+                          </motion.button>
                         )}
+                        <div className="flex-1 min-w-0">
+                          {editMode ? (
+                            <input
+                              type="text"
+                              value={editData.title}
+                              onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                              className="w-full text-2xl font-bold text-gray-900 border-2 border-indigo-500 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                              placeholder="Task title..."
+                            />
+                          ) : (
+                            <h1 className="text-2xl font-bold text-gray-900 leading-tight">{task.title}</h1>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 ml-4">
-                      {!editMode && (
-                        <div className="relative">
-                          <motion.button
-                            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                            className={`px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-md ${getStatusColorClass(task.status)}`}
-                            whileHover={{ scale: 1.03, y: -2 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <span className="font-medium text-gray-900">{task.status}</span>
-                            <FiChevronDown className="w-5 h-5" />
-                          </motion.button>
-                          
-                          {showStatusDropdown && (
-                            <div className="status-dropdown absolute z-20 right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
-                              {statusOptions.map((status) => {
-                                const StatusIcon = status.icon;
-                                return (
-                                  <button
-                                    key={status.value}
-                                    onClick={() => {
-                                      handleStatusChange(status.value);
-                                      setShowStatusDropdown(false);
-                                    }}
-                                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${status.color} ${task.status === status.value ? 'font-bold' : ''}`}
-                                  >
-                                    <StatusIcon className="w-5 h-5" />
-                                    <span>{status.label}</span>
-                                    {task.status === status.value && (
-                                      <FiCheck className="w-4 h-4 ml-auto text-green-600" />
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
+                    {/* Metadata Row */}
+                    <div className="flex items-center flex-wrap gap-3">
+                      <Badge type="status" value={editMode ? editData.status : task.status} size="md" />
+                      <Badge type="priority" value={editMode ? editData.priority : task.priority} size="md" />
+                      {task.team && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg border border-purple-200">
+                          <FiUsers className="w-3.5 h-3.5" />
+                          <span className="text-sm font-medium">{task.team.name}</span>
+                        </div>
+                      )}
+                      {task.assignee && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+                          <Avatar user={task.assignee} size="xs" />
+                          <span className="text-sm text-gray-700 font-medium">{task.assignee.name}</span>
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* Status Badges */}
-                  <div className="flex items-center gap-4">
-                    <Badge type="status" value={editMode ? editData.status : task.status} size="lg" />
-                    <Badge type="priority" value={editMode ? editData.priority : task.priority} size="lg" />
-                    {task.team && (
-                      <Badge type="team" value={task.team.name} size="lg" />
-                    )}
-                    {task.assignee && (
-                      <div className="flex items-center gap-2">
-                        <Avatar user={task.assignee} size="sm" />
-                        <span className="text-gray-700 font-medium">{task.assignee.name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Date Information */}
-                  <div className="flex items-center gap-6 mt-4 text-sm">
-                    {task.due_date && (
-                      <div className="flex items-center gap-2">
-                        <FiCalendar className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-700">
-                          Due {format(new Date(task.due_date), 'MMM dd, yyyy')}
+                    {/* Date Information */}
+                    <div className="flex items-center flex-wrap gap-4 mt-4 text-sm">
+                      {task.due_date && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">
+                          <FiCalendar className="w-4 h-4" />
+                          <span className="font-medium">
+                            Due {format(new Date(task.due_date), 'MMM dd, yyyy')}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <FiClock className="w-4 h-4" />
+                        <span>
+                          Created {formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}
                         </span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <FiClock className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700">
-                        Created {formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}
-                      </span>
+                      {subtasks.length > 0 && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg">
+                          <FiCheckSquare className="w-4 h-4" />
+                          <span className="font-medium">
+                            {subtasks.filter(s => s.status === 'Completed').length}/{subtasks.length} subtasks
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1113,32 +1334,35 @@ const TaskDetailView = ({
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
-                  <div className="p-6">
+                  <div className="p-6 space-y-6">
                     {/* Overview Section */}
                     {activeSection === 'overview' && (
-                      <div className="space-y-6">
+                      <div className="space-y-5">
                         {/* Description Card */}
                         <motion.div 
-                          className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden"
+                          className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 }}
                         >
-                          <div 
-                            className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 cursor-pointer"
+                          <button
                             onClick={() => toggleSection('description')}
+                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                            aria-expanded={expandedSections.description}
                           >
-                            <div className="flex items-center gap-3">
-                              <FiFileText className="w-5 h-5 text-indigo-600" />
-                              <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-2 bg-indigo-50 rounded-lg">
+                                <FiFileText className="w-4 h-4 text-indigo-600" />
+                              </div>
+                              <h3 className="text-base font-semibold text-gray-900">Description</h3>
                             </div>
                             <motion.div
                               animate={{ rotate: expandedSections.description ? 180 : 0 }}
                               transition={{ duration: 0.2 }}
                             >
-                              <FiChevronDown className="w-5 h-5 text-gray-500" />
+                              <FiChevronDown className="w-5 h-5 text-gray-400" />
                             </motion.div>
-                          </div>
+                          </button>
                           
                           <AnimatePresence>
                             {expandedSections.description && (
@@ -1148,22 +1372,24 @@ const TaskDetailView = ({
                                 exit={{ height: 0, opacity: 0 }}
                                 transition={{ duration: 0.3 }}
                               >
-                                <div className="p-5">
-                                  {editMode ? (
-                                    <textarea
-                                      value={editData.description}
-                                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                                      rows="8"
-                                      className="w-full px-4 py-3 border-2 border-indigo-500 rounded-lg focus:outline-none resize-none"
-                                      placeholder="Add a detailed description of the task..."
-                                    />
-                                  ) : (
-                                    <div className="prose max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg min-h-[120px]">
-                                      {task.description || (
-                                        <span className="text-gray-400 italic">No description provided</span>
-                                      )}
-                                    </div>
-                                  )}
+                                <div className="px-4 pb-4 border-t border-gray-100">
+                                  <div className="mt-4">
+                                    {editMode ? (
+                                      <textarea
+                                        value={editData.description}
+                                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                                        rows="8"
+                                        className="w-full px-4 py-3 border-2 border-indigo-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+                                        placeholder="Add a detailed description of the task..."
+                                      />
+                                    ) : (
+                                      <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 p-4 rounded-lg min-h-[120px]">
+                                        {task.description || (
+                                          <span className="text-gray-400 italic">No description provided</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </motion.div>
                             )}
@@ -1174,53 +1400,73 @@ const TaskDetailView = ({
 
                         {/* Comments Preview Card */}
                         <motion.div 
-                          className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden"
+                          className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.2 }}
                         >
-                          <div 
-                            className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FiMessageSquare className="w-5 h-5 text-indigo-600" />
-                              <h3 className="text-lg font-semibold text-gray-900">Comments</h3>
+                          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-2 bg-blue-50 rounded-lg">
+                                <FiMessageSquare className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <h3 className="text-base font-semibold text-gray-900">Recent Comments</h3>
                               {comments.length > 0 && (
-                                <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
                                   {comments.length}
                                 </span>
                               )}
                             </div>
-                            <button 
+                            <motion.button 
                               onClick={() => setActiveSection('comments')}
-                              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                              whileHover={{ x: 3 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              View All Comments →
-                            </button>
+                              View All
+                              <FiExternalLink className="w-3.5 h-3.5" />
+                            </motion.button>
                           </div>
                           
-                          <div className="p-5">
+                          <div className="p-4">
                             {comments.length === 0 ? (
-                              <div className="text-center py-4 text-gray-500">
-                                <FiMessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                <p>No comments yet</p>
+                              <div className="text-center py-8 text-gray-500">
+                                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <FiMessageSquare className="w-6 h-6 text-gray-400" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-600">No comments yet</p>
+                                <p className="text-xs text-gray-500 mt-1">Be the first to comment</p>
                               </div>
                             ) : (
-                              <div className="space-y-4">
-                                {comments.slice(0, 5).map((comment) => (
-                                  <div key={comment.id} className="flex gap-3">
+                              <div className="space-y-3">
+                                {comments.slice(0, 3).map((comment, index) => (
+                                  <motion.div 
+                                    key={comment.id} 
+                                    className="flex gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                  >
                                     <Avatar user={comment.user} size="sm" />
-                                    <div className="flex-1">
+                                    <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-medium text-gray-900">{comment.user?.name}</span>
+                                        <span className="text-sm font-medium text-gray-900">{comment.user?.name}</span>
                                         <span className="text-xs text-gray-500">
                                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                                         </span>
                                       </div>
-                                      <p className="text-gray-700 text-sm">{comment.content}</p>
+                                      <p className="text-sm text-gray-700 line-clamp-2">{comment.content}</p>
                                     </div>
-                                  </div>
+                                  </motion.div>
                                 ))}
+                                {comments.length > 3 && (
+                                  <button
+                                    onClick={() => setActiveSection('comments')}
+                                    className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                                  >
+                                    View {comments.length - 3} more comment{comments.length - 3 > 1 ? 's' : ''}
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1228,65 +1474,88 @@ const TaskDetailView = ({
 
                         {/* Dependencies Preview Card */}
                         <motion.div 
-                          className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden"
+                          className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 }}
                         >
-                          <div 
-                            className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FiGitBranch className="w-5 h-5 text-indigo-600" />
-                              <h3 className="text-lg font-semibold text-gray-900">Dependencies</h3>
+                          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <div className="flex items-center gap-2.5">
+                              <div className="p-2 bg-amber-50 rounded-lg">
+                                <FiGitBranch className="w-4 h-4 text-amber-600" />
+                              </div>
+                              <h3 className="text-base font-semibold text-gray-900">Dependencies</h3>
                               {dependencies.length > 0 && (
-                                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full font-medium">
+                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-medium">
                                   {dependencies.length}
                                 </span>
                               )}
                             </div>
-                            <button 
+                            <motion.button 
                               onClick={() => setActiveSection('dependencies')}
-                              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                              whileHover={{ x: 3 }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              View All Dependencies →
-                            </button>
+                              View All
+                              <FiExternalLink className="w-3.5 h-3.5" />
+                            </motion.button>
                           </div>
                           
-                          <div className="p-5">
+                          <div className="p-4">
                             {dependencies.length === 0 ? (
-                              <div className="text-center py-4 text-gray-500">
-                                <FiGitBranch className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                <p>No dependencies</p>
+                              <div className="text-center py-8 text-gray-500">
+                                <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                                  <FiGitBranch className="w-6 h-6 text-gray-400" />
+                                </div>
+                                <p className="text-sm font-medium text-gray-600">No dependencies</p>
+                                <p className="text-xs text-gray-500 mt-1">This task has no dependencies</p>
                               </div>
                             ) : (
-                              <div className="space-y-3">
-                                {dependencies.slice(0, 5).map((dep) => (
-                                  <div 
+                              <div className="space-y-2">
+                                {dependencies.slice(0, 3).map((dep, index) => (
+                                  <motion.div 
                                     key={dep.id} 
-                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                    className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg hover:bg-amber-100 cursor-pointer transition-colors group"
                                     onClick={() => navigateToTask(dep.depends_on_task.id)}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
                                   >
-                                    <FiLink className="w-4 h-4 text-amber-600" />
+                                    <div className="p-1.5 bg-amber-100 rounded-md mt-0.5">
+                                      <FiLink className="w-3.5 h-3.5 text-amber-700" />
+                                    </div>
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <Badge type="type" value={dep.depends_on_task.type} size="xs" />
-                                        <span className="font-medium text-gray-900 truncate hover:text-indigo-600">{dep.depends_on_task.title}</span>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-sm font-medium text-gray-900 truncate group-hover:text-indigo-700 transition-colors">{dep.depends_on_task.title}</span>
                                       </div>
-                                      <div className="flex items-center gap-2 mt-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
                                         <Badge type="status" value={dep.depends_on_task.status} size="xs" />
                                         <Badge type="priority" value={dep.depends_on_task.priority} size="xs" />
-                                        <Badge 
-                                          type="dependency" 
-                                          value={dep.dependency_type || 'related'} 
-                                          size="xs" 
-                                          className={`text-xs px-1.5 py-0.5 rounded ${dep.dependency_type === 'blocks' ? 'bg-red-100 text-red-800' : dep.dependency_type === 'blocked_by' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'}`}
-                                        />
+                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                          dep.dependency_type === 'blocks' 
+                                            ? 'bg-red-100 text-red-700' 
+                                            : dep.dependency_type === 'blocked_by' 
+                                            ? 'bg-orange-100 text-orange-700' 
+                                            : 'bg-blue-100 text-blue-700'
+                                        }`}>
+                                          {dep.dependency_type || 'related'}
+                                        </span>
                                       </div>
                                     </div>
-                                    <FiExternalLink className="w-4 h-4 text-gray-400" />
-                                  </div>
+                                    <FiExternalLink className="w-4 h-4 text-gray-400 group-hover:text-amber-600 transition-colors mt-1" />
+                                  </motion.div>
                                 ))}
+                                {dependencies.length > 3 && (
+                                  <button
+                                    onClick={() => setActiveSection('dependencies')}
+                                    className="w-full py-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                                  >
+                                    View {dependencies.length - 3} more dependenc{dependencies.length - 3 > 1 ? 'ies' : 'y'}
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -2000,8 +2269,9 @@ const TaskDetailView = ({
               </div>
             </>
           ) : null}
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };

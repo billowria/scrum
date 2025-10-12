@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { FiAward, FiSave, FiUserPlus, FiX, FiCheck, FiCamera } from 'react-icons/fi';
+import { notifyAchievement } from '../utils/notificationHelper';
 
 // Animation variants
 const formVariants = {
@@ -168,6 +169,19 @@ const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
         }]);
       
       if (error) throw error;
+      
+      // Notify the user about their achievement
+      const { data: creatorData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+      
+      await notifyAchievement(
+        selectedUser.id,
+        title,
+        creatorData?.name || 'Someone'
+      );
       
       // Success
       setMessage({ type: 'success', text: 'Achievement posted successfully!' });
