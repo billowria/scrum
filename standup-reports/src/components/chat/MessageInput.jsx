@@ -62,10 +62,59 @@ export const MessageInput = ({
   };
 
   const handleKeyDown = (e) => {
+    // Enter to send (unless Shift is held for new line)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
     }
+
+    // Ctrl/Cmd + Enter also sends
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSend();
+      return;
+    }
+
+    // Escape to clear input
+    if (e.key === 'Escape') {
+      setMessage('');
+      if (onTyping) onTyping(false);
+      return;
+    }
+
+    // Ctrl/Cmd + B for bold (future markdown support)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+      e.preventDefault();
+      insertMarkdown('**', '**');
+      return;
+    }
+
+    // Ctrl/Cmd + I for italic (future markdown support)
+    if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
+      e.preventDefault();
+      insertMarkdown('*', '*');
+      return;
+    }
+  };
+
+  const insertMarkdown = (before, after) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = message.substring(start, end);
+    const newText = message.substring(0, start) + before + selectedText + after + message.substring(end);
+    
+    setMessage(newText);
+    
+    // Set cursor position after insertion
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = start + before.length + selectedText.length + after.length;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   };
 
   const handleSend = () => {
@@ -107,7 +156,7 @@ export const MessageInput = ({
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className="bg-white px-4 py-3">
       <div className="flex items-end space-x-2">
         {/* Emoji Picker Button */}
         <div className="relative" ref={emojiPickerRef}>
@@ -160,11 +209,33 @@ export const MessageInput = ({
         </button>
       </div>
 
-      {/* Hint text */}
-      <p className="text-xs text-gray-400 mt-2 px-2">
-        Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> to send, 
-        <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs ml-1">Shift+Enter</kbd> for new line
-      </p>
+      {/* Enhanced hint text with keyboard shortcuts */}
+      <div className="text-[10px] text-gray-500 mt-2 px-2 flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">Enter</kbd>
+            <span>send</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">Shift+Enter</kbd>
+            <span>new line</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">Esc</kbd>
+            <span>clear</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">⌘B</kbd>
+            <span>bold</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-[10px] font-mono">⌘I</kbd>
+            <span>italic</span>
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

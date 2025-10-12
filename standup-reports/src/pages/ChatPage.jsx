@@ -156,7 +156,7 @@ export const ChatPage = () => {
           x: isMobile && showSidebar ? '100%' : 0
         }}
         transition={{ type: 'spring', damping: 20 }}
-        className="flex-1"
+        className="flex-1 h-full overflow-hidden"
       >
         <ChatWindow
           conversation={activeConversation}

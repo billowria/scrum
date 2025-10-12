@@ -10,10 +10,11 @@ import Message from './Message';
 import TypingIndicator from './TypingIndicator';
 
 /**
- * MessageList Component
- * Scrollable list of messages with date separators
+ * ScrollableMessageArea Component
+ * Dedicated scrollable container for chat messages
+ * This component handles ONLY the scrolling of messages
  */
-export const MessageList = ({ 
+export const ScrollableMessageArea = ({ 
   messages = [], 
   typingUsers = [],
   onEdit,
@@ -69,7 +70,7 @@ export const MessageList = ({
 
   if (!messages || messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
+      <div className="h-full flex items-center justify-center text-gray-400 bg-white/50">
         <div className="text-center">
           <p className="text-sm">No messages yet</p>
           <p className="text-xs mt-1">Start the conversation!</p>
@@ -82,7 +83,7 @@ export const MessageList = ({
     <div
       ref={scrollContainerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
+      className="h-full overflow-y-auto px-4 py-4 space-y-1 bg-white/50"
       style={{ scrollBehavior: 'smooth' }}
     >
       {/* Loading indicator at top */}
@@ -137,4 +138,4 @@ export const MessageList = ({
   );
 };
 
-export default MessageList;
+export default ScrollableMessageArea;
