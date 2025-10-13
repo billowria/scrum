@@ -732,72 +732,128 @@ const [reports, setReports] = useState([]);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return setNewMessagesCount(0);
 
-      // Query to get unread messages for user
-      // This will count messages where:
-      // - The message is in a conversation the user is part of
-      // - The message was sent after the user's last read timestamp
-      const { data: conversations, error: convError } = await supabase
-        .from('conversations_users')
-        .select('conversation_id')
-        .eq('user_id', user.id);
-
-      if (convError) {
-        console.error('Error fetching conversations for user:', convError);
-        setNewMessagesCount(0);
-        return;
+      // Try multiple approaches to get conversations for user
+      let conversations = [];
+      let approachUsed = 'none';
+      
+      // Approach 1: Try chat_participants table
+      try {
+        const result = await supabase
+          .from('chat_participants')
+          .select('conversation_id')
+          .eq('user_id', user.id);
+          
+        if (!result.error && result.data && result.data.length > 0) {
+          conversations = result.data;
+          approachUsed = 'chat_participants';
+        } else if (result.error) {
+          console.warn('chat_participants query failed:', result.error.message);
+        }
+      } catch (error) {
+        console.warn('Error with chat_participants approach:', error.message);
       }
 
+      // Approach 2: Try chat_conversation_list table if first approach failed
+      if (conversations.length === 0) {
+        try {
+          const result = await supabase
+            .from('chat_conversation_list')
+            .select('id as conversation_id')
+            .eq('participant_user_id', user.id);
+            
+          if (!result.error && result.data && result.data.length > 0) {
+            conversations = result.data;
+            approachUsed = 'chat_conversation_list';
+          } else if (result.error) {
+            console.warn('chat_conversation_list query failed:', result.error.message);
+          }
+        } catch (error) {
+          console.warn('Error with chat_conversation_list approach:', error.message);
+        }
+      }
+
+      // Approach 3: Try chat_conversations table if previous approaches failed
+      if (conversations.length === 0) {
+        try {
+          const result = await supabase
+            .from('chat_conversations')
+            .select('id as conversation_id')
+            .contains('participants', [user.id]); // Assuming participants is an array column
+            
+          if (!result.error && result.data && result.data.length > 0) {
+            conversations = result.data;
+            approachUsed = 'chat_conversations';
+          } else if (result.error) {
+            console.warn('chat_conversations query failed:', result.error.message);
+          }
+        } catch (error) {
+          console.warn('Error with chat_conversations approach:', error.message);
+        }
+      }
+
+      console.log(`Using approach: ${approachUsed} with ${conversations.length} conversations`);
+      
       if (conversations.length === 0) {
         setNewMessagesCount(0);
         return;
       }
 
       // Get the latest read timestamp for each conversation for this user
-      const { data: lastReads, error: readError } = await supabase
-        .from('conversation_read_status')
-        .select('conversation_id, last_read_at')
-        .eq('user_id', user.id);
-
-      if (readError) {
-        console.error('Error fetching read status:', readError);
-        // If there's an error, we'll count all messages as unread (except user's own messages)
+      let lastReads = [];
+      
+      try {
+        if (approachUsed === 'chat_participants') {
+          const readResult = await supabase
+            .from('chat_participants')
+            .select('conversation_id, last_read_at')
+            .eq('user_id', user.id);
+            
+          if (!readResult.error) {
+            lastReads = readResult.data || [];
+          }
+        }
+      } catch (readQueryError) {
+        console.error('Error fetching read status:', readQueryError.message);
       }
 
       // For each conversation, count messages after the last read timestamp
       let totalCount = 0;
       for (const conv of conversations) {
-        const convId = conv.conversation_id;
-        
-        // Find the last read time for this conversation
-        const lastReadRecord = lastReads && lastReads.find(lr => lr.conversation_id === convId);
-        const lastReadTime = lastReadRecord && lastReadRecord.last_read_at;
+        try {
+          const convId = conv.conversation_id;
+          
+          // Find the last read time for this conversation
+          const lastReadRecord = lastReads && lastReads.find(lr => lr.conversation_id === convId);
+          const lastReadTime = lastReadRecord && lastReadRecord.last_read_at;
 
-        // Count messages in this conversation after last read time
-        let query = supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true });
+          // Count messages in this conversation after last read time
+          let query = supabase
+            .from('chat_messages')
+            .select('*', { count: 'exact', head: true });
 
-        if (lastReadTime) {
-          query = query.gt('created_at', lastReadTime);
-        } else {
-          // If no read time recorded, consider all messages in the conversation as unread
-          // (but exclude the user's own messages)
-        }
+          if (lastReadTime) {
+            query = query.gt('created_at', lastReadTime);
+          }
 
-        const { count, error: msgError } = await query
-          .eq('conversation_id', convId)
-          .neq('user_id', user.id); // Exclude messages sent by the user themselves
+          const { count, error: msgError } = await query
+            .eq('conversation_id', convId)
+            .neq('user_id', user.id); // Exclude messages sent by the user themselves
 
-        if (msgError) {
-          console.error(`Error fetching messages for conversation ${convId}:`, msgError);
-        } else if (count !== null) {
-          totalCount += count;
+          if (msgError) {
+            console.error(`Error fetching messages for conversation ${convId}:`, msgError.message);
+          } else if (count !== null) {
+            totalCount += count;
+          }
+        } catch (convError) {
+          console.error(`Error processing conversation ${conv.conversation_id}:`, convError.message);
+          // Continue with other conversations even if one fails
         }
       }
 
       setNewMessagesCount(totalCount);
     } catch (error) {
-      console.error('Error fetching new messages count:', error);
+      console.error('Unexpected error in fetchNewMessagesCount:', error);
+      // Set count to 0 but don't crash the dashboard
       setNewMessagesCount(0);
     }
   };

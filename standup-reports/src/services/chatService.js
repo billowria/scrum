@@ -376,23 +376,37 @@ export const subscribeToMessages = (conversationId, onNewMessage, onMessageUpdat
         filter: `conversation_id=eq.${conversationId}`
       },
       async (payload) => {
-        // Fetch full message with user data
-        const { data } = await supabase
-          .from('chat_messages')
-          .select(`
-            *,
-            user:users (
-              id,
-              name,
-              email,
-              avatar_url
-            )
-          `)
-          .eq('id', payload.new.id)
-          .single();
+        // First, try to get user data from the users table with a single query
+        let userData = null;
+        if (payload.new.user_id) {
+          try {
+            const { data, error } = await supabase
+              .from('users')
+              .select('id, name, email, avatar_url')
+              .eq('id', payload.new.user_id)
+              .single();
+            
+            if (!error && data) {
+              userData = data;
+            }
+          } catch (error) {
+            console.warn('Could not fetch user data:', error);
+          }
+        }
 
-        if (data && onNewMessage) {
-          onNewMessage(data);
+        // Create the complete message object with user data
+        const message = {
+          ...payload.new,
+          user: userData || {
+            id: payload.new.user_id,
+            name: 'Unknown User',
+            email: null,
+            avatar_url: null
+          }
+        };
+
+        if (onNewMessage) {
+          onNewMessage(message);
         }
       }
     )
@@ -412,22 +426,36 @@ export const subscribeToMessages = (conversationId, onNewMessage, onMessageUpdat
           }
         } else {
           // Message was edited
-          const { data } = await supabase
-            .from('chat_messages')
-            .select(`
-              *,
-              user:users (
-                id,
-                name,
-                email,
-                avatar_url
-              )
-            `)
-            .eq('id', payload.new.id)
-            .single();
+          // Get user data for edited message
+          let userData = null;
+          if (payload.new.user_id) {
+            try {
+              const { data, error } = await supabase
+                .from('users')
+                .select('id, name, email, avatar_url')
+                .eq('id', payload.new.user_id)
+                .single();
+              
+              if (!error && data) {
+                userData = data;
+              }
+            } catch (error) {
+              console.warn('Could not fetch user data for edited message:', error);
+            }
+          }
 
-          if (data && onMessageUpdate) {
-            onMessageUpdate(data);
+          const message = {
+            ...payload.new,
+            user: userData || {
+              id: payload.new.user_id,
+              name: 'Unknown User',
+              email: null,
+              avatar_url: null
+            }
+          };
+
+          if (onMessageUpdate) {
+            onMessageUpdate(message);
           }
         }
       }
@@ -474,8 +502,37 @@ export const updateTypingStatus = async (conversationId, isTyping) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const channel = supabase.channel(`typing:${conversationId}`);
+    // Use a consistent channel name
+    const channelName = `typing:${conversationId}`;
     
+    // Try to find an existing channel
+    let channel = supabase.getChannels().find(ch => 
+      ch.topic === `realtime:${channelName}` || ch.topic === channelName
+    );
+    
+    // If no existing channel, create a new one
+    if (!channel) {
+      channel = supabase.channel(channelName);
+      
+      // Subscribe to the channel and wait for connection
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Channel subscription timeout'));
+        }, 10000);
+        
+        // Subscribe and resolve when connected
+        channel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            clearTimeout(timeout);
+            resolve();
+          }
+        });
+      });
+    }
+
+    // Wait a bit to ensure subscription is fully established
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     if (isTyping) {
       await channel.track({
         user_id: user.id,
