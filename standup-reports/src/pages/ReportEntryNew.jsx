@@ -2,17 +2,162 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import TaskDetailView from '../components/tasks/TaskDetailView';
 import { 
   FiCalendar, FiCheckCircle, FiAlertCircle, FiClipboard, FiList, FiUsers, 
   FiSend, FiCopy, FiStar, FiBold, FiItalic, FiCode, FiAtSign, FiFileText, 
   FiPlus, FiCheck, FiEdit, FiX, FiClock, FiTarget, FiTrendingUp, FiZap,
   FiBookmark, FiHash, FiLink, FiSave, FiRefreshCw, FiArrowLeft, FiChevronDown,
-  FiChevronUp, FiMaximize2, FiMinimize2
+  FiChevronUp, FiMaximize2, FiMinimize2, FiTag, FiUser, FiFlag, FiPaperclip,
+  FiThumbsUp, FiMessageSquare, FiBarChart2, FiAward, FiCoffee, FiShield,
+  FiCompass, FiDatabase, FiGitBranch, FiSettings, FiTool, FiFilter,
+  FiNavigation, FiPackage, FiLayers, FiMapPin, FiHome, FiMonitor,
+  FiSmartphone, FiTablet, FiHeadphones, FiCamera, FiVideo,
+  FiMic, FiSpeaker, FiPrinter, FiServer, FiCloud, FiWifi,
+  FiBluetooth, FiBattery, FiPower, FiLock, FiUnlock,
+  FiKey, FiEye, FiEyeOff, FiHeart, FiSmile, FiFrown,
+  FiMeh, FiThumbsDown, FiShare2, FiDownload, FiUpload,
+  FiTrash2, FiArchive, FiInbox, FiMail, FiPhone,
+  FiGlobe, FiMap, FiNavigation2, FiCompass as FiCompass2,
+  FiAnchor, FiLifeBuoy, FiTool as FiTool2, FiSettings as FiSettings2
 } from 'react-icons/fi';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { format, subDays } from 'date-fns';
 import '../tiptap.css';
+
+// Utility function to parse task references from text
+const parseTaskReferences = (text) => {
+  // Match patterns like [TASK:id|title] or TASK:id
+  const taskPattern = /\[TASK:([^\]|]+)\|([^\]]+)\]|\bTASK:([A-Z0-9]{8,})\b/g;
+  const matches = [];
+  let match;
+  
+  while ((match = taskPattern.exec(text)) !== null) {
+    const taskId = match[1] || match[3];
+    const taskTitle = match[2] || taskId;
+    
+    if (taskId) {
+      matches.push({
+        id: taskId,
+        title: taskTitle,
+        index: match.index,
+        length: match[0].length,
+        fullMatch: match[0]
+      });
+    }
+  }
+  
+  return matches;
+};
+
+// Utility function to parse mentions from text
+const parseMentions = (text) => {
+  // Match patterns like @name{id:uuid}
+  const mentionPattern = /@([^\{\s]+)\{id:([a-f0-9\-]+)\}/g;
+  const mentions = [];
+  let match;
+  
+  while ((match = mentionPattern.exec(text)) !== null) {
+    mentions.push({
+      name: match[1],
+      id: match[2],
+      index: match.index,
+      length: match[0].length,
+      fullMatch: match[0]
+    });
+  }
+  
+  return mentions;
+};
+
+// Custom component to render content with clickable task references and mentions
+const ContentRenderer = ({ content, onTaskClick, onMentionClick }) => {
+  // Parse task references and mentions from the content
+  const taskReferences = parseTaskReferences(content);
+  const mentions = parseMentions(content);
+  
+  // Create an array of all clickable elements with their positions
+  const clickableElements = [
+    ...taskReferences.map(ref => ({ ...ref, type: 'task' })),
+    ...mentions.map(mention => ({ ...mention, type: 'mention' }))
+  ].sort((a, b) => a.index - b.index);
+  
+  // If no clickable elements, just render the content as plain text
+  if (clickableElements.length === 0) {
+    return (
+      <div 
+        className="prose prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: content }} 
+      />
+    );
+  }
+  
+  // Split the content by clickable elements
+  const elements = [];
+  let lastIndex = 0;
+  
+  clickableElements.forEach((element, index) => {
+    // Add text before the clickable element
+    if (element.index > lastIndex) {
+      const text = content.substring(lastIndex, element.index);
+      elements.push(
+        <span 
+          key={`text-${index}`} 
+          dangerouslySetInnerHTML={{ __html: text }} 
+        />
+      );
+    }
+    
+    // Add the clickable element
+    if (element.type === 'task') {
+      elements.push(
+        <motion.button
+          key={`task-${element.id}`}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm"
+          onClick={() => onTaskClick(element.id)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FiTag className="w-3 h-3" />
+          <span>{element.title}</span>
+        </motion.button>
+      );
+    } else if (element.type === 'mention') {
+      elements.push(
+        <motion.button
+          key={`mention-${element.id}`}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors shadow-sm"
+          onClick={() => onMentionClick(element.id)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <FiUser className="w-3 h-3" />
+          <span>{element.name}</span>
+        </motion.button>
+      );
+    }
+    
+    lastIndex = element.index + element.length;
+  });
+  
+  // Add remaining text after the last clickable element
+  if (lastIndex < content.length) {
+    const text = content.substring(lastIndex);
+    elements.push(
+      <span 
+        key="text-end" 
+        dangerouslySetInnerHTML={{ __html: text }} 
+      />
+    );
+  }
+  
+  return (
+    <div className="prose prose-sm max-w-none">
+      {elements}
+    </div>
+  );
+};
 
 // Success animation
 const SuccessAnimation = ({ onComplete }) => {
@@ -55,67 +200,91 @@ const EditorToolbar = ({ editor, onInsert }) => {
   if (!editor) return null;
   
   return (
-    <div className="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-200">
-      <button
+    <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+      <motion.button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bold') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'}`}
+        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
+          editor.isActive('bold') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
+        }`}
         title="Bold (Ctrl+B)"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <FiBold className="h-4 w-4" />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('italic') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'}`}
+        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
+          editor.isActive('italic') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
+        }`}
         title="Italic (Ctrl+I)"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <FiItalic className="h-4 w-4" />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
         onClick={() => editor.chain().focus().toggleCode().run()}
-        className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('code') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'}`}
+        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
+          editor.isActive('code') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
+        }`}
         title="Code"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <FiCode className="h-4 w-4" />
-      </button>
-      <div className="h-6 w-px bg-gray-300 mx-1"></div>
-      <button
+      </motion.button>
+      <div className="h-5 w-px bg-gray-300 mx-1"></div>
+      <motion.button
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'}`}
+        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
+          editor.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
+        }`}
         title="Bullet List"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <FiList className="h-4 w-4" />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded hover:bg-gray-200 transition-colors ${editor.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'}`}
+        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
+          editor.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
+        }`}
         title="Numbered List"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <FiFileText className="h-4 w-4" />
-      </button>
-      <div className="h-6 w-px bg-gray-300 mx-1"></div>
-      <button
+      </motion.button>
+      <div className="h-5 w-px bg-gray-300 mx-1"></div>
+      <motion.button
         type="button"
         onClick={() => onInsert?.('task')}
-        className="px-3 py-1.5 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1"
+        className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg text-sm font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all flex items-center gap-1 shadow-sm hover:shadow-md"
         title="Insert Task"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <FiPlus className="h-3 w-3" />
         Task
-      </button>
-      <button
+      </motion.button>
+      <motion.button
         type="button"
         onClick={() => onInsert?.('mention')}
-        className="px-3 py-1.5 bg-purple-600 text-white rounded text-sm font-medium hover:bg-purple-700 transition-colors flex items-center gap-1"
+        className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all flex items-center gap-1 shadow-sm hover:shadow-md"
         title="Mention User"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <FiAtSign className="h-3 w-3" />
         Mention
-      </button>
+      </motion.button>
     </div>
   );
 };
@@ -145,6 +314,10 @@ export default function ReportEntryNew() {
   const [wordCount, setWordCount] = useState({ yesterday: 0, today: 0, blockers: 0 });
   const [taskSearch, setTaskSearch] = useState('');
   const [tasksLoading, setTasksLoading] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   
   const navigate = useNavigate();
 
@@ -235,16 +408,18 @@ export default function ReportEntryNew() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        setCurrentUser(user);
+
         // Fetch teams
         const { data: teamsData } = await supabase
           .from('teams')
           .select('id, name');
         setTeams(teamsData || []);
 
-        // Fetch user's team
+        // Fetch user's team and role
         const { data: userData } = await supabase
           .from('users')
-          .select('team_id')
+          .select('team_id, role')
           .eq('id', user.id)
           .single();
 
@@ -258,6 +433,10 @@ export default function ReportEntryNew() {
             .eq('team_id', userData.team_id)
             .order('name');
           setTeamMembers(members || []);
+        }
+
+        if (userData?.role) {
+          setUserRole(userData.role);
         }
 
         // Fetch user's tasks
@@ -377,6 +556,23 @@ export default function ReportEntryNew() {
     return () => clearTimeout(autoSaveTimer);
   }, [yesterday, today, blockers, autoSaveEnabled, date, selectedTeam, existingReport]);
 
+  // Handle task click to open task modal
+  const handleTaskClick = (taskId) => {
+    setSelectedTaskId(taskId);
+    setShowTaskModal(true);
+  };
+
+  // Handle mention click to navigate to profile
+  const handleMentionClick = (userId) => {
+    navigate(`/profile/${userId}`);
+  };
+
+  // Close task modal
+  const handleCloseTaskModal = () => {
+    setShowTaskModal(false);
+    setSelectedTaskId(null);
+  };
+
   // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -492,54 +688,90 @@ export default function ReportEntryNew() {
         <div className={`mx-auto ${isFullscreen ? 'max-w-full px-8' : 'max-w-[1600px] px-8'} py-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button
+              <motion.button
                 onClick={() => navigate('/dashboard')}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 hover:bg-gray-100 rounded-xl transition-colors shadow-sm hover:shadow-md"
                 title="Back to Dashboard"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <FiArrowLeft className="h-5 w-5 text-gray-600" />
-              </button>
+                <FiArrowLeft className="h-5 w-5 text-gray-700" />
+              </motion.button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {existingReport ? 'Update Report' : 'Daily Report'}
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                  {existingReport ? 'Update Daily Report' : 'Create Daily Report'}
                 </h1>
-                <p className="text-sm text-gray-500 flex items-center gap-2">
-                  <FiCalendar className="h-4 w-4" />
-                  {format(new Date(date), 'MMMM d, yyyy')}
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                    <motion.div 
+                      className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      <FiCalendar className="h-4 w-4" />
+                    </motion.div>
+                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                  </p>
                   {selectedTeam && (
-                    <>
-                      <span>•</span>
-                      <FiUsers className="h-4 w-4" />
+                    <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                      <motion.div 
+                        className="p-1.5 rounded-lg bg-purple-100 text-purple-600"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        <FiUsers className="h-4 w-4" />
+                      </motion.div>
                       {teams.find(t => t.id === selectedTeam)?.name}
-                    </>
+                    </p>
                   )}
-                </p>
+                </div>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               {lastSaved && (
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <FiCheck className="h-3 w-3 text-green-500" />
+                <motion.span 
+                  className="text-xs text-gray-500 flex items-center gap-1 bg-green-50 px-2.5 py-1.5 rounded-lg"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div
+                    className="p-1 rounded-full bg-green-100 text-green-600"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                  >
+                    <FiCheck className="h-3 w-3" />
+                  </motion.div>
                   Saved {format(lastSaved, 'HH:mm')}
-                </span>
+                </motion.span>
               )}
-              <button
+              <motion.button
                 type="button"
                 onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 hover:bg-gray-100 rounded-xl transition-colors shadow-sm hover:shadow-md"
                 title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {isFullscreen ? <FiMinimize2 className="h-5 w-5" /> : <FiMaximize2 className="h-5 w-5" />}
-              </button>
-              <button
+                {isFullscreen ? 
+                  <motion.div
+                    initial={{ rotate: -90 }}
+                    animate={{ rotate: 0 }}
+                  >
+                    <FiMinimize2 className="h-5 w-5 text-gray-700" />
+                  </motion.div> : 
+                  <FiMaximize2 className="h-5 w-5 text-gray-700" />
+                }
+              </motion.button>
+              <motion.button
                 type="button"
                 onClick={() => setShowQuickActions(!showQuickActions)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-3 hover:bg-indigo-100 rounded-xl transition-colors shadow-sm hover:shadow-md text-indigo-600"
                 title="Quick Actions"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <FiZap className="h-5 w-5 text-indigo-600" />
-              </button>
+                <FiZap className="h-5 w-5" />
+              </motion.button>
             </div>
           </div>
         </div>
@@ -550,16 +782,17 @@ export default function ReportEntryNew() {
         <AnimatePresence>
           {message.text && (
             <motion.div 
-              className={`mb-6 p-4 rounded-xl flex items-start shadow-md ${
+              className={`mb-6 p-4 rounded-xl flex items-start shadow-lg ${
                 {
-                  success: 'bg-green-50 text-green-700 border border-green-200',
-                  error: 'bg-red-50 text-red-700 border border-red-200',
-                  info: 'bg-blue-50 text-blue-700 border border-blue-200'
+                  success: 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200',
+                  error: 'bg-gradient-to-r from-red-50 to-orange-50 text-red-700 border border-red-200',
+                  info: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200'
                 }[message.type]
               }`}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               <div className="mr-3">
                 {message.type === 'success' && <FiCheckCircle className="h-5 w-5" />}
@@ -572,81 +805,58 @@ export default function ReportEntryNew() {
         </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Quick Actions Bar */}
-          <AnimatePresence>
-            {showQuickActions && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-4"
-              >
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={copyFromPreviousReport}
-                    disabled={!previousReport}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                  >
-                    <FiCopy className="h-4 w-4" />
-                    Copy from Yesterday's Plan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowTaskPicker(!showTaskPicker); setActiveEditor(todayEditor); }}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium"
-                  >
-                    <FiList className="h-4 w-4" />
-                    Add Task
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowMentionPicker(!showMentionPicker); setActiveEditor(todayEditor); }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                  >
-                    <FiAtSign className="h-4 w-4" />
-                    Mention
-                  </button>
-                  <div className="ml-auto flex items-center gap-2">
-                    <label className="text-sm text-gray-600 flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={autoSaveEnabled}
-                        onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                        className="rounded text-indigo-600"
-                      />
-                      Auto-save
-                    </label>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+         
 
           {/* Editor Sections */}
           <div className={`grid ${isFullscreen ? 'grid-cols-3' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
             {/* Yesterday */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FiCheckCircle className="h-5 w-5 text-green-600" />
-                    <h3 className="font-semibold text-gray-900">Yesterday</h3>
+            <motion.div 
+              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FiCheckCircle className="h-6 w-6 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-bold text-white text-xl">Yesterday</h3>
+                      <p className="text-emerald-100 text-sm">What you accomplished</p>
+                    </div>
                   </div>
                   {previousReport && (
-                    <button
+                    <motion.button
                       type="button"
                       onClick={copyFromPreviousReport}
-                      className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                      className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm font-medium flex items-center gap-1.5 shadow-sm"
                       title="Copy from yesterday's plan"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <FiCopy className="h-3 w-3 inline mr-1" />
+                      <FiCopy className="h-3.5 w-3.5" />
                       Copy
-                    </button>
+                    </motion.button>
                   )}
                 </div>
-                <p className="text-xs text-gray-600">What you accomplished</p>
-                <div className="text-xs text-gray-500 mt-1">{wordCount.yesterday} words</div>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1.5 text-emerald-100">
+                    <FiFileText className="h-4 w-4" />
+                    <span className="text-sm font-medium">{wordCount.yesterday} words</span>
+                  </div>
+                  <div className="h-4 w-px bg-emerald-300/50"></div>
+                  <div className="flex items-center gap-1.5 text-emerald-100">
+                    <FiClock className="h-4 w-4" />
+                    <span className="text-sm font-medium">Completed</span>
+                  </div>
+                </div>
               </div>
               <EditorToolbar 
                 editor={yesterdayEditor} 
@@ -659,19 +869,43 @@ export default function ReportEntryNew() {
               <div className="bg-white min-h-[200px]">
                 <EditorContent editor={yesterdayEditor} />
               </div>
-            </div>
+            </motion.div>
 
             {/* Today */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FiTarget className="h-5 w-5 text-blue-600" />
-                    <h3 className="font-semibold text-gray-900">Today</h3>
+            <motion.div 
+              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="bg-gradient-to-r from-indigo-500 to-blue-500 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FiTarget className="h-6 w-6 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-bold text-white text-xl">Today</h3>
+                      <p className="text-indigo-100 text-sm">What you plan to do</p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">What you plan to do</p>
-                <div className="text-xs text-gray-500 mt-1">{wordCount.today} words</div>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1.5 text-indigo-100">
+                    <FiFileText className="h-4 w-4" />
+                    <span className="text-sm font-medium">{wordCount.today} words</span>
+                  </div>
+                  <div className="h-4 w-px bg-indigo-300/50"></div>
+                  <div className="flex items-center gap-1.5 text-indigo-100">
+                    <FiTrendingUp className="h-4 w-4" />
+                    <span className="text-sm font-medium">Planned</span>
+                  </div>
+                </div>
               </div>
               <EditorToolbar 
                 editor={todayEditor} 
@@ -684,19 +918,43 @@ export default function ReportEntryNew() {
               <div className="bg-white min-h-[200px]">
                 <EditorContent editor={todayEditor} />
               </div>
-            </div>
+            </motion.div>
 
             {/* Blockers */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <FiAlertCircle className="h-5 w-5 text-amber-600" />
-                    <h3 className="font-semibold text-gray-900">Blockers</h3>
+            <motion.div 
+              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+              whileHover={{ y: -5 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <FiAlertCircle className="h-6 w-6 text-white" />
+                    </motion.div>
+                    <div>
+                      <h3 className="font-bold text-white text-xl">Blockers</h3>
+                      <p className="text-amber-100 text-sm">What's blocking you</p>
+                    </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">What's blocking you</p>
-                <div className="text-xs text-gray-500 mt-1">{wordCount.blockers} words</div>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1.5 text-amber-100">
+                    <FiFileText className="h-4 w-4" />
+                    <span className="text-sm font-medium">{wordCount.blockers} words</span>
+                  </div>
+                  <div className="h-4 w-px bg-amber-300/50"></div>
+                  <div className="flex items-center gap-1.5 text-amber-100">
+                    <FiShield className="h-4 w-4" />
+                    <span className="text-sm font-medium">Issues</span>
+                  </div>
+                </div>
               </div>
               <EditorToolbar 
                 editor={blockersEditor} 
@@ -709,35 +967,48 @@ export default function ReportEntryNew() {
               <div className="bg-white min-h-[200px]">
                 <EditorContent editor={blockersEditor} />
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end gap-3">
-            <button
+          <div className="flex justify-end gap-4 mt-8">
+            <motion.button
               type="button"
               onClick={() => navigate('/dashboard')}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="px-6 py-3.5 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2.5"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
+              <FiX className="h-5 w-5" />
               Cancel
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+              className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center gap-2.5 relative overflow-hidden"
+              whileHover={{ scale: loading ? 1 : 1.03 }}
+              whileTap={{ scale: loading ? 1 : 0.97 }}
             >
               {loading ? (
                 <>
-                  <FiRefreshCw className="h-5 w-5 animate-spin" />
-                  Submitting...
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  />
+                  <span className="relative z-10 flex items-center gap-2">
+                    <FiRefreshCw className="h-5 w-5 animate-spin" />
+                    Submitting Report...
+                  </span>
                 </>
               ) : (
-                <>
+                <span className="relative z-10 flex items-center gap-2">
                   <FiSend className="h-5 w-5" />
                   {existingReport ? 'Update Report' : 'Submit Report'}
-                </>
+                </span>
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
       </div>
@@ -920,6 +1191,19 @@ export default function ReportEntryNew() {
       {/* Success Animation */}
       <AnimatePresence>
         {showSuccess && <SuccessAnimation onComplete={handleSuccessComplete} />}
+      </AnimatePresence>
+
+      {/* Task Detail Modal */}
+      <AnimatePresence>
+        {showTaskModal && selectedTaskId && (
+          <TaskDetailView
+            isOpen={showTaskModal}
+            onClose={handleCloseTaskModal}
+            taskId={selectedTaskId}
+            currentUser={currentUser}
+            userRole={userRole}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

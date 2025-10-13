@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
-import ReportEntry from './pages/ReportEntry';
 import LeaveCalendar from './pages/LeaveCalendar';
 import AchievementsPage from './pages/AchievementsPage';
 import UserAchievements from './pages/UserAchievements';
@@ -24,7 +23,6 @@ function App() {
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="manager-dashboard" element={<ManagerDashboard />} />
-        <Route path="report" element={<ReportEntry />} />
         <Route path="calendar" element={<LeaveCalendar />} />
         <Route path="achievements" element={<AchievementsPage />} />
         <Route path="my-achievements" element={<UserAchievements />} />

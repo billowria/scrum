@@ -129,7 +129,7 @@ export const ScrollableMessageArea = ({
 
       {/* Typing indicator */}
       {typingUsers && typingUsers.length > 0 && (
-        <TypingIndicator />
+        <TypingIndicator typingUsers={typingUsers} />
       )}
 
       {/* Scroll anchor */}
