@@ -313,7 +313,7 @@ const LeaveRequestForm = ({
                   {/* Date Picker Popover */}
                   {showDatePopover && (
                     <motion.div 
-                      className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 p-4 mt-2 z-30 max-h-[50vh] overflow-y-auto"
+                      className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 p-4 mt-2 z-50"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -326,7 +326,7 @@ const LeaveRequestForm = ({
                             className="w-full p-3 rounded-xl border-2 border-gray-200 bg-white/90 text-gray-800 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                             value={selectedDates.start ? format(selectedDates.start, 'yyyy-MM-dd') : ''}
                             min={format(new Date(), 'yyyy-MM-dd')}
-                            onChange={e => setSelectedDates({ start: new Date(e.target.value), end: selectedDates.end })}
+                            onChange={e => setSelectedDates({ start: new Date(e.target.value), end: selectedDates.end || new Date(e.target.value) })}
                           />
                         </div>
                         <div>
@@ -366,35 +366,35 @@ const LeaveRequestForm = ({
                     <FiTag className="inline mr-2 text-indigo-500" />
                     Leave Type
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {Object.entries(leaveTypeConfig).map(([key, config]) => (
                       <motion.button
                         key={key}
                         type="button"
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-2 ${
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all cursor-pointer ${
                           leaveType === key 
-                            ? `border-indigo-500 bg-gradient-to-br ${config.color} bg-opacity-10 shadow-lg` 
-                            : 'border-gray-200/50 bg-white/50 hover:border-gray-300/50'
+                            ? `border-indigo-500 bg-gradient-to-br ${config.color} bg-opacity-20 shadow-md` 
+                            : 'border-gray-200/50 bg-white/50 hover:border-gray-300'
                         }`}
                         onClick={() => setLeaveType(key)}
                         onMouseEnter={() => setHoveredType(key)}
                         onMouseLeave={() => setHoveredType(null)}
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.05, y: -3 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <motion.div
-                          className={`p-3 rounded-xl ${
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                             leaveType === key 
-                              ? `bg-gradient-to-br ${config.color} text-white shadow-lg` 
+                              ? `bg-gradient-to-br ${config.color} text-white` 
                               : 'bg-gray-100 text-gray-600'
                           }`}
                           animate={{
-                            scale: hoveredType === key ? 1.1 : 1
+                            scale: hoveredType === key ? 1.2 : 1
                           }}
                         >
                           {config.icon}
                         </motion.div>
-                        <span className={`font-semibold ${leaveType === key ? 'text-gray-800' : 'text-gray-600'}`}>
+                        <span className={`text-xs font-medium mt-1 ${leaveType === key ? 'text-gray-800' : 'text-gray-600'}`}>
                           {config.label}
                         </span>
                       </motion.button>
