@@ -230,7 +230,7 @@ const LeaveRequestForm = ({
             onClick={onClose}
           >
             <motion.div
-              className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl w-full max-w-md mx-auto overflow-hidden border border-gray-200/30 z-50"
+              className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl w-full sm:w-[500px] max-w-[95vw] mx-auto max-h-[90vh] overflow-hidden border border-gray-200/30 z-50 flex flex-col"
               variants={modalVariants}
               initial="hidden"
               animate="visible"
@@ -281,7 +281,8 @@ const LeaveRequestForm = ({
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5 relative z-10">
+              <div className="overflow-y-auto flex-1 max-h-[60vh]">
+                <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5 relative z-10">
                 {/* Date Range Selection */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -312,12 +313,12 @@ const LeaveRequestForm = ({
                   {/* Date Picker Popover */}
                   {showDatePopover && (
                     <motion.div 
-                      className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 p-4 mt-2 z-30"
+                      className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200/50 p-4 mt-2 z-30 max-h-[50vh] overflow-y-auto"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-3">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
                           <input
@@ -365,7 +366,7 @@ const LeaveRequestForm = ({
                     <FiTag className="inline mr-2 text-indigo-500" />
                     Leave Type
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {Object.entries(leaveTypeConfig).map(([key, config]) => (
                       <motion.button
                         key={key}
@@ -485,6 +486,7 @@ const LeaveRequestForm = ({
                   </motion.button>
                 </motion.div>
               </form>
+            </div>
 
               {/* Success overlay */}
               {success && (

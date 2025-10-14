@@ -26,138 +26,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { format, subDays } from 'date-fns';
 import '../tiptap.css';
 
-// Utility function to parse task references from text
-const parseTaskReferences = (text) => {
-  // Match patterns like [TASK:id|title] or TASK:id
-  const taskPattern = /\[TASK:([^\]|]+)\|([^\]]+)\]|\bTASK:([A-Z0-9]{8,})\b/g;
-  const matches = [];
-  let match;
-  
-  while ((match = taskPattern.exec(text)) !== null) {
-    const taskId = match[1] || match[3];
-    const taskTitle = match[2] || taskId;
-    
-    if (taskId) {
-      matches.push({
-        id: taskId,
-        title: taskTitle,
-        index: match.index,
-        length: match[0].length,
-        fullMatch: match[0]
-      });
-    }
-  }
-  
-  return matches;
-};
 
-// Utility function to parse mentions from text
-const parseMentions = (text) => {
-  // Match patterns like @name{id:uuid}
-  const mentionPattern = /@([^\{\s]+)\{id:([a-f0-9\-]+)\}/g;
-  const mentions = [];
-  let match;
-  
-  while ((match = mentionPattern.exec(text)) !== null) {
-    mentions.push({
-      name: match[1],
-      id: match[2],
-      index: match.index,
-      length: match[0].length,
-      fullMatch: match[0]
-    });
-  }
-  
-  return mentions;
-};
-
-// Custom component to render content with clickable task references and mentions
-const ContentRenderer = ({ content, onTaskClick, onMentionClick }) => {
-  // Parse task references and mentions from the content
-  const taskReferences = parseTaskReferences(content);
-  const mentions = parseMentions(content);
-  
-  // Create an array of all clickable elements with their positions
-  const clickableElements = [
-    ...taskReferences.map(ref => ({ ...ref, type: 'task' })),
-    ...mentions.map(mention => ({ ...mention, type: 'mention' }))
-  ].sort((a, b) => a.index - b.index);
-  
-  // If no clickable elements, just render the content as plain text
-  if (clickableElements.length === 0) {
-    return (
-      <div 
-        className="prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: content }} 
-      />
-    );
-  }
-  
-  // Split the content by clickable elements
-  const elements = [];
-  let lastIndex = 0;
-  
-  clickableElements.forEach((element, index) => {
-    // Add text before the clickable element
-    if (element.index > lastIndex) {
-      const text = content.substring(lastIndex, element.index);
-      elements.push(
-        <span 
-          key={`text-${index}`} 
-          dangerouslySetInnerHTML={{ __html: text }} 
-        />
-      );
-    }
-    
-    // Add the clickable element
-    if (element.type === 'task') {
-      elements.push(
-        <motion.button
-          key={`task-${element.id}`}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm"
-          onClick={() => onTaskClick(element.id)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiTag className="w-3 h-3" />
-          <span>{element.title}</span>
-        </motion.button>
-      );
-    } else if (element.type === 'mention') {
-      elements.push(
-        <motion.button
-          key={`mention-${element.id}`}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors shadow-sm"
-          onClick={() => onMentionClick(element.id)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiUser className="w-3 h-3" />
-          <span>{element.name}</span>
-        </motion.button>
-      );
-    }
-    
-    lastIndex = element.index + element.length;
-  });
-  
-  // Add remaining text after the last clickable element
-  if (lastIndex < content.length) {
-    const text = content.substring(lastIndex);
-    elements.push(
-      <span 
-        key="text-end" 
-        dangerouslySetInnerHTML={{ __html: text }} 
-      />
-    );
-  }
-  
-  return (
-    <div className="prose prose-sm max-w-none">
-      {elements}
-    </div>
-  );
-};
 
 // Success animation
 const SuccessAnimation = ({ onComplete }) => {
@@ -320,6 +189,139 @@ export default function ReportEntryNew() {
   const [userRole, setUserRole] = useState(null);
   
   const navigate = useNavigate();
+
+  // Utility function to parse task references from text with positions
+  const parseTaskReferences = (text) => {
+    // Match patterns like [TASK:id|title] or TASK:id
+    const taskPattern = /\[TASK:([^\]|]+)\|([^\]]+)\]|\bTASK:([A-Z0-9]{8,})\b/g;
+    const matches = [];
+    let match;
+    
+    while ((match = taskPattern.exec(text)) !== null) {
+      const taskId = match[1] || match[3];
+      const taskTitle = match[2] || taskId;
+      
+      if (taskId) {
+        matches.push({
+          id: taskId,
+          title: taskTitle,
+          index: match.index,
+          length: match[0].length,
+          fullMatch: match[0]
+        });
+      }
+    }
+    
+    return matches;
+  };
+
+  // Utility function to parse mentions from text with positions
+  const parseMentions = (text) => {
+    // Match patterns like @name{id:uuid}
+    const mentionPattern = /@([^\{\s]+)\{id:([a-f0-9\-]+)\}/g;
+    const mentions = [];
+    let match;
+    
+    while ((match = mentionPattern.exec(text)) !== null) {
+      mentions.push({
+        name: match[1],
+        id: match[2],
+        index: match.index,
+        length: match[0].length,
+        fullMatch: match[0]
+      });
+    }
+    
+    return mentions;
+  };
+
+  // Custom component to render content with clickable task references and mentions
+  const ContentRenderer = ({ content, onTaskClick, onMentionClick }) => {
+    // Parse task references and mentions from the content
+    const taskReferences = parseTaskReferences(content);
+    const mentions = parseMentions(content);
+    
+    // Create an array of all clickable elements with their positions
+    const clickableElements = [
+      ...taskReferences.map(ref => ({ ...ref, type: 'task' })),
+      ...mentions.map(mention => ({ ...mention, type: 'mention' }))
+    ].sort((a, b) => a.index - b.index);
+    
+    // If no clickable elements, just render the content as plain text
+    if (clickableElements.length === 0) {
+      return (
+        <div 
+          className="prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: content }} 
+        />
+      );
+    }
+    
+    // Split the content by clickable elements
+    const elements = [];
+    let lastIndex = 0;
+    
+    clickableElements.forEach((element, index) => {
+      // Add text before the clickable element
+      if (element.index > lastIndex) {
+        const text = content.substring(lastIndex, element.index);
+        elements.push(
+          <span 
+            key={`text-${index}`} 
+            dangerouslySetInnerHTML={{ __html: text }} 
+          />
+        );
+      }
+      
+      // Add the clickable element
+      if (element.type === 'task') {
+        elements.push(
+          <motion.button
+            key={`task-${element.id}`}
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm cursor-pointer"
+            onClick={() => onTaskClick(element.id)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FiTag className="w-3 h-3" />
+            <span>{element.id}</span>
+          </motion.button>
+        );
+      } else if (element.type === 'mention') {
+        elements.push(
+          <motion.button
+            key={`mention-${element.id}`}
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors shadow-sm cursor-pointer"
+            onClick={() => onMentionClick(element.id)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FiUser className="w-3 h-3" />
+            <span>{element.name}</span>
+          </motion.button>
+        );
+      }
+      
+      lastIndex = element.index + element.length;
+    });
+    
+    // Add remaining text after the last clickable element
+    if (lastIndex < content.length) {
+      const text = content.substring(lastIndex);
+      elements.push(
+        <span 
+          key="text-end" 
+          dangerouslySetInnerHTML={{ __html: text }} 
+        />
+      );
+    }
+    
+    return (
+      <div className="prose prose-sm max-w-none">
+        {elements}
+      </div>
+    );
+  };
 
   // Tiptap editors
   const yesterdayEditor = useEditor({
