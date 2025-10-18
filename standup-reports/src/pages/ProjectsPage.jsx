@@ -819,7 +819,8 @@ const ProjectsHeader = ({
   stats,
   onToggleSidebar,
   isMobile,
-  onCreateProject
+  onCreateProject,
+  navigate
 }) => {
   return (
     <motion.header
@@ -835,7 +836,7 @@ const ProjectsHeader = ({
             {/* Mobile Menu Toggle */}
             {isMobile && (
               <HamburgerMenu
-                isOpen={sidebarOpen}
+                isOpen={true}
                 onClick={onToggleSidebar}
                 isMobile={true}
                 className="backdrop-blur-sm"
@@ -879,6 +880,18 @@ const ProjectsHeader = ({
                 </div>
               </div>
             )}
+            
+            {/* Advanced Project Management Button */}
+            <motion.button
+              onClick={() => navigate('/project-management')}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all duration-200 mr-2"
+              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(139, 92, 246, 0.5)" }}
+              whileTap={{ scale: 0.97 }}
+              title="Advanced Project Management"
+            >
+              <FiSettings size={16} />
+              <span className="hidden sm:inline">Advanced</span>
+            </motion.button>
             
             {/* Create Project Button */}
             <motion.button
@@ -1143,8 +1156,9 @@ const ProjectCard = ({
   };
   
   // Glassmorphic icon styles
-  const getGlassmorphicIconStyle = (iconType) => {
-    const baseStyle = "p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 shadow-lg text-white hover:scale-110";
+  const getGlassmorphicIconStyle = (iconType, viewMode = 'grid') => {
+    const baseTextColor = viewMode === 'list' ? 'text-gray-700' : 'text-white';
+    const baseStyle = `p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 shadow-lg ${baseTextColor} hover:scale-110`;
     
     switch(iconType) {
       case 'favorite':
@@ -1251,7 +1265,7 @@ const ProjectCard = ({
                   e.stopPropagation();
                   onEditProject(project);
                 }}
-                className={getGlassmorphicIconStyle('edit')}
+                className={getGlassmorphicIconStyle('edit', 'list')}
                 title="Edit Project"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1265,7 +1279,7 @@ const ProjectCard = ({
                     e.stopPropagation();
                     onAssignUsers(project);
                   }}
-                  className={getGlassmorphicIconStyle('assign')}
+                  className={getGlassmorphicIconStyle('assign', 'list')}
                   title="Assign Users"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1280,7 +1294,7 @@ const ProjectCard = ({
                   e.stopPropagation();
                   onViewMembers(project);
                 }}
-                className={getGlassmorphicIconStyle('members')}
+                className={getGlassmorphicIconStyle('members', 'list')}
                 title="View Members"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1294,7 +1308,7 @@ const ProjectCard = ({
                     e.stopPropagation();
                     onDeleteProject(project.id);
                   }}
-                  className={getGlassmorphicIconStyle('delete')}
+                  className={getGlassmorphicIconStyle('delete', 'list')}
                   title="Delete Project"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1308,7 +1322,7 @@ const ProjectCard = ({
                   e.stopPropagation();
                   onToggleFavorite(project.id);
                 }}
-                className={getGlassmorphicIconStyle('favorite')}
+                className={getGlassmorphicIconStyle('favorite', 'list')}
                 title="Add to Favorites"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1360,7 +1374,7 @@ const ProjectCard = ({
                     }}
                     onMouseEnter={() => setHoveredIcon('edit')}
                     onMouseLeave={() => setHoveredIcon(null)}
-                    className={getGlassmorphicIconStyle('edit')}
+                    className={getGlassmorphicIconStyle('edit', 'grid')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     style={{
@@ -1393,7 +1407,7 @@ const ProjectCard = ({
                     }}
                     onMouseEnter={() => setHoveredIcon('assign')}
                     onMouseLeave={() => setHoveredIcon(null)}
-                    className={getGlassmorphicIconStyle('assign')}
+                    className={getGlassmorphicIconStyle('assign', 'grid')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     style={{
@@ -1425,7 +1439,7 @@ const ProjectCard = ({
                   }}
                   onMouseEnter={() => setHoveredIcon('members')}
                   onMouseLeave={() => setHoveredIcon(null)}
-                  className={getGlassmorphicIconStyle('members')}
+                  className={getGlassmorphicIconStyle('members', 'grid')}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   style={{
@@ -1457,7 +1471,7 @@ const ProjectCard = ({
                   }}
                   onMouseEnter={() => setHoveredIcon('favorite')}
                   onMouseLeave={() => setHoveredIcon(null)}
-                  className={getGlassmorphicIconStyle('favorite')}
+                  className={getGlassmorphicIconStyle('favorite', 'grid')}
                   whileHover={{ scale: 1.1, rotate: 10 }}
                   whileTap={{ scale: 0.9 }}
                   style={{
@@ -1489,7 +1503,7 @@ const ProjectCard = ({
                     }}
                     onMouseEnter={() => setHoveredIcon('delete')}
                     onMouseLeave={() => setHoveredIcon(null)}
-                    className={getGlassmorphicIconStyle('delete')}
+                    className={getGlassmorphicIconStyle('delete', 'grid')}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     style={{
@@ -2583,6 +2597,7 @@ export default function ProjectsPage() {
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             isMobile={isMobile}
             onCreateProject={handleCreateProject}
+            navigate={navigate}
           />
 
           {/* Projects Content */}
