@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '../supabaseClient';
-import TaskDetailView from '../components/tasks/TaskDetailView';
+// import TaskDetailView from '../components/tasks/TaskDetailView';
 
 // Icons
 import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare } from 'react-icons/fi';
@@ -1145,6 +1145,17 @@ const [reports, setReports] = useState([]);
                         count: newMessagesCount > 0 ? newMessagesCount : null
                       },
                       { 
+                        key: 'notes', 
+                        icon: <FiFileText className="w-6 h-6" />, 
+                        onClick: () => navigate('/notes'), 
+                        label: 'Notes', 
+                        gradient: 'from-emerald-500 to-teal-600',
+                        bg: 'bg-emerald-500/10',
+                        border: 'border-emerald-500/30',
+                        glow: 'shadow-emerald-500/20',
+                        hoverText: 'Take and manage notes'
+                      },
+                      { 
                         key: 'tasks', 
                         icon: <FiList className="w-6 h-6" />, 
                         onClick: () => navigate('/tasks?assignee=me'), 
@@ -1179,7 +1190,7 @@ const [reports, setReports] = useState([]);
                         glow: 'shadow-amber-500/20'
                       },                 
                      
-                      {
+                      { 
                         key: 'analytics',
                         icon: <FiBarChart2 className="w-6 h-6" />,
                         onClick: () => navigate('/analytics-dashboard'),
@@ -1190,6 +1201,7 @@ const [reports, setReports] = useState([]);
                         glow: 'shadow-rose-500/20',
                         hoverText: 'View my analytics'
                       },
+                   
                       { 
                         key: 'profile', 
                         icon: <FiUser className="w-6 h-6" />, 
@@ -2620,16 +2632,17 @@ const [reports, setReports] = useState([]);
         emptyMessage="Everyone has submitted their reports today!"
       />
 
-      {/* Task Detail Modal for clickable task IDs in reports */}
+      {/* Task Detail Modal for clickable task IDs in reports - Temporarily removed */}
       <AnimatePresence>
         {showTaskModal && activeTaskId && (
           <motion.div className="fixed inset-0 z-[9998]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <TaskDetailView
+            {/* TaskDetailView temporarily removed - needs to be re-implemented */}
+            {/* <TaskDetailView
               isOpen={showTaskModal}
               onClose={() => { setShowTaskModal(false); setActiveTaskId(null); }}
               taskId={activeTaskId}
               onUpdate={() => { /* no-op */ }}
-            />
+            /> */}
           </motion.div>
         )}
       </AnimatePresence>

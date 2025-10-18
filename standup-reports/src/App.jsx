@@ -27,7 +27,10 @@ import DepartmentManagement from './pages/DepartmentManagement';
 import TasksPage from './pages/TasksPage';
 import NotificationCenterV2 from './pages/NotificationCenterV2';
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import ProjectManagementPage from './pages/ProjectManagementPage';
 import ChatPage from './pages/ChatPage';
+import NotesPage from './pages/NotesPage';
 
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 
@@ -306,6 +309,21 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <ProjectsPage />
                   </PageTransition>
                 } />
+                <Route path="/projects/:projectId" element={
+                  <PageTransition>
+                    <ProjectDetailPage />
+                  </PageTransition>
+                } />
+                <Route path="/project-management" element={
+                  <PageTransition>
+                    <ProjectManagementPage />
+                  </PageTransition>
+                } />
+                <Route path="/project-management/:projectId" element={
+                  <PageTransition>
+                    <ProjectManagementPage />
+                  </PageTransition>
+                } />
                 <Route path="/analytics-dashboard" element={
                   <PageTransition>
                     <div className="w-full py-6">
@@ -316,6 +334,13 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 
                 {/* Chat Route */}
                 <Route path="/chat" element={<ChatPage />} />
+                
+                {/* Notes Route */}
+                <Route path="/notes" element={
+                  <PageTransition>
+                    <NotesPage sidebarOpen={sidebarOpen} />
+                  </PageTransition>
+                } />
                 
                 {/* Profile Routes */}
                 <Route path="/profile" element={

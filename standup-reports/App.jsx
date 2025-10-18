@@ -9,6 +9,9 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import History from './pages/History';
 import TeamManagement from './pages/TeamManagement';
 import AuthPage from './pages/AuthPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import ProjectManagementPage from './pages/ProjectManagementPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';
@@ -29,6 +32,10 @@ function App() {
         <Route path="user-achievements/:userId" element={<UserAchievements />} />
         <Route path="history" element={<History />} />
         <Route path="team" element={<TeamManagement />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="project-management" element={<ProjectManagementPage />} />
+        <Route path="project-management/:projectId" element={<ProjectManagementPage />} />
         <Route path="admin" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
       </Route>
     </Routes>

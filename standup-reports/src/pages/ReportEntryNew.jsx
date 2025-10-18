@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import TaskDetailView from '../components/tasks/TaskDetailView';
+// import TaskDetailView from '../components/tasks/TaskDetailView';
 import { 
   FiCalendar, FiCheckCircle, FiAlertCircle, FiClipboard, FiList, FiUsers, 
   FiSend, FiCopy, FiStar, FiBold, FiItalic, FiCode, FiAtSign, FiFileText, 
@@ -1197,7 +1197,8 @@ export default function ReportEntryNew() {
 
       {/* Task Detail Modal */}
       <AnimatePresence>
-        {showTaskModal && selectedTaskId && (
+        {/* TaskDetailView temporarily removed - needs to be re-implemented */}
+        {/* {showTaskModal && selectedTaskId && (
           <TaskDetailView
             isOpen={showTaskModal}
             onClose={handleCloseTaskModal}
@@ -1205,7 +1206,7 @@ export default function ReportEntryNew() {
             currentUser={currentUser}
             userRole={userRole}
           />
-        )}
+        )} */}
       </AnimatePresence>
     </div>
   );

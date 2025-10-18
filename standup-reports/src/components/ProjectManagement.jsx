@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiFolder, FiUsers, FiCalendar, FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiFolder, FiUsers, FiCalendar, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { notifyProjectUpdate } from '../utils/notificationHelper';
 
-export default function ProjectManagement() {
+export default function ProjectManagement({ selectedProjectId, onClose }) {
   const [projects, setProjects] = useState([]);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [projectForm, setProjectForm] = useState({
@@ -24,18 +24,6 @@ export default function ProjectManagement() {
   const [assignmentError, setAssignmentError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [sections, setSections] = useState([]);
-  const [showCreateSectionModal, setShowCreateSectionModal] = useState(false);
-  const [sectionForm, setSectionForm] = useState({ id: null, name: '', description: '', order: 0 });
-  const [topics, setTopics] = useState({});
-  const [showCreateTopicModal, setShowCreateTopicModal] = useState(false);
-  const [topicForm, setTopicForm] = useState({ id: null, section_id: '', name: '', description: '', order: 0 });
-  const [contents, setContents] = useState({});
-  const [showCreateContentModal, setShowCreateContentModal] = useState(false);
-  const [contentForm, setContentForm] = useState({ id: null, topic_id: '', title: '', content: '' });
-  const [expandedSections, setExpandedSections] = useState({});
-  const [expandedTopics, setExpandedTopics] = useState({});
   const [showAssignedMembersModal, setShowAssignedMembersModal] = useState(false);
   const [assignedMembers, setAssignedMembers] = useState([]);
   const [selectedProjectForMembers, setSelectedProjectForMembers] = useState(null);
@@ -269,186 +257,12 @@ export default function ProjectManagement() {
     }
   };
 
-  // Fetch sections for selected project
-  const fetchSections = async (projectId) => {
-    try {
-      const { data, error } = await supabase
-        .from('project_sections')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('order');
-      if (error) throw error;
-      setSections(data || []);
-    } catch (err) {
-      console.error('Error fetching sections:', err);
-    }
-  };
-
-  // Create or update section
-  const handleSaveSection = async (e) => {
-    e.preventDefault();
-    try {
-      const sectionData = {
-        project_id: selectedProject.id,
-        name: sectionForm.name,
-        description: sectionForm.description,
-        order: sectionForm.order,
-      };
-      if (sectionForm.id) {
-        const { error } = await supabase.from('project_sections').update(sectionData).eq('id', sectionForm.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('project_sections').insert(sectionData);
-        if (error) throw error;
-      }
-      setShowCreateSectionModal(false);
-      setSectionForm({ id: null, name: '', description: '', order: 0 });
-      fetchSections(selectedProject.id);
-    } catch (err) {
-      console.error('Error saving section:', err);
-    }
-  };
-
-  // Delete section
-  const handleDeleteSection = async (sectionId) => {
-    try {
-      const { error } = await supabase.from('project_sections').delete().eq('id', sectionId);
-      if (error) throw error;
-      fetchSections(selectedProject.id);
-    } catch (err) {
-      console.error('Error deleting section:', err);
-    }
-  };
-
-  // Fetch topics for section
-  const fetchTopics = async (sectionId) => {
-    try {
-      const { data, error } = await supabase
-        .from('project_topics')
-        .select('*')
-        .eq('section_id', sectionId)
-        .order('order');
-      if (error) throw error;
-      setTopics(prev => ({ ...prev, [sectionId]: data || [] }));
-    } catch (err) {
-      console.error('Error fetching topics:', err);
-    }
-  };
-
-  // Create or update topic
-  const handleSaveTopic = async (e) => {
-    e.preventDefault();
-    try {
-      const topicData = {
-        section_id: topicForm.section_id,
-        name: topicForm.name,
-        description: topicForm.description,
-        order: topicForm.order,
-      };
-      if (topicForm.id) {
-        const { error } = await supabase.from('project_topics').update(topicData).eq('id', topicForm.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('project_topics').insert(topicData);
-        if (error) throw error;
-      }
-      setShowCreateTopicModal(false);
-      setTopicForm({ id: null, section_id: '', name: '', description: '', order: 0 });
-      fetchTopics(topicForm.section_id);
-    } catch (err) {
-      console.error('Error saving topic:', err);
-    }
-  };
-
-  // Delete topic
-  const handleDeleteTopic = async (topicId, sectionId) => {
-    try {
-      const { error } = await supabase.from('project_topics').delete().eq('id', topicId);
-      if (error) throw error;
-      fetchTopics(sectionId);
-    } catch (err) {
-      console.error('Error deleting topic:', err);
-    }
-  };
-
-  // Fetch content for topic
-  const fetchContent = async (topicId) => {
-    try {
-      const { data, error } = await supabase
-        .from('project_topic_content')
-        .select('*')
-        .eq('topic_id', topicId)
-        .order('created_at');
-      if (error) throw error;
-      setContents(prev => ({ ...prev, [topicId]: data || [] }));
-    } catch (err) {
-      console.error('Error fetching content:', err);
-    }
-  };
-
-  // Create or update content
-  const handleSaveContent = async (e) => {
-    e.preventDefault();
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const contentData = {
-        topic_id: contentForm.topic_id,
-        title: contentForm.title,
-        content: contentForm.content,
-        created_by: user.id,
-      };
-      if (contentForm.id) {
-        contentData.updated_at = new Date().toISOString();
-        const { error } = await supabase.from('project_topic_content').update(contentData).eq('id', contentForm.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('project_topic_content').insert(contentData);
-        if (error) throw error;
-      }
-      setShowCreateContentModal(false);
-      setContentForm({ id: null, topic_id: '', title: '', content: '' });
-      fetchContent(contentForm.topic_id);
-    } catch (err) {
-      console.error('Error saving content:', err);
-    }
-  };
-
-  // Delete content
-  const handleDeleteContent = async (contentId, topicId) => {
-    try {
-      const { error } = await supabase.from('project_topic_content').delete().eq('id', contentId);
-      if (error) throw error;
-      fetchContent(topicId);
-    } catch (err) {
-      console.error('Error deleting content:', err);
-    }
-  };
-
-  // Toggle section expansion
-  const toggleSection = (sectionId) => {
-    setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
-    if (!expandedSections[sectionId]) fetchTopics(sectionId);
-  };
-
-  // Toggle topic expansion
-  const toggleTopic = (topicId) => {
-    setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
-    if (!expandedTopics[topicId]) fetchContent(topicId);
-  };
-
   // Load data
   useEffect(() => {
     if (currentUser) {
       fetchProjects();
     }
   }, [currentUser]);
-
-  // Fetch sections when project selected
-  useEffect(() => {
-    if (selectedProject) {
-      fetchSections(selectedProject.id);
-    }
-  }, [selectedProject]);
 
   // Edit project
   const handleEditProject = (project) => {
@@ -469,7 +283,6 @@ export default function ProjectManagement() {
       const { error } = await supabase.from('projects').delete().eq('id', projectId);
       if (error) throw error;
       fetchProjects();
-      if (selectedProject?.id === projectId) setSelectedProject(null);
     } catch (err) {
       console.error('Error deleting project:', err);
     }
@@ -496,10 +309,10 @@ export default function ProjectManagement() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
               <FiFolder className="text-indigo-600" size={24} />
-              Project Management
+              All Projects
             </h1>
             <p className="text-gray-600 mt-1 text-base">
-              Manage projects, assign teams, and organize content efficiently.
+              Manage your projects and assign team members.
             </p>
           </div>
           <motion.button
@@ -535,9 +348,8 @@ export default function ProjectManagement() {
             projects.map(project => (
               <motion.div
                 key={project.id}
-                className="bg-white rounded-lg shadow-md p-4 flex flex-col gap-3 hover:shadow-xl transition-shadow cursor-pointer"
+                className="bg-white rounded-lg shadow-md p-4 flex flex-col gap-3 hover:shadow-xl transition-shadow"
                 whileHover={{ scale: 1.02 }}
-                onClick={() => setSelectedProject(project)}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -605,202 +417,6 @@ export default function ProjectManagement() {
             ))
           )}
         </div>
-
-        {/* Project Details */}
-        {selectedProject && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-lg shadow-md p-4"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">{selectedProject.name}</h2>
-                <p className="text-gray-600 mt-1">{selectedProject.description}</p>
-              </div>
-              <button
-                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-                onClick={() => setSelectedProject(null)}
-              >
-                <FiChevronUp size={20} />
-              </button>
-            </div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-gray-800">Sections</h3>
-              <button
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-                onClick={() => {
-                  setSectionForm({ id: null, name: '', description: '', order: sections.length });
-                  setShowCreateSectionModal(true);
-                }}
-              >
-                <FiPlus /> Add Section
-              </button>
-            </div>
-            <div className="space-y-3">
-              {sections.map(section => (
-                <div key={section.id} className="border rounded-lg">
-                  <div
-                    className="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100"
-                    onClick={() => toggleSection(section.id)}
-                  >
-                    <div>
-                      <h4 className="font-semibold text-gray-800">{section.name}</h4>
-                      <p className="text-sm text-gray-600">{section.description}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="p-1 text-gray-600 hover:text-indigo-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSectionForm({ ...section });
-                          setShowCreateSectionModal(true);
-                        }}
-                      >
-                        <FiEdit2 />
-                      </button>
-                      <button
-                        className="p-1 text-gray-600 hover:text-red-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSection(section.id);
-                        }}
-                      >
-                        <FiTrash2 />
-                      </button>
-                      {expandedSections[section.id] ? <FiChevronUp /> : <FiChevronDown />}
-                    </div>
-                  </div>
-                  <AnimatePresence>
-                    {expandedSections[section.id] && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="p-4 bg-white">
-                          <div className="flex justify-between items-center mb-3">
-                            <h5 className="font-medium text-gray-700">Topics</h5>
-                            <button
-                              className="flex items-center gap-1 px-3 py-1 bg-indigo-500 text-white rounded-md text-sm"
-                              onClick={() => {
-                                setTopicForm({ id: null, section_id: section.id, name: '', description: '', order: topics[section.id]?.length || 0 });
-                                setShowCreateTopicModal(true);
-                              }}
-                            >
-                              <FiPlus /> Add Topic
-                            </button>
-                          </div>
-                          <div className="space-y-3">
-                            {topics[section.id]?.map(topic => (
-                              <div key={topic.id} className="border rounded-md">
-                                <div
-                                  className="flex justify-between items-center p-3 cursor-pointer bg-gray-50 hover:bg-gray-100"
-                                  onClick={() => toggleTopic(topic.id)}
-                                >
-                                  <div>
-                                    <h6 className="font-medium text-gray-800">{topic.name}</h6>
-                                    <p className="text-xs text-gray-600">{topic.description}</p>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      className="p-1 text-gray-600 hover:text-indigo-600"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setTopicForm({ ...topic, section_id: section.id });
-                                        setShowCreateTopicModal(true);
-                                      }}
-                                    >
-                                      <FiEdit2 size={14} />
-                                    </button>
-                                    <button
-                                      className="p-1 text-gray-600 hover:text-red-600"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteTopic(topic.id, section.id);
-                                      }}
-                                    >
-                                      <FiTrash2 size={14} />
-                                    </button>
-                                    {expandedTopics[topic.id] ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                                  </div>
-                                </div>
-                                <AnimatePresence>
-                                  {expandedTopics[topic.id] && (
-                                    <motion.div
-                                      initial={{ height: 0, opacity: 0 }}
-                                      animate={{ height: 'auto', opacity: 1 }}
-                                      exit={{ height: 0, opacity: 0 }}
-                                      className="overflow-hidden"
-                                    >
-                                      <div className="p-3 bg-white">
-                                        <div className="flex justify-between items-center mb-2">
-                                          <h6 className="font-medium text-gray-700 text-sm">Content</h6>
-                                          <button
-                                            className="flex items-center gap-1 px-2 py-1 bg-indigo-400 text-white rounded text-xs"
-                                            onClick={() => {
-                                              setContentForm({ id: null, topic_id: topic.id, title: '', content: '' });
-                                              setShowCreateContentModal(true);
-                                            }}
-                                          >
-                                            <FiPlus /> Add Content
-                                          </button>
-                                        </div>
-                                        <div className="space-y-2">
-                                          {contents[topic.id]?.map(content => (
-                                            <div key={content.id} className="p-3 bg-gray-50 rounded-lg">
-                                              <div className="flex justify-between items-start">
-                                                <div>
-                                                  <h6 className="font-semibold text-gray-800">{content.title}</h6>
-                                                  <p className="text-sm text-gray-600">{content.content}</p>
-                                                </div>
-                                                <div className="flex gap-1">
-                                                  <button
-                                                    className="p-1 text-gray-600 hover:text-indigo-600"
-                                                    onClick={() => {
-                                                      setContentForm({ ...content, topic_id: topic.id });
-                                                      setShowCreateContentModal(true);
-                                                    }}
-                                                  >
-                                                    <FiEdit2 size={12} />
-                                                  </button>
-                                                  <button
-                                                    className="p-1 text-gray-600 hover:text-red-600"
-                                                    onClick={() => handleDeleteContent(content.id, topic.id)}
-                                                  >
-                                                    <FiTrash2 size={12} />
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          ))}
-                                          {contents[topic.id]?.length === 0 && (
-                                            <p className="text-sm text-gray-500 text-center">No content yet.</p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            ))}
-                            {topics[section.id]?.length === 0 && (
-                              <p className="text-sm text-gray-500 text-center">No topics yet.</p>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-              {sections.length === 0 && (
-                <p className="text-center text-gray-500 py-4">No sections yet. Add one to start.</p>
-              )}
-            </div>
-          </motion.div>
-        )}
 
         {/* Create/Edit Project Modal */}
         <AnimatePresence>
@@ -943,198 +559,6 @@ export default function ProjectManagement() {
                     Close
                   </button>
                 </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Create/Edit Section Modal */}
-        <AnimatePresence>
-          {showCreateSectionModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 w-full max-w-md"
-              >
-                <h2 className="text-xl font-bold mb-4">{sectionForm.id ? 'Edit Section' : 'Add Section'}</h2>
-                <form onSubmit={handleSaveSection}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={sectionForm.name}
-                        onChange={e => setSectionForm({ ...sectionForm, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <textarea
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={sectionForm.description}
-                        onChange={e => setSectionForm({ ...sectionForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                      <input
-                        type="number"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={sectionForm.order}
-                        onChange={e => setSectionForm({ ...sectionForm, order: parseInt(e.target.value) || 0 })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                      onClick={() => setShowCreateSectionModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Create/Edit Topic Modal */}
-        <AnimatePresence>
-          {showCreateTopicModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 w-full max-w-md"
-              >
-                <h2 className="text-xl font-bold mb-4">{topicForm.id ? 'Edit Topic' : 'Add Topic'}</h2>
-                <form onSubmit={handleSaveTopic}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={topicForm.name}
-                        onChange={e => setTopicForm({ ...topicForm, name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <textarea
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={topicForm.description}
-                        onChange={e => setTopicForm({ ...topicForm, description: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                      <input
-                        type="number"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={topicForm.order}
-                        onChange={e => setTopicForm({ ...topicForm, order: parseInt(e.target.value) || 0 })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                      onClick={() => setShowCreateTopicModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Create/Edit Content Modal */}
-        <AnimatePresence>
-          {showCreateContentModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 w-full max-w-md"
-              >
-                <h2 className="text-xl font-bold mb-4">{contentForm.id ? 'Edit Content' : 'Add Content'}</h2>
-                <form onSubmit={handleSaveContent}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                      <input
-                        type="text"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-                        value={contentForm.title}
-                        onChange={e => setContentForm({ ...contentForm, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                      <textarea
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 h-32"
-                        value={contentForm.content}
-                        onChange={e => setContentForm({ ...contentForm, content: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-6">
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                      onClick={() => setShowCreateContentModal(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </form>
               </motion.div>
             </motion.div>
           )}

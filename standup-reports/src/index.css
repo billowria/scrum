@@ -1,6 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global font settings */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+  
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Confluence-inspired design system colors */
+:root {
+  /* Primary Blue */
+  --confluence-blue-50: #f0f9ff;
+  --confluence-blue-100: #e0f2fe;
+  --confluence-blue-200: #bae6fd;
+  --confluence-blue-300: #7dd3fc;
+  --confluence-blue-400: #38bdf8;
+  --confluence-blue-500: #0ea5e9;
+  --confluence-blue-600: #0284c7;
+  --confluence-blue-700: #0369a1;
+  --confluence-blue-800: #075985;
+  --confluence-blue-900: #0c4a6e;
+  
+  /* Neutral Grays */
+  --confluence-gray-50: #f8fafc;
+  --confluence-gray-100: #f1f5f9;
+  --confluence-gray-200: #e2e8f0;
+  --confluence-gray-300: #cbd5e1;
+  --confluence-gray-400: #94a3b8;
+  --confluence-gray-500: #64748b;
+  --confluence-gray-600: #475569;
+  --confluence-gray-700: #334155;
+  --confluence-gray-800: #1e293b;
+  --confluence-gray-900: #0f172a;
+  
+  /* Accent Purple */
+  --confluence-purple-50: #fdf4ff;
+  --confluence-purple-100: #fae8ff;
+  --confluence-purple-200: #f5d0fe;
+  --confluence-purple-300: #f0abfc;
+  --confluence-purple-400: #e879f9;
+  --confluence-purple-500: #d946ef;
+  --confluence-purple-600: #c026d3;
+  --confluence-purple-700: #a21caf;
+  --confluence-purple-800: #86198f;
+  --confluence-purple-900: #701a75;
+}
+
+/* Responsive breakpoints utilities */
+@layer utilities {
+  /* Mobile-first responsive utilities */
+  .container-fluid {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .container-fluid {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container-fluid {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+  
+  /* Sidebar responsive utilities */
+  .sidebar-mobile {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+  
+  @media (min-width: 1024px) {
+    .sidebar-mobile {
+      transform: translateX(0);
+    }
+  }
+  
+  /* Project grid responsive utilities */
+  .projects-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .projects-grid {
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .projects-grid {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+  }
+  
+  @media (min-width: 1280px) {
+    .projects-grid {
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 2rem;
+    }
+  }
+}
+
+/* Enhanced focus states for accessibility */
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white;
+  }
+  
+  .focus-ring-inset {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset;
+  }
+  
+  /* Skip to content link for screen readers */
+  .skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--confluence-blue-600);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 1000;
+    transition: top 0.3s;
+  }
+  
+  .skip-to-content:focus {
+    top: 6px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-break-before {
+    page-break-before: always;
+  }
+  
+  .print-break-after {
+    page-break-after: always;
+  }
+}
 
 /* Custom styles */
 .animate-slide-up {

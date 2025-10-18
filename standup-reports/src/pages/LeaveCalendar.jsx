@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend } from 'react-icons/fi';
 
 // Import components
 import LeaveRequestForm from '../components/LeaveRequestForm';
 import FloatingNav from '../components/FloatingNav';
 import AnnouncementModal from '../components/AnnouncementModal';
 import UserListModal from '../components/UserListModal';
+
 
 // Professional color palette
 const colors = {
@@ -236,6 +237,7 @@ const CompactTabHeader = ({
   );
 };
 
+
 export default function LeaveCalendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
@@ -255,6 +257,9 @@ export default function LeaveCalendar() {
   const [monthDirection, setMonthDirection] = useState(0);
   const [teamAvailability, setTeamAvailability] = useState({});
   const [usersOnLeaveToday, setUsersOnLeaveToday] = useState([]);
+
+  // New state for premium button hover
+  const [isButtonHovered, setButtonHovered] = useState(false);
 
   // New state for holiday calendar view
   const [showHolidayCalendarModal, setShowHolidayCalendarModal] = useState(false);
@@ -415,7 +420,7 @@ export default function LeaveCalendar() {
         .from('leave_plans')
         .select(`
           id, start_date, end_date, reason, status,
-          users:user_id (id, name, team_id)
+          users:user_id (id, name, team_id, avatar_url)
         `)
         .gte('start_date', start)
         .lte('end_date', end);
@@ -545,31 +550,42 @@ export default function LeaveCalendar() {
     return colors.neutral.lighter;
   };
   
-  // Get styling for selected dates in range
+  // Get styling for selected dates in range - ultra-light animated water color
   const getSelectedDateStyling = (day) => {
     const { start, end } = selectedDates;
-    
+
     if (!start) return '';
-    
+
     const isStart = isSameDay(day, start);
     const isEnd = end && isSameDay(day, end);
     const isInRange = start && end && day > start && day < end;
-    
+
     if (isStart && isEnd) {
       // Single day selection
-      return 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl ring-4 ring-blue-400';
-    } else if (isStart) {
-      // Start date of range
-      return 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg ring-4 ring-blue-300';
-    } else if (isEnd) {
-      // End date of range
-      return 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg ring-4 ring-blue-300';
-    } else if (isInRange) {
-      // Middle dates in range
-      return 'bg-gradient-to-br from-blue-100 to-indigo-100 shadow-md ring-2 ring-blue-200';
+      return 'bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 text-gray-700 shadow-2xl ring-4 ring-sky-300/60 relative overflow-hidden';
+    } else if (isStart || isEnd || isInRange) {
+      // All selected dates have same ultra-light sky blue water color
+      return 'bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 text-gray-700 shadow-xl ring-4 ring-sky-200/60 relative overflow-hidden';
     }
-    
+
     return '';
+  };
+
+  // Calculate water flow from start to end date
+  const getWaterFlowInfo = () => {
+    if (!selectedDates.start || !selectedDates.end) return null;
+
+    const startIdx = daysInMonth.findIndex(day => isSameDay(day, selectedDates.start));
+    const endIdx = daysInMonth.findIndex(day => isSameDay(day, selectedDates.end));
+
+    if (startIdx === -1 || endIdx === -1) return null;
+
+    return {
+      startIndex: startIdx,
+      endIndex: endIdx,
+      totalDays: endIdx - startIdx + 1,
+      isInRange: (idx) => idx >= startIdx && idx <= endIdx
+    };
   };
   
   // Calendar days for current month
@@ -624,13 +640,17 @@ export default function LeaveCalendar() {
       return day >= start && day <= end && leave.status === 'pending';
     });
   
+    const waterFlowInfo = getWaterFlowInfo();
+    const dayIndex = daysInMonth.findIndex(d => isSameDay(d, day));
+    const isInWaterFlow = waterFlowInfo && waterFlowInfo.isInRange(dayIndex);
+
     return (
-      <motion.div 
+      <motion.div
         key={dateStr}
         whileHover={{ y: -5, boxShadow: "0 12px 24px -4px rgba(0,0,0,0.15)" }}
         whileTap={{ scale: 0.98 }}
         className={`
-          relative cursor-pointer rounded-2xl p-4 min-h-[120px] 
+          relative cursor-pointer rounded-2xl p-4 min-h-[120px]
           flex flex-col justify-between
           ${isSameMonthDay ? 'opacity-100' : 'opacity-60'}
           ${isToday ? 'ring-4 ring-blue-500 ring-offset-2 transform' : ''}
@@ -657,15 +677,57 @@ export default function LeaveCalendar() {
           
           <div className="flex flex-col items-end gap-1">
             {hasLeave && (
-              <motion.span 
+              <motion.div
                 className="text-[0.65rem] px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-full inline-flex items-center cursor-pointer hover:from-blue-200 hover:to-blue-300 shadow-sm"
                 onClick={(e) => handleUsersIconClick(day, usersOnLeave, e)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <FiUsers size={9} className="mr-1" /> 
-                {usersOnLeave.length}
-              </motion.span>
+                {/* Show avatars for up to 2 users */}
+                {usersOnLeave.length === 1 && usersOnLeave[0]?.avatar_url ? (
+                  <img
+                    src={usersOnLeave[0].avatar_url}
+                    alt={usersOnLeave[0].name}
+                    className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1"
+                  />
+                ) : usersOnLeave.length >= 2 ? (
+                  <>
+                    {/* First user avatar */}
+                    {usersOnLeave[0]?.avatar_url ? (
+                      <img
+                        src={usersOnLeave[0].avatar_url}
+                        alt={usersOnLeave[0].name}
+                        className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1 z-10"
+                        style={{ marginLeft: '-2px' }}
+                      />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full bg-blue-300 text-blue-700 flex items-center justify-center font-medium text-xs mr-1 z-10" style={{ marginLeft: '-2px' }}>
+                        {usersOnLeave[0]?.name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    )}
+
+                    {/* Second user avatar */}
+                    {usersOnLeave[1]?.avatar_url ? (
+                      <img
+                        src={usersOnLeave[1].avatar_url}
+                        alt={usersOnLeave[1].name}
+                        className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1 z-20"
+                      />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full bg-blue-300 text-blue-700 flex items-center justify-center font-medium text-xs mr-1 z-20">
+                        {usersOnLeave[1]?.name?.charAt(0).toUpperCase() || 'U'}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <FiUsers size={9} className="mr-1" />
+                )}
+
+                {/* Show count */}
+                <span className="ml-1">
+                  {usersOnLeave.length}
+                </span>
+              </motion.div>
             )}
             
             {hasPendingRequests && (
@@ -711,27 +773,249 @@ export default function LeaveCalendar() {
         {userHasLeave && (
           <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full border-2 border-white shadow-lg"></div>
         )}
+
+        {/* Enhanced Light Animated Water Flow */}
+        {isInWaterFlow && waterFlowInfo && (
+          <>
+            {/* Multiple water waves with different speeds */}
+            <motion.div
+              className="absolute top-0 bottom-0 w-24 bg-gradient-to-r from-sky-400 via-sky-300 to-transparent"
+              style={{
+                left: '-100px',
+                filter: 'blur(12px)',
+              }}
+              animate={{
+                left: ['-100px', '200px'],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "linear",
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25
+              }}
+            />
+
+            <motion.div
+              className="absolute top-1 bottom-1 w-20 bg-gradient-to-r from-sky-300 via-sky-200 to-transparent"
+              style={{
+                left: '-80px',
+                filter: 'blur(10px)',
+              }}
+              animate={{
+                left: ['-80px', '200px'],
+              }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: "linear",
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25 + 0.5
+              }}
+            />
+
+            <motion.div
+              className="absolute top-2 bottom-2 w-16 bg-gradient-to-r from-sky-200 via-sky-100 to-transparent"
+              style={{
+                left: '-60px',
+                filter: 'blur(8px)',
+              }}
+              animate={{
+                left: ['-60px', '200px'],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear",
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25 + 1
+              }}
+            />
+
+            {/* Animated water droplets - more of them with varied patterns */}
+            <motion.div
+              className="absolute top-1 left-2 w-3 h-3 bg-sky-400 rounded-full"
+              animate={{
+                y: [0, 15, 30, 45, 60, 75],
+                x: [0, 3, 6, 3, 0, -2],
+                opacity: [1, 0.9, 0.8, 0.6, 0.4, 0.2],
+                scale: [0.8, 1, 1.1, 0.9, 0.7, 0.5],
+              }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div
+              className="absolute top-3 right-3 w-2.5 h-2.5 bg-sky-300 rounded-full"
+              animate={{
+                y: [0, 12, 24, 36, 48, 60],
+                x: [0, -2, -4, -2, 0, 2],
+                opacity: [1, 0.9, 0.7, 0.5, 0.3, 0.1],
+                scale: [0.9, 1, 0.8, 0.6, 0.4, 0.3],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                delay: Math.random() * 2 + 0.7,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div
+              className="absolute top-2 left-1/2 w-2 h-2 bg-sky-500 rounded-full"
+              animate={{
+                y: [0, 18, 36, 54, 72],
+                x: [0, 4, 8, 4, 0, -4],
+                opacity: [0.8, 1, 0.8, 0.5, 0.3, 0],
+                scale: [0.7, 0.9, 1, 0.8, 0.6, 0.4],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                delay: Math.random() * 2 + 1.2,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Animated bottom water level */}
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-sky-400/50 via-sky-300/40 to-transparent"
+              animate={{
+                height: ['0px', '16px', '10px', '16px', '10px'],
+                opacity: [0, 0.9, 0.7, 0.9, 0.7],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.2,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Top shimmer effect */}
+            <motion.div
+              className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-transparent via-sky-100/60 to-transparent"
+              animate={{
+                x: ['-100%', '100%'],
+              }}
+              transition={{
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "linear",
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.4
+              }}
+            />
+
+            {/* Multiple shimmer layers */}
+            <motion.div
+              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-sky-200/30 to-transparent"
+              animate={{
+                x: ['-100%', '100%'],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "linear",
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.6
+              }}
+            />
+
+            {/* Pulsing water particles */}
+            <motion.div
+              className="absolute top-1/2 left-1/4 w-2 h-2 bg-sky-300 rounded-full"
+              animate={{
+                scale: [0, 1, 0.5, 1, 0.5, 0],
+                opacity: [0, 0.8, 0.4, 0.8, 0.4, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: (dayIndex - waterFlowInfo.startIndex) * 0.3,
+                ease: "easeInOut"
+              }}
+            />
+          </>
+        )}
         
-        {/* Selected day indicator - only show if not fully styled */}
+        {/* Selected day indicators with water theme */}
         {!getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && (
-          <div className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
+          <motion.div
+            className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full border-2 border-white shadow-lg"
+            animate={{
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         )}
-        
+
         {!getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && (
-          <div className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full border-2 border-white shadow-lg"></div>
+          <motion.div
+            className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full border-2 border-white shadow-lg"
+            animate={{
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         )}
-        
+
         {/* Special indicators for start/end of range when fully styled */}
         {getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
-          <div className="absolute -top-1 -left-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-          </div>
+          <motion.div
+            className="absolute -top-1 -left-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner"
+            animate={{
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <motion.div
+              className="w-2 h-2 bg-cyan-500 rounded-full"
+              animate={{
+                scale: [1, 0.8, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
         )}
-        
+
         {getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner">
-            <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
-          </div>
+          <motion.div
+            className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner"
+            animate={{
+              scale: [1, 1.2, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
+            <motion.div
+              className="w-2 h-2 bg-indigo-500 rounded-full"
+              animate={{
+                scale: [1, 0.8, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </motion.div>
         )}
       </motion.div>
     );
@@ -845,28 +1129,107 @@ export default function LeaveCalendar() {
               <div className="flex items-center gap-2">
                
                 
-                {/* Request Leave button */}
+               
+                {/* Smooth Animated Request Leave Button */}
                 <motion.button
-                  className="px-5 py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white rounded-xl hover:from-indigo-700 hover:via-purple-700 hover:to-pink-600 flex items-center justify-center transition-all shadow-lg font-semibold relative overflow-hidden group"
+                  className="relative flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg shadow-lg overflow-hidden"
                   onClick={() => setShowLeaveForm(true)}
-                  variants={overlayButtonVariants}
-                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(139, 92, 246, 0.4)" }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  initial="rest"
-                  animate="rest"
+                  onHoverStart={() => setButtonHovered(true)}
+                  onHoverEnd={() => setButtonHovered(false)}
+                  layout
+                  style={{
+                    height: '48px',
+                    minWidth: isButtonHovered ? '180px' : '48px'
+                  }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/30 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out delay-100"></div>
-                  <span className="relative z-10 flex items-center">
-                    <motion.div 
-                      className="mr-3"
-                      animate={{ rotate: [0, 0, 360] }}
-                      transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", repeatDelay: 2 }}
+                  {/* Background shimmer effect */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    animate={{
+                      x: isButtonHovered ? ['-100%', '100%'] : ['-100%', '-100%'],
+                    }}
+                    transition={{
+                      x: {
+                        duration: 0.6,
+                        ease: 'easeOut',
+                        repeat: isButtonHovered ? Infinity : 0,
+                        repeatDelay: 1
+                      }
+                    }}
+                  />
+
+                  {/* Content container */}
+                  <div className="relative z-10 flex items-center justify-center w-full h-full px-4">
+                    {/* Icon container */}
+                    <motion.div
+                      className="flex items-center justify-center"
+                      animate={{
+                        marginRight: isButtonHovered ? 8 : 0,
+                        rotate: isButtonHovered ? 0 : [0, 360],
+                      }}
+                      transition={{
+                        marginRight: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
+                        rotate: {
+                          duration: isButtonHovered ? 0.4 : 8,
+                          ease: isButtonHovered ? 'easeOut' : 'linear',
+                          repeat: isButtonHovered ? 0 : Infinity
+                        }
+                      }}
                     >
-                      <FiPlus className="w-5 h-5" />
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="flex-shrink-0"
+                      >
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
                     </motion.div>
-                    Request Leave
-                  </span>
+
+                    {/* Text container with smooth reveal */}
+                    <motion.div
+                      className="overflow-hidden"
+                      animate={{
+                        width: isButtonHovered ? 'auto' : 0,
+                        opacity: isButtonHovered ? 1 : 0,
+                      }}
+                      transition={{
+                        width: { duration: 0.35, ease: [0.23, 1, 0.32, 1] },
+                        opacity: { duration: 0.25, delay: isButtonHovered ? 0.05 : 0 }
+                      }}
+                    >
+                      <motion.span
+                        className="whitespace-nowrap block"
+                        animate={{
+                          x: isButtonHovered ? 0 : -10,
+                        }}
+                        transition={{
+                          x: { duration: 0.3, delay: isButtonHovered ? 0.1 : 0, ease: 'easeOut' }
+                        }}
+                      >
+                        Request Leave
+                      </motion.span>
+                    </motion.div>
+                  </div>
+
+                  {/* Subtle glow effect on hover */}
+                  <motion.div
+                    className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400/20 to-indigo-400/20"
+                    animate={{
+                      opacity: isButtonHovered ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
                 </motion.button>
               </div>
             </div>
@@ -891,12 +1254,9 @@ export default function LeaveCalendar() {
                 </div>
                 <span className="text-gray-700 font-medium">Low Availability</span>
               </div>
-              <div className="flex items-center text-sm">
-                <span className="inline-block w-3 h-3 mr-2 border-2 border-accent-500 rounded-full bg-accent-50"></span>
-                <span className="text-gray-700 font-medium">Your Leave</span>
-              </div>
             </div>
           </div>
+          
           
           {/* Calendar Header with days of week */}
           <div className="bg-gradient-to-r from-gray-50 to-white p-4 border-b border-gray-100">

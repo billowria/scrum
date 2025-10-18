@@ -5,7 +5,7 @@ import {
   FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
   FiTrendingUp, FiShield, FiZap, FiHeart, FiSearch, FiStar,
   FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX,
-  FiMessageSquare
+  FiMessageSquare, FiFileText
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -68,6 +68,15 @@ const createNavLinks = (counts, user) => [
     shadowColor: 'rgba(239, 68, 68, 0.5)',
     description: 'Stay updated',
     badge: counts.notifications
+  },
+  { 
+    to: '/notes', 
+    icon: <FiFileText />, 
+    label: 'Quick Notes', 
+    gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
+    shadowColor: 'rgba(16, 185, 129, 0.5)',
+    description: 'Personal notes & ideas',
+    badge: null
   },
 ];
 
@@ -264,17 +273,15 @@ const SearchBar = ({ open, isDarkMode }) => {
         >
           <motion.div
             className={`relative flex items-center rounded-2xl border transition-all duration-300 ${
-              isFocused 
-                ? 'bg-white/15 border-blue-400/50 shadow-lg shadow-blue-500/20' 
-                : isDarkMode 
-                  ? 'bg-gray-800/30 border-gray-600/30 hover:border-gray-500/50' 
-                  : 'bg-white/10 border-slate-300/30 hover:border-slate-400/50'
+              isFocused
+                ? 'bg-white/80 border-blue-400/50 shadow-lg shadow-blue-500/20'
+                : 'bg-white/60 border-slate-300/50 hover:border-slate-400/70'
             }`}
             whileHover={{ scale: 1.02 }}
             transition={{ type: 'spring', stiffness: 300 }}
           >
             <FiSearch className={`ml-4 transition-colors ${
-              isFocused ? 'text-blue-400' : isDarkMode ? 'text-gray-400' : 'text-slate-500'
+              isFocused ? 'text-blue-600' : 'text-slate-600'
             }`} size={16} />
             <input
               type="text"
@@ -283,9 +290,7 @@ const SearchBar = ({ open, isDarkMode }) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              className={`flex-1 bg-transparent border-none outline-none px-3 py-3 text-sm placeholder-gray-400 ${
-                isDarkMode ? 'text-white' : 'text-gray-800'
-              }`}
+              className={`flex-1 bg-transparent border-none outline-none px-3 py-3 text-sm placeholder-gray-500 text-gray-800`}
             />
             {searchTerm && (
               <motion.button
@@ -293,7 +298,7 @@ const SearchBar = ({ open, isDarkMode }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 onClick={() => setSearchTerm('')}
-                className="mr-3 p-1 rounded-full hover:bg-white/10 transition-colors"
+                className="mr-3 p-1 rounded-full hover:bg-gray-200/60 transition-colors"
               >
                 <FiX size={14} />
               </motion.button>
@@ -316,17 +321,11 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
       onHoverEnd={() => setShowMenu(false)}
     >
       <motion.div 
-        className={`flex items-center p-3 rounded-xl backdrop-blur-sm border cursor-pointer transition-all duration-300 ${
-          isDarkMode 
-            ? 'bg-slate-800/40 border-white/5' 
-            : 'bg-white/40 border-slate-200/20'
-        }`}
+        className={`flex items-center p-3 rounded-xl backdrop-blur-sm border cursor-pointer transition-all duration-300 bg-white/80 border-slate-300/40`}
         whileHover={{ 
           scale: 1.02,
           y: -1,
-          boxShadow: isDarkMode 
-            ? '0 4px 16px rgba(0, 0, 0, 0.2)' 
-            : '0 4px 16px rgba(0, 0, 0, 0.05)'
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
         }}
         transition={{ type: 'spring', stiffness: 300 }}
       >
@@ -348,10 +347,10 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
               variants={itemVariants}
               className="ml-3 flex-1"
             >
-              <div className={`font-medium text-sm truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <div className={`font-medium text-sm truncate text-gray-900`}>
                 {user?.name || 'User'}
               </div>
-              <div className={`text-xs truncate ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <div className={`text-xs truncate text-slate-600`}>
                 {user?.role || 'Member'}
               </div>
             </motion.div>
@@ -366,11 +365,7 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
             >
               <motion.button
                 onClick={onLogout}
-                className={`p-1.5 rounded-lg transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'text-red-400 hover:text-red-300 hover:bg-red-500/10' 
-                    : 'text-red-500 hover:text-red-600 hover:bg-red-100/50'
-                }`}
+                className={`p-1.5 rounded-lg transition-all duration-200 text-red-500 hover:text-red-600 hover:bg-red-100/50`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -388,16 +383,16 @@ const UserProfile = ({ open, user, isDarkMode, onLogout }) => {
             initial={{ opacity: 0, y: 5, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.95 }}
-            className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white/90 backdrop-blur-xl rounded-xl border border-white/20 shadow-lg"
+            className="absolute bottom-full left-0 right-0 mb-2 p-2 bg-white/95 backdrop-blur-xl rounded-xl border border-slate-200/60 shadow-lg"
           >
             <div className="space-y-1">
-              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm">
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-gray-100/60 transition-colors text-sm text-gray-700">
                 Profile
               </button>
-              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm">
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-gray-100/60 transition-colors text-sm text-gray-700">
                 Settings
               </button>
-              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/20 transition-colors text-sm text-red-600">
+              <button className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-red-50/60 transition-colors text-sm text-red-600">
                 Sign Out
               </button>
             </div>
@@ -559,28 +554,14 @@ export default function Sidebar({ open, setOpen, user }) {
 
   // Dynamic background calculation
   const dynamicBackground = useMemo(() => {
-    if (!isDarkMode) {
-      // Professional white background in light mode
-      return {
-        background: open ? '#ffffff' : 'rgba(255,255,255,0.95)',
-        backdropFilter: open ? 'blur(4px) saturate(120%)' : 'blur(8px) saturate(110%)',
-        borderRight: `1px solid rgba(226, 232, 240, ${open ? 1 : 0.8})`,
-        boxShadow: `0 25px 50px -12px rgba(0,0,0,${open ? 0.06 : 0.1}), 0 1px 2px rgba(0,0,0,0.04)`
-      };
-    }
-    // Subtle gradient for dark mode
-    const baseOpacity = open ? 0.15 : 0.2;
+    // Professional white background in light mode
     return {
-      background: `linear-gradient(145deg, 
-        rgba(23,23,23, ${baseOpacity}), 
-        rgba(38,38,38, ${baseOpacity - 0.05}), 
-        rgba(64,64,64, ${baseOpacity - 0.1})
-      )`,
-      backdropFilter: `blur(${open ? 32 : 24}px) saturate(${open ? 200 : 180}%)`,
-      borderRight: `1px solid rgba(64,64,64, ${open ? 0.3 : 0.4})`,
-      boxShadow: `0 25px 50px -12px rgba(0,0,0,${open ? 0.4 : 0.5}), 0 0 0 1px rgba(255,255,255,${open ? 0.05 : 0.08}), inset 0 1px 0 rgba(255,255,255,${open ? 0.1 : 0.15}), inset 0 -1px 0 rgba(64,64,64,${open ? 0.2 : 0.25})`
+      background: open ? '#ffffff' : 'rgba(255,255,255,0.95)',
+      backdropFilter: open ? 'blur(4px) saturate(120%)' : 'blur(8px) saturate(110%)',
+      borderRight: `1px solid rgba(226, 232, 240, ${open ? 1 : 0.8})`,
+      boxShadow: `0 25px 50px -12px rgba(0,0,0,${open ? 0.06 : 0.1}), 0 1px 2px rgba(0,0,0,0.04)`
     };
-  }, [open, isDarkMode]);
+  }, [open]);
 
   return (
     <>
@@ -622,7 +603,7 @@ export default function Sidebar({ open, setOpen, user }) {
       <motion.div
         className="absolute inset-0"
         animate={{ 
-          opacity: open ? (isDarkMode ? 0.3 : 0) : (isDarkMode ? 0.1 : 0),
+          opacity: 0,
           scale: open ? 1 : 0.4,
           x: open ? 0 : -30,
           scaleX: open ? 1 : 0.3
@@ -635,17 +616,8 @@ export default function Sidebar({ open, setOpen, user }) {
         }}
         style={{
           background: !prefersReducedMotion 
-            ? `radial-gradient(${open ? '800px' : '200px'} circle at ${mouseSpringX}px ${mouseSpringY}px, 
-                ${isDarkMode 
-                  ? `rgba(64, 64, 64, ${open ? '0.2' : '0.08'}), rgba(96, 96, 96, ${open ? '0.15' : '0.05'})` 
-                  : `rgba(59, 130, 246, ${open ? '0.15' : '0.06'}), rgba(147, 197, 253, ${open ? '0.1' : '0.03'})`
-                }, 
-                transparent 60%)`
-            : `radial-gradient(300px circle at 50% 50%, ${
-                isDarkMode 
-                  ? 'rgba(64, 64, 64, 0.08)' 
-                  : 'rgba(59, 130, 246, 0.08)'
-              }, transparent 60%)`,
+            ? `radial-gradient(${open ? '800px' : '200px'} circle at ${mouseSpringX}px ${mouseSpringY}px, rgba(59, 130, 246, ${open ? '0.08' : '0.03'}), rgba(147, 197, 253, ${open ? '0.05' : '0.02'}), transparent 60%)`
+            : `radial-gradient(300px circle at 50% 50%, rgba(59, 130, 246, 0.05), transparent 60%)`,
           transformOrigin: 'center center'
         }}
       />
@@ -654,7 +626,7 @@ export default function Sidebar({ open, setOpen, user }) {
       <motion.div
         className="absolute inset-0"
         animate={{ 
-          opacity: open ? (isDarkMode ? 0.15 : 0) : (isDarkMode ? 0.05 : 0),
+          opacity: 0,
           scaleY: open ? 1 : 0.3,
           y: open ? 0 : 20,
           scaleX: open ? 1 : 0.4
@@ -666,21 +638,14 @@ export default function Sidebar({ open, setOpen, user }) {
           mass: 0.8
         }}
         style={{
-          background: `linear-gradient(180deg, 
-            ${isDarkMode 
-              ? `rgba(64, 64, 64, ${open ? '0.12' : '0.04'}) 0%, rgba(96, 96, 96, ${open ? '0.08' : '0.02'}) 50%` 
-              : `rgba(59, 130, 246, ${open ? '0.12' : '0.04'}) 0%, rgba(147, 197, 253, ${open ? '0.08' : '0.02'}) 50%`
-            }, 
-            transparent 100%)`,
+          background: 'transparent',
           transformOrigin: 'top center'
         }}
       />
       
       {/* Header with enhanced toggle button */}
       <motion.div 
-        className={`relative flex items-center justify-center border-b ${
-          isDarkMode ? 'border-gray-600/30' : 'border-slate-200/20'
-        }`}
+        className="relative flex items-center justify-center border-b border-slate-200/40"
         initial={{ y: -50, opacity: 0 }}
         animate={{ 
           y: 0, 
@@ -703,14 +668,10 @@ export default function Sidebar({ open, setOpen, user }) {
         {/* Enhanced toggle button */}
         <motion.button
           onClick={handleToggle}
-          className={`relative group p-3 rounded-2xl backdrop-blur-sm border transition-all duration-300 focus:outline-none focus:ring-2 ${
-            isDarkMode 
-              ? 'bg-white/10 border-gray-600/40 hover:border-gray-500/60 focus:ring-gray-400/50' 
-              : 'bg-white/15 border-slate-200/30 hover:border-slate-300/50 focus:ring-slate-400/50'
-          }`}
+          className="relative group p-3 rounded-2xl backdrop-blur-sm border transition-all duration-300 focus:outline-none focus:ring-2 bg-white/60 border-slate-300/50 hover:border-slate-400/70 focus:ring-slate-400/50"
           whileHover={{ 
             scale: 1.05,
-            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
             rotate: 5
           }}
           whileTap={{ scale: 0.95 }}
@@ -718,22 +679,14 @@ export default function Sidebar({ open, setOpen, user }) {
         >
           {/* Glow effect */}
           <motion.div
-            className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-              isDarkMode 
-                ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20' 
-                : 'bg-gradient-to-r from-slate-300/20 to-gray-300/20'
-            }`}
+            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-slate-300/30 to-gray-300/30"
             initial={false}
           />
           
           <motion.div
             animate={{ rotate: open ? 0 : 180 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`relative z-10 transition-colors ${
-              isDarkMode 
-                ? 'text-gray-300 group-hover:text-white' 
-                : 'text-slate-600 group-hover:text-slate-800'
-            }`}
+            className="relative z-10 transition-colors text-slate-600 group-hover:text-slate-800"
           >
             <FiChevronLeft size={20} />
           </motion.div>
@@ -773,7 +726,7 @@ export default function Sidebar({ open, setOpen, user }) {
         }}
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: isDarkMode ? 'rgba(156, 163, 175, 0.5) transparent' : 'rgba(156, 163, 175, 0.3) transparent'
+          scrollbarColor: 'rgba(156, 163, 175, 0.3) transparent'
         }}
       >
         {navLinks.map((link, index) => {
@@ -1127,20 +1080,14 @@ export default function Sidebar({ open, setOpen, user }) {
                       ? 'left-0 right-0 top-full mt-2 max-h-80 overflow-y-auto' 
                       : 'left-full ml-6 top-0 w-80 max-h-80 overflow-y-auto'
                   } 
-                  backdrop-blur-2xl rounded-2xl border shadow-2xl z-50 p-3 ${
-                    isDarkMode ? 'border-gray-600/40' : 'border-slate-200/30'
-                  }
+                  backdrop-blur-2xl rounded-2xl border shadow-2xl z-50 p-3 border-slate-200/40
                   scrollbar-thin scrollbar-thumb-gray-400/50 scrollbar-track-transparent
                 `}
                 style={{
-                  background: isDarkMode
-                    ? 'linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))'
-                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))',
-                  boxShadow: isDarkMode
-                    ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-                    : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+                  background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9))',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2)',
                   scrollbarWidth: 'thin',
-                  scrollbarColor: isDarkMode ? 'rgba(156, 163, 175, 0.6) transparent' : 'rgba(156, 163, 175, 0.4) transparent'
+                  scrollbarColor: 'rgba(156, 163, 175, 0.4) transparent'
                 }}
               >
                 <div className="space-y-2">
@@ -1158,11 +1105,7 @@ export default function Sidebar({ open, setOpen, user }) {
                         navigate(item.to);
                         setManagerDropdown(false);
                       }}
-                      className={`w-full flex items-center p-4 rounded-2xl text-left transition-all duration-200 group ${
-                        isDarkMode 
-                          ? 'text-gray-300 hover:text-white hover:bg-white/10' 
-                          : 'text-slate-600 hover:text-slate-800 hover:bg-white/10'
-                      }`}
+                      className="w-full flex items-center p-4 rounded-2xl text-left transition-all duration-200 group text-slate-600 hover:text-slate-800 hover:bg-white/60"
                       whileHover={{ 
                         scale: 1.02,
                         y: -1,
@@ -1199,11 +1142,7 @@ export default function Sidebar({ open, setOpen, user }) {
                             </span>
                           )}
                         </div>
-                        <div className={`text-xs mt-1 transition-colors ${
-                          isDarkMode 
-                            ? 'text-gray-400 group-hover:text-gray-300' 
-                            : 'text-slate-500 group-hover:text-slate-600'
-                        }`}>
+                        <div className="text-xs mt-1 transition-colors text-slate-500 group-hover:text-slate-600">
                           {item.description}
                         </div>
                       </div>
@@ -1230,14 +1169,14 @@ export default function Sidebar({ open, setOpen, user }) {
                   }}
                   className="absolute left-full ml-6 top-1/2 -translate-y-1/2 z-[60] pointer-events-none"
                 >
-                  <div className="bg-gray-900/95 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10">
+                  <div className="bg-white/95 backdrop-blur-xl text-gray-900 px-4 py-3 rounded-2xl shadow-2xl border border-slate-200/60">
                     <div className="font-bold text-sm whitespace-nowrap flex items-center">
                       Manager Portal
-                      <FiStar className="ml-2 text-yellow-400" size={12} />
+                      <FiStar className="ml-2 text-yellow-500" size={12} />
                     </div>
-                    <div className="text-xs text-gray-400 mt-1 whitespace-nowrap">Leadership tools & insights</div>
+                    <div className="text-xs text-gray-600 mt-1 whitespace-nowrap">Leadership tools & insights</div>
                     {/* Enhanced tooltip arrow with glow */}
-                    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-gray-900/95 rotate-45 border-l border-b border-white/10 shadow-lg" />
+                    <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-white/95 rotate-45 border-l border-b border-slate-200/60 shadow-lg" />
                   </div>
                 </motion.div>
               )}
@@ -1249,7 +1188,7 @@ export default function Sidebar({ open, setOpen, user }) {
 
       {/* Enhanced footer section */}
       <motion.div 
-        className="border-t border-slate-200/20 backdrop-blur-sm"
+        className="border-t border-slate-200/40 backdrop-blur-sm"
         animate={{ 
           paddingLeft: open ? 20 : 12,
           paddingRight: open ? 20 : 12,
@@ -1279,7 +1218,7 @@ export default function Sidebar({ open, setOpen, user }) {
          animate={{
            y: [-3, 3, -3],
            scale: open ? 1 : 0.5,
-           opacity: open ? (isDarkMode ? 0.3 : 0.4) : (isDarkMode ? 0.1 : 0.2),
+           opacity: open ? 0.3 : 0.1,
            x: open ? 0 : -10
          }}
          transition={{
@@ -1292,11 +1231,7 @@ export default function Sidebar({ open, setOpen, user }) {
            opacity: { type: 'spring', stiffness: 400, damping: 40 },
            x: { type: 'spring', stiffness: 400, damping: 40 }
          }}
-         className={`absolute top-1/3 left-1/2 rounded-full blur-3xl pointer-events-none ${
-           isDarkMode 
-             ? 'bg-gradient-to-r from-gray-400/10 to-slate-400/10' 
-             : 'bg-gradient-to-r from-blue-400/10 to-purple-400/10'
-         }`}
+         className="absolute top-1/3 left-1/2 rounded-full blur-3xl pointer-events-none bg-gradient-to-r from-blue-400/10 to-purple-400/10"
          style={{ 
            transform: 'translate(-50%, -50%)',
            width: open ? 160 : 60,
@@ -1310,7 +1245,7 @@ export default function Sidebar({ open, setOpen, user }) {
            y: [3, -3, 3],
            x: [-2, 2, -2],
            scale: open ? 1 : 0.3,
-           opacity: open ? (isDarkMode ? 0.2 : 0.3) : (isDarkMode ? 0.05 : 0.1),
+           opacity: open ? 0.2 : 0.05,
          }}
          transition={{
            y: {
@@ -1326,11 +1261,7 @@ export default function Sidebar({ open, setOpen, user }) {
            scale: { type: 'spring', stiffness: 400, damping: 40 },
            opacity: { type: 'spring', stiffness: 400, damping: 40 }
          }}
-         className={`absolute bottom-1/4 right-1/4 rounded-full blur-2xl pointer-events-none ${
-           isDarkMode 
-             ? 'bg-gradient-to-r from-slate-400/10 to-gray-400/10' 
-             : 'bg-gradient-to-r from-pink-400/10 to-orange-400/10'
-         }`}
+         className="absolute bottom-1/4 right-1/4 rounded-full blur-2xl pointer-events-none bg-gradient-to-r from-pink-400/10 to-orange-400/10"
          style={{ 
            width: open ? 120 : 40,
            height: open ? 120 : 40
