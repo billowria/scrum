@@ -5,7 +5,7 @@ import {
   FiFolder, FiUsers, FiCalendar, FiSearch, FiGrid, FiList, FiStar,
   FiClock, FiUser, FiChevronDown, FiX, FiRefreshCw, FiEye, FiAlertCircle,
   FiSettings, FiTrendingUp, FiPlus, FiFilter, FiMoreVertical, FiMenu,
-  FiEdit2, FiTrash2, FiUserPlus, FiCheck, FiLoader
+  FiEdit2, FiEdit3, FiTrash2, FiUserPlus, FiCheck, FiLoader
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import ContentLoader from '../components/ContentLoader';
@@ -1055,6 +1055,7 @@ const ProjectCard = ({
   const navigate = useNavigate();
   const [showActions, setShowActions] = useState(false);
   const [hoveredIcon, setHoveredIcon] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   
   // Debug logging for button visibility
   console.log(`[DEBUG] ProjectCard for project ${project.id}:`, {
@@ -1182,7 +1183,7 @@ const ProjectCard = ({
         className="bg-white border border-gray-200 rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden group"
         variants={cardVariants}
         whileHover="hover"
-        onClick={() => navigate(`/projects/${project.id}`)}
+        onClick={() => navigate(`/projects/${project.id}?editMode=${isEditMode}`)}
       >
         <div className="p-6">
           <div className="flex items-center gap-6">
@@ -1260,6 +1261,26 @@ const ProjectCard = ({
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {/* View/Edit Mode Toggle */}
+              {canManageProject && (
+                <motion.button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditMode(!isEditMode);
+                  }}
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    isEditMode
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  }`}
+                  title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {isEditMode ? <FiEye className="w-4 h-4" /> : <FiEdit3 className="w-4 h-4" />}
+                </motion.button>
+              )}
+
               <motion.button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1341,7 +1362,7 @@ const ProjectCard = ({
       className="bg-white border border-gray-200 rounded-xl hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
       variants={cardVariants}
       whileHover="hover"
-      onClick={() => navigate(`/projects/${project.id}`)}
+      onClick={() => navigate(`/projects/${project.id}?editMode=${isEditMode}`)}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -1365,6 +1386,7 @@ const ProjectCard = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
             >
+    
               {canManageProject && (
                 <div className="relative">
                   <motion.button
@@ -1383,7 +1405,7 @@ const ProjectCard = ({
                   >
                     <FiEdit2 className="w-4 h-4" />
                   </motion.button>
-                  
+
                   {/* Tooltip for Edit */}
                   {hoveredIcon === 'edit' && (
                     <motion.div
@@ -1590,6 +1612,41 @@ const ProjectCard = ({
           </div>
           <AvatarGroup users={teamMembers} max={3} size="xs" />
         </div>
+
+        {/* View/Edit Mode Toggle */}
+        {canManageProject && (
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <span className="text-xs text-gray-500 font-medium">
+              Mode: {isEditMode ? 'Edit' : 'View'}
+            </span>
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditMode(!isEditMode);
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                isEditMode
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
+              }`}
+              title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isEditMode ? (
+                <>
+                  <FiEye className="w-3 h-3" />
+                  View Mode
+                </>
+              ) : (
+                <>
+                  <FiEdit3 className="w-3 h-3" />
+                  Edit Mode
+                </>
+              )}
+            </motion.button>
+          </div>
+        )}
       </div>
 
     </motion.div>
@@ -2570,7 +2627,7 @@ export default function ProjectsPage() {
         <ProjectsSidebar
           projects={projects}
           activeFilter={filterStatus}
-          onProjectSelect={(project) => navigate(`/projects/${project.id}`)}
+          onProjectSelect={(project) => navigate(`/projects/${project.id}?editMode=false`)}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isMobile={isMobile}

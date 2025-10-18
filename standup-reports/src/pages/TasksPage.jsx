@@ -579,9 +579,9 @@ export default function TasksPage({ sidebarOpen }) {
       let query = supabase
         .from('tasks')
         .select(`
-          id, title, description, status, due_date, created_at, updated_at, project_id,
+          id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id,
           assignee:team_members_view!assignee_id(
-            id, 
+            id,
             name,
             email,
             role,
@@ -595,6 +595,8 @@ export default function TasksPage({ sidebarOpen }) {
           ),
           team:team_id(id, name),
           project:project_id(id, name),
+          sprint:sprint_id(id, name),
+          comments:comments(id),
           assignee_id
         `);
 

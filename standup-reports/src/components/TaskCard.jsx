@@ -239,27 +239,14 @@ export default function TaskCard({
                   </span>
                 </div>
               )}
-
-              {/* Sprint Badge - Enhanced */}
-              {task.sprint_id && (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse"></div>
-                  <span className="font-medium text-purple-600 text-xs truncate max-w-[50px] hidden sm:inline">
-                    Sprint
-                  </span>
-                </div>
-              )}
             </div>
 
-            {/* Due Date - Enhanced */}
+            {/* Due Date - Simplified */}
             {due_date && (
               <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${dueDateStatus.bg} backdrop-blur-sm flex-shrink-0`}>
                 <FiCalendar className={`w-3 h-3 ${dueDateStatus.color}`} />
                 <span className={`text-xs font-bold ${dueDateStatus.color}`}>
                   {format(new Date(due_date), 'MMM d')}
-                  {dueDateStatus.status === 'today' && ' • Today'}
-                  {dueDateStatus.status === 'tomorrow' && ' • Tomorrow'}
-                  {dueDateStatus.status === 'overdue' && ' • OVERDUE'}
                 </span>
               </div>
             )}
@@ -268,26 +255,37 @@ export default function TaskCard({
           {/* Bottom Row: Secondary Info */}
           <div className="flex items-center justify-between gap-2 text-xs text-gray-500">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* Team */}
-              {team && (
+              {/* Project */}
+              {task.project && (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <FiUsers className="w-3 h-3 text-gray-400" />
+                  <FiTarget className="w-3 h-3 text-gray-400" />
                   <span className="font-medium text-gray-600 truncate max-w-[60px]">
-                    {team.name}
+                    {task.project.name}
                   </span>
                 </div>
               )}
 
-              {/* Department - New Feature */}
-              {team?.department_name && (
+              {/* Sprint */}
+              {(task.sprint?.name || task.sprint_name || task.sprintName) && (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <FiTag className="w-3 h-3 text-gray-400" />
-                  <span className="font-medium text-gray-600 truncate max-w-[50px] hidden md:inline">
-                    {team.department_name}
+                  <FiZap className="w-3 h-3 text-purple-400" />
+                  <span className="font-medium text-purple-600 truncate max-w-[50px]">
+                    {task.sprint?.name || task.sprint_name || task.sprintName}
                   </span>
                 </div>
               )}
 
+              {/* Sprint Badge (fallback if no sprint name) */}
+              {((task.sprint && !task.sprint?.name) || (!task.sprint_name && !task.sprintName && task.sprint_id)) && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse"></div>
+                  <span className="font-medium text-purple-600 text-xs truncate max-w-[50px]">
+                    Sprint
+                  </span>
+                </div>
+              )}
+
+  
               {/* Updated Date - New Feature */}
               {task.updated_at && new Date(task.updated_at) > new Date(task.created_at) && (
                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -299,31 +297,23 @@ export default function TaskCard({
               )}
             </div>
 
-            {/* Comments Count - Enhanced */}
+            {/* Activity Stats */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {/* Activity Stats */}
-              <div className="flex items-center gap-2">
+              {/* Attachment Indicator */}
+              {task.attachment_count > 0 && (
                 <div className="flex items-center gap-1">
-                  <FiMessageSquare className="w-3 h-3" />
-                  <span>{task.comment_count || 0}</span>
+                  <FiTarget className="w-3 h-3 text-blue-400" />
+                  <span>{task.attachment_count}</span>
                 </div>
+              )}
 
-                {/* Attachment Indicator */}
-                {task.attachment_count > 0 && (
-                  <div className="flex items-center gap-1">
-                    <FiTarget className="w-3 h-3 text-blue-400" />
-                    <span>{task.attachment_count}</span>
-                  </div>
-                )}
-
-                {/* Subtasks Indicator */}
-                {task.subtask_count > 0 && (
-                  <div className="flex items-center gap-1">
-                    <FiZap className="w-3 h-3 text-orange-400" />
-                    <span>{task.subtask_count}</span>
-                  </div>
-                )}
-              </div>
+              {/* Subtasks Indicator */}
+              {task.subtask_count > 0 && (
+                <div className="flex items-center gap-1">
+                  <FiZap className="w-3 h-3 text-orange-400" />
+                  <span>{task.subtask_count}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -370,31 +360,32 @@ export default function TaskCard({
             </motion.button>
           )}
         </motion.div>
-        
-        {/* Task Indicators */}
+  
+        {/* Task Footer - Optimized */}
         <div className="flex items-center justify-between text-xs">
+          {/* Created Date */}
+          <div className="flex items-center gap-1 text-gray-400">
+            <FiClock className="w-3 h-3" />
+            <span>{format(new Date(created_at), 'MMM d')}</span>
+          </div>
+
+          {/* Action Icons */}
           <div className="flex items-center gap-2">
-            {/* Created Date */}
-            <div className="flex items-center gap-1 text-gray-400">
-              <FiClock className="w-3 h-3" />
-              <span>{format(new Date(created_at), 'MMM d')}</span>
-            </div>
-            
-            {/* Comments Indicator */}
+            {/* Comments */}
             <div className="flex items-center gap-1 text-gray-400">
               <FiMessageSquare className="w-3 h-3" />
-              <span>0</span>
+              <span>{task.comments?.length || 0}</span>
             </div>
+
+            {/* Favorite/Star */}
+            <motion.button
+              className="p-1 text-gray-300 hover:text-yellow-500 rounded-full hover:bg-yellow-100/50 backdrop-blur-sm transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiStar className="w-3 h-3" />
+            </motion.button>
           </div>
-          
-          {/* Favorite/Star */}
-          <motion.button
-            className="p-1 text-gray-300 hover:text-yellow-500 rounded-full hover:bg-yellow-100/50 backdrop-blur-sm transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <FiStar className="w-3 h-3" />
-          </motion.button>
         </div>
       </div>
       

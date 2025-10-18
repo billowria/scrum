@@ -27,8 +27,8 @@ import DepartmentManagement from './pages/DepartmentManagement';
 import TasksPage from './pages/TasksPage';
 import NotificationCenterV2 from './pages/NotificationCenterV2';
 import ProjectsPage from './pages/ProjectsPage';
-import ProjectDetailPage from './pages/ProjectDetailPage';
-import ProjectManagementPage from './pages/ProjectManagementPage';
+import ProjectDetailPage from './projects/pages/ProjectDetailPage';
+// import ProjectManagementPage from './pages/ProjectManagementPage'; // Removed - functionality integrated
 import ChatPage from './pages/ChatPage';
 import NotesPage from './pages/NotesPage';
 
@@ -314,16 +314,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <ProjectDetailPage />
                   </PageTransition>
                 } />
-                <Route path="/project-management" element={
-                  <PageTransition>
-                    <ProjectManagementPage />
-                  </PageTransition>
-                } />
-                <Route path="/project-management/:projectId" element={
-                  <PageTransition>
-                    <ProjectManagementPage />
-                  </PageTransition>
-                } />
+                {/* ProjectManagement routes removed - functionality integrated into ProjectDetailPage */}
                 <Route path="/analytics-dashboard" element={
                   <PageTransition>
                     <div className="w-full py-6">

@@ -2637,11 +2637,12 @@ const [reports, setReports] = useState([]);
         {showTaskModal && activeTaskId && (
           <motion.div className="fixed inset-0 z-[9998]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {/* TaskDetailView temporarily removed - needs to be re-implemented */}
-            {/* <TaskDetailView
+            {/* TaskDetailView commented out
               isOpen={showTaskModal}
               onClose={() => { setShowTaskModal(false); setActiveTaskId(null); }}
               taskId={activeTaskId}
-              onUpdate={() => { /* no-op */ }}
+              onUpdate={() => { // no-op
+              }}
             /> */}
           </motion.div>
         )}
