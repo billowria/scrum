@@ -23,7 +23,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import TeamManagement from './pages/TeamManagement';
 import AchievementsPage from './pages/AchievementsPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
-import DepartmentManagement from './pages/DepartmentManagement';
+
 import TasksPage from './pages/TasksPage';
 import NotificationCenterV2 from './pages/NotificationCenterV2';
 import ProjectsPage from './pages/ProjectsPage';
@@ -317,7 +317,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     </div>
                   </PageTransition>
                 } />
-                <Route path="/department-management" element={<DepartmentManagement />} />
+
                 <Route path="/projects" element={
                   <PageTransition>
                     <ProjectsPage />
