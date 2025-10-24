@@ -15,66 +15,66 @@ import { supabase } from '../supabaseClient';
 
 // Enhanced navigation configuration with real-time counts
 const createNavLinks = (counts, user) => [
-  { 
-    to: '/dashboard', 
-    icon: <FiHome />, 
-    label: 'Dashboard', 
-    gradient: 'from-cyan-400 via-blue-500 to-indigo-600',
-    shadowColor: 'rgba(59, 130, 246, 0.5)',
+  {
+    to: '/dashboard',
+    icon: <FiHome />,
+    label: 'Dashboard',
+    gradient: 'from-sky-300 via-blue-400 to-indigo-500',
+    shadowColor: 'rgba(147, 197, 253, 0.4)',
     description: 'Overview & Analytics',
     badge: null
   },
-  { 
-    to: '/leave-calendar', 
-    icon: <FiCalendar />, 
-    label: 'Leave Calendar', 
-    gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
-    shadowColor: 'rgba(20, 184, 166, 0.5)',
+  {
+    to: '/leave-calendar',
+    icon: <FiCalendar />,
+    label: 'Leave Calendar',
+    gradient: 'from-teal-300 via-emerald-400 to-cyan-500',
+    shadowColor: 'rgba(167, 243, 208, 0.4)',
     description: 'Time Management',
     badge: counts.leaveRequests > 0 ? counts.leaveRequests : null
   },
-  { 
-    to: '/tasks', 
-    icon: <FiList />, 
-    label: 'Tasks', 
-    gradient: 'from-pink-400 via-purple-500 to-indigo-600',
-    shadowColor: 'rgba(168, 85, 247, 0.5)',
+  {
+    to: '/tasks',
+    icon: <FiList />,
+    label: 'Tasks',
+    gradient: 'from-rose-300 via-purple-400 to-indigo-500',
+    shadowColor: 'rgba(196, 181, 253, 0.4)',
     description: 'Project Workflow',
     badge: counts.tasks
   },
-  { 
-    to: '/achievements', 
-    icon: <FiAward />, 
-    label: 'Achievements', 
-    gradient: 'from-amber-400 via-orange-500 to-red-600',
-    shadowColor: 'rgba(251, 146, 60, 0.5)',
+  {
+    to: '/achievements',
+    icon: <FiAward />,
+    label: 'Achievements',
+    gradient: 'from-amber-300 via-yellow-400 to-orange-500',
+    shadowColor: 'rgba(254, 240, 138, 0.4)',
     description: 'Recognition & Goals',
     badge: counts.achievements > 0 ? 'new' : null
   },
-  { 
-    to: '/projects', 
-    icon: <FiFolder />, 
-    label: 'Projects', 
-    gradient: 'from-indigo-500 to-purple-600',
-    shadowColor: 'rgba(168, 85, 247, 0.5)',
+  {
+    to: '/projects',
+    icon: <FiFolder />,
+    label: 'Projects',
+    gradient: 'from-violet-300 via-purple-400 to-pink-500',
+    shadowColor: 'rgba(196, 181, 253, 0.4)',
     description: 'View assigned projects',
     badge: counts.projects
   },
-  { 
-    to: '/notifications', 
-    icon: <FiBell />, 
-    label: 'Notifications', 
-    gradient: 'from-red-400 via-pink-500 to-purple-600',
-    shadowColor: 'rgba(239, 68, 68, 0.5)',
+  {
+    to: '/notifications',
+    icon: <FiBell />,
+    label: 'Notifications',
+    gradient: 'from-red-300 via-rose-400 to-pink-500',
+    shadowColor: 'rgba(254, 202, 202, 0.4)',
     description: 'Stay updated',
     badge: counts.notifications
   },
-  { 
-    to: '/notes', 
-    icon: <FiFileText />, 
-    label: 'Quick Notes', 
-    gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
-    shadowColor: 'rgba(16, 185, 129, 0.5)',
+  {
+    to: '/notes',
+    icon: <FiFileText />,
+    label: 'Quick Notes',
+    gradient: 'from-lime-300 via-green-400 to-emerald-500',
+    shadowColor: 'rgba(187, 247, 208, 0.4)',
     description: 'Personal notes & ideas',
     badge: null
   },
