@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap } from 'react-icons/fi';
+import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiMenu, FiX } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 
-export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null } }) {
+export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarOpen, setSidebarOpen }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
@@ -38,9 +38,62 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   }, [dropdownOpen]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/50 flex items-center justify-between px-6 h-16">
-      {/* Left side - empty for spacing */}
-      <div className="w-24"></div>
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-4 md:px-6 h-16">
+      {/* Left side - Sidebar Toggle */}
+      <div className="flex items-center">
+        <motion.button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-slate-800 hover:bg-white/70 transition-all duration-200 shadow-sm"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400 }}
+          title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+        >
+          <AnimatePresence mode="wait">
+            {sidebarOpen ? (
+              <motion.div
+                key="collapse"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30,
+                  duration: 0.2
+                }}
+              >
+                <FiX size={20} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="expand"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 30,
+                  duration: 0.2
+                }}
+              >
+                <FiMenu size={20} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Animated glow effect */}
+          <motion.div
+            className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300"
+            whileHover={{
+              scale: 1.1,
+              opacity: 1
+            }}
+            whileTap={{ scale: 0.9 }}
+          />
+        </motion.button>
+      </div>
 
       {/* Brand - Centered */}
       <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>

@@ -887,140 +887,325 @@ export default function TasksPage({ sidebarOpen }) {
       initial="hidden"
       animate="visible"
     >
-      {/* Compact Minimal Header */}
+      {/* Creative Modern Tasks Header */}
       {showHeader && (
         <motion.div
-          className="sticky top-16 z-[30] w-full -mt-4"
+          className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-[35] transition-all duration-200`}
           id="tasks-header"
-          initial={{ y: -20, opacity: 0 }}
+          initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -20, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          exit={{ y: -30, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 25 }}
+          style={{
+            width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
+            transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
         >
-          <div className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
-            <div className="px-4 sm:px-6 py-2">
-              <div className="flex items-center justify-between gap-4">
-                {/* Left: Title */}
-                <div className="flex items-center gap-2">
+          {/* Light Glassmorphism Header with Glowing Effects */}
+          <div className="relative bg-white/40 backdrop-blur-2xl border-b border-white/30 shadow-2xl overflow-hidden">
+            {/* Animated glowing background */}
+            <div className="absolute inset-0">
+              {/* Gradient glow layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-100/30 via-purple-100/30 to-pink-100/30"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/20 via-indigo-100/20 to-emerald-100/20"></div>
+
+              {/* Animated glowing orbs */}
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full blur-3xl"
+                  style={{
+                    width: `${150 + Math.random() * 200}px`,
+                    height: `${150 + Math.random() * 200}px`,
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                  }}
+                  animate={{
+                    x: [0, Math.random() * 50 - 25],
+                    y: [0, Math.random() * 50 - 25],
+                    scale: [1, 1.1, 1],
+                  }}
+                  transition={{
+                    duration: Math.random() * 4 + 3,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    delay: Math.random() * 2,
+                  }}
+                >
+                  <div className={`w-full h-full rounded-full bg-gradient-to-r ${
+                    i % 3 === 0 ? 'from-blue-200/40 to-purple-200/40' :
+                    i % 3 === 1 ? 'from-cyan-200/40 to-emerald-200/40' :
+                    'from-pink-200/40 to-rose-200/40'
+                  }`} />
+                </motion.div>
+              ))}
+
+              {/* Floating sparkles */}
+              {[...Array(15)].map((_, i) => (
+                <motion.div
+                  key={`sparkle-${i}`}
+                  className="absolute w-1 h-1 bg-white rounded-full"
+                  animate={{
+                    x: [0, Math.random() * 60 - 30],
+                    y: [0, Math.random() * 60 - 30],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1, 0],
+                  }}
+                  transition={{
+                    duration: Math.random() * 2 + 1,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                  }}
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    filter: 'blur(0.5px)',
+                  }}
+                >
+                  <div className="w-full h-full bg-white/80 rounded-full shadow-lg shadow-white/50" />
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Glass reflection overlay */}
+            <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/10"></div>
+
+            {/* Content */}
+            <div className="relative px-4 sm:px-6 lg:px-8 py-3">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                {/* Left Section - Brand & Title */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  {/* Glowing animated logo/icon */}
                   <motion.div
-                    className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center"
-                    whileHover={{ scale: 1.05 }}
+                    className="relative group"
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <FiGrid className="w-4 h-4 text-white" />
+                    {/* Multi-layer glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-2xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 to-indigo-400 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                    <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-2.5 rounded-2xl shadow-xl backdrop-blur-sm border border-white/20">
+                      <FiGrid className="w-5 h-5 text-white" />
+                    </div>
+                    {/* Glowing orbiting dots */}
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"
+                        animate={{
+                          rotate: [0, 360],
+                          opacity: [0.5, 1, 0.5],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "linear",
+                          delay: i * 0.3,
+                        }}
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          transformOrigin: `0 ${20 + i * 8}px`,
+                          filter: 'blur(0.5px)',
+                        }}
+                      >
+                        <div className="w-full h-full bg-white rounded-full shadow-lg shadow-blue-400/50" />
+                      </motion.div>
+                    ))}
                   </motion.div>
-                  <h1 className="text-lg font-bold text-gray-900">Tasks</h1>
+
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Tasks</h1>
+                      <motion.div
+                        className="px-2 py-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        PRO
+                      </motion.div>
+                    </div>
+                    <p className="text-sm text-gray-600 hidden sm:block">Manage your workflow with style</p>
+                  </div>
                 </div>
-                
-                {/* Right: Actions */}
-                <div className="flex items-center gap-2">
-                  {/* View Toggle */}
-                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
-                    <motion.button
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
-                        view === 'board' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
-                      }`}
-                      onClick={() => setView('board')}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiGrid className="w-3 h-3" />
-                      <span className="hidden sm:inline">Board</span>
-                    </motion.button>
-                    <motion.button
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
-                        view === 'list' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
-                      }`}
-                      onClick={() => setView('list')}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiList className="w-3 h-3" />
-                      <span className="hidden sm:inline">List</span>
-                    </motion.button>
-                    <motion.button
-                      className={`px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
-                        view === 'sprint' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600'
-                      }`}
-                      onClick={() => setView('sprint')}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiTarget className="w-3 h-3" />
-                      <span className="hidden sm:inline">Sprint</span>
-                    </motion.button>
-                  </div>
 
-                  {/* Quick Stats */}
+                {/* Center Section - Glassmorphic View Toggle */}
+                <div className="flex items-center justify-center">
+                  <div className="bg-white/30 backdrop-blur-xl p-1.5 rounded-2xl border border-white/40 shadow-xl">
+                    <div className="flex items-center gap-1">
+                      {[
+                        { id: 'board', icon: FiGrid, label: 'Board' },
+                        { id: 'list', icon: FiList, label: 'List' },
+                        { id: 'sprint', icon: FiTarget, label: 'Sprint' }
+                      ].map((tab, index) => (
+                        <motion.button
+                          key={tab.id}
+                          className={`relative px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                            view === tab.id
+                              ? 'text-white shadow-lg'
+                              : 'text-gray-700 hover:text-gray-900'
+                          }`}
+                          onClick={() => setView(tab.id)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {view === tab.id && (
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-xl shadow-lg"
+                              layoutId="activeTab"
+                              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            />
+                          )}
+                          <div className="relative flex items-center gap-2">
+                            <tab.icon className="w-4 h-4" />
+                            <span className="hidden sm:inline">{tab.label}</span>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Section - Glowing Stats & Actions */}
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Glowing Stats Pills */}
                   <div className="hidden md:flex items-center gap-2">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
-                      <FiGrid className="w-3 h-3" />
-                      {taskStats.total}
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">
-                      <FiClock className="w-3 h-3" />
-                      {taskStats.inProgress}
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
-                      <FiCheckCircle className="w-3 h-3" />
-                      {taskStats.completed}
-                    </div>
+                    {[
+                      { value: taskStats.total, label: 'Total', colors: ['from-blue-400', 'to-cyan-400'], icon: FiGrid },
+                      { value: taskStats.inProgress, label: 'In Progress', colors: ['from-amber-400', 'to-orange-400'], icon: FiClock },
+                      { value: taskStats.completed, label: 'Done', colors: ['from-emerald-400', 'to-green-400'], icon: FiCheckCircle }
+                    ].map((stat, index) => (
+                      <motion.div
+                        key={stat.label}
+                        className={`relative bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg overflow-hidden backdrop-blur-sm`}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + index * 0.1 }}
+                        whileHover={{ y: -2, scale: 1.05 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className={`absolute inset-0 bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} rounded-full opacity-50 blur-md`}></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                        />
+                        <div className="relative flex items-center gap-1">
+                          <stat.icon className="w-3 h-3" />
+                          <span>{stat.value}</span>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                  
-                  {/* Action Buttons */}
-                  <motion.button
-                    className="p-2 bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 rounded-lg"
-                    onClick={fetchTasks}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    title="Refresh"
-                  >
-                    <FiRefreshCw className="w-3.5 h-3.5" />
-                  </motion.button>
 
-                  {userRole === 'manager' && (
+                  {/* Glowing Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    {/* Refresh button with glow */}
                     <motion.button
-                      className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-medium text-xs flex items-center gap-1.5"
-                      onClick={() => {
-                        setShowCreateModal(true);
-                        setEditingTask(null);
-                      }}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
+                      className="relative p-2.5 bg-white/40 backdrop-blur-xl border border-white/50 text-gray-700 rounded-xl hover:bg-white/60 transition-all group"
+                      onClick={fetchTasks}
+                      whileHover={{ scale: 1.05, rotate: 180 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Refresh Tasks"
                     >
-                      <FiPlus className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">New</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <FiRefreshCw className="w-4 h-4 relative z-10" />
                     </motion.button>
-                  )}
 
-                  {/* Hide Header Button */}
-                  <motion.button
-                    className="p-2 bg-gray-100 text-gray-600 hover:text-indigo-600 rounded-lg"
-                    onClick={() => setShowHeader(false)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    title="Hide Header"
-                  >
-                    <FiEyeOff className="w-3.5 h-3.5" />
-                  </motion.button>
+                    {/* Glowing Create Task Button */}
+                    {userRole === 'manager' && (
+                      <motion.button
+                        className="relative px-4 py-2.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl font-medium text-sm shadow-lg overflow-hidden group backdrop-blur-sm"
+                        onClick={() => {
+                          setShowCreateModal(true);
+                          setEditingTask(null);
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {/* Multi-layer glow */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-xl blur-md opacity-60"></div>
+                        {/* Background shimmer on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1 }}
+                        />
+                        <div className="relative flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                          >
+                            <FiPlus className="w-4 h-4" />
+                          </motion.div>
+                          <span className="hidden sm:inline">Create</span>
+                        </div>
+                      </motion.button>
+                    )}
+
+                    {/* Glowing Hide/Show Header Toggle */}
+                    <motion.button
+                      className="relative p-2.5 bg-white/40 backdrop-blur-xl border border-white/50 text-gray-700 hover:text-gray-900 rounded-xl transition-all group"
+                      onClick={() => setShowHeader(false)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="Hide Header"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-gray-300/20 to-gray-400/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <FiEyeOff className="w-4 h-4 relative z-10" />
+                    </motion.button>
+                  </div>
                 </div>
               </div>
-            </div>
+
+              </div>
           </div>
         </motion.div>
       )}
       
       {/* Main Content */}
-      <div className="pt-0">
-        {/* Header Toggle Button - appears when header is hidden */}
+      <div className="pt-12 sm:pt-16 md:pt-20">
+        {/* Light Glowing Header Toggle Button - appears when header is hidden */}
         {!showHeader && (
           <motion.button
-            className="fixed top-20 right-4 z-[99999] w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all"
+            className={`fixed ${sidebarOpen ? 'right-4' : 'right-6'} z-[99999] px-4 py-2.5 bg-white/60 backdrop-blur-xl border border-white/60 text-gray-700 rounded-2xl shadow-2xl hover:shadow-3xl flex items-center gap-2 transition-all group`}
             onClick={() => setShowHeader(true)}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.1 }}
+            initial={{ opacity: 0, x: 100, scale: 0.8 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 100, scale: 0.8 }}
+            whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             title="Show Header"
+            style={{
+              transition: 'right 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
           >
-            <FiEye className="w-3 h-3" />
+            {/* Multi-layer glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 rounded-2xl blur-md opacity-60"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-300/10 via-indigo-300/10 to-emerald-300/10 rounded-2xl blur-lg"></div>
+            {/* Animated shimmer effect */}
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-2xl"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+            />
+            <motion.div
+              animate={{ rotate: [0, 5, 0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              className="relative z-10"
+            >
+              <FiEye className="w-4 h-4" />
+            </motion.div>
+            <span className="text-sm font-medium relative z-10">Show Header</span>
+            {/* Glowing notification dot */}
+            <motion.div
+              className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full shadow-lg"
+              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <div className="w-full h-full bg-white rounded-full animate-pulse"></div>
+            </motion.div>
           </motion.button>
         )}
         

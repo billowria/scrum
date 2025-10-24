@@ -179,11 +179,25 @@ function App() {
     <Router>
       {session ? (
         <>
-          <Navbar user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
+          <Navbar
+            user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
           <div className="flex pt-16">
             <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
-            <div className={`flex-1 min-h-screen bg-gray-50 transition-all duration-300 ${sidebarOpen ? 'pl-64' : 'pl-20'}`}>
-              <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+            <div className="flex-1 flex min-h-screen">
+              <div
+                className="flex-1 bg-gray-50 overflow-hidden relative"
+                style={{
+                  marginLeft: sidebarOpen
+                    ? 'clamp(232px, 20vw, 336px)'  // Responsive: 232px (mobile) to 336px (desktop)
+                    : 'clamp(52px, 8vw, 96px)',   // Responsive: 52px (mobile) to 96px (desktop)
+                  transition: 'margin-left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+              </div>
             </div>
           </div>
         </>
@@ -271,7 +285,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/leave-calendar" element={
                   <PageTransition>
                     <div className="w-full py-6">
-                      <LeaveCalendar />
+                      <LeaveCalendar sidebarOpen={sidebarOpen} />
                     </div>
                   </PageTransition>
                 } />
@@ -299,7 +313,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/notifications" element={
                   <PageTransition>
                     <div className="w-full h-full">
-                      <NotificationCenterV2 realTimeEnabled={true} />
+                      <NotificationCenterV2 sidebarOpen={sidebarOpen} />
                     </div>
                   </PageTransition>
                 } />

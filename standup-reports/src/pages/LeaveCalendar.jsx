@@ -112,125 +112,237 @@ const overlayButtonVariants = {
   tap: { scale: 0.95 }
 };
 
-// Compact Tab Header Component - Small and Responsive Design
-const CompactTabHeader = ({ 
-  title, 
-  subtitle, 
-  icon: Icon, 
-  color = "blue",
+// Glassmorphic Ocean Dreams Leave Calendar Header
+const CompactTabHeader = ({
+  title,
+  subtitle,
+  icon: Icon,
+  color = "ocean",
   quickStats = [],
   quickActions = [],
-  badge
+  badge,
+  sidebarOpen = false
 }) => {
-  const colorSchemes = {
-    blue: {
-      bg: "bg-gradient-to-r from-blue-600 to-indigo-600",
-      text: "text-blue-50",
-      border: "border-blue-500/20",
-      accent: "bg-blue-500/20"
-    },
-    green: {
-      bg: "bg-gradient-to-r from-emerald-600 to-teal-600",
-      text: "text-emerald-50",
-      border: "border-emerald-500/20",
-      accent: "bg-emerald-500/20"
-    },
-    purple: {
-      bg: "bg-gradient-to-r from-purple-600 to-violet-600",
-      text: "text-purple-50",
-      border: "border-purple-500/20",
-      accent: "bg-purple-500/20"
-    },
-    orange: {
-      bg: "bg-gradient-to-r from-orange-600 to-red-600",
-      text: "text-orange-50",
-      border: "border-orange-500/20",
-      accent: "bg-orange-500/20"
-    }
-  };
-
-  const scheme = colorSchemes[color];
-
   return (
     <motion.div
-      className={`sticky top-16 z-30 ${scheme.bg} shadow-lg border-b ${scheme.border} backdrop-blur-sm`}
-      initial={{ opacity: 0, y: -10 }}
+      className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-40 transition-all duration-200`}
+      initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
+      style={{
+        width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
+        transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+      }}
     >
-      <div className="px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Left Section - Title and Icon */}
-          <div className="flex items-center gap-3">
-            <motion.div 
-              className={`p-2 rounded-lg ${scheme.accent} backdrop-blur-sm`}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
+      {/* Ocean Dreams Glassmorphic Background */}
+      <div className="relative bg-white/40 backdrop-blur-2xl border-b border-white/30 shadow-2xl overflow-hidden">
+        {/* Animated Ocean-Themed Background */}
+        <div className="absolute inset-0">
+          {/* Ocean gradient layers */}
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-100/30 via-teal-100/30 to-blue-100/30"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-indigo-100/20 to-purple-100/20"></div>
+
+          {/* Animated ocean glowing orbs */}
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full blur-3xl"
+              style={{
+                width: `${150 + Math.random() * 200}px`,
+                height: `${150 + Math.random() * 200}px`,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                x: [0, Math.random() * 50 - 25],
+                y: [0, Math.random() * 50 - 25],
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: Math.random() * 4 + 3,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: Math.random() * 2,
+              }}
             >
-              <Icon className={`w-5 h-5 ${scheme.text}`} />
+              <div className={`w-full h-full rounded-full bg-gradient-to-r ${
+                i % 3 === 0 ? 'from-cyan-200/40 to-teal-200/40' :
+                i % 3 === 1 ? 'from-blue-200/40 to-indigo-200/40' :
+                'from-purple-200/40 to-pink-200/40'
+              }`} />
             </motion.div>
-            
-            <div className="flex items-center gap-3">
-              <div>
-                <h2 className={`text-lg sm:text-xl font-bold ${scheme.text} flex items-center gap-2 cursor-pointer hover:text-blue-300 transition-colors`} onClick={() => window.location.href = '/'}>
-                  {title}
+          ))}
+
+          {/* Ocean floating sparkles */}
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={`sparkle-${i}`}
+              className="absolute w-1 h-1 bg-white rounded-full"
+              animate={{
+                x: [0, Math.random() * 60 - 30],
+                y: [0, Math.random() * 60 - 30],
+                opacity: [0, 1, 0],
+                scale: [0, 1, 0],
+              }}
+              transition={{
+                duration: Math.random() * 2 + 1,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                filter: 'blur(0.5px)',
+              }}
+            >
+              <div className="w-full h-full bg-cyan-300/80 rounded-full shadow-lg shadow-cyan-400/50" />
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Ocean glass reflection overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/20 via-transparent to-blue-50/10"></div>
+
+        {/* Content */}
+        <div className="relative px-3 sm:px-4 lg:px-6 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left Section - Ocean Title with Icon */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <motion.div
+                className="relative group"
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                {/* Ocean glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-400 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                <div className="relative bg-gradient-to-br from-cyan-500 via-teal-500 to-blue-500 p-2 rounded-xl shadow-xl backdrop-blur-sm border border-white/20">
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+                {/* Ocean orbiting dots */}
+                {[...Array(3)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-1.5 h-1.5 bg-gradient-to-r from-cyan-300 to-blue-300 rounded-full"
+                    animate={{
+                      rotate: [0, 360],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "linear",
+                      delay: i * 0.3,
+                    }}
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transformOrigin: `0 ${15 + i * 6}px`,
+                      filter: 'blur(0.5px)',
+                    }}
+                  >
+                    <div className="w-full h-full bg-white rounded-full shadow-lg shadow-cyan-400/50" />
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 truncate cursor-pointer hover:text-cyan-700 transition-colors" onClick={() => window.location.href = '/'}>
+                    {title}
+                  </h2>
                   {badge && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-white/20 rounded-full">
+                    <motion.span
+                      className="px-2 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full shadow-lg"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
                       {badge}
-                    </span>
+                    </motion.span>
                   )}
-                </h2>
-                <p className={`text-sm ${scheme.text} opacity-90 hidden sm:block`}>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block truncate">
                   {subtitle}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Right Section - Stats and Actions */}
-          <div className="flex items-center gap-3">
-            {/* Quick Stats */}
+            {/* Center Section - Ocean-Themed Quick Stats */}
             {quickStats.length > 0 && (
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 lg:gap-3">
                 {quickStats.map((stat, index) => (
                   <motion.div
                     key={index}
                     onClick={stat.onClick}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${scheme.accent} ${stat.onClick ? 'cursor-pointer hover:bg-white/10' : ''} transition-colors`}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    whileHover={stat.onClick ? { scale: 1.02 } : {}}
+                    className="relative px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl bg-white/30 backdrop-blur-sm border border-cyan-200/30 shadow-lg cursor-pointer hover:bg-white/50 transition-all overflow-hidden"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 + index * 0.08, type: "spring", stiffness: 400 }}
+                    whileHover={{ y: -2, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {stat.icon && <span className="mr-1">{stat.icon}</span>}
-                    <span className={`text-xs ${scheme.text} opacity-80`}>{stat.label}:</span>
-                    <span className={`text-sm font-bold ${scheme.text}`}>{stat.value}</span>
+                    {/* Ocean shimmer effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent"
+                      animate={{ x: ['-100%', '100%'] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                    />
+                    <div className="relative flex items-center gap-1 lg:gap-2">
+                      {stat.icon && <span className="text-cyan-700">{stat.icon}</span>}
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-600 hidden lg:block">{stat.label}:</span>
+                        <span className="text-sm font-bold text-gray-800">{stat.value}</span>
+                      </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
             )}
 
-            {/* Quick Actions */}
+            {/* Right Section - Ocean-Themed Actions */}
             {quickActions.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 {quickActions.map((action, index) => (
                   <motion.button
                     key={index}
-                    className={`p-2 rounded-lg ${scheme.accent} hover:bg-white/10 transition-colors ${scheme.text}`}
+                    className="relative p-1.5 sm:p-2 rounded-xl bg-white/30 backdrop-blur-sm border border-cyan-200/30 text-gray-700 hover:text-cyan-700 transition-all group"
                     onClick={action.onClick}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.05, y: -1 }}
                     whileTap={{ scale: 0.95 }}
                     title={action.tooltip}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 + index * 0.05 }}
+                    transition={{ delay: 0.2 + index * 0.08, type: "spring", stiffness: 500 }}
                   >
-                    {action.icon}
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <span className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center relative z-10">
+                      {action.icon}
+                    </span>
                   </motion.button>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Mobile Ocean Stats Row */}
+          {quickStats.length > 0 && (
+            <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-cyan-100/20">
+              {quickStats.map((stat, index) => (
+                <motion.div
+                  key={index}
+                  onClick={stat.onClick}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-50/60 backdrop-blur-sm border border-cyan-200/30 cursor-pointer hover:bg-cyan-100/60 transition-all"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + index * 0.06 }}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  {stat.icon && <span className="text-cyan-600 text-xs">{stat.icon}</span>}
+                  <span className="text-xs font-bold text-gray-800">{stat.value}</span>
+                  <span className="text-xs text-gray-600 hidden sm:inline">{stat.label}</span>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -238,7 +350,7 @@ const CompactTabHeader = ({
 };
 
 
-export default function LeaveCalendar() {
+export default function LeaveCalendar({ sidebarOpen = false }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
   const [leaveData, setLeaveData] = useState([]);
@@ -1030,14 +1142,15 @@ export default function LeaveCalendar() {
         icon={FiCalendar}
         color="blue"
         badge="Active"
+        sidebarOpen={sidebarOpen}
         quickStats={[
-          { 
-            label: "Month", 
+          {
+            label: "Month",
             value: format(currentMonth, 'MMM yyyy'),
             onClick: () => setShowHolidayCalendarModal(true)
           },
-          { 
-            label: "On Leave Today", 
+          {
+            label: "On Leave Today",
             value: usersOnLeaveToday.length,
             onClick: () => {
               setSelectedDate(new Date());
@@ -1051,13 +1164,13 @@ export default function LeaveCalendar() {
           {
             icon: (
               <motion.div
-                animate={{ 
+                animate={{
                   rotate: [0, 0, 360],
                   scale: [1, 1.1, 1]
                 }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Infinity, 
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
                   repeatType: "reverse",
                   repeatDelay: 2
                 }}
@@ -1076,8 +1189,8 @@ export default function LeaveCalendar() {
         ]}
       />
       
-      {/* Calendar Content */}
-      <div className="px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 md:pb-8">
+      {/* Calendar Content - Add top padding for fixed header */}
+      <div className="px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-4 sm:pb-6 md:pb-8">
         <motion.div
           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative"
           initial={{ opacity: 0, y: 20 }}

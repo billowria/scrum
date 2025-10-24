@@ -411,7 +411,6 @@ export default function Sidebar({ open, setOpen, user }) {
   const [chatDropdown, setChatDropdown] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isCollapsing, setIsCollapsing] = useState(false);
   
   // Real-time counts state
   const [counts, setCounts] = useState({
@@ -544,14 +543,7 @@ export default function Sidebar({ open, setOpen, user }) {
     mouseY.set(e.clientY - rect.top);
   }, [mouseX, mouseY, prefersReducedMotion]);
 
-  const handleToggle = useCallback(() => {
-    setIsCollapsing(!open);
-    setTimeout(() => {
-      setOpen(prev => !prev);
-      setIsCollapsing(false);
-    }, 150);
-  }, [open, setOpen]);
-
+  
   // Dynamic background calculation
   const dynamicBackground = useMemo(() => {
     // Professional white background in light mode
@@ -565,37 +557,22 @@ export default function Sidebar({ open, setOpen, user }) {
 
   return (
     <>
-      {/* Backdrop overlay to prevent content overlap */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-            onClick={() => setOpen(false)}
-            style={{ pointerEvents: 'auto' }}
-          />
-        )}
-      </AnimatePresence>
-
       <motion.aside
         onMouseMove={handleMouseMove}
-        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col ${open ? 'overflow-hidden' : 'overflow-visible'} z-50 select-none ${
-          isCollapsing ? 'pointer-events-none' : ''
-        }`}
+        className={`fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col ${open ? 'overflow-hidden' : 'overflow-visible'} z-[60] select-none pointer-events-auto ${
+          open ? 'lg:w-80 md:w-72 sm:w-64 w-56 lg:pr-4 md:pr-3 sm:pr-2 pr-2' : 'lg:w-20 md:w-16 sm:w-14 w-12 lg:pr-2 md:pr-1.5 sm:pr-1 pr-1'
+        } transition-all duration-200`}
         style={{
-          ...dynamicBackground,
-          width: open ? 320 : 88
+          ...dynamicBackground
         }}
         animate={{
           width: open ? 320 : 88
         }}
         transition={{
           type: 'spring',
-          stiffness: 400,
-          damping: 40,
-          mass: 0.8
+          stiffness: 600,
+          damping: 30,
+          mass: 0.5
         }}
         initial={false}
       >
@@ -642,57 +619,7 @@ export default function Sidebar({ open, setOpen, user }) {
           transformOrigin: 'top center'
         }}
       />
-      
-      {/* Header with enhanced toggle button */}
-      <motion.div 
-        className="relative flex items-center justify-center border-b border-slate-200/40"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ 
-          y: 0, 
-          opacity: 1,
-          paddingLeft: open ? 24 : 12,
-          paddingRight: open ? 24 : 12,
-          paddingTop: 20,
-          paddingBottom: 20
-        }}
-        transition={{ 
-          delay: 0.1, 
-          type: 'spring',
-          stiffness: 400,
-          damping: 40,
-          mass: 0.8
-        }}
-      >
-    
-
-        {/* Enhanced toggle button */}
-        <motion.button
-          onClick={handleToggle}
-          className="relative group p-3 rounded-2xl backdrop-blur-sm border transition-all duration-300 focus:outline-none focus:ring-2 bg-white/60 border-slate-300/50 hover:border-slate-400/70 focus:ring-slate-400/50"
-          whileHover={{ 
-            scale: 1.05,
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            rotate: 5
-          }}
-          whileTap={{ scale: 0.95 }}
-          aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-        >
-          {/* Glow effect */}
-          <motion.div
-            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-slate-300/30 to-gray-300/30"
-            initial={false}
-          />
-          
-          <motion.div
-            animate={{ rotate: open ? 0 : 180 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="relative z-10 transition-colors text-slate-600 group-hover:text-slate-800"
-          >
-            <FiChevronLeft size={20} />
-          </motion.div>
-        </motion.button>
-      </motion.div>
-
+  
       {/* Search bar */}
       <motion.div
         animate={{ 
