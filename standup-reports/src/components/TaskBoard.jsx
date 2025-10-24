@@ -12,19 +12,16 @@ import {
 } from '@dnd-kit/core';
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+  useDroppable,
+} from '@dnd-kit/core';
 import { format, parseISO, isAfter, isToday, isTomorrow } from 'date-fns';
-import { 
-  FiPlus, 
-  FiMoreVertical, 
-  FiFilter, 
+import {
+  FiPlus,
+  FiMoreVertical,
+  FiFilter,
   FiTrendingUp,
   FiClock,
   FiCheckCircle,
@@ -39,7 +36,6 @@ import {
   FiZap,
   FiTarget,
   FiSearch,
-  FiX,
   FiChevronDown,
   FiFolder
 } from 'react-icons/fi';
@@ -97,10 +93,12 @@ const statusColumns = [
 ];
 
 const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete, onTaskView }) => {
+  const [justReceivedTask, setJustReceivedTask] = useState(false);
+
   const {
     setNodeRef,
     isOver,
-  } = useSortable({
+  } = useDroppable({
     id: column.id,
     data: {
       type: 'Column',
@@ -111,6 +109,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
   const columnTasks = tasks.filter(task => task.status === column.id);
   const ColumnIcon = column.icon;
 
+  
   // Calculate progress percentage
   const totalTasks = tasks.length;
   const columnProgress = totalTasks > 0 ? (columnTasks.length / totalTasks) * 100 : 0;
@@ -122,22 +121,35 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
   });
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      className={`flex-1 min-w-[320px] max-w-[420px] flex flex-col backdrop-blur-sm rounded-2xl border ${column.borderColor} transition-all duration-300 ${
-        isOver ? 'ring-2 ring-opacity-50 scale-105' : 'hover:scale-[1.02]'
-      }`}
-      style={{
-        background: column.bgColor,
-        boxShadow: isOver 
-          ? `0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px ${column.glassColor}` 
-          : '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.1)'
-      }}
-      whileHover={{ 
-        y: -4,
-        transition: { duration: 0.2 }
-      }}
-    >
+    <div className="flex-1 min-w-[320px] max-w-[420px] flex flex-col relative">
+      {/* Droppable area overlay */}
+      <div
+        ref={setNodeRef}
+        className={`absolute inset-0 rounded-2xl transition-all duration-300 z-10 ${
+          isOver ? 'ring-4 ring-blue-400 ring-opacity-50' : ''
+        } ${
+          justReceivedTask ? 'ring-4 ring-green-400 ring-opacity-75' : ''
+        }`}
+        style={{ pointerEvents: isOver ? 'auto' : 'none' }}
+      />
+
+      <motion.div
+        className={`flex-1 flex flex-col backdrop-blur-sm rounded-2xl border ${column.borderColor} transition-all duration-300 ${
+          isOver ? 'scale-105' : 'hover:scale-[1.02]'
+        } ${
+          justReceivedTask ? 'scale-105' : ''
+        }`}
+        style={{
+          background: column.bgColor,
+          boxShadow: isOver
+            ? `0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px ${column.glassColor}`
+            : '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.1)'
+        }}
+        whileHover={{
+          y: -4,
+          transition: { duration: 0.2 }
+        }}
+      >
       {/* Column Header */}
       <div className={`p-4 border-b ${column.borderColor} backdrop-blur-sm`}>
         <div className="flex items-center justify-between mb-3">
@@ -195,39 +207,34 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
 
       {/* Task List */}
       <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-        <SortableContext
-          items={columnTasks.map(task => task.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <AnimatePresence>
-            {columnTasks.map((task, index) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ 
-                  duration: 0.4,
-                  delay: index * 0.08,
-                  ease: "easeOut"
-                }}
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { duration: 0.2 }
-                }}
-              >
-                <TaskCard
-                  task={task}
-                  onEdit={onTaskEdit}
-                  onUpdate={onTaskUpdate}
-                  onDelete={onTaskDelete}
-                  onView={onTaskView}
-                  columnColor={column}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </SortableContext>
+        <AnimatePresence>
+          {columnTasks.map((task, index) => (
+            <motion.div
+              key={task.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{
+                duration: 0.4,
+                delay: index * 0.08,
+                ease: "easeOut"
+              }}
+              whileHover={{
+                scale: 1.02,
+                transition: { duration: 0.2 }
+              }}
+            >
+              <TaskCard
+                task={task}
+                onEdit={onTaskEdit}
+                onUpdate={onTaskUpdate}
+                onDelete={onTaskDelete}
+                onView={onTaskView}
+                columnColor={column}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {/* Enhanced Empty State with Status Info */}
         {columnTasks.length === 0 && (
@@ -272,7 +279,8 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
           </motion.div>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -303,7 +311,6 @@ export default function TaskBoard({
   const [showSprintDropdown, setShowSprintDropdown] = useState(false);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const [showProjectDropdown, setShowProjectDropdown] = useState(false);
-  const [showShortcuts, setShowShortcuts] = useState(false);
   
   const statusDropdownRef = useRef(null);
   const sprintDropdownRef = useRef(null);
@@ -338,9 +345,6 @@ export default function TaskBoard({
       if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') return;
       
       switch(event.key) {
-        case '?':
-          setShowShortcuts(!showShortcuts);
-          break;
         case '/':
           event.preventDefault();
           searchInputRef.current?.focus();
@@ -370,15 +374,12 @@ export default function TaskBoard({
             }
           }
           break;
-        case 'Escape':
-          setShowShortcuts(false);
-          break;
       }
     };
     
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [showShortcuts]);
+  }, []);
   
   // Filter tasks by search
   const filteredTasks = tasks.filter(task => {
@@ -389,6 +390,17 @@ export default function TaskBoard({
       task.assignee?.name?.toLowerCase().includes(q)
     );
   });
+
+  // Debug: Log when tasks prop changes
+  useEffect(() => {
+    console.log('Tasks prop updated:', tasks.length, 'tasks');
+    console.log('Tasks by status:', {
+      'To Do': tasks.filter(t => t.status === 'To Do').length,
+      'In Progress': tasks.filter(t => t.status === 'In Progress').length,
+      'Review': tasks.filter(t => t.status === 'Review').length,
+      'Completed': tasks.filter(t => t.status === 'Completed').length,
+    });
+  }, [tasks]);
 
   // Group tasks by status
   const tasksByStatus = useMemo(() => {
@@ -436,31 +448,87 @@ export default function TaskBoard({
 
   const handleDragStart = (event) => {
     const { active } = event;
+    console.log('DragStart triggered:', active.id);
     setActiveId(active.id);
   };
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    
+
+    console.log('DragEnd triggered:', { active: active.id, over: over?.id });
+    console.log('Full event data:', { active, over });
+
     if (!over) {
+      console.log('No drop target - drag cancelled');
       setActiveId(null);
       return;
     }
 
-    // Find the containers (columns) involved in the drag
-    const activeContainer = active.data.current?.sortable?.containerId;
-    const overContainer = over.data.current?.sortable?.containerId;
-    
-    if (activeContainer !== overContainer) {
-      // Find the task that was dragged
-      const task = tasks.find(t => t.id === active.id);
-      if (!task) return;
+    // Check if over is a droppable container
+    let overContainer = over.id;
 
-      // Update task status
-      onTaskUpdate({
-        ...task,
-        status: overContainer
-      });
+    // If over.data exists and has the column info, use that
+    if (over.data?.current?.column?.id) {
+      overContainer = over.data.current.column.id;
+      console.log('Using column ID from over.data:', overContainer);
+    }
+
+    // Get the current task to find its current column
+    const task = tasks.find(t => t.id === active.id);
+    if (!task) {
+      console.error('Task not found:', active.id);
+      setActiveId(null);
+      return;
+    }
+
+    const activeContainer = task.status;
+
+    console.log('Task details:', {
+      taskTitle: task.title,
+      currentStatus: activeContainer,
+      targetContainer: overContainer,
+      overData: over.data
+    });
+
+    // Only update if the task is moved to a different column
+    if (activeContainer !== overContainer) {
+      // Validate the new status
+      const validStatuses = statusColumns.map(col => col.id);
+      if (!validStatuses.includes(overContainer)) {
+        console.error('Invalid status:', overContainer, 'Valid statuses:', validStatuses);
+        setActiveId(null);
+        return;
+      }
+
+      console.log('Moving task:', task.title, 'from', activeContainer, 'to', overContainer);
+
+      // Update task status with proper error handling
+      try {
+        console.log('Calling onTaskUpdate with:', {
+          ...task,
+          status: overContainer
+        });
+
+        // Update the task immediately
+        const updatedTask = {
+          ...task,
+          status: overContainer
+        };
+
+        console.log('About to call onTaskUpdate with updatedTask:', updatedTask);
+        console.log('onTaskUpdate function:', typeof onTaskUpdate, onTaskUpdate);
+
+        const result = onTaskUpdate(updatedTask);
+        console.log('onTaskUpdate returned:', result);
+
+        console.log('Task status updated successfully to:', overContainer);
+      } catch (error) {
+        console.error('Error updating task status:', error);
+        // Show error feedback to user
+        alert('Failed to update task status. Please try again.');
+      }
+    } else {
+      console.log('Task dropped in same column - no change needed');
     }
 
     setActiveId(null);
@@ -1014,6 +1082,7 @@ export default function TaskBoard({
         </DragOverlay>
       </DndContext>
 
+      
       {/* Beautiful Board Footer with Stats */}
       <motion.div 
         className="bg-gradient-to-r from-white via-purple-50/20 to-blue-50/20 backdrop-blur-md rounded-2xl border border-gray-200/60 px-5 py-3 shadow-lg hover:shadow-xl transition-all"
@@ -1060,98 +1129,9 @@ export default function TaskBoard({
             </motion.div>
           </div>
           
-          {/* Keyboard Shortcuts Hint - Clickable */}
-          <motion.button
-            onClick={() => setShowShortcuts(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer"
-            whileHover={{ scale: 1.08, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            title="Click to view all shortcuts"
-          >
-            <span className="text-indigo-700 font-bold text-xs">⚡ Press</span>
-            <kbd className="px-2 py-0.5 bg-white rounded text-indigo-700 font-mono text-xs shadow-sm border-2 border-indigo-300 font-bold">?</kbd>
-            <span className="text-indigo-700 font-bold text-xs">for shortcuts</span>
-          </motion.button>
-        </div>
+                  </div>
       </motion.div>
 
-      {/* Keyboard Shortcuts Modal */}
-      <AnimatePresence>
-        {showShortcuts && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowShortcuts(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full mx-4 border-2 border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-2xl">⚡</span>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Keyboard Shortcuts</h2>
-                    <p className="text-sm text-gray-600">Speed up your workflow</p>
-                  </div>
-                </div>
-                <motion.button
-                  onClick={() => setShowShortcuts(false)}
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-                >
-                  <FiX className="w-6 h-6 text-gray-600" />
-                </motion.button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { key: '?', description: 'Show/hide shortcuts', icon: '❓' },
-                  { key: '/', description: 'Focus search bar', icon: '🔍' },
-                  { key: 'c', description: 'Clear all filters', icon: '🧹' },
-                  { key: 'Esc', description: 'Close modals', icon: '❌' },
-                ].map((shortcut, index) => (
-                  <motion.div
-                    key={shortcut.key}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:shadow-md transition-all"
-                  >
-                    <div className="text-2xl">{shortcut.icon}</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{shortcut.description}</p>
-                    </div>
-                    <kbd className="px-3 py-2 bg-white rounded-lg text-gray-700 font-mono text-sm shadow-sm border-2 border-gray-300 font-bold">
-                      {shortcut.key}
-                    </kbd>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
-              >
-                <p className="text-xs text-center text-blue-900">
-                  <strong>💡 Pro Tip:</strong> More shortcuts coming soon! These features help you work faster.
-                </p>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
   );
 }

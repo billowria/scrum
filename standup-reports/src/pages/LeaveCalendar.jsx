@@ -1190,7 +1190,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       />
       
       {/* Calendar Content - Add top padding for fixed header */}
-      <div className="px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-4 sm:pb-6 md:pb-8">
+      <div className="px-4 sm:px-6 md:px-8 pt-16 sm:pt-16 md:pt-16 pb-4 sm:pb-6 md:pb-8">
         <motion.div
           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative"
           initial={{ opacity: 0, y: 20 }}

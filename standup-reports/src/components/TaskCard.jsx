@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { format, parseISO, isAfter, isToday, isTomorrow } from 'date-fns';
+import { useDraggable } from '@dnd-kit/core';
 import { 
   FiCalendar, 
   FiUser, 
@@ -19,8 +20,6 @@ import {
   FiZap,
   FiTarget
 } from 'react-icons/fi';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 const getStatusConfig = (status) => {
   switch (status) {
@@ -107,9 +106,9 @@ const getDueDateStatus = (dueDate) => {
   }
 };
 
-export default function TaskCard({ 
-  task, 
-  onEdit, 
+export default function TaskCard({
+  task,
+  onEdit,
   onUpdate,
   onDelete,
   onView,
@@ -117,25 +116,23 @@ export default function TaskCard({
   isDragging = false,
   columnColor = null
 }) {
+  // Make task cards draggable but not droppable
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    transition,
-    isDragging: isSortableDragging
-  } = useSortable({
+    isDragging: isDraggingCard,
+  } = useDraggable({
     id: task.id,
     data: {
-      type: 'Task',
-      task
-    }
+      task,
+    },
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isSortableDragging ? 0.5 : 1
+    opacity: (isDragging || isDraggingCard) ? 0.5 : 1,
+    transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
   };
 
   const {
@@ -158,7 +155,7 @@ export default function TaskCard({
       ref={setNodeRef}
       style={style}
       className={`group relative bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200/60 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden h-auto min-h-[160px] w-full ${
-        isDragging ? 'shadow-2xl scale-105 rotate-2' : 'hover:scale-[1.02] hover:-translate-y-1'
+        (isDragging || isDraggingCard) ? 'shadow-2xl scale-105 rotate-2' : 'hover:scale-[1.02] hover:-translate-y-1'
       }`}
       layout
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -168,13 +165,13 @@ export default function TaskCard({
         y: -4,
         transition: { duration: 0.2 }
       }}
-      {...attributes}
-      {...listeners}
       onClick={(e) => {
         // Only open detail view if clicking on the card itself, not buttons
         if (e.target.closest('button')) return;
         onView?.(task);
       }}
+      {...attributes}
+      {...listeners}
     >
       {/* Glassmorphic Background Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm" />

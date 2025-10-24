@@ -42,6 +42,7 @@ import SprintBoard from '../components/SprintBoard';
 import SprintModal from '../components/SprintModal';
 import SprintManagement from '../components/sprint/SprintManagement';
 import SprintDetailView from '../components/sprint/SprintDetailView';
+import GlassmorphicToast from '../components/GlassmorphicToast';
 
 // Animation variants
 const containerVariants = {
@@ -816,6 +817,41 @@ export default function TasksPage({ sidebarOpen }) {
     setShowUpdateModal(true);
   };
 
+  // Direct task update for drag and drop
+  const handleDirectTaskUpdate = async (task) => {
+    try {
+      console.log('Direct task update:', task);
+
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          status: task.status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', task.id);
+
+      if (error) {
+        console.error('Error updating task:', error);
+        throw error;
+      }
+
+      console.log('Task updated successfully, fetching tasks...');
+      // Show glassmorphic toast notification after successful DB save
+      showToast(
+        'save',
+        'Task status saved successfully!',
+        `"${task.title}" moved to ${task.status}`
+      );
+      // Refresh tasks from database
+      await fetchTasks();
+
+    } catch (err) {
+      console.error('Error in handleDirectTaskUpdate:', err);
+      setError('Failed to update task. Please try again.');
+      showToast('error', 'Failed to update task', 'Please try again');
+    }
+  };
+
   const handleTaskEdit = (task) => {
     setEditingTask(task);
     setShowCreateModal(true);
@@ -852,6 +888,29 @@ export default function TasksPage({ sidebarOpen }) {
 
   // Sprint assignment modal state
   const [showSprintAssignModal, setShowSprintAssignModal] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    type: 'success',
+    message: '',
+    description: ''
+  });
+
+  // Show toast notification function
+  const showToast = (type, message, description = null) => {
+    setToast({
+      isVisible: true,
+      type,
+      message,
+      description
+    });
+  };
+
+  // Hide toast notification function
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
 
 
@@ -1233,7 +1292,7 @@ export default function TasksPage({ sidebarOpen }) {
               {view === 'board' ? (
                 <TaskBoard
                   tasks={tasks}
-                  onTaskUpdate={handleTaskUpdate}
+                  onTaskUpdate={handleDirectTaskUpdate}
                   onTaskEdit={handleTaskEdit}
                   onTaskDelete={handleTaskDelete}
                   onTaskView={handleTaskView}
@@ -1510,6 +1569,15 @@ export default function TasksPage({ sidebarOpen }) {
           />
         )}
       </AnimatePresence>
+
+      {/* Glassmorphic Toast Notification */}
+      <GlassmorphicToast
+        type={toast.type}
+        message={toast.message}
+        description={toast.description}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </motion.div>
   );
 }
