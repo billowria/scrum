@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 
-export const useRealTimeCounts = (user) => {
+export const useRealTimeCounts = (user, currentCompany) => {
   const [counts, setCounts] = useState({
     tasks: 0,
     notifications: 0,
@@ -60,7 +60,8 @@ export const useRealTimeCounts = (user) => {
         const { data: teamMembersData } = await supabase
           .from('users')
           .select('id')
-          .eq('role', 'developer');
+          .eq('role', 'developer')
+          .eq('company_id', currentCompany?.id);
         countsData.teamMembers = teamMembersData?.length || 0;
       }
 
@@ -86,7 +87,7 @@ export const useRealTimeCounts = (user) => {
     } catch (error) {
       console.error('Error fetching counts:', error);
     }
-  };
+  }, [user, currentCompany]);
 
   useEffect(() => {
     fetchCounts();
@@ -95,7 +96,7 @@ export const useRealTimeCounts = (user) => {
     const interval = setInterval(fetchCounts, 30000);
     
     return () => clearInterval(interval);
-  }, [user, fetchCounts]);
+  }, [user, currentCompany, fetchCounts]);
 
   return counts;
 }; 

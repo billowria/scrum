@@ -29,7 +29,8 @@ export default function AuthPage({ mode = "login" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("member");
+  const [companyName, setCompanyName] = useState("");
+  const [role, setRole] = useState("manager"); // Default to manager for new companies
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -199,21 +200,54 @@ export default function AuthPage({ mode = "login" }) {
         // success -> navigate
         navigate("/dashboard");
       } else {
+        // For signup, ensure company name is provided
+        if (!companyName) {
+          throw new Error("Company name is required");
+        }
+
+        // Sanitize company name to create a URL-friendly slug
+        const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        
         const { error: signUpError, data } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
+        
         if (data?.user) {
-          // create profile with predefined avatar_url
+          // First, create the user profile in the users table without company association
           const randomAvatarUrl = AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)];
           const { error: profileError } = await supabase.from("users").insert([
             {
               id: data.user.id,
               name,
               email,
-              role,
+              role: 'manager', // New signup is always a manager
               avatar_url: randomAvatarUrl,
+              // company_id is initially null, will be set after company creation
             },
           ]);
           if (profileError) throw profileError;
+
+          // Now create the company with the user as the creator
+          const { data: companyData, error: companyError } = await supabase
+            .from('companies')
+            .insert([
+              {
+                name: companyName,
+                slug: slug,
+                created_by: data.user.id
+              }
+            ])
+            .select()
+            .single();
+            
+          if (companyError) throw companyError;
+
+          // Finally, update the user record to link to the created company
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ company_id: companyData.id })
+            .eq('id', data.user.id);
+            
+          if (updateError) throw updateError;
         }
         setSuccess(true);
         // small UX delay for confetti and celebration
@@ -452,21 +486,38 @@ export default function AuthPage({ mode = "login" }) {
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                   {mode === "signup" && (
-                    <div>
-                      <label className="text-sm text-neutral-300 mb-2 block">Full name</label>
-                      <div className="relative">
-                        <FiUser className="absolute left-3 top-3 text-neutral-400" />
-                        <input
-                          required
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="w-full pl-10 pr-3 py-3 rounded-xl bg-white/5 border border-white/8 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
-                          placeholder="John Doe"
-                          aria-label="Full name"
-                        />
+                    <>
+                      <div>
+                        <label className="text-sm text-neutral-300 mb-2 block">Company name</label>
+                        <div className="relative">
+                          <FiUser className="absolute left-3 top-3 text-neutral-400" />
+                          <input
+                            required
+                            type="text"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            className="w-full pl-10 pr-3 py-3 rounded-xl bg-white/5 border border-white/8 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                            placeholder="Acme Corporation"
+                            aria-label="Company name"
+                          />
+                        </div>
                       </div>
-                    </div>
+                      <div>
+                        <label className="text-sm text-neutral-300 mb-2 block">Full name</label>
+                        <div className="relative">
+                          <FiUser className="absolute left-3 top-3 text-neutral-400" />
+                          <input
+                            required
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full pl-10 pr-3 py-3 rounded-xl bg-white/5 border border-white/8 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+                            placeholder="John Doe"
+                            aria-label="Full name"
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <div>

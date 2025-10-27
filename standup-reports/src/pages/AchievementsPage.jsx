@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { 
-  FiAward, FiPlus, FiFilter, FiSearch, FiInfo, FiRefreshCw, 
-  FiClock, FiUsers, FiStar, FiTrendingUp, FiPlusCircle, 
-  FiThumbsUp, FiCheckCircle, FiGift, FiBell, FiCalendar, 
+import {
+  FiAward, FiPlus, FiFilter, FiSearch, FiInfo, FiRefreshCw,
+  FiClock, FiUsers, FiStar, FiTrendingUp, FiPlusCircle,
+  FiThumbsUp, FiCheckCircle, FiGift, FiBell, FiCalendar,
   FiChevronLeft, FiChevronRight, FiMaximize, FiX, FiUser, FiCode
 } from 'react-icons/fi';
 import { format, parseISO, isAfter, subDays, addMonths, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { useCompany } from '../contexts/CompanyContext';
 
 // Import components
 import AchievementForm from '../components/AchievementForm';
@@ -88,7 +89,8 @@ const buttonVariants = {
 const AchievementsPage = () => {
   const containerRef = useRef(null);
   const isInView = useInView(containerRef, { once: false, amount: 0.3 });
-  
+  const { currentCompany } = useCompany();
+
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
@@ -114,21 +116,24 @@ const AchievementsPage = () => {
   
   // Fetch current user and achievements on component mount
   useEffect(() => {
-    fetchCurrentUser();
-    fetchAchievements();
-  }, [refreshTrigger, currentMonth]);
+    if (currentCompany) {
+      fetchCurrentUser();
+      fetchAchievements();
+    }
+  }, [refreshTrigger, currentMonth, currentCompany]);
   
   const fetchCurrentUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
+
+      if (user && currentCompany) {
         const { data, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
+          .eq('company_id', currentCompany.id)
           .single();
-        
+
         if (error) throw error;
         setCurrentUser(data);
       }
@@ -140,44 +145,53 @@ const AchievementsPage = () => {
   const fetchAchievements = async () => {
     try {
       setLoading(true);
-      
+
+      if (!currentCompany) {
+        setAchievements([]);
+        setLoading(false);
+        return;
+      }
+
       // Calculate start and end of current month for filtering
       const startDate = startOfMonth(currentMonth);
       const endDate = endOfMonth(currentMonth);
-      
-      // First get all achievements
+
+      // First get achievements filtered by company_id
       const { data, error } = await supabase
         .from('achievements')
         .select(`
-          id, 
-          title, 
-          description, 
-          award_type, 
-          awarded_at, 
+          id,
+          title,
+          description,
+          award_type,
+          awarded_at,
           image_url,
           user_id,
-          created_by
+          created_by,
+          company_id
         `)
+        .eq('company_id', currentCompany.id)
         .order('awarded_at', { ascending: false });
-      
+
       if (error) throw error;
-      
+
       // Then fetch the user details for each achievement
       if (data && data.length > 0) {
         // Get unique user IDs
         const userIds = [...new Set(data.map(item => item.user_id).filter(Boolean))];
         const creatorIds = [...new Set(data.map(item => item.created_by).filter(Boolean))];
         const allIds = [...new Set([...userIds, ...creatorIds])];
-        
-        // Fetch all users in one query
+
+        // Fetch all users in one query with company filtering
         if (allIds.length > 0) {
           const { data: userData, error: userError } = await supabase
             .from('users')
             .select('id, name, email')
-            .in('id', allIds);
-          
+            .in('id', allIds)
+            .eq('company_id', currentCompany.id);
+
           if (userError) throw userError;
-          
+
           // Create a map of user data for quick lookup
           const userMap = {};
           if (userData) {
@@ -185,27 +199,27 @@ const AchievementsPage = () => {
               userMap[user.id] = user;
             });
           }
-          
+
           // Attach user data to achievements
           const enhancedData = data.map(achievement => ({
             ...achievement,
             users: userMap[achievement.user_id] || null,
             creator: userMap[achievement.created_by] || null
           }));
-          
+
           // Filter achievements by month range
           const currentMonthAchievements = enhancedData.filter(achievement => {
             if (!achievement.awarded_at) return false;
             const achievementDate = parseISO(achievement.awarded_at);
             return isWithinInterval(achievementDate, { start: startDate, end: endDate });
           });
-          
+
           setAchievements(currentMonthAchievements);
-          
+
           // Calculate stats
           const allTeamAchievements = enhancedData.filter(a => !a.user_id || (a.user_id && a.user_id !== currentUser?.id));
           const allPersonalAchievements = currentUser ? enhancedData.filter(a => a.user_id === currentUser.id) : [];
-          
+
           // Team stats
           setTeamStats({
             total: allTeamAchievements.length,
@@ -216,7 +230,7 @@ const AchievementsPage = () => {
             }).length,
             recognitions: allTeamAchievements.reduce((count, a) => count + (a.reactions || 0), 0)
           });
-          
+
           // Personal stats
           setPersonalStats({
             total: allPersonalAchievements.length,

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './supabaseClient';
 import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
 import squadsyncLogo from './assets/brand/squadsync-logo.png';
+import { CompanyProvider } from './contexts/CompanyContext';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -23,6 +24,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import TeamManagement from './pages/TeamManagement';
 import AchievementsPage from './pages/AchievementsPage';
 import ManageAnnouncements from './components/ManageAnnouncements';
+import CreateUser from './pages/CreateUser';
 
 import TasksPage from './pages/TasksPage';
 import NotificationCenterV2 from './pages/NotificationCenterV2';
@@ -178,29 +180,31 @@ function App() {
   return (
     <Router>
       {session ? (
-        <>
-          <Navbar
-            user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
-            sidebarOpen={sidebarOpen}
-            setSidebarOpen={setSidebarOpen}
-          />
-          <div className="flex pt-16">
-            <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
-            <div className="flex-1 flex min-h-screen">
-              <div
-                className="flex-1 bg-gray-50 overflow-hidden relative"
-                style={{
-                  marginLeft: sidebarOpen
-                    ? 'clamp(232px, 20vw, 336px)'  // Responsive: 232px (mobile) to 336px (desktop)
-                    : 'clamp(52px, 8vw, 96px)',   // Responsive: 52px (mobile) to 96px (desktop)
-                  transition: 'margin-left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
-              >
-                <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+        <CompanyProvider>
+          <>
+            <Navbar
+              user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+            />
+            <div className="flex pt-16">
+              <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
+              <div className="flex-1 flex min-h-screen">
+                <div
+                  className="flex-1 bg-gray-50 overflow-hidden relative"
+                  style={{
+                    marginLeft: sidebarOpen
+                      ? 'clamp(232px, 20vw, 336px)'  // Responsive: 232px (mobile) to 336px (desktop)
+                      : 'clamp(52px, 8vw, 96px)',   // Responsive: 52px (mobile) to 96px (desktop)
+                    transition: 'margin-left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                >
+                  <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+                </div>
               </div>
             </div>
-          </div>
-        </>
+          </>
+        </CompanyProvider>
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30">
           <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
@@ -231,7 +235,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
             ) : (
               // Authenticated routes
               <>
-                <Route path="/dashboard" element={
+                {/* CompanyProvider needs to be handled differently */}\n                <Route path="/dashboard" element={
                   <PageTransition>
                     <div className="w-full py-6">
                       <Dashboard sidebarOpen={sidebarOpen} />
@@ -267,6 +271,12 @@ function AppContent({ session, userRole, sidebarOpen }) {
                         <div className="w-full py-6">
                           <History />
                         </div>
+                      </PageTransition>
+                    } />
+                    {/* Create User Route */}
+                    <Route path="/create-user" element={
+                      <PageTransition>
+                        <CreateUser />
                       </PageTransition>
                     } />
                     {/* Manager Profile Route */}
@@ -391,6 +401,5 @@ function PageTransition({ children }) {
     </motion.div>
   );
 }
-
 
 export default App;

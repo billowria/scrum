@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiUser, FiUsers, FiCalendar, FiClock, FiChevronRight } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useCompany } from '../contexts/CompanyContext';
 
 const modalVariants = {
   hidden: { 
@@ -42,9 +43,9 @@ const itemVariants = {
   }
 };
 
-const UserListModal = ({ 
-  isOpen, 
-  onClose, 
+const UserListModal = ({
+  isOpen,
+  onClose,
   title,
   subtitle,
   users = [],
@@ -52,6 +53,15 @@ const UserListModal = ({
   date = null
 }) => {
   const navigate = useNavigate();
+  const { currentCompany } = useCompany();
+
+  // Filter users by company and remove null/undefined users
+  const filteredUsers = users.filter(user =>
+    user &&
+    user.id &&
+    user.name &&
+    (!currentCompany?.id || user.company_id === currentCompany?.id)
+  );
 
   if (!isOpen) return null;
 
@@ -115,14 +125,14 @@ const UserListModal = ({
 
           {/* User List */}
           <div className="px-6 py-4 max-h-[60vh] overflow-y-auto">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <FiUsers className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No users to display</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {users.map((user, index) => (
+                {filteredUsers.map((user, index) => (
                   <motion.div
                     key={user.id || index}
                     className="flex items-center justify-between text-sm p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group"
@@ -142,9 +152,7 @@ const UserListModal = ({
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-medium mr-3 text-xs">
                           <FiUser className="w-4 h-4" />
-                          {user.name && (
-                            <span className="ml-1">{user.name.charAt(0).toUpperCase()}</span>
-                          )}
+                          <span className="ml-1">{user.name.charAt(0).toUpperCase()}</span>
                         </div>
                       )}
                       <span className="font-medium text-gray-800">{user.name}</span>

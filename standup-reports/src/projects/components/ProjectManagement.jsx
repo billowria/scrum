@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiFolder, FiUsers, FiCalendar, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { notifyProjectUpdate } from '../utils/notificationHelper';
+import { useCompany } from '../../contexts/CompanyContext';
 
 export default function ProjectManagement({ selectedProjectId, onClose }) {
+  const { currentCompany } = useCompany();
   const [projects, setProjects] = useState([]);
   const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [projectForm, setProjectForm] = useState({
@@ -150,7 +152,8 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
       const { data: allUsers, error: usersError } = await supabase
         .from('users')
         .select('id, name, email, role')
-        .eq('team_id', currentUser.team_id);
+        .eq('team_id', currentUser.team_id)
+        .eq('company_id', currentCompany?.id);
       
       if (usersError) throw usersError;
 

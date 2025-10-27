@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { notifyLeaveStatus } from '../utils/notificationHelper';
+import { useCompany } from '../contexts/CompanyContext';
 import { FiUsers, FiClipboard, FiSettings, FiClock, FiCalendar, FiCheck, FiX, 
   FiMessageSquare, FiUser, FiRefreshCw, FiAlertCircle, FiInfo,FiBell, FiChevronLeft, FiChevronRight,
   FiTarget, FiTrendingUp, FiFileText, FiAward, FiShield, FiZap, FiStar, FiUserPlus, FiMail, FiLock, FiFolder } from 'react-icons/fi';
@@ -296,6 +297,7 @@ const TabHeader = ({
 };
 
 export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }) {
+  const { currentCompany } = useCompany();
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(activeTabDefault);
@@ -427,16 +429,18 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     fetchTeams();
     fetchUsers();
     fetchLeaveRequests();
-    
-    // Set up real-time subscription for leave requests
+  }, [currentCompany]); // Re-fetch when company data changes
+
+  // Set up real-time subscription for leave requests
+  useEffect(() => {
     const leaveRequestsSubscription = supabase
       .channel('leave_requests_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'leave_plans' 
-        }, 
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leave_plans'
+        },
         (payload) => {
           console.log('Change received!', payload);
           fetchLeaveRequests();
@@ -451,11 +455,15 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   
   const fetchTeams = async () => {
     try {
+      // Don't fetch teams if company is not loaded yet
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('teams')
         .select('*')
+        .eq('company_id', currentCompany.id)
         .order('name');
-      
+
       if (error) throw error;
       setTeams(data || []);
     } catch (error) {
@@ -465,13 +473,17 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   
   const fetchUsers = async () => {
     try {
+      // Don't fetch users if company is not loaded yet
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('users')
         .select(`
-          id, name, email, role,
+          id, name, email, role, company_id,
           teams:team_id (id, name)
-        `);
-      
+        `)
+        .eq('company_id', currentCompany.id);
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -535,8 +547,9 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       const { error } = await supabase
         .from('users')
         .update({ team_id: selectedTeam })
-        .eq('id', selectedUser);
-      
+        .eq('id', selectedUser)
+        .eq('company_id', currentCompany?.id);
+
       if (error) throw error;
       
       setMessage({ type: 'success', text: 'Team assigned successfully' });

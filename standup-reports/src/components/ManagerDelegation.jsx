@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
+import { useCompany } from '../contexts/CompanyContext';
 import { FiUserCheck, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX, FiFilter } from 'react-icons/fi';
 
 // Animation variants
@@ -24,6 +25,7 @@ const itemVariants = {
 };
 
 export default function ManagerDelegation() {
+  const { currentCompany } = useCompany();
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,7 @@ export default function ManagerDelegation() {
     fetchCurrentUser();
     fetchUsers();
     fetchManagers();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, currentCompany]);
   
   const fetchCurrentUser = async () => {
     try {
@@ -62,14 +64,17 @@ export default function ManagerDelegation() {
   
   const fetchUsers = async () => {
     try {
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('users')
         .select(`
-          id, name, email, role, 
+          id, name, email, role,
           teams:team_id (id, name),
           manager:manager_id (id, name)
-        `);
-      
+        `)
+        .eq('company_id', currentCompany.id);
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -81,12 +86,15 @@ export default function ManagerDelegation() {
   
   const fetchManagers = async () => {
     try {
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('users')
         .select('id, name')
         .eq('role', 'manager')
+        .eq('company_id', currentCompany.id)
         .order('name');
-      
+
       if (error) throw error;
       setManagers(data || []);
     } catch (error) {

@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import { supabase } from '../../supabaseClient';
 import { createTaskNotification } from '../../utils/notificationHelper';
+import { useCompany } from '../../contexts/CompanyContext';
 import Avatar from '../shared/Avatar';
 import Badge from '../shared/Badge';
 
@@ -36,6 +37,7 @@ const statusOptions = [
 ];
 
 export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, currentUser, userRole, task = null }) {
+  const { currentCompany } = useCompany();
   const titleInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -84,10 +86,10 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
         if (!currentUserData) throw new Error('User not authenticated');
         
         const [{ data: usersData }, { data: teamsData }, { data: projectsData }, { data: tasksData }] = await Promise.all([
-          supabase.from('users').select('id, name, avatar_url, email, team_id').order('name'),
-          supabase.from('teams').select('id, name').order('name'),
-          supabase.from('projects').select('id, name').order('name'),
-          supabase.from('tasks').select('id, title, type, status, priority').order('created_at', { ascending: false }).limit(100),
+          supabase.from('users').select('id, name, avatar_url, email, team_id').eq('company_id', currentCompany?.id).order('name'),
+          supabase.from('teams').select('id, name').eq('company_id', currentCompany?.id).order('name'),
+          supabase.from('projects').select('id, name').eq('company_id', currentCompany?.id).order('name'),
+          supabase.from('tasks').select('id, title, type, status, priority').eq('company_id', currentCompany?.id).order('created_at', { ascending: false }).limit(100),
         ]);
         
         setUsers(usersData || []);

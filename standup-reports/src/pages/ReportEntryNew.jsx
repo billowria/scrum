@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useCompany } from '../contexts/CompanyContext';
 // import TaskDetailView from '../components/tasks/TaskDetailView';
 import { 
   FiCalendar, FiCheckCircle, FiAlertCircle, FiClipboard, FiList, FiUsers, 
@@ -159,6 +160,9 @@ const EditorToolbar = ({ editor, onInsert }) => {
 };
 
 export default function ReportEntryNew() {
+  // Company context
+  const { currentCompany } = useCompany();
+
   // State management
   const [yesterday, setYesterday] = useState('');
   const [today, setToday] = useState('');
@@ -187,7 +191,7 @@ export default function ReportEntryNew() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  
+
   const navigate = useNavigate();
 
   // Utility function to parse task references from text with positions
@@ -372,14 +376,17 @@ export default function ReportEntryNew() {
   // Fetch previous day's report
   const fetchPreviousReport = async (userId) => {
     try {
+      if (!currentCompany?.id) return;
+
       const previousDate = format(subDays(new Date(date), 1), 'yyyy-MM-dd');
       const { data, error } = await supabase
         .from('daily_reports')
         .select('today')
         .eq('user_id', userId)
         .eq('date', previousDate)
+        .eq('company_id', currentCompany.id) // Company filter
         .single();
-      
+
       if (data && !error) {
         setPreviousReport(data);
       }
@@ -407,32 +414,38 @@ export default function ReportEntryNew() {
   useEffect(() => {
     const initializeData = async () => {
       try {
+        // Wait for company context to be available
+        if (!currentCompany?.id) return;
+
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
         setCurrentUser(user);
 
-        // Fetch teams
+        // Fetch teams with company filtering
         const { data: teamsData } = await supabase
           .from('teams')
-          .select('id, name');
+          .select('id, name')
+          .eq('company_id', currentCompany.id);
         setTeams(teamsData || []);
 
-        // Fetch user's team and role
+        // Fetch user's team and role with company filtering
         const { data: userData } = await supabase
           .from('users')
           .select('team_id, role')
           .eq('id', user.id)
+          .eq('company_id', currentCompany.id) // Company filter
           .single();
 
         if (userData?.team_id) {
           setSelectedTeam(userData.team_id);
-          
-          // Fetch team members
+
+          // Fetch team members with company filtering
           const { data: members } = await supabase
             .from('users')
             .select('id, name')
             .eq('team_id', userData.team_id)
+            .eq('company_id', currentCompany.id) // Company filter
             .order('name');
           setTeamMembers(members || []);
         }
@@ -467,6 +480,7 @@ export default function ReportEntryNew() {
           .select('*')
           .eq('user_id', user.id)
           .eq('date', date)
+          .eq('company_id', currentCompany.id) // Company filter
           .single();
 
         if (reportData) {
@@ -482,7 +496,7 @@ export default function ReportEntryNew() {
     };
 
     initializeData();
-  }, [date]);
+  }, [date, currentCompany]);
 
   // Sync content to editors
   useEffect(() => {
@@ -522,7 +536,7 @@ export default function ReportEntryNew() {
     const autoSaveTimer = setTimeout(async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !selectedTeam) return;
+        if (!user || !selectedTeam || !currentCompany?.id) return;
 
         const reportData = {
           user_id: user.id,
@@ -530,6 +544,7 @@ export default function ReportEntryNew() {
           yesterday,
           today,
           blockers,
+          company_id: currentCompany.id, // Add company_id
           updated_at: new Date().toISOString()
         };
 
@@ -584,6 +599,11 @@ export default function ReportEntryNew() {
       return;
     }
 
+    if (!currentCompany?.id) {
+      setMessage({ type: 'error', text: 'Company context not available' });
+      return;
+    }
+
     setLoading(true);
     setMessage({ type: '', text: '' });
 
@@ -597,6 +617,7 @@ export default function ReportEntryNew() {
         yesterday,
         today,
         blockers,
+        company_id: currentCompany.id, // Add company_id
         updated_at: new Date().toISOString()
       };
 

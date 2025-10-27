@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
+import { useCompany } from '../contexts/CompanyContext';
 import { FiUserPlus, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX, FiFilter } from 'react-icons/fi';
 
 // Animation variants
@@ -29,6 +30,7 @@ const inputFocusVariants = {
 };
 
 export default function TeamAssignment() {
+  const { currentCompany } = useCompany();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function TeamAssignment() {
     fetchCurrentUser();
     fetchUsers();
     fetchTeams();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, currentCompany]);
   
   const fetchCurrentUser = async () => {
     try {
@@ -73,14 +75,17 @@ export default function TeamAssignment() {
   
   const fetchUsers = async () => {
     try {
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('users')
         .select(`
-          id, name, email, role, 
+          id, name, email, role,
           teams:team_id (id, name),
           manager:manager_id (id, name)
-        `);
-      
+        `)
+        .eq('company_id', currentCompany.id);
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -92,11 +97,14 @@ export default function TeamAssignment() {
   
   const fetchTeams = async () => {
     try {
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('teams')
         .select('*')
+        .eq('company_id', currentCompany.id)
         .order('name');
-      
+
       if (error) throw error;
       setTeams(data || []);
     } catch (error) {
@@ -168,14 +176,20 @@ export default function TeamAssignment() {
       setMessage({ type: 'error', text: 'Team name is required' });
       return;
     }
-    
+
+    if (!currentCompany?.id) {
+      setMessage({ type: 'error', text: 'Company information not available. Please refresh the page.' });
+      return;
+    }
+
     setAddingTeam(true);
-    
+
     try {
       const { data, error } = await supabase
         .from('teams')
-        .insert([{ 
-          name: newTeamName.trim()
+        .insert([{
+          name: newTeamName.trim(),
+          company_id: currentCompany.id
         }])
         .select();
       

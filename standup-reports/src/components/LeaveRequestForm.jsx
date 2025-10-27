@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { 
-  FiCalendar, 
-  FiX, 
-  FiCheck, 
-  FiLoader, 
-  FiAlertCircle, 
-  FiTag, 
-  FiEdit3, 
-  FiSun, 
-  FiHeart, 
-  FiUser, 
+import {
+  FiCalendar,
+  FiX,
+  FiCheck,
+  FiLoader,
+  FiAlertCircle,
+  FiTag,
+  FiEdit3,
+  FiSun,
+  FiHeart,
+  FiUser,
   FiActivity,
   FiBriefcase,
   FiZap
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { notifyLeaveRequest } from '../utils/notificationHelper';
+import { useCompany } from '../contexts/CompanyContext';
 
 const modalVariants = {
   hidden: { 
@@ -62,13 +63,14 @@ const buttonVariants = {
   disabled: { opacity: 0.6, scale: 1 }
 };
 
-const LeaveRequestForm = ({ 
-  isOpen = true, 
-  onClose, 
+const LeaveRequestForm = ({
+  isOpen = true,
+  onClose,
   selectedDates,
   setSelectedDates,
   onSuccess
 }) => {
+  const { currentCompany } = useCompany();
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -122,31 +124,77 @@ const LeaveRequestForm = ({
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedDates.start || !selectedDates.end) {
       setError('Please select both start and end dates');
       return;
     }
-    
+
     if (leaveType === "other" && !reason.trim()) {
       setError('Please enter a reason for other leave types');
       return;
     }
-    
+
+    if (!currentCompany?.id) {
+      setError('Company information not available. Please refresh the page.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    
+
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error('User not authenticated');
       }
-      
+
       // Format dates for database
       const startDate = format(selectedDates.start, 'yyyy-MM-dd');
       const endDate = format(selectedDates.end, 'yyyy-MM-dd');
+
+      // Check for existing leave requests that overlap with the requested dates
+      const { data: existingLeave, error: checkError } = await supabase
+        .from('leave_plans')
+        .select('id, start_date, end_date, status')
+        .eq('user_id', user.id)
+        .eq('company_id', currentCompany.id)
+        .neq('status', 'rejected'); // Ignore rejected requests
+
+      if (checkError) {
+        throw new Error('Error checking existing leave requests');
+      }
+
+      // Check for any overlapping leave requests
+      const overlappingRequests = existingLeave ? existingLeave.filter(leave => {
+        const existingStart = new Date(leave.start_date);
+        const existingEnd = new Date(leave.end_date);
+        const requestedStart = new Date(startDate);
+        const requestedEnd = new Date(endDate);
+
+        // Check if date ranges overlap
+        return (
+          (requestedStart >= existingStart && requestedStart <= existingEnd) ||
+          (requestedEnd >= existingStart && requestedEnd <= existingEnd) ||
+          (requestedStart <= existingStart && requestedEnd >= existingEnd)
+        );
+      }) : [];
+
+      if (overlappingRequests.length > 0) {
+        const overlappingDates = overlappingRequests
+          .map(leave => {
+            const start = format(new Date(leave.start_date), 'MMM d, yyyy');
+            const end = format(new Date(leave.end_date), 'MMM d, yyyy');
+            return start === end ? start : `${start} - ${end}`;
+          })
+          .join(', ');
+
+        setError(`You already have a leave request for ${overlappingDates}. Please edit your existing request instead of creating a new one.`);
+        setLoading(false);
+        return;
+      }
       
       // Insert leave request
       const { data, error } = await supabase
@@ -154,6 +202,7 @@ const LeaveRequestForm = ({
         .insert([
           {
             user_id: user.id,
+            company_id: currentCompany.id,
             start_date: startDate,
             end_date: endDate,
             reason: reason,

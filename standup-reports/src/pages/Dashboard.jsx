@@ -3,10 +3,11 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { format, isToday, parseISO, subDays, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '../supabaseClient';
+import { useCompany } from '../contexts/CompanyContext';
 // import TaskDetailView from '../components/tasks/TaskDetailView';
 
 // Icons
-import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare } from 'react-icons/fi';
+import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare, FiUserPlus } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -210,7 +211,8 @@ function RichTextDisplay({ content, onTaskClick }) {
 }
 
 export default function Dashboard({ sidebarOpen }) {
-const [reports, setReports] = useState([]);
+  const { currentCompany, loading: companyLoading, error: companyError } = useCompany();
+  const [reports, setReports] = useState([]);
   // Task modal state
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [activeTaskId, setActiveTaskId] = useState(null);
@@ -229,6 +231,7 @@ const [reports, setReports] = useState([]);
   // User state
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [userTeamId, setUserTeamId] = useState(null);
   const [userTeamName, setUserTeamName] = useState(null);
   
@@ -299,15 +302,16 @@ const [reports, setReports] = useState([]);
         setUserId(authUser.id);
         setUser(authUser); // Store full user object
 
-        // Get user's info including avatar and team
+        // Get user's info including avatar, team, and company
         const { data, error } = await supabase
           .from('users')
-          .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
+          .select('id, name, role, avatar_url, team_id, company_id, teams:team_id (id, name)')
           .eq('id', authUser.id)
           .single();
         
         if (!error && data) {
           setAvatarUrl(data.avatar_url || null);
+          setUserRole(data.role || null);
           setUserTeamId(data.team_id);
           setUserTeamName(data.teams && data.teams.name || null);
           setUserName(data.name || authUser.user_metadata && authUser.user_metadata.name || authUser.email);
@@ -322,8 +326,7 @@ const [reports, setReports] = useState([]);
     };
     
     getUserInfo();
-    fetchReports(date);
-    fetchTeams();
+    // fetchReports and fetchTeams will be called after company context is loaded
     
     // Initialize animation controls
     cardControls.start({
@@ -370,7 +373,16 @@ const [reports, setReports] = useState([]);
         });
       }
     };
-  }, [date, cardControls]);
+  }, [date, cardControls, currentCompany?.id]);
+
+  // Effect to fetch data once company context is loaded
+  useEffect(() => {
+    // Only fetch data when company context is available and not still loading
+    if (!companyLoading && currentCompany !== undefined) {
+      fetchReports(date);
+      fetchTeams();
+    }
+  }, [companyLoading, currentCompany, date]);
   
   // Clock display component that only re-renders when necessary
   const ClockDisplay = React.memo(() => {
@@ -418,10 +430,14 @@ const [reports, setReports] = useState([]);
   });
 
   const fetchTeams = async () => {
+    // Don't fetch if company context is not available yet or is loading
+    if (companyLoading || !currentCompany?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name');
+        .select('id, name')
+        .eq('company_id', currentCompany.id); // Filter by company
 
       if (error) throw error;
       setTeams(data || []);
@@ -435,14 +451,23 @@ const [reports, setReports] = useState([]);
     setError(null);
 
     try {
+      // Don't fetch if company context is not available yet or is loading
+      if (companyLoading || !currentCompany?.id) {
+        setLoading(false);
+        return;
+      }
+      
       // Query to get reports with user and team information
+      // Filter by company_id to ensure we only get reports from the current company
       let query = supabase
         .from('daily_reports')
         .select(`
-          id, date, yesterday, today, blockers, created_at,
-          users:user_id (id, name, team_id, teams:team_id (id, name))
+          id, date, yesterday, today, blockers, created_at, company_id,
+          users:user_id (id, name, team_id, company_id, teams:team_id (id, name))
         `)
         .eq('date', date)
+        .eq('company_id', currentCompany.id) // Direct company filter on daily_reports table
+        .eq('users.company_id', currentCompany.id) // Additional safety filter on users table
         .order('created_at', { ascending: false });
 
       const { data, error } = await query;
@@ -467,14 +492,15 @@ const [reports, setReports] = useState([]);
   };
 
   const fetchTeamMembers = async (teamId) => {
-    if (!teamId) return;
+    if (!teamId || !currentCompany?.id) return;
     
     setLoadingMissing(true);
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
-        .eq('team_id', teamId);
+        .select('id, name, role, avatar_url, team_id, company_id, teams:team_id (id, name)')
+        .eq('team_id', teamId)
+        .eq('company_id', currentCompany?.id); // Filter by company
         
       if (error) throw error;
       
@@ -494,13 +520,14 @@ const [reports, setReports] = useState([]);
 
   // This function is used for fetching team members when team is selected in filter
   const fetchTeamMembersForStatus = async (teamId) => {
-    if (!teamId || teamId === 'all') return;
+    if (!teamId || teamId === 'all' || !currentCompany?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, role, avatar_url, team_id, teams:team_id (id, name)')
+        .select('id, name, role, avatar_url, team_id, company_id, teams:team_id (id, name)')
         .eq('team_id', teamId)
+        .eq('company_id', currentCompany?.id) // Filter by company
         .order('name', { ascending: true });
         
       if (error) throw error;
@@ -645,12 +672,16 @@ const [reports, setReports] = useState([]);
 
   // Fetch on-leave count
   const fetchOnLeaveCount = async () => {
+    // Don't fetch if company context is not available yet or is loading
+    if (companyLoading || !currentCompany?.id) return;
+    
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error, count } = await supabase
         .from('leave_plans')
         .select('*', { count: 'exact' })
         .eq('status', 'approved')
+        .eq('company_id', currentCompany.id) // Filter by company
         .lte('start_date', today)
         .gte('end_date', today);
 
@@ -666,12 +697,14 @@ const [reports, setReports] = useState([]);
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return setAnnouncementsCount(0);
+      // Don't fetch if company context is not available yet or is loading
+      if (!user || companyLoading || !currentCompany?.id) return setAnnouncementsCount(0);
 
-      // Fetch all announcements for user's team
+      // Fetch all announcements for the current company
       const { data: announcements, error: annError } = await supabase
         .from('announcements')
-        .select(`id, team_id, expiry_date, announcement_reads:announcement_reads!announcement_reads_announcement_id_fkey(user_id, read)`)
+        .select(`id, team_id, expiry_date, company_id, announcement_reads:announcement_reads!announcement_reads_announcement_id_fkey(user_id, read)`)
+        .eq('company_id', currentCompany.id) // Filter by company
         .gte('expiry_date', new Date().toISOString());
       if (annError) throw annError;
 
@@ -861,9 +894,9 @@ const [reports, setReports] = useState([]);
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return setProjectCount(0);
+      if (!user || !currentCompany?.id) return setProjectCount(0);
 
-      // Query to get projects assigned to the user
+      // Query to get projects assigned to the user in their company
       const { count, error } = await supabase
         .from('project_assignments')
         .select('*', { count: 'exact', head: true })
@@ -911,9 +944,10 @@ const [reports, setReports] = useState([]);
         .from('leave_plans')
         .select(`
           id,
-          users:user_id (id, name, avatar_url, role, teams:team_id (id, name))
+          users:user_id (id, name, avatar_url, role, company_id, teams:team_id (id, name))
         `)
         .eq('status', 'approved')
+        .eq('users.company_id', currentCompany?.id) // Filter by company
         .lte('start_date', today)
         .gte('end_date', today);
 
@@ -929,8 +963,9 @@ const [reports, setReports] = useState([]);
       if (userTeamId) {
         const { data: allMembers, error: membersError } = await supabase
           .from('users')
-          .select('id, name, avatar_url, role, teams:team_id (id, name)')
-          .eq('team_id', userTeamId);
+          .select('id, name, avatar_url, role, company_id, teams:team_id (id, name)')
+          .eq('team_id', userTeamId)
+          .eq('company_id', currentCompany?.id); // Filter by company
           
         if (membersError) {
           console.error('Error fetching team members:', membersError);
@@ -1062,7 +1097,29 @@ const [reports, setReports] = useState([]);
                           <span className="text-xs font-bold text-amber-700">{onLeaveMembers.length}</span>
                         </div>
                       </motion.button>
-                      
+
+                      {/* Create User button - Manager only */}
+                      {userRole === 'manager' && (
+                        <motion.button
+                          onClick={() => navigate('/create-user')}
+                          className="relative p-2.5 rounded-lg bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 text-blue-600 hover:bg-blue-500/30 hover:border-blue-500/50 transition-all shadow-md hover:shadow-blue-500/25 hover:shadow-lg"
+                          title="Create New User"
+                          whileHover={{ scale: 1.1, y: -1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <div className="relative">
+                            <FiUserPlus className="w-4 h-4" />
+                            {/* Neon glow effect */}
+                            <motion.div
+                              className="absolute inset-0 rounded-lg bg-blue-500 opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300"
+                              initial={false}
+                              animate={{ opacity: 0 }}
+                              whileHover={{ opacity: 0.4 }}
+                            />
+                          </div>
+                        </motion.button>
+                      )}
+
                       <motion.button
                         onClick={() => navigate('/notifications')}
                         className="relative p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 transition-all shadow-md"

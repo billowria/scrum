@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
+import { useCompany } from '../contexts/CompanyContext';
 import { FiUserPlus, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX } from 'react-icons/fi';
 
 // Animation variants
@@ -24,6 +25,7 @@ const itemVariants = {
 };
 
 export default function ManagerAssignment() {
+  const { currentCompany } = useCompany();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
@@ -35,7 +37,7 @@ export default function ManagerAssignment() {
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, currentCompany]);
   
   const fetchCurrentUser = async () => {
     try {
@@ -59,9 +61,9 @@ export default function ManagerAssignment() {
   const fetchUsers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
-      
+
+      if (!user || !currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -69,8 +71,9 @@ export default function ManagerAssignment() {
           manager_id,
           manager:manager_id(id, name)
         `)
+        .eq('company_id', currentCompany.id)
         .neq('id', user.id); // Exclude current user
-      
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {

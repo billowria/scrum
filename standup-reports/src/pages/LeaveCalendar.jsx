@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
 import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend } from 'react-icons/fi';
+import { useCompany } from '../contexts/CompanyContext';
 
 // Import components
 import LeaveRequestForm from '../components/LeaveRequestForm';
@@ -351,6 +352,7 @@ const CompactTabHeader = ({
 
 
 export default function LeaveCalendar({ sidebarOpen = false }) {
+  const { currentCompany } = useCompany();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
   const [leaveData, setLeaveData] = useState([]);
@@ -384,7 +386,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentCompany?.id) {
       fetchUsers();
       fetchLeaveData();
       fetchAnnouncements();
@@ -392,29 +394,28 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     
     // Animate the calendar on initial load
     controls.start('visible');
-  }, [currentUser]);
+  }, [currentUser, currentCompany?.id]);
   
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentCompany?.id) {
       fetchLeaveData();
     }
-  }, [currentMonth, currentUser]);
+  }, [currentMonth, currentUser, currentCompany?.id]);
 
 
   
-  // Calculate team availability and stats whenever leave data changes
+  // Calculate team availability and stats whenever data changes
   useEffect(() => {
-    if (leaveData.length > 0 && users.length > 0) {
-      calculateTeamAvailability();
-      calculateStats();
-    } else if (users.length > 0) {
-      // Calculate stats even if no leave data to show 0 on leave
+    // Always calculate team availability, even with no users (shows 100% or setup prompt)
+    calculateTeamAvailability();
+
+    if (users.length > 0) {
       calculateStats();
     }
-  }, [leaveData, users]);
+  }, [leaveData, users, currentMonth]); // Added currentMonth dependency
   
   const calculateStats = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentCompany?.id) return;
     
     try {
       const today = new Date();
@@ -423,20 +424,27 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       const { data: onLeaveTodayData, error: onLeaveError } = await supabase
         .from('leave_plans')
         .select(`
-          users:user_id (id, name, avatar_url, role)
+          users:user_id (id, name, avatar_url, role, company_id)
         `)
+        .eq('company_id', currentCompany?.id) // Filter leave plans by company
+        .eq('users.company_id', currentCompany?.id) // Also filter users by company
         .eq('status', 'approved')
         .lte('start_date', todayString)
         .gte('end_date', todayString);
 
       if (onLeaveError) throw onLeaveError;
 
-      const usersOnLeave = onLeaveTodayData.map(leave => leave.users).filter(Boolean);
-      const onLeaveIds = usersOnLeave.map(user => user.id);
+      const usersOnLeave = onLeaveTodayData
+      .map(leave => leave.users)
+      .filter(user => user && user.id && user.name) // Filter out null/undefined users
+      .filter((user, index, arr) => arr.findIndex(u => u.id === user.id) === index); // Remove duplicates
+
+    const onLeaveIds = usersOnLeave.map(user => user.id);
       
       const { data: allUsers, error: usersError } = await supabase
         .from('users')
-        .select('id, name, avatar_url, role');
+        .select('id, name, avatar_url, role, company_id')
+        .eq('company_id', currentCompany?.id); // Filter by company
 
       if (usersError) throw usersError;
 
@@ -475,17 +483,22 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         const end = parseISO(leave.end_date);
         return day >= start && day <= end && leave.status !== 'rejected';
       }).length;
-      
-      const availablePercentage = Math.round(((totalUsers - onLeave) / totalUsers) * 100);
-      
+
+      // Handle case when there are no users yet
+      let availablePercentage = 100;
+      if (totalUsers > 0) {
+        availablePercentage = Math.round(((totalUsers - onLeave) / totalUsers) * 100);
+      }
+
       let status = 'high';
       if (availablePercentage < 70) status = 'medium';
       if (availablePercentage < 50) status = 'low';
-      
+
       availability[dateStr] = {
         availablePercentage,
         status,
-        onLeave
+        onLeave,
+        totalUsers
       };
     });
     
@@ -506,12 +519,13 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   };
   
   const fetchUsers = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentCompany?.id) return;
     
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, team_id');
+        .select('id, name, team_id, company_id')
+        .eq('company_id', currentCompany?.id); // Filter by company
       
       if (error) throw error;
       setUsers(data || []);
@@ -521,7 +535,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   };
   
   const fetchLeaveData = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentCompany?.id) return;
     
     setLoading(true);
     try {
@@ -531,9 +545,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       const { data, error } = await supabase
         .from('leave_plans')
         .select(`
-          id, start_date, end_date, reason, status,
-          users:user_id (id, name, team_id, avatar_url)
+          id, start_date, end_date, reason, status, company_id,
+          users:user_id (id, name, team_id, avatar_url, company_id)
         `)
+        .eq('company_id', currentCompany?.id) // Filter leave plans by company
+        .eq('users.company_id', currentCompany?.id) // Also filter users by company
         .gte('start_date', start)
         .lte('end_date', end);
       
@@ -550,7 +566,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   
   // Fetch announcements from the database
   const fetchAnnouncements = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentCompany?.id) return;
     
     try {
       const today = new Date().toISOString();
@@ -558,9 +574,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       const { data, error } = await supabase
         .from('announcements')
         .select(`
-          id, title, content, created_at, expiry_date,
+          id, title, content, created_at, expiry_date, company_id,
           manager:created_by (id, name)
         `)
+        .eq('company_id', currentCompany?.id) // Filter by company
         .gte('expiry_date', today)
         .order('created_at', { ascending: false });
       
@@ -731,8 +748,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         const end = parseISO(leave.end_date);
         return day >= start && day <= end && leave.status === 'approved';
       })
-      .map(leave => leave.users);
-    
+      .map(leave => leave.users)
+      .filter(user => user && user.id && user.name) // Filter out null/undefined users and ensure they have required fields
+      .filter((user, index, arr) => arr.findIndex(u => u.id === user.id) === index); // Remove duplicates
+
     const hasLeave = usersOnLeave.length > 0;
     
     // Check if current user has leave on this day
@@ -851,7 +870,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
           </div>
         </div>
         
-        {/* Availability indicator */}
+        {/* Availability indicator - always show when we have user data */}
         {availability && (
           <div className="flex flex-col gap-1 mt-auto">
             <div 
@@ -869,13 +888,15 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
             </div>
             
             <div className="flex justify-between items-center text-[0.65rem]">
-              <span className="font-medium text-gray-600">Avail:</span>
+              <span className="font-medium text-gray-600">
+                {availability.totalUsers === 0 ? 'Setup:' : 'Avail:'}
+              </span>
               <span className={`font-bold ${
-                availability.status === 'high' ? 'text-green-700' : 
-                availability.status === 'medium' ? 'text-amber-700' : 
+                availability.status === 'high' ? 'text-green-700' :
+                availability.status === 'medium' ? 'text-amber-700' :
                 'text-red-700'
               }`}>
-                {availability.availablePercentage}%
+                {availability.totalUsers === 0 ? 'Add users' : `${availability.availablePercentage}%`}
               </span>
             </div>
           </div>

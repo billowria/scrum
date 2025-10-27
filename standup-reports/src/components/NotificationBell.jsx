@@ -264,17 +264,26 @@ const NotificationBell = ({ userRole }) => {
       setDismissedAnnouncements(dismissedAnnouncementIds);
       
       // Get announcements for user's team that haven't expired and haven't been dismissed
-      const { data: announcements, error: announcementError } = await supabase
-        .from('announcements')
-        .select(`
-          id, title, content, created_at, expiry_date, created_by,
-          teams:team_id (id, name),
-          manager:created_by (id, name)
-        `)
-        .eq('team_id', userData.team_id)
-        .gte('expiry_date', today)
-        .order('created_at', { ascending: false });
-        
+      let announcements = [];
+      let announcementError = null;
+      
+      // Only fetch team announcements if user belongs to a team
+      if (userData.team_id) {
+        const result = await supabase
+          .from('announcements')
+          .select(`
+            id, title, content, created_at, expiry_date, created_by,
+            teams:team_id (id, name),
+            manager:created_by (id, name)
+          `)
+          .eq('team_id', userData.team_id)
+          .gte('expiry_date', today)
+          .order('created_at', { ascending: false });
+          
+        announcements = result.data || [];
+        announcementError = result.error;
+      }
+      
       if (announcementError) throw announcementError;
       
       // Filter out dismissed announcements and transform them

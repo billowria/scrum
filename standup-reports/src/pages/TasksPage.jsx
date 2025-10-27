@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { notifySprintUpdate } from '../utils/notificationHelper';
+import { useCompany } from '../contexts/CompanyContext';
 import { format, addWeeks, parseISO, isWithinInterval } from 'date-fns';
 import { 
   FiGrid, 
@@ -200,6 +201,7 @@ const FilterTag = ({ label, color, onRemove }) => (
 );
 
 export default function TasksPage({ sidebarOpen }) {
+  const { currentCompany } = useCompany();
   // State management
   const [view, setView] = useState('board'); // 'board' or 'list'
   const [tasks, setTasks] = useState([]);
@@ -549,7 +551,8 @@ export default function TasksPage({ sidebarOpen }) {
     const fetchEmployees = async () => {
       if (!currentUser || !userRole) return;
       try {
-        let query = supabase.from('users').select('id, name');
+        let query = supabase.from('users').select('id, name')
+          .eq('company_id', currentCompany?.id);
         if (userRole === 'manager' && currentUser.team_id) {
           query = query.eq('team_id', currentUser.team_id);
         } else if (userRole === 'member') {

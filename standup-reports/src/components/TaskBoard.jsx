@@ -37,7 +37,8 @@ import {
   FiTarget,
   FiSearch,
   FiChevronDown,
-  FiFolder
+  FiFolder,
+  FiX
 } from 'react-icons/fi';
 import TaskCard from './TaskCard';
 

@@ -16,8 +16,10 @@ import LeaveAnalysisWidget from '../components/analytics/widgets/LeaveAnalysisWi
 import { getLeaveAnalysis } from '../services/analyticsService';
 import { supabase } from '../supabaseClient';
 import { colors } from '../config/designSystem';
+import { useCompany } from '../contexts/CompanyContext';
 
 const AnalyticsDashboard = () => {
+  const { currentCompany } = useCompany();
   const [userPerformanceData, setUserPerformanceData] = useState(null);
   const [velocityData, setVelocityData] = useState(null);
   const [predictiveData, setPredictiveData] = useState(null);
@@ -82,6 +84,7 @@ const AnalyticsDashboard = () => {
        const { data: users, error: usersError } = await supabase
          .from('users')
          .select('id, name')
+         .eq('company_id', currentCompany?.id)
          .order('name');
 
        if (!usersError && users) {
@@ -91,6 +94,7 @@ const AnalyticsDashboard = () => {
        const { data: teams, error: teamsError } = await supabase
          .from('teams')
          .select('id, name')
+         .eq('company_id', currentCompany?.id)
          .order('name');
 
        if (!teamsError && teams) {
@@ -102,7 +106,7 @@ const AnalyticsDashboard = () => {
    };
 
    loadFilterOptions();
- }, []);
+ }, [currentCompany]);
 
  useEffect(() => {
    fetchData();

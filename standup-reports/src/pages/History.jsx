@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useCompany } from '../contexts/CompanyContext';
 import { FiChevronDown, FiChevronUp, FiFilter, FiCalendar, FiUsers, FiCheckCircle, FiAlertCircle, FiClock } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -49,6 +50,7 @@ const statusColors = {
 };
 
 export default function History() {
+  const { currentCompany } = useCompany();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,19 +70,22 @@ export default function History() {
     setStartDate(start.toISOString().split('T')[0]);
     
     fetchTeams();
-  }, []);
+  }, [currentCompany]);
 
   useEffect(() => {
     if (startDate && endDate) {
       fetchReports();
     }
-  }, [startDate, endDate, selectedTeam]);
+  }, [startDate, endDate, selectedTeam, currentCompany]);
 
   const fetchTeams = async () => {
     try {
+      if (!currentCompany?.id) return;
+
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name');
+        .select('id, name')
+        .eq('company_id', currentCompany.id);
 
       if (error) throw error;
       setTeams(data || []);
@@ -90,28 +95,55 @@ export default function History() {
   };
 
   const fetchReports = async () => {
-    if (!startDate || !endDate) return;
-    
+    if (!startDate || !endDate || !currentCompany?.id) return;
+
     setLoading(true);
     setError(null);
 
     try {
       // Query to get reports within date range with user and team information
+      // Filter by company_id and also join with users to ensure user belongs to same company
       let query = supabase
         .from('daily_reports')
         .select(`
           id, date, yesterday, today, blockers, created_at,
-          users:user_id (id, name, team_id, teams:team_id (id, name))
+          users:user_id (id, name, team_id, company_id, teams:team_id (id, name, company_id))
         `)
+        .eq('company_id', currentCompany.id)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: false });
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        // If company_id column doesn't exist yet, fallback to filtering by user company
+        if (error.message?.includes('column "company_id" does not exist') || error.code === 'PGRST204') {
+          const fallbackQuery = supabase
+            .from('daily_reports')
+            .select(`
+              id, date, yesterday, today, blockers, created_at,
+              users:user_id (id, name, team_id, company_id, teams:team_id (id, name, company_id))
+            `)
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', { ascending: false });
 
-      setReports(data || []);
+          const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+          if (fallbackError) throw fallbackError;
+
+          // Filter client-side by user company_id
+          const filteredData = fallbackData?.filter(report =>
+            report.users?.company_id === currentCompany.id
+          ) || [];
+
+          setReports(filteredData);
+        } else {
+          throw error;
+        }
+      } else {
+        setReports(data || []);
+      }
     } catch (error) {
       setError('Error fetching reports: ' + error.message);
       console.error('Error fetching reports:', error);
