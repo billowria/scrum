@@ -542,7 +542,7 @@ export default function TaskBoard({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="mt-8 space-y-4">
       {/* Stunning Modern Header with Integrated Filters */}
       <div className="relative z-[40] mb-4 bg-gradient-to-r from-white via-blue-50/30 to-purple-50/30 backdrop-blur-md rounded-2xl border border-gray-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="p-4">
@@ -944,41 +944,7 @@ export default function TaskBoard({
               <span className="sm:hidden">Sprints</span>
             </motion.button>
 
-            {/* Display Mode Toggle - Beautiful Glassmorphic */}
-            <motion.div
-              className="bg-white/40 backdrop-blur-md p-1 rounded-xl border border-white/60 shadow-sm"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex items-center bg-white/20 rounded-lg backdrop-blur-sm">
-                {[
-                  { id: 'board', icon: FiGrid, label: 'Board', color: 'blue' },
-                  { id: 'list', icon: FiList, label: 'List', color: 'purple' }
-                ].map((mode) => (
-                  <motion.button
-                    key={mode.id}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setDisplayMode(mode.id)}
-                    className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 flex items-center gap-1.5 ${
-                      displayMode === mode.id
-                        ? `bg-gradient-to-r from-${mode.color}-500 to-${mode.color}-600 text-white shadow-lg`
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                  >
-                    <mode.icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{mode.label}</span>
-                    {displayMode === mode.id && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-lg"
-                        animate={{ x: [0, 100, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
+
 
             {/* Spacer */}
             <div className="flex-1"></div>
@@ -1077,6 +1043,42 @@ export default function TaskBoard({
                   <span className="text-red-700 font-bold">{boardStats.overdue}</span>
                 </div>
               )}
+
+              {/* Board/List Toggle in Stats Section */}
+              <motion.div
+                className="bg-white/40 backdrop-blur-md p-1 rounded-xl border border-white/60 shadow-sm ml-2"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="flex items-center bg-white/20 rounded-lg backdrop-blur-sm">
+                  {[
+                    { id: 'board', icon: FiGrid, label: 'Board', color: 'blue' },
+                    { id: 'list', icon: FiList, label: 'List', color: 'purple' }
+                  ].map((mode) => (
+                    <motion.button
+                      key={mode.id}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setDisplayMode(mode.id)}
+                      className={`relative px-2 py-1 rounded-lg text-xs font-medium transition-all duration-300 flex items-center gap-1 ${
+                        displayMode === mode.id
+                          ? `bg-gradient-to-r from-${mode.color}-500 to-${mode.color}-600 text-white shadow-lg`
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      <mode.icon className="w-3 h-3" />
+                      <span className="hidden sm:inline">{mode.label}</span>
+                      {displayMode === mode.id && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-lg"
+                          animate={{ x: [0, 80, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
             </div>
           </div>
         </div>
