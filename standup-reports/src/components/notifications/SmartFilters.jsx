@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   FiFilter, FiCalendar, FiTag, FiX, FiRefreshCw, FiCheck,
-  FiChevronDown, FiChevronUp, FiSliders
+  FiChevronDown, FiChevronUp, FiSliders, FiMessageCircle,
+  FiFolder, FiTarget, FiAlertTriangle, FiStar
 } from 'react-icons/fi';
 import { NOTIFICATION_CATEGORIES, NOTIFICATION_PRIORITIES } from '../../services/notificationService';
 
@@ -159,29 +160,60 @@ export default function SmartFilters({ filters, onFilterChange, stats }) {
           >
             <div className="space-y-1">
               {[
-                { value: 'all', label: 'All Categories' },
-                { value: NOTIFICATION_CATEGORIES.COMMUNICATION, label: 'Communication' },
-                { value: NOTIFICATION_CATEGORIES.ADMINISTRATIVE, label: 'Administrative' },
-                { value: NOTIFICATION_CATEGORIES.PROJECT, label: 'Projects' },
-                { value: NOTIFICATION_CATEGORIES.TASK, label: 'Tasks' },
-                { value: NOTIFICATION_CATEGORIES.SYSTEM, label: 'System' },
-                { value: NOTIFICATION_CATEGORIES.ACHIEVEMENT, label: 'Achievements' }
-              ].map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => handleFilterUpdate('category', value)}
-                  className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
-                    filters.category === value
-                      ? 'bg-indigo-50 border border-indigo-300 text-indigo-700'
-                      : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    {filters.category === value && <FiCheck className="w-3 h-3" />}
-                    <span className="font-medium">{label}</span>
-                  </div>
-                </button>
-              ))}
+                { value: 'all', label: 'All Categories', icon: FiTag },
+                { value: NOTIFICATION_CATEGORIES.COMMUNICATION, label: 'Communication', icon: FiMessageCircle },
+                { value: NOTIFICATION_CATEGORIES.ADMINISTRATIVE, label: 'Administrative', icon: FiCalendar },
+                { value: NOTIFICATION_CATEGORIES.PROJECT, label: 'Projects', icon: FiFolder },
+                { value: NOTIFICATION_CATEGORIES.TASK, label: 'Tasks', icon: FiTarget },
+                { value: NOTIFICATION_CATEGORIES.SYSTEM, label: 'System', icon: FiAlertTriangle },
+                { value: NOTIFICATION_CATEGORIES.ACHIEVEMENT, label: 'Achievements', icon: FiStar }
+              ].map(({ value, label, icon: Icon }) => {
+                // Get count for this category from stats
+                const count = value === 'all'
+                  ? (stats.total || 0)
+                  : (stats.byCategory?.[value] || 0);
+
+                // Special styling for Projects and Tasks categories
+                const isSpecialCategory = value === NOTIFICATION_CATEGORIES.PROJECT || value === NOTIFICATION_CATEGORIES.TASK;
+                const specialColor = value === NOTIFICATION_CATEGORIES.PROJECT
+                  ? 'text-emerald-600 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+                  : value === NOTIFICATION_CATEGORIES.TASK
+                  ? 'text-indigo-600 border-indigo-200 bg-indigo-50 hover:bg-indigo-100'
+                  : '';
+
+                return (
+                  <button
+                    key={value}
+                    onClick={() => handleFilterUpdate('category', value)}
+                    className={`w-full flex items-center justify-between p-2 rounded text-sm transition-colors ${
+                      filters.category === value
+                        ? isSpecialCategory
+                          ? specialColor
+                          : 'bg-indigo-50 border border-indigo-300 text-indigo-700'
+                        : 'border border-gray-200 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {filters.category === value && <FiCheck className="w-3 h-3" />}
+                      {Icon && <Icon className="w-3 h-3" />}
+                      <span className="font-medium">{label}</span>
+                    </div>
+                    {count > 0 && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        filters.category === value
+                          ? isSpecialCategory
+                            ? value === NOTIFICATION_CATEGORIES.PROJECT
+                              ? 'bg-emerald-200 text-emerald-800'
+                              : 'bg-indigo-200 text-indigo-800'
+                            : 'bg-indigo-200 text-indigo-800'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </CollapsibleSection>
 

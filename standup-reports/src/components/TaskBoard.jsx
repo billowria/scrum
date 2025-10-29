@@ -41,6 +41,7 @@ import {
   FiX
 } from 'react-icons/fi';
 import TaskCard from './TaskCard';
+import TaskList from './TaskList';
 
 const statusColumns = [
   { 
@@ -285,8 +286,8 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
   );
 };
 
-export default function TaskBoard({ 
-  tasks, 
+export default function TaskBoard({
+  tasks,
   onTaskUpdate,
   onTaskEdit,
   onTaskDelete,
@@ -306,6 +307,7 @@ export default function TaskBoard({
   onClearAllFilters = null,
   onOpenSprintManagement = () => {}
 }) {
+  const [displayMode, setDisplayMode] = useState('board'); // 'board' or 'list'
   const [activeId, setActiveId] = useState(null);
   const [showStats, setShowStats] = useState(true);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -942,6 +944,42 @@ export default function TaskBoard({
               <span className="sm:hidden">Sprints</span>
             </motion.button>
 
+            {/* Display Mode Toggle - Beautiful Glassmorphic */}
+            <motion.div
+              className="bg-white/40 backdrop-blur-md p-1 rounded-xl border border-white/60 shadow-sm"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center bg-white/20 rounded-lg backdrop-blur-sm">
+                {[
+                  { id: 'board', icon: FiGrid, label: 'Board', color: 'blue' },
+                  { id: 'list', icon: FiList, label: 'List', color: 'purple' }
+                ].map((mode) => (
+                  <motion.button
+                    key={mode.id}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setDisplayMode(mode.id)}
+                    className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 flex items-center gap-1.5 ${
+                      displayMode === mode.id
+                        ? `bg-gradient-to-r from-${mode.color}-500 to-${mode.color}-600 text-white shadow-lg`
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <mode.icon className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{mode.label}</span>
+                    {displayMode === mode.id && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-lg"
+                        animate={{ x: [0, 100, 0] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+
             {/* Spacer */}
             <div className="flex-1"></div>
 
@@ -1044,44 +1082,76 @@ export default function TaskBoard({
         </div>
       </div>
 
-      {/* Enhanced Kanban Board */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        measuring={{
-          droppable: {
-            strategy: MeasuringStrategy.Always,
-          },
-        }}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <div className="flex gap-8 h-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-          {statusColumns.map(column => (
-            <SortableColumn
-              key={column.id}
-              column={column}
+      {/* Conditional rendering based on display mode */}
+      <AnimatePresence mode="wait">
+        {displayMode === 'board' ? (
+          <motion.div
+            key="board-view"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Enhanced Kanban Board */}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              measuring={{
+                droppable: {
+                  strategy: MeasuringStrategy.Always,
+                },
+              }}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
+              <div className="flex gap-8 h-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {statusColumns.map(column => (
+                  <SortableColumn
+                    key={column.id}
+                    column={column}
+                    tasks={filteredTasks}
+                    onTaskUpdate={onTaskUpdate}
+                    onTaskEdit={onTaskEdit}
+                    onTaskDelete={onTaskDelete}
+                    onTaskView={onTaskView}
+                  />
+                ))}
+              </div>
+
+              {/* Drag Overlay */}
+              <DragOverlay>
+                {activeId ? (
+                  <TaskCard
+                    task={tasks.find(task => task.id === activeId)}
+                    isDragging
+                    columnColor={statusColumns.find(col => col.id === tasks.find(t => t.id === activeId)?.status)}
+                  />
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="list-view"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TaskList
               tasks={filteredTasks}
               onTaskUpdate={onTaskUpdate}
               onTaskEdit={onTaskEdit}
               onTaskDelete={onTaskDelete}
               onTaskView={onTaskView}
+              employees={employees}
+              projects={projects}
+              getStatusConfig={getStatusConfig}
             />
-          ))}
-        </div>
-
-        {/* Drag Overlay */}
-        <DragOverlay>
-          {activeId ? (
-            <TaskCard
-              task={tasks.find(task => task.id === activeId)}
-              isDragging
-              columnColor={statusColumns.find(col => col.id === tasks.find(t => t.id === activeId)?.status)}
-            />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       
       {/* Beautiful Board Footer with Stats */}

@@ -749,25 +749,6 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
           {/* Team Management Tab */}
           {activeTab === 'team-management' && (
             <div ref={teamManagementRef}>
-              <TabHeader
-                title="Team Management"
-                subtitle="Lead & Organize Your Team"
-                description="Comprehensive team oversight with member assignments, role management, and performance tracking. Manage team structures, delegate responsibilities, and monitor team dynamics."
-                icon={FiUsers}
-                accentColor="blue"
-                features={[
-                  "Staff Oversight",
-                  "Team Assignment", 
-                  "Manager Delegation",
-                  "Role Management"
-                ]}
-                stats={[
-                  { value: teams.length, label: "Teams" },
-                  { value: users.length, label: "Members" },
-                  { value: users.filter(u => u.role === 'manager').length, label: "Managers" },
-                  { value: users.filter(u => u.role === 'member').length, label: "Members" }
-                ]}
-              />
               <TeamManagement activeSubTab={activeSubTab} setActiveSubTab={setActiveSubTab} />
             </div>
           )}

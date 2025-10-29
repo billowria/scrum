@@ -155,7 +155,6 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
     ],
     'manager-dashboard': [
       { id: 'analytics-dashboard', icon: TbLayoutDashboard, label: 'Analytics', path: '/analytics-dashboard' },
-      { id: 'team-management', icon: TbUsers, label: 'Team', path: '/manager-dashboard?tab=team-management' },
       { id: 'add-member', icon: TbUserPlus, label: 'Add Member', path: '/manager-dashboard?tab=add-member' },
       { id: 'project-manager', icon: TbFolder, label: 'Project Manager', path: '/manager-dashboard?tab=project-manager' },
       { id: 'announcements', icon: TbBell, label: 'Announcements', path: '/manager-dashboard?tab=announcements' },

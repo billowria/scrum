@@ -470,10 +470,19 @@ class NotificationService {
     const content = (announcement.content || '').toLowerCase();
     const notificationType = announcement.notification_type;
 
+    // Debug logging for categorization
+    console.log('Detecting announcement type:', {
+      title: announcement.title,
+      content: announcement.content?.substring(0, 100) + '...',
+      notificationType,
+      metadata: announcement.metadata
+    });
+
     // If notification_type is explicitly set, use it
     if (notificationType) {
       // Validate that it's a known notification type
       if (Object.values(NOTIFICATION_TYPES).includes(notificationType)) {
+        console.log('Using explicit notification type:', notificationType);
         return notificationType;
       }
     }
@@ -483,50 +492,76 @@ class NotificationService {
         title.includes('sprint update') ||
         title.includes('sprint started') ||
         title.includes('sprint completed') ||
-        content.includes('sprint') &&
-        (content.includes('started') || content.includes('completed') || content.includes('created'))) {
+        title.includes('sprint created') ||
+        (content.includes('sprint') &&
+        (content.includes('started') || content.includes('completed') || content.includes('created')))) {
+      console.log('Detected sprint update notification');
       return NOTIFICATION_TYPES.SPRINT_UPDATE;
     }
 
-    // Task-related announcements - enhanced detection
+    // Task-related announcements - enhanced detection for tasks page notifications
     if (title.includes('task') ||
         title.includes('new task') ||
         title.includes('task assigned') ||
         title.includes('task updated') ||
         title.includes('task status') ||
         title.includes('comment on task') ||
+        title.includes('task created') ||
+        title.includes('task completed') ||
         content.includes('task ')) {
       // More specific task type detection
-      if (title.includes('assigned') || title.includes('new task')) {
+      if (title.includes('assigned') || title.includes('new task') || title.includes('task created')) {
+        console.log('Detected task assigned notification');
         return NOTIFICATION_TYPES.TASK_ASSIGNED;
-      } else if (title.includes('status') || title.includes('completed')) {
+      } else if (title.includes('status') || title.includes('completed') || title.includes('task completed')) {
+        console.log('Detected task status change notification');
         return NOTIFICATION_TYPES.TASK_STATUS_CHANGE;
       } else if (title.includes('comment')) {
+        console.log('Detected task comment notification');
         return NOTIFICATION_TYPES.TASK_COMMENT;
       } else {
+        console.log('Detected task updated notification');
         return NOTIFICATION_TYPES.TASK_UPDATED;
       }
     }
 
-    // Project update announcements - enhanced detection
+    // Project update announcements - enhanced detection for projects page notifications
     if (title.startsWith('project update') ||
         title.includes('project created') ||
         title.includes('project updated') ||
-        content.includes('project') &&
-        (content.includes('created') || content.includes('updated'))) {
+        title.includes('new project') ||
+        title.includes('project milestone') ||
+        (content.includes('project') &&
+        (content.includes('created') || content.includes('updated') || content.includes('milestone')))) {
+      console.log('Detected project update notification');
       return NOTIFICATION_TYPES.PROJECT_UPDATE;
     }
 
     // Leave request announcements
     if (title.includes('leave request') || content.includes('leave request')) {
+      console.log('Detected leave request notification');
       return NOTIFICATION_TYPES.LEAVE_REQUEST;
     }
 
     // Timesheet announcements
     if (title.includes('timesheet') || content.includes('timesheet')) {
+      console.log('Detected timesheet notification');
       return NOTIFICATION_TYPES.TIMESHEET_SUBMISSION;
     }
 
+    // Check metadata for task/project information
+    if (announcement.metadata) {
+      if (announcement.metadata.taskId || announcement.metadata.taskTitle) {
+        console.log('Detected task notification from metadata');
+        return NOTIFICATION_TYPES.TASK_UPDATED;
+      }
+      if (announcement.metadata.projectId || announcement.metadata.projectName) {
+        console.log('Detected project notification from metadata');
+        return NOTIFICATION_TYPES.PROJECT_UPDATE;
+      }
+    }
+
+    console.log('Defaulting to general announcement');
     return NOTIFICATION_TYPES.ANNOUNCEMENT;
   }
 

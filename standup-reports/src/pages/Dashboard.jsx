@@ -1215,11 +1215,11 @@ export default function Dashboard({ sidebarOpen }) {
                         glow: 'shadow-blue-500/20'
                       },
                       // Removed 'report' card as requested
-                      { 
-                        key: 'projects', 
-                        icon: <FiGrid className="w-6 h-6" />, 
-                        onClick: () => navigate('/projects'), 
-                        label: 'Projects', 
+                      {
+                        key: 'projects',
+                        icon: <FiGrid className="w-6 h-6" />,
+                        onClick: () => navigate('/projects'),
+                        label: 'Projects',
                         gradient: 'from-purple-500 to-fuchsia-600',
                         bg: 'bg-purple-500/10',
                         border: 'border-purple-500/30',
@@ -1228,7 +1228,19 @@ export default function Dashboard({ sidebarOpen }) {
                         hoverText: `You are assigned to ${projectCount} project${projectCount !== 1 ? 's' : ''}`
                       },
 
-                      { 
+                      {
+                        key: 'team-management',
+                        icon: <FiUsers className="w-6 h-6" />,
+                        onClick: () => navigate('/team-management'),
+                        label: 'Manage Team',
+                        gradient: 'from-teal-500 to-cyan-600',
+                        bg: 'bg-teal-500/10',
+                        border: 'border-teal-500/30',
+                        glow: 'shadow-teal-500/20',
+                        hoverText: 'Manage team members and roles'
+                      },
+
+                      {
                         key: 'ach', 
                         icon: <FiAward className="w-6 h-6" />, 
                         onClick: () => navigate('/achievements'), 
@@ -2152,33 +2164,52 @@ export default function Dashboard({ sidebarOpen }) {
                               </span>
                             )}
                             
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
-                              filteredReports[currentReportIndex].blockers 
-                                ? "bg-amber-100 text-amber-700" 
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}>
-                              {filteredReports[currentReportIndex].blockers 
-                                ? <FiAlertCircle className="mr-1 h-3 w-3" /> 
-                                : <FiCheckCircle className="mr-1 h-3 w-3" />}
-                              {filteredReports[currentReportIndex].blockers 
-                                ? "Has Blockers" 
-                                : "No Blockers"}
-                            </span>
+                            {(() => {
+                              const blockers = filteredReports[currentReportIndex]?.blockers;
+                              const isEmptyContent = !blockers ||
+                                                    blockers === null ||
+                                                    blockers === undefined ||
+                                                    blockers.toString().trim() === '' ||
+                                                    blockers.toString().trim() === '<p></p>' ||
+                                                    blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                              const hasBlockers = !isEmptyContent;
+                              return (
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
+                                  hasBlockers
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-emerald-100 text-emerald-700"
+                                }`}>
+                                  {hasBlockers
+                                    ? <FiAlertCircle className="mr-1 h-3 w-3" />
+                                    : <FiCheckCircle className="mr-1 h-3 w-3" />}
+                                  {hasBlockers ? "Has Blockers" : "No Blockers"}
+                                </span>
+                              );
+                            })()}
                           </div>
                     </div>
                     
-                        <div className="grid md:grid-cols-3 gap-6 flex-1">
+                        <div className={`grid gap-6 flex-1 ${(() => {
+                          const blockers = filteredReports[currentReportIndex]?.blockers;
+                          const isEmptyContent = !blockers ||
+                                                blockers === null ||
+                                                blockers === undefined ||
+                                                blockers.toString().trim() === '' ||
+                                                blockers.toString().trim() === '<p></p>' ||
+                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                          return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
+                        })()}`}>
                         <motion.div 
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
-                            <div className="bg-indigo-600 text-white px-5 py-3">
-                              <h4 className="font-medium flex items-center text-lg">
-                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">1</span>
+                            <div className="bg-indigo-600 text-white px-4 py-1">
+                              <h4 className="font-medium flex items-center justify-center text-sm">
+                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">1</span>
                             Yesterday
                           </h4>
                             </div>
-                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[210px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
+                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[273px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
                               <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
                                 {filteredReports[currentReportIndex].yesterday ? (
                                   <RichTextDisplay 
@@ -2199,13 +2230,13 @@ export default function Dashboard({ sidebarOpen }) {
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
-                            <div className="bg-emerald-600 text-white px-5 py-3">
-                              <h4 className="font-medium flex items-center text-lg">
-                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">2</span>
+                            <div className="bg-emerald-600 text-white px-4 py-1">
+                              <h4 className="font-medium flex items-center justify-center text-sm">
+                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">2</span>
                             Today
                           </h4>
                             </div>
-                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[210px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
+                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[273px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
                               <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
                                 {filteredReports[currentReportIndex].today ? (
                                   <RichTextDisplay 
@@ -2221,37 +2252,37 @@ export default function Dashboard({ sidebarOpen }) {
                               </div>
                           </div>
                         </motion.div>
-                        
-                        <motion.div 
+
+                        {(() => {
+                          const blockers = filteredReports[currentReportIndex]?.blockers;
+                          const isEmptyContent = !blockers ||
+                                                blockers === null ||
+                                                blockers === undefined ||
+                                                blockers.toString().trim() === '' ||
+                                                blockers.toString().trim() === '<p></p>' ||
+                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                          return !isEmptyContent;
+                        })() && (
+                          <motion.div
                             className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
                             whileHover={{ scale: 1.02, y: -3 }}
                           >
-                            <div className={`px-5 py-3 text-white ${filteredReports[currentReportIndex].blockers ? 'bg-amber-600' : 'bg-blue-600'}`}>
-                              <h4 className="font-medium flex items-center text-lg">
-                                <span className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center mr-2 text-sm font-bold">3</span>
+                            <div className="px-4 py-1 text-white bg-amber-600">
+                              <h4 className="font-medium flex items-center justify-center text-sm">
+                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">3</span>
                             Blockers
                           </h4>
                             </div>
-                            <div className={`p-5 h-[210px] flex flex-col transition-colors ${
-                              filteredReports[currentReportIndex].blockers 
-                                ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50' 
-                                : 'bg-gradient-to-br from-blue-50 to-blue-100/50 group-hover:from-blue-100 group-hover:to-blue-50'
-                            }`}>
-                              <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 ${filteredReports[currentReportIndex].blockers ? 'text-amber-700' : 'text-blue-700'}`}>
-                                {filteredReports[currentReportIndex].blockers ? (
-                                  <RichTextDisplay 
-                                    content={filteredReports[currentReportIndex].blockers}
-                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
-                                  />
-                                ) : (
-                                  <span className="italic text-emerald-600 flex items-center gap-1">
-                                    <FiCheckCircle className="h-3 w-3" />
-                                    No blockers
-                                  </span>
-                                )}
+                            <div className="p-5 h-[273px] flex flex-col transition-colors bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50">
+                              <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-amber-700">
+                                <RichTextDisplay
+                                  content={filteredReports[currentReportIndex].blockers}
+                                  onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                />
                               </div>
                           </div>
                         </motion.div>
+                      )}
                       </div>
                     </div>
               </motion.div>
@@ -2340,24 +2371,52 @@ export default function Dashboard({ sidebarOpen }) {
                           )}
                           
                           <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
-                            report.blockers 
-                              ? "bg-amber-100 text-amber-700" 
-                              : "bg-emerald-100 text-emerald-700"
+                            (() => {
+                              const blockers = report?.blockers;
+                              const isEmptyContent = !blockers ||
+                                                    blockers === null ||
+                                                    blockers === undefined ||
+                                                    blockers.toString().trim() === '' ||
+                                                    blockers.toString().trim() === '<p></p>' ||
+                                                    blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                              return !isEmptyContent ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
+                            })()
                           }`}>
-                            {report.blockers 
-                              ? <FiAlertCircle className="mr-1 h-3 w-3" /> 
-                              : <FiCheckCircle className="mr-1 h-3 w-3" />}
-                            {report.blockers 
-                              ? "Has Blockers" 
-                              : "No Blockers"}
+                            {(() => {
+                            const blockers = report?.blockers;
+                            const isEmptyContent = !blockers ||
+                                                  blockers === null ||
+                                                  blockers === undefined ||
+                                                  blockers.toString().trim() === '' ||
+                                                  blockers.toString().trim() === '<p></p>' ||
+                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            const hasBlockers = !isEmptyContent;
+                            return (
+                              <>
+                                {hasBlockers
+                                  ? <FiAlertCircle className="mr-1 h-3 w-3" />
+                                  : <FiCheckCircle className="mr-1 h-3 w-3" />}
+                                {hasBlockers ? "Has Blockers" : "No Blockers"}
+                              </>
+                            );
+                          })()}
                           </span>
                   </div>
                   </div>
                       
-                      <div className="grid sm:grid-cols-3 gap-3">
+                      <div className={`grid gap-3 ${(() => {
+                            const blockers = report?.blockers;
+                            const isEmptyContent = !blockers ||
+                                                  blockers === null ||
+                                                  blockers === undefined ||
+                                                  blockers.toString().trim() === '' ||
+                                                  blockers.toString().trim() === '<p></p>' ||
+                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            return !isEmptyContent ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
+                          })()}`}>
                         <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
-                          <span className="font-medium text-indigo-700 block mb-1.5 flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-indigo-200 flex items-center justify-center text-xs font-bold text-indigo-700">1</span>
+                          <span className="font-medium text-indigo-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
+                            <span className="w-4 h-4 rounded-full bg-indigo-200 flex items-center justify-center text-[10px] font-bold text-indigo-700">1</span>
                             Yesterday:
                           </span>
                           <div className="text-gray-700 break-words text-sm">
@@ -2370,8 +2429,8 @@ export default function Dashboard({ sidebarOpen }) {
                       </div>
                         
                         <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
-                          <span className="font-medium text-emerald-700 block mb-1.5 flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-emerald-200 flex items-center justify-center text-xs font-bold text-emerald-700">2</span>
+                          <span className="font-medium text-emerald-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
+                            <span className="w-4 h-4 rounded-full bg-emerald-200 flex items-center justify-center text-[10px] font-bold text-emerald-700">2</span>
                             Today:
                           </span>
                           <div className="text-gray-700 break-words text-sm">
@@ -2383,34 +2442,28 @@ export default function Dashboard({ sidebarOpen }) {
                           </div>
                     </div>
                     
-                        <div className={`rounded-lg p-3 hover:bg-opacity-70 transition-colors ${
-                          report.blockers 
-                            ? 'bg-amber-50 border border-amber-100 hover:bg-amber-100/50' 
-                            : 'bg-blue-50 border border-blue-100 hover:bg-blue-100/50'
-                        }`}> 
-                          <span className={`font-medium block mb-1.5 flex items-center gap-1.5 ${
-                            report.blockers ? 'text-amber-700' : 'text-blue-700'
-                          }`}>
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                              report.blockers ? 'bg-amber-200 text-amber-700' : 'bg-blue-200 text-blue-700'
-                            }`}>
+                        {(() => {
+                            const blockers = report?.blockers;
+                            const isEmptyContent = !blockers ||
+                                                  blockers === null ||
+                                                  blockers === undefined ||
+                                                  blockers.toString().trim() === '' ||
+                                                  blockers.toString().trim() === '<p></p>' ||
+                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            return !isEmptyContent;
+                          })() && (
+                          <div className="rounded-lg p-3 bg-amber-50 border border-amber-100 hover:bg-amber-100/50 hover:bg-opacity-70 transition-colors"> 
+                          <span className="font-medium block mb-0.5 flex items-center justify-center gap-1 text-amber-700 text-xs">
+                            <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-amber-200 text-amber-700">
                               3
                             </span>
                             Blockers:
                           </span>
-                          <div className={`break-words text-sm ${
-                            report.blockers ? 'text-amber-700' : 'text-blue-700'
-                          }`}>
-                            {report.blockers ? (
-                              <RichTextDisplay content={report.blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
-                            ) : (
-                              <span className="italic text-emerald-600 flex items-center gap-1">
-                                <FiCheckCircle className="h-3 w-3" />
-                                No blockers
-                              </span>
-                            )}
+                          <div className="break-words text-sm text-amber-700">
+                            <RichTextDisplay content={report.blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
                           </div>
-                      </div>
+                        </div>
+                      )}
                     </div>
                     </motion.div>
                   ))}
@@ -2653,10 +2706,19 @@ export default function Dashboard({ sidebarOpen }) {
                       </div>
                   </div>
                   
-                      <div className="grid md:grid-cols-3 gap-8">
-                        <div className="bg-primary-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
-                          <h4 className="font-semibold text-primary-700 mb-4 flex items-center text-xl border-b border-primary-100 pb-3">
-                            <span className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3 text-sm font-bold">1</span>
+                      <div className={`grid gap-8 ${(() => {
+                          const blockers = filteredReports[currentReportIndex]?.blockers;
+                          const isEmptyContent = !blockers ||
+                                                blockers === null ||
+                                                blockers === undefined ||
+                                                blockers.toString().trim() === '' ||
+                                                blockers.toString().trim() === '<p></p>' ||
+                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                          return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
+                        })()}`}>
+                        <div className="bg-primary-50 rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
+                          <h4 className="font-semibold text-primary-700 mb-1 flex items-center justify-center text-sm border-b border-primary-100 pb-0.5">
+                            <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">1</span>
                           Yesterday
                         </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
@@ -2668,9 +2730,9 @@ export default function Dashboard({ sidebarOpen }) {
                         </div>
                         </div>
                         
-                        <div className="bg-green-50 rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
-                          <h4 className="font-semibold text-green-700 mb-4 flex items-center text-xl border-b border-green-100 pb-3">
-                            <span className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3 text-sm font-bold">2</span>
+                        <div className="bg-green-50 rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
+                          <h4 className="font-semibold text-green-700 mb-1 flex items-center justify-center text-sm border-b border-green-100 pb-0.5">
+                            <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">2</span>
                           Today
                         </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
@@ -2682,22 +2744,26 @@ export default function Dashboard({ sidebarOpen }) {
                         </div>
                         </div>
                         
-                        <div className={`rounded-xl p-6 shadow-sm h-[300px] flex flex-col hover:shadow-md transition-all duration-300 border ${filteredReports[currentReportIndex].blockers ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-200'}`}>
-                          <h4 className={`font-semibold mb-4 flex items-center text-xl pb-3 border-b ${filteredReports[currentReportIndex].blockers ? 'text-red-700 border-red-100' : 'text-gray-700 border-gray-200'}`}>
-                            <span className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 text-sm font-bold ${filteredReports[currentReportIndex].blockers ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-700'}`}>3</span>
-                          Blockers
-                        </h4>
-                          <div className={`flex-1 overflow-y-auto custom-scrollbar px-1 ${filteredReports[currentReportIndex].blockers ? 'text-red-700' : 'text-green-700'}`}>
-                            {filteredReports[currentReportIndex].blockers ? (
+                        {(() => {
+                          const blockers = filteredReports[currentReportIndex]?.blockers;
+                          const isEmptyContent = !blockers ||
+                                                blockers === null ||
+                                                blockers === undefined ||
+                                                blockers.toString().trim() === '' ||
+                                                blockers.toString().trim() === '<p></p>' ||
+                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                          return !isEmptyContent;
+                        })() && (
+                          <div className="rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border bg-red-50 border-red-100">
+                            <h4 className="font-semibold mb-1 flex items-center justify-center text-sm pb-0.5 border-b text-red-700 border-red-100">
+                              <span className="h-5 w-5 rounded-full flex items-center justify-center mr-2 text-xs font-bold bg-red-100 text-red-700">3</span>
+                            Blockers
+                          </h4>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-red-700">
                               <RichTextDisplay content={filteredReports[currentReportIndex].blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
-                            ) : (
-                              <span className="italic text-emerald-600 flex items-center gap-1">
-                                <FiCheckCircle className="h-3 w-3" />
-                                No blockers
-                              </span>
-                            )}
-                          </div>
-                    </div>
+                            </div>
+                        </div>
+                      )}
                   </div>
                       
                       {/* Navigation indicator */}

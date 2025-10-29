@@ -60,10 +60,17 @@ export default function NotificationCenterV2() {
   // Fetch notifications and stats
   const fetchNotifications = useCallback(async () => {
     if (!currentUser) return;
-    
+
     setLoading(true);
     try {
       const companyOrTeamId = currentUser.company_id || currentUser.team_id;
+
+      console.log('NotificationCenter: Fetching notifications for user:', {
+        userId: currentUser.id,
+        role: userRole,
+        teamId: companyOrTeamId,
+        filters
+      });
 
       const result = await notificationService.getNotifications({
         userId: currentUser.id,
@@ -72,15 +79,27 @@ export default function NotificationCenterV2() {
         limit: 100,
         ...filters
       });
-      
+
+      console.log('NotificationCenter: Fetched notifications:', {
+        total: result.total,
+        notifications: result.notifications.length,
+        categories: result.notifications.map(n => ({
+          title: n.title,
+          type: n.type,
+          category: n.category
+        }))
+      });
+
       setNotifications(result.notifications);
-      
+
       // Get advanced stats
       const notificationStats = await notificationService.getNotificationStats(
         currentUser.id,
         userRole,
         currentUser.company_id || currentUser.team_id
       );
+
+      console.log('NotificationCenter: Notification stats:', notificationStats);
       setStats(notificationStats);
     } catch (err) {
       console.error('Error fetching notifications:', err);
@@ -101,37 +120,142 @@ export default function NotificationCenterV2() {
   useEffect(() => {
     if (!currentUser) return;
 
-    const subscriptionKey = notificationService.subscribeToNotifications(
-      currentUser.id,
-      userRole,
-      currentUser.team_id,
-      (type) => {
-        console.log('Real-time notification update:', type);
-        fetchNotifications();
-      }
-    );
+    console.log('NotificationCenter: Setting up real-time subscriptions for user:', currentUser.id);
+
+    // Subscribe to announcements (existing)
+    const announcementsChannel = supabase
+      .channel('announcements_nc')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'announcements'
+        },
+        (payload) => {
+          console.log('NotificationCenter: New announcement received:', payload);
+          fetchNotifications();
+        }
+      );
+
+    // Subscribe to tasks table changes
+    const tasksChannel = supabase
+      .channel('tasks_nc')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        (payload) => {
+          console.log('NotificationCenter: Task table changed:', payload);
+          fetchNotifications();
+        }
+      );
+
+    // Subscribe to projects table changes (if exists)
+    const projectsChannel = supabase
+      .channel('projects_nc')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'projects'
+        },
+        (payload) => {
+          console.log('NotificationCenter: Project table changed:', payload);
+          fetchNotifications();
+        }
+      );
+
+    // Subscribe to leave requests
+    const leaveRequestsChannel = supabase
+      .channel('leave_requests_nc')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leave_plans'
+        },
+        (payload) => {
+          console.log('NotificationCenter: New leave request:', payload);
+          fetchNotifications();
+        }
+      );
+
+    // Subscribe to timesheet submissions
+    const timesheetChannel = supabase
+      .channel('timesheets_nc')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'timesheet_submissions'
+        },
+        (payload) => {
+          console.log('NotificationCenter: New timesheet submission:', payload);
+          fetchNotifications();
+        }
+      );
+
+    // Subscribe to all channels
+    announcementsChannel.subscribe();
+    tasksChannel.subscribe();
+    projectsChannel.subscribe();
+    leaveRequestsChannel.subscribe();
+    timesheetChannel.subscribe();
 
     return () => {
-      notificationService.unsubscribeFromNotifications(subscriptionKey);
+      console.log('NotificationCenter: Cleaning up subscriptions');
+      supabase.removeChannel(announcementsChannel);
+      supabase.removeChannel(tasksChannel);
+      supabase.removeChannel(projectsChannel);
+      supabase.removeChannel(leaveRequestsChannel);
+      supabase.removeChannel(timesheetChannel);
     };
-  }, [currentUser, userRole, fetchNotifications]);
+  }, [currentUser, fetchNotifications]);
 
   // Memoized values
   const filteredNotifications = useMemo(() => {
-    return notifications.filter(notification => {
+    const filtered = notifications.filter(notification => {
       // Derive category from type if not present to ensure consistent categorization
       const derivedCategory = notification.category || notificationService.getNotificationCategory(notification.type);
+
+      // Debug filtering logic
+      if (filters.category !== 'all') {
+        console.log('Filtering by category:', {
+          notificationTitle: notification.title,
+          notificationType: notification.type,
+          originalCategory: notification.category,
+          derivedCategory,
+          filterCategory: filters.category,
+          matches: derivedCategory === filters.category
+        });
+      }
+
       if (filters.category !== 'all' && derivedCategory !== filters.category) return false;
       if (filters.priority !== 'all' && notification.priority !== filters.priority) return false;
       if (filters.status === 'unread' && notification.read) return false;
       if (filters.status === 'read' && !notification.read) return false;
       if (filters.search) {
         const search = filters.search.toLowerCase();
-        return (notification.title || '').toLowerCase().includes(search) || 
+        return (notification.title || '').toLowerCase().includes(search) ||
                (notification.message || '').toLowerCase().includes(search);
       }
       return true;
     });
+
+    console.log('NotificationCenter: Filtered notifications:', {
+      total: notifications.length,
+      filtered: filtered.length,
+      filters,
+      breakdown: filtered.reduce((acc, n) => {
+        const category = n.category || notificationService.getNotificationCategory(n.type);
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      }, {})
+    });
+
+    return filtered;
   }, [notifications, filters]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -215,6 +339,50 @@ export default function NotificationCenterV2() {
         searchQuery={filters.search}
         isRefreshing={isRefreshing}
       />
+
+      {/* Debug Panel - Notification Categories */}
+      <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-4">
+            <span className="font-medium text-yellow-800">Debug: Notification Categories</span>
+            <div className="flex gap-3">
+              <span className="text-gray-600">
+                Total: <span className="font-bold text-gray-800">{notifications.length}</span>
+              </span>
+              <span className="text-gray-600">
+                Tasks: <span className="font-bold text-indigo-600">
+                  {notifications.filter(n => {
+                    const category = n.category || notificationService.getNotificationCategory(n.type);
+                    return category === 'task';
+                  }).length}
+                </span>
+              </span>
+              <span className="text-gray-600">
+                Projects: <span className="font-bold text-emerald-600">
+                  {notifications.filter(n => {
+                    const category = n.category || notificationService.getNotificationCategory(n.type);
+                    return category === 'project';
+                  }).length}
+                </span>
+              </span>
+              <span className="text-gray-600">
+                Other: <span className="font-bold text-gray-600">
+                  {notifications.filter(n => {
+                    const category = n.category || notificationService.getNotificationCategory(n.type);
+                    return category !== 'task' && category !== 'project';
+                  }).length}
+                </span>
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={fetchNotifications}
+            className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-300 transition-colors"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
