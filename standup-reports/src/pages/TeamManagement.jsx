@@ -57,27 +57,38 @@ export default function TeamManagement({ activeSubTab = 'staff-oversight', setAc
         </div>
       </motion.div>
 
-            <div className="relative bg-gray-100 p-1.5 rounded-xl flex items-center justify-center shadow-inner">
+      {/* Tab Navigation */}
+      <motion.div variants={itemVariants} className="relative bg-gray-100 p-1.5 rounded-xl flex items-center justify-center shadow-inner">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
-            className={`relative z-10 flex items-center gap-2 py-2.5 px-6 rounded-lg transition-colors duration-300 text-sm font-medium ${activeSubTab === tab.id ? 'text-white' : 'text-gray-600 hover:text-gray-800'}`}
-            style={{ WebkitTapHighlightColor: 'transparent' }}
+            className={`relative flex items-center gap-2 py-2.5 px-6 rounded-lg transition-all duration-300 text-sm font-medium cursor-pointer ${
+              activeSubTab === tab.id
+                ? 'text-white'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
+            }`}
+            style={{
+              WebkitTapHighlightColor: 'transparent',
+              pointerEvents: 'auto',
+              zIndex: 10
+            }}
           >
             {activeSubTab === tab.id && (
               <motion.div
                 layoutId="active-pill"
                 className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg shadow-md"
+                style={{ zIndex: -1 }}
                 transition={{ type: 'spring', stiffness: 380, damping: 30 }}
               />
             )}
-            <span className="relative">{tab.icon}</span>
-            <span className="relative">{tab.label}</span>
+            <span>{tab.icon}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
-      </div>
+      </motion.div>
 
+      {/* Tab Content */}
       <motion.div variants={itemVariants}>
         <AnimatePresence mode="wait">
           {activeSubTab === 'staff-oversight' && (

@@ -165,6 +165,11 @@ export default function NotificationStream({
           await markAsRead(notificationId);
         }
         break;
+      case 'refresh':
+        // Remove the notification from the local list when leave request is approved/rejected
+        setLocalNotifications(prev => prev.filter(n => n.id !== notificationId));
+        onNotificationAction?.();
+        break;
     }
   };
 
@@ -259,6 +264,7 @@ export default function NotificationStream({
               <NotificationCard
                 notification={notification}
                 onAction={handleQuickAction}
+                currentUser={currentUser}
               />
             </motion.div>
           ))}

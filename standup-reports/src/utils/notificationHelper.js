@@ -10,19 +10,48 @@ import notificationService, { NOTIFICATION_TYPES, NOTIFICATION_PRIORITIES } from
  * @param {string} message - Additional message about the update
  * @param {Object} additionalData - Any additional data to store with the notification
  */
-export const createTaskNotification = async (userId, taskId, taskTitle, action, message, additionalData = {}) => {
+export const createTaskNotification = async (userId, taskId, _taskTitle, action, message, additionalData = {}) => {
   try {
+    // Get user's team information
+    const { data: userData } = await supabase
+      .from('users')
+      .select('team_id, company_id')
+      .eq('id', userId)
+      .single();
+
+    if (!userData?.team_id) {
+      console.warn('User team not found, skipping task notification');
+      return { userId, taskId, taskTitle: _taskTitle, action, message, skipped: true };
+    }
+
     const type = action === 'assigned' || action === 'reassigned' ? NOTIFICATION_TYPES.TASK_ASSIGNED :
                  action === 'comment' ? NOTIFICATION_TYPES.TASK_COMMENT :
+                 action === 'status_changed' ? NOTIFICATION_TYPES.TASK_STATUS_CHANGE :
                  NOTIFICATION_TYPES.TASK_UPDATED;
-    
-    await notificationService.createTaskNotification(taskId, type, userId, {
-      title: titleFromAction(action, taskTitle),
-      message,
-      ...additionalData
+
+    const title = titleFromAction(action, _taskTitle);
+
+    // Create announcement for task notification
+    await supabase.from('announcements').insert({
+      title: title,
+      content: message,
+      notification_type: type,
+      priority: additionalData.priority || NOTIFICATION_PRIORITIES.NORMAL,
+      team_id: userData.team_id,
+      company_id: userData.company_id,
+      created_by: additionalData.createdBy || userId,
+      task_id: taskId,
+      expiry_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days
+      metadata: {
+        taskId: taskId,
+        taskTitle: _taskTitle,
+        action: action,
+        userId: userId,
+        ...additionalData
+      }
     });
-    
-    return { userId, taskId, taskTitle, action, message };
+
+    return { userId, taskId, taskTitle: _taskTitle, action, message };
   } catch (error) {
     console.error('Error creating task notification:', error);
     throw error;
@@ -67,19 +96,13 @@ export const createTaskNotificationsForUsers = async (userIds, taskId, taskTitle
 /**
  * Create notification for leave request (for managers)
  */
-export const notifyLeaveRequest = async (leaveRequest, requesterName, managerId) => {
+export const notifyLeaveRequest = async (leaveRequest, _requesterName, _managerId) => {
   try {
-    // Create announcement for the manager about new leave request
-    const { data: { user } } = await supabase.auth.getUser();
-    const creatorId = user?.id || leaveRequest.user_id;
-
-    await supabase.from('announcements').insert({
-      title: 'New Leave Request',
-      content: `${requesterName} has requested leave from ${new Date(leaveRequest.start_date).toLocaleDateString()} to ${new Date(leaveRequest.end_date).toLocaleDateString()}.`,
-      created_by: creatorId,
-      team_id: null, // Visible to all
-      expiry_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    });
+    // Use the new notification service method
+    const success = await notificationService.createLeaveRequestNotification(leaveRequest.id);
+    if (success) {
+      console.log('Leave request notification created successfully');
+    }
   } catch (error) {
     console.error('Error creating leave request notification:', error);
   }
@@ -91,7 +114,7 @@ export const notifyLeaveRequest = async (leaveRequest, requesterName, managerId)
 export const notifyLeaveStatus = async (leaveRequest, status, userId) => {
   try {
     const { data: userData } = await supabase.from('users').select('team_id').eq('id', userId).single();
-    
+
     await supabase.from('announcements').insert({
       title: `Leave Request ${status.charAt(0).toUpperCase() + status.slice(1)}`,
       content: `Your leave request for ${new Date(leaveRequest.start_date).toLocaleDateString()} to ${new Date(leaveRequest.end_date).toLocaleDateString()} has been ${status}.`,
@@ -105,12 +128,38 @@ export const notifyLeaveStatus = async (leaveRequest, status, userId) => {
 };
 
 /**
+ * Approve leave request from notification
+ */
+export const approveLeaveRequestFromNotification = async (leaveRequestId, managerId) => {
+  try {
+    const success = await notificationService.approveLeaveRequestFromNotification(leaveRequestId, managerId);
+    return success;
+  } catch (error) {
+    console.error('Error approving leave request from notification:', error);
+    return false;
+  }
+};
+
+/**
+ * Reject leave request from notification
+ */
+export const rejectLeaveRequestFromNotification = async (leaveRequestId, managerId, rejectionReason = '') => {
+  try {
+    const success = await notificationService.rejectLeaveRequestFromNotification(leaveRequestId, managerId, rejectionReason);
+    return success;
+  } catch (error) {
+    console.error('Error rejecting leave request from notification:', error);
+    return false;
+  }
+};
+
+/**
  * Notify user about achievement
  */
-export const notifyAchievement = async (userId, achievementTitle, creatorName) => {
+export const notifyAchievement = async (userId, achievementTitle, _creatorName) => {
   try {
     const { data: userData } = await supabase.from('users').select('team_id').eq('id', userId).single();
-    
+
     await supabase.from('announcements').insert({
       title: '🏆 New Achievement!',
       content: `Congratulations! You've earned the achievement: ${achievementTitle}`,

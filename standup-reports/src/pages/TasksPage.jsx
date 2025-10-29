@@ -838,6 +838,29 @@ export default function TasksPage({ sidebarOpen }) {
         throw error;
       }
 
+      // Create task status change notification
+      if (task.status && currentUser) {
+        try {
+          const oldStatus = task.previousStatus || 'unknown';
+          await createTaskNotification(
+            task.assignee_id || currentUser.id,
+            task.id,
+            task.title,
+            'status_changed',
+            `Task "${task.title}" status changed from ${oldStatus} to ${task.status}`,
+            {
+              previousStatus: oldStatus,
+              newStatus: task.status,
+              priority: task.priority === 'High' ? 'High' : 'Medium',
+              createdBy: currentUser.id
+            }
+          );
+        } catch (notificationError) {
+          console.error('Error creating task status notification:', notificationError);
+          // Continue even if notification fails
+        }
+      }
+
       console.log('Task updated successfully, fetching tasks...');
       // Show glassmorphic toast notification after successful DB save
       showToast(

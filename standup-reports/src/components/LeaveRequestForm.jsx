@@ -196,6 +196,13 @@ const LeaveRequestForm = ({
         return;
       }
       
+      // Fetch user info first for notification
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name, manager_id')
+        .eq('id', user.id)
+        .single();
+
       // Insert leave request
       const { data, error } = await supabase
         .from('leave_plans')
@@ -209,22 +216,25 @@ const LeaveRequestForm = ({
             status: 'pending',
             type: leaveType
           }
-        ]);
-      
-      if (error) throw error;
-      
-      // Fetch user info and notify manager
-      const { data: userData } = await supabase
-        .from('users')
-        .select('name, manager_id')
-        .eq('id', user.id)
+        ])
+        .select()
         .single();
-      
-      if (userData?.manager_id) {
+
+      if (error) throw error;
+
+      // Create notification for managers about the new leave request
+      if (data?.id) {
         await notifyLeaveRequest(
-          { start_date: startDate, end_date: endDate, user_id: user.id, type: leaveType },
-          userData.name,
-          userData.manager_id
+          {
+            id: data.id,
+            start_date: startDate,
+            end_date: endDate,
+            user_id: user.id,
+            type: leaveType,
+            reason: reason
+          },
+          userData?.name || 'Employee',
+          userData?.manager_id
         );
       }
       

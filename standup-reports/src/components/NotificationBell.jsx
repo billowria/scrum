@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import AnnouncementModal from './AnnouncementModal';
+import NotificationDetailModal from './notifications/NotificationDetailModal';
 
 // Enhanced animation variants
 const bellVariants = {
@@ -116,8 +116,8 @@ const NotificationBell = ({ userRole }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState(new Set());
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
-  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [processingLeaveRequest, setProcessingLeaveRequest] = useState(null);
   const modalRoot = useRef(document.getElementById('modal-root') || document.body);
@@ -200,20 +200,20 @@ const NotificationBell = ({ userRole }) => {
     try {
       // Get current user to fetch relevant notifications
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) return;
-      
+
       // Get user's team information
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('team_id')
         .eq('id', user.id)
         .single();
-        
+
       if (userError) throw userError;
-      
+
       let allNotifications = [];
-      
+
       // Fetch pending leave requests (for managers only)
       if (userRole === 'manager') {
         const { data: leaveRequests, error: leaveError } = await supabase
@@ -227,37 +227,34 @@ const NotificationBell = ({ userRole }) => {
 
         if (leaveError) throw leaveError;
 
-      // Transform leave requests into notifications
+        // Transform leave requests into notifications
         const leaveNotifications = leaveRequests.map(request => {
           // Format the leave days count
           const startDate = parseISO(request.start_date);
           const endDate = parseISO(request.end_date);
           const days = differenceInDays(endDate, startDate) + 1;
-          
+
           return {
             id: `leave-${request.id}`,
             type: 'leave_request',
             title: 'Leave Request',
             message: `${request.users.name} requested ${days} ${days === 1 ? 'day' : 'days'} off (${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')})`,
             created_at: request.created_at,
-            read: false,
+            read: false, // Leave requests are always unread until dismissed
             data: request
           };
         });
-        
+
         allNotifications = [...leaveNotifications];
       }
-      
+
       // Fetch announcements for user's team
       const today = new Date().toISOString();
 
-      // No dismissal tracking anymore
-      setDismissedAnnouncements(new Set());
-      
-      // Get announcements for user's team that haven't expired and haven't been dismissed
+      // Get announcements for user's team that haven't expired
       let announcements = [];
       let announcementError = null;
-      
+
       // Only fetch team announcements if user belongs to a team
       if (userData.team_id) {
         const result = await supabase
@@ -270,26 +267,43 @@ const NotificationBell = ({ userRole }) => {
           .eq('team_id', userData.team_id)
           .gte('expiry_date', today)
           .order('created_at', { ascending: false });
-          
+
         announcements = result.data || [];
         announcementError = result.error;
       }
-      
+
       if (announcementError) throw announcementError;
-      
-      // Transform announcements (no dismissal filtering)
+
+      // Get read status for announcements
+      const announcementIds = announcements.map(a => a.id);
+      let readAnnouncementIds = new Set();
+
+      if (announcementIds.length > 0) {
+        const { data: readStatuses, error: readError } = await supabase
+          .from('announcement_reads')
+          .select('announcement_id')
+          .eq('user_id', user.id)
+          .eq('read', true)
+          .in('announcement_id', announcementIds);
+
+        if (!readError && readStatuses) {
+          readAnnouncementIds = new Set(readStatuses.map(r => r.announcement_id));
+        }
+      }
+
+      // Transform announcements with read status
       const announcementNotifications = announcements.map(announcement => ({
-          id: `announcement-${announcement.id}`,
-          type: 'announcement',
-          title: announcement.title,
-          message: announcement.content.length > 80 
-            ? `${announcement.content.substring(0, 80)}...` 
-            : announcement.content,
-          created_at: announcement.created_at,
-          read: false,
-          data: announcement
-        }));
-        
+        id: `announcement-${announcement.id}`,
+        type: 'announcement',
+        title: announcement.title,
+        message: announcement.content.length > 80
+          ? `${announcement.content.substring(0, 80)}...`
+          : announcement.content,
+        created_at: announcement.created_at,
+        read: readAnnouncementIds.has(announcement.id), // Check if announcement has been read
+        data: announcement
+      }));
+
       // Timesheet submissions for managers
       if (userRole === 'manager') {
         const { data: timesheetSubs } = await supabase
@@ -306,7 +320,7 @@ const NotificationBell = ({ userRole }) => {
           title: 'Timesheet Submission',
           message: `${sub.users?.name || 'Employee'} submitted timesheet for ${new Date(sub.start_date).toLocaleDateString()} - ${new Date(sub.end_date).toLocaleDateString()}`,
           created_at: sub.created_at || sub.start_date,
-          is_read: false,
+          read: false, // Timesheet submissions are always unread until dismissed
           status: sub.status,
           data: sub,
         }));
@@ -315,36 +329,110 @@ const NotificationBell = ({ userRole }) => {
 
       // Add announcements to notifications
       allNotifications = [...allNotifications, ...announcementNotifications];
-      
+
       // Sort all notifications by date (newest first)
-      allNotifications.sort((a, b) => 
+      allNotifications.sort((a, b) =>
         new Date(b.created_at) - new Date(a.created_at)
       );
-      
-      setNotifications(allNotifications);
-      setUnreadCount(allNotifications.length);
+
+      // Filter to show only unread notifications in the bell
+      const unreadNotifications = allNotifications.filter(n => !n.read);
+
+      setNotifications(allNotifications); // Keep all notifications for the full notification page
+      setUnreadCount(unreadNotifications.length); // Count only unread notifications for the bell
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
   };
 
-  const handleNotificationClick = (notification) => {
-    if (notification.type === 'leave_request') {
-      navigate('/manager-dashboard?tab=leave-requests');
-      setShowDropdown(false);
-    } else if (notification.type === 'announcement') {
-      // Open the announcement modal
-      setSelectedAnnouncement(notification.data);
-      setShowAnnouncementModal(true);
-      setShowDropdown(false); // Close the dropdown when opening the modal
+  const handleNotificationClick = async (notification) => {
+    // Mark announcement as read if it's an announcement type
+    if (notification.type === 'announcement') {
+      await markAnnouncementAsRead(notification.data.id, currentUserId);
+    }
+
+    // Open the detail modal for all notification types
+    setSelectedNotification(notification);
+    setShowDetailModal(true);
+    setShowDropdown(false); // Close the dropdown when opening the modal
+  };
+
+  const markAnnouncementAsRead = async (announcementId, userId) => {
+    if (!announcementId || !userId) return;
+
+    try {
+      // Upsert announcement read status
+      const { error } = await supabase
+        .from('announcement_reads')
+        .upsert({
+          announcement_id: announcementId,
+          user_id: userId,
+          read: true,
+          read_at: new Date().toISOString()
+        }, {
+          onConflict: 'announcement_id,user_id'
+        });
+
+      if (error) throw error;
+
+      // Update local state to mark as read
+      setNotifications(prev =>
+        prev.map(n =>
+          n.id === `announcement-${announcementId}`
+            ? { ...n, read: true }
+            : n
+        )
+      );
+
+      // Update unread count
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking announcement as read:', error);
+    }
+  };
+
+  const handleModalAction = async (action, notificationId) => {
+    try {
+      if (action === 'markRead') {
+        // Find the notification and mark as read
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification?.type === 'announcement') {
+          await markAnnouncementAsRead(notification.data.id, currentUserId);
+        } else if (notification?.type === 'leave_request' || notification?.type === 'timesheet') {
+          // For other types, just remove from unread count
+          setNotifications(prev =>
+            prev.map(n =>
+              n.id === notificationId
+                ? { ...n, read: true }
+                : n
+            )
+          );
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+      } else if (action === 'archive' || action === 'delete') {
+        // Remove notification from list
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+
+      // Close modal after action
+      setTimeout(() => {
+        setShowDetailModal(false);
+        setSelectedNotification(null);
+      }, 1000);
+    } catch (error) {
+      console.error('Error handling modal action:', error);
     }
   };
 
   const handleAnnouncementDismissal = async (announcementId) => {
-    // After the announcement is dismissed from the modal
+    // Mark announcement as read before dismissing
+    await markAnnouncementAsRead(announcementId, currentUserId);
+
+    // Remove from notification list
     handleDismiss(`announcement-${announcementId}`);
-    setShowAnnouncementModal(false);
-    setSelectedAnnouncement(null);
+    setShowDetailModal(false);
+    setSelectedNotification(null);
   };
 
   const handleDismiss = async (notificationId) => {
@@ -352,14 +440,10 @@ const NotificationBell = ({ userRole }) => {
     const parts = notificationId.split('-');
     const type = parts[0];
     const id = parts[1];
-    
+
     if (type === 'announcement') {
-      try {
-        // Dismissal tracking has been removed
-        console.log('Announcement dismissal not tracked anymore');
-      } catch (error) {
-        console.error('Error dismissing announcement:', error);
-      }
+      // Mark announcement as read
+      await markAnnouncementAsRead(id, currentUserId);
     } else if (type === 'leave') {
       // Dismissing a leave request: set status to 'rejected' so it doesn't reappear
       try {
@@ -371,11 +455,15 @@ const NotificationBell = ({ userRole }) => {
       } catch (error) {
         console.error('Error dismissing leave request:', error);
       }
+
+      // Remove from notification list and update count
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } else if (type === 'timesheet') {
+      // Handle timesheet dismissal
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      setUnreadCount(prev => Math.max(0, prev - 1));
     }
-    
-    // Remove from notification list
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    setUnreadCount(prev => Math.max(0, prev - 1));
   };
   
   const handleLeaveAction = async (leaveId, action) => {
@@ -459,14 +547,14 @@ const NotificationBell = ({ userRole }) => {
               </div>
 
               <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-                {notifications.length === 0 ? (
+                {notifications.filter(n => !n.read).length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
                     <FiBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                     <p>No new notifications</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {notifications.map((notification, index) => (
+                    {notifications.filter(n => !n.read).map((notification, index) => (
                       <motion.div
                         key={notification.id}
                         custom={index}
@@ -485,7 +573,7 @@ const NotificationBell = ({ userRole }) => {
                                   <FiCalendar className="w-5 h-5" />
                                 </div>
                               </div>
-                              
+
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between">
                                   <p className="font-medium text-gray-900">{notification.title}</p>
@@ -499,9 +587,9 @@ const NotificationBell = ({ userRole }) => {
                                     <FiX className="w-4 h-4" />
                                   </button>
                                 </div>
-                                
+
                                 <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                
+
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                   {notification.data.users?.teams?.name && (
                                     <span className="px-2 py-0.5 bg-gray-100 text-xs font-medium rounded-full text-gray-600">
@@ -512,8 +600,8 @@ const NotificationBell = ({ userRole }) => {
                                     {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
                                   </span>
                                 </div>
-                                
-                                {/* Action buttons for managers */}
+
+                                {/* Quick actions for leave requests */}
                                 <div className="flex gap-2 mt-3">
                                   <motion.button
                                     className="px-3 py-1.5 rounded-md bg-green-100 text-green-700 text-xs font-medium flex items-center gap-1 hover:bg-green-200 transition-colors disabled:opacity-50"
@@ -532,7 +620,7 @@ const NotificationBell = ({ userRole }) => {
                                     )}
                                     Approve
                                   </motion.button>
-                                  
+
                                   <motion.button
                                     className="px-3 py-1.5 rounded-md bg-red-100 text-red-700 text-xs font-medium flex items-center gap-1 hover:bg-red-200 transition-colors disabled:opacity-50"
                                     whileHover={{ scale: 1.05 }}
@@ -550,7 +638,7 @@ const NotificationBell = ({ userRole }) => {
                                     )}
                                     Reject
                                   </motion.button>
-                                  
+
                                   <motion.button
                                     className="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium flex items-center gap-1 hover:bg-gray-200 transition-colors ml-auto"
                                     whileHover={{ scale: 1.05 }}
@@ -618,18 +706,17 @@ const NotificationBell = ({ userRole }) => {
         )}
       </AnimatePresence>
 
-      {/* Render the announcement modal using a portal to escape any layout constraints */}
-      {selectedAnnouncement && showAnnouncementModal && (
+      {/* Render the notification detail modal using a portal to escape any layout constraints */}
+      {selectedNotification && showDetailModal && (
         createPortal(
-          <AnnouncementModal
-            announcement={selectedAnnouncement}
-            isOpen={showAnnouncementModal}
+          <NotificationDetailModal
+            notification={selectedNotification}
+            isOpen={showDetailModal}
             onClose={() => {
-              setShowAnnouncementModal(false);
-              setSelectedAnnouncement(null);
+              setShowDetailModal(false);
+              setSelectedNotification(null);
             }}
-            onDismiss={handleAnnouncementDismissal}
-            userId={currentUserId}
+            onAction={handleModalAction}
           />,
           modalRoot.current
         )

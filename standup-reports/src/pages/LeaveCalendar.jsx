@@ -1168,7 +1168,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         sidebarOpen={sidebarOpen}
         quickStats={[
           {
-            label: "Manage",
+            label: "Manage Leaves",
             value: "",
             onClick: () => window.location.href = '/leave-management',
             icon: <FiTarget className="w-3 h-3" />

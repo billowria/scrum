@@ -800,6 +800,40 @@ export default function ReportEntryNew() {
         </div>
       </div>
 
+      {/* Quick Actions Menu */}
+      <AnimatePresence>
+        {showQuickActions && (
+          <motion.div
+            className="fixed top-20 right-8 z-30 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden min-w-[200px]"
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="p-2">
+              <motion.button
+                type="button"
+                onClick={() => navigate('/team-management')}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-indigo-50 rounded-lg transition-colors group"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <motion.div
+                  className="p-2 rounded-lg bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200"
+                  whileHover={{ scale: 1.1 }}
+                >
+                  <FiUsers className="h-4 w-4" />
+                </motion.div>
+                <div>
+                  <div className="font-medium text-gray-900 group-hover:text-indigo-700">Manage Team</div>
+                  <div className="text-xs text-gray-500">Team members and roles</div>
+                </div>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <div className={`mx-auto ${isFullscreen ? 'max-w-full px-8' : 'max-w-[1600px] px-8'} py-8`}>
         <AnimatePresence>

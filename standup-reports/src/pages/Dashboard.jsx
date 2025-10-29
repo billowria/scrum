@@ -751,10 +751,10 @@ export default function Dashboard({ sidebarOpen }) {
 
   // Fetch available and on-leave members when userTeamId is available
   useEffect(() => {
-    if (userTeamId) {
+    if (userTeamId && currentCompany?.id) {
       fetchOnLeaveMembers();
     }
-  }, [userTeamId]);
+  }, [userTeamId, currentCompany?.id]);
   
   // Function to fetch new messages count for the user
   const fetchNewMessagesCount = async () => {
@@ -937,8 +937,14 @@ export default function Dashboard({ sidebarOpen }) {
   // Function to fetch on-leave members and available members
   const fetchOnLeaveMembers = async () => {
     try {
+      // Guard clause - don't proceed if company context is not available
+      if (!currentCompany?.id) {
+        console.warn('Company context not available, skipping fetchOnLeaveMembers');
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
-      
+
       // Fetch on-leave members
       const { data: leaveData, error: leaveError } = await supabase
         .from('leave_plans')
@@ -947,7 +953,7 @@ export default function Dashboard({ sidebarOpen }) {
           users:user_id (id, name, avatar_url, role, company_id, teams:team_id (id, name))
         `)
         .eq('status', 'approved')
-        .eq('users.company_id', currentCompany?.id) // Filter by company
+        .eq('users.company_id', currentCompany.id) // Filter by company
         .lte('start_date', today)
         .gte('end_date', today);
 
@@ -965,7 +971,7 @@ export default function Dashboard({ sidebarOpen }) {
           .from('users')
           .select('id, name, avatar_url, role, company_id, teams:team_id (id, name)')
           .eq('team_id', userTeamId)
-          .eq('company_id', currentCompany?.id); // Filter by company
+          .eq('company_id', currentCompany.id); // Filter by company
           
         if (membersError) {
           console.error('Error fetching team members:', membersError);

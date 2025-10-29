@@ -3,17 +3,20 @@ import { motion } from 'framer-motion';
 import {
   FiClock, FiUser, FiCheckCircle, FiExternalLink, FiCalendar,
   FiMessageCircle, FiTarget, FiFolder, FiPlus, FiEdit, FiAlertTriangle, FiBell,
-  FiStar, FiArchive, FiTrash2, FiArrowRight, FiActivity
+  FiStar, FiArchive, FiTrash2, FiArrowRight, FiActivity, FiCheck, FiX
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import notificationService from '../../services/notificationService';
+import { approveLeaveRequestFromNotification, rejectLeaveRequestFromNotification } from '../../utils/notificationHelper';
 
 export default function NotificationCard({
   notification,
   onAction, // Unified action handler
-  compact = false
+  compact = false,
+  currentUser // Add current user for role checking
 }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
 
   // Enhanced notification icons with different sizes
   const getNotificationIcon = (type, size = 'normal') => {
@@ -54,15 +57,15 @@ export default function NotificationCard({
         glowColor: 'from-blue-400/20 to-indigo-600/20'
       },
       leave_request: {
-        gradient: 'from-purple-400 via-purple-500 to-pink-600',
-        lightBg: 'bg-gradient-to-br from-purple-50 to-pink-50',
-        borderColor: 'border-purple-200',
-        iconBg: 'bg-gradient-to-br from-purple-500 to-pink-600',
-        textColor: 'text-purple-900',
-        subTextColor: 'text-purple-700',
-        badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
-        shadowColor: 'shadow-purple-100',
-        glowColor: 'from-purple-400/20 to-pink-600/20'
+        gradient: 'from-indigo-500 via-purple-500 to-pink-500',
+        lightBg: 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50',
+        borderColor: 'border-indigo-200',
+        iconBg: 'bg-gradient-to-br from-indigo-500 to-purple-600',
+        textColor: 'text-indigo-900',
+        subTextColor: 'text-indigo-700',
+        badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        shadowColor: 'shadow-indigo-100',
+        glowColor: 'from-indigo-400/20 to-purple-600/20'
       },
       timesheet_submission: {
         gradient: 'from-green-400 via-emerald-500 to-teal-600',
@@ -250,9 +253,291 @@ export default function NotificationCard({
     onAction(action, notification.id);
   };
 
+  // Handle leave request actions
+  const handleLeaveAction = async (action, e) => {
+    e.stopPropagation();
+
+    if (!currentUser || (currentUser.role !== 'manager' && currentUser.role !== 'admin')) {
+      console.error('Only managers and admins can approve or reject leave requests');
+      return;
+    }
+
+    setActionLoading(action);
+
+    try {
+      const leaveRequestId = notification.data?.id || notification.id?.replace('leave-', '');
+      let success = false;
+
+      if (action === 'approve') {
+        success = await approveLeaveRequestFromNotification(leaveRequestId, currentUser.id);
+      } else if (action === 'reject') {
+        success = await rejectLeaveRequestFromNotification(leaveRequestId, currentUser.id);
+      }
+
+      if (success) {
+        // Notify parent component to refresh notifications
+        onAction('refresh', notification.id);
+      }
+    } catch (error) {
+      console.error('Error handling leave action:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const design = getNotificationDesign(notification.type, notification.read, notification.priority);
   const category = notificationService.getNotificationCategory(notification.type);
 
+  // Special render for leave requests with compact enhanced structure
+  if (notification.type === 'leave_request') {
+    const leaveData = notification.data;
+    const startDate = leaveData?.start_date ? new Date(leaveData.start_date) : null;
+    const endDate = leaveData?.end_date ? new Date(leaveData.end_date) : null;
+    const daysCount = startDate && endDate ? Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1 : 0;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+        whileHover={{
+          scale: 1.01,
+          y: -2,
+          boxShadow: `0 15px 40px -10px ${notification.read ? 'rgba(0,0,0,0.1)' : 'rgba(99, 102, 241, 0.2)'}`,
+          transition: { duration: 0.2, ease: "easeOut" }
+        }}
+        className={`
+          group relative border-2 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden
+          ${!notification.read
+            ? 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border-indigo-200 shadow-lg shadow-indigo-100/40'
+            : 'bg-white border-gray-200 shadow-sm'
+          }
+          hover:shadow-xl
+          ${compact ? 'p-4' : 'p-5'}
+        `}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
+      >
+        {/* Compact unread indicator */}
+        {!notification.read && (
+          <motion.div
+            className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-indigo-500 via-purple-500 to-pink-500 rounded-l-2xl"
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 0.3, delay: 0.1, ease: "easeOut" }}
+          />
+        )}
+
+        {/* Subtle glow effect for unread notifications */}
+        {!notification.read && (
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-br from-indigo-400/5 via-purple-400/5 to-pink-400/5 rounded-2xl"
+            animate={{
+              opacity: isHovered ? 0.8 : 0.2,
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+
+        <div className="relative">
+          <div className="flex items-start gap-3">
+            {/* Compact Calendar Icon */}
+            <motion.div
+              className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-md flex-shrink-0"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{
+                scale: 1,
+                rotate: 0,
+                boxShadow: isHovered ? '0 8px 20px -3px rgba(99, 102, 241, 0.25)' : '0 4px 8px -1px rgba(0,0,0,0.1)'
+              }}
+              whileHover={{
+                scale: 1.05,
+                rotate: 5,
+                transition: { duration: 0.2 }
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 25,
+                delay: 0.05
+              }}
+            >
+              <FiCalendar className="w-5 h-5" />
+            </motion.div>
+
+            {/* Compact Content Section */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex-1 min-w-0">
+                  <motion.h3
+                    className={`text-base font-bold ${!notification.read ? 'text-indigo-900' : 'text-gray-900'} mb-1`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    Leave Request
+                  </motion.h3>
+
+                  <motion.p
+                    className={`text-sm ${!notification.read ? 'text-indigo-700' : 'text-gray-600'} leading-relaxed mb-2`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.15 }}
+                  >
+                    {notification.message}
+                  </motion.p>
+
+                  {/* Compact Leave Details */}
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <motion.div
+                      className="bg-white/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-indigo-100 text-xs"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <span className="text-indigo-600 font-semibold">
+                        {startDate ? startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A'}
+                      </span>
+                      <span className="text-gray-500 mx-1">→</span>
+                      <span className="text-indigo-600 font-semibold">
+                        {endDate ? endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A'}
+                      </span>
+                    </motion.div>
+
+                    <motion.div
+                      className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                    >
+                      {daysCount} {daysCount === 1 ? 'day' : 'days'}
+                    </motion.div>
+
+                    <motion.div
+                      className="bg-white/80 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-indigo-100 text-xs"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <span className="text-gray-600">by</span>
+                      <span className="text-indigo-600 font-semibold ml-1">
+                        {notification.data?.users?.name || notification.sender_name || 'Employee'}
+                      </span>
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Compact Action Buttons */}
+                {currentUser && (currentUser.role === 'manager' || currentUser.role === 'admin') && (
+                  <motion.div
+                    className="flex items-center gap-2 flex-shrink-0"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.35 }}
+                  >
+                    <motion.button
+                      onClick={(e) => handleLeaveAction('approve', e)}
+                      className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1"
+                      whileHover={{ scale: 1.05, y: -1 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={actionLoading === 'approve'}
+                      title="Approve leave request"
+                    >
+                      {actionLoading === 'approve' ? (
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-3 h-3"
+                        >
+                          <FiClock />
+                        </motion.div>
+                      ) : (
+                        <>
+                          <FiCheck className="w-3 h-3" />
+                          Approve
+                        </>
+                      )}
+                    </motion.button>
+
+                    <motion.button
+                      onClick={(e) => handleLeaveAction('reject', e)}
+                      className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-1"
+                      whileHover={{ scale: 1.05, y: -1 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={actionLoading === 'reject'}
+                      title="Reject leave request"
+                    >
+                      {actionLoading === 'reject' ? (
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-3 h-3"
+                        >
+                          <FiClock />
+                        </motion.div>
+                      ) : (
+                        <>
+                          <FiX className="w-3 h-3" />
+                          Reject
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Compact Footer */}
+              <motion.div
+                className="flex items-center justify-between gap-2"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium border border-amber-200"
+                    animate={{
+                      scale: [1, 1.02, 1],
+                      opacity: [0.8, 1, 0.8]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    Pending Approval
+                  </motion.div>
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <FiClock className="w-3 h-3" />
+                  <span>
+                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subtle activity indicator */}
+        {isHovered && (
+          <motion.div
+            className="absolute top-2 right-2 opacity-40"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 0.4, scale: 1 }}
+            transition={{ delay: 0.45 }}
+          >
+            <FiActivity className="w-3 h-3 text-indigo-400" />
+          </motion.div>
+        )}
+      </motion.div>
+    );
+  }
+
+  // Default notification card for other types
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}

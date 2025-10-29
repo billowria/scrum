@@ -249,7 +249,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <Route path="/team-management" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <TeamManagement />
+                          <ManagerDashboard activeTabDefault="team-management" />
                         </div>
                       </PageTransition>
                     } />

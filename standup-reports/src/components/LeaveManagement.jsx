@@ -4,7 +4,7 @@ import { format, parseISO, getMonth, getYear, differenceInDays } from 'date-fns'
 import { FiCalendar, FiUser, FiFilter, FiDownload, FiClock, FiCheck, FiX, FiSearch, 
   FiChevronLeft, FiChevronRight, FiInfo, FiSliders, FiRefreshCw, FiClipboard, FiTarget } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
-import { notifyLeaveStatus } from '../utils/notificationHelper';
+import { notifyLeaveStatus, approveLeaveRequestFromNotification, rejectLeaveRequestFromNotification } from '../utils/notificationHelper';
 
 // Animation variants
 const containerVariants = {
@@ -287,18 +287,30 @@ const LeaveManagement = () => {
       console.error('Only managers and admins can approve or reject leave requests');
       return;
     }
-    
+
     try {
       // Get leave request details before updating
       const leaveItem = allLeaveData.find(req => req.id === leaveId);
-      
-      const { error } = await supabase
-        .from('leave_plans')
-        .update({ status })
-        .eq('id', leaveId);
-      
-      if (error) throw error;
-      
+
+      let notificationSuccess = false;
+
+      // Use new notification service methods to update the leave request
+      if (status === 'approved') {
+        notificationSuccess = await approveLeaveRequestFromNotification(leaveId, currentUser.id);
+      } else if (status === 'rejected') {
+        notificationSuccess = await rejectLeaveRequestFromNotification(leaveId, currentUser.id);
+      }
+
+      if (!notificationSuccess) {
+        // Fallback to direct database update if notification method fails
+        const { error } = await supabase
+          .from('leave_plans')
+          .update({ status })
+          .eq('id', leaveId);
+
+        if (error) throw error;
+      }
+
       // Send notification to the user about their leave status
       if (leaveItem && leaveItem.users?.id) {
         try {
@@ -312,7 +324,7 @@ const LeaveManagement = () => {
           // Continue even if notification fails
         }
       }
-      
+
       // Refresh the data
       await fetchLeaveData();
     } catch (error) {

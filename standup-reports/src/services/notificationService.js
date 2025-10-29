@@ -160,7 +160,7 @@ class NotificationService {
     return true;
   }
 
-  // Fetch all notifications for a user (using announcements table)
+  // Fetch all notifications for a user (using announcements table + other sources)
   async fetchNotifications(userId, userRole, teamId, options = {}) {
     try {
       const {
@@ -168,97 +168,67 @@ class NotificationService {
         offset = 0,
         category = 'all',
         priority = 'all',
-        status = 'all',
         search = ''
       } = options;
 
-      // Build query for announcements table
-      let query = supabase
-        .from('announcements')
-        .select(`
-          id,
-          title,
-          content,
-          notification_type,
-          priority,
-          created_at,
-          updated_at,
-          expiry_date,
-          team_id,
-          created_by,
-          task_id,
-          company_id,
-          metadata,
-          users!announcements_created_by_fkey (
-            name,
-            role
-          )
-        `)
-        .eq('company_id', teamId) // Assuming teamId is actually companyId for announcements
-        .gte('expiry_date', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+      let allNotifications = [];
 
-      // Apply filters
+      // 1. Fetch announcements (general notifications)
+      const announcementNotifications = await this.fetchAnnouncementNotifications(userId, teamId, limit);
+      allNotifications = allNotifications.concat(announcementNotifications);
+
+      // 2. Fetch leave request notifications (only for managers and admins)
+      if (userRole === 'manager' || userRole === 'admin') {
+        const leaveNotifications = await this.fetchLeaveRequestNotifications(teamId, Math.floor(limit / 3));
+        allNotifications = allNotifications.concat(leaveNotifications);
+      }
+
+      // 3. Fetch timesheet notifications (only for managers and admins)
+      if (userRole === 'manager' || userRole === 'admin') {
+        const timesheetNotifications = await this.fetchTimesheetNotifications(teamId, Math.floor(limit / 3));
+        allNotifications = allNotifications.concat(timesheetNotifications);
+      }
+
+      // 4. Fetch task notifications for all users
+      const taskNotifications = await this.fetchTaskNotifications(userId, userRole, teamId, Math.floor(limit / 3));
+      allNotifications = allNotifications.concat(taskNotifications);
+
+      // Sort by created_at date (most recent first)
+      allNotifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Apply pagination
+      const paginatedNotifications = allNotifications.slice(offset, offset + limit);
+
+      // Apply additional filters
+      let filteredNotifications = paginatedNotifications;
+
       if (category !== 'all') {
-        // Map category to notification_type
-        const categoryToType = {
-          [NOTIFICATION_CATEGORIES.COMMUNICATION]: 'general',
-          [NOTIFICATION_CATEGORIES.ADMINISTRATIVE]: 'leave_request',
-          [NOTIFICATION_CATEGORIES.PROJECT]: 'project_update',
-          [NOTIFICATION_CATEGORIES.TASK]: ['task_created', 'task_updated', 'task_assigned', 'task_comment'],
-          [NOTIFICATION_CATEGORIES.SYSTEM]: 'system_alert'
-        };
-
-        const types = categoryToType[category];
-        if (types) {
-          if (Array.isArray(types)) {
-            query = query.in('notification_type', types);
-          } else {
-            query = query.eq('notification_type', types);
-          }
-        }
+        filteredNotifications = filteredNotifications.filter(notification =>
+          this.getNotificationCategory(notification.type) === category
+        );
       }
 
       if (priority !== 'all') {
-        query = query.eq('priority', priority);
+        filteredNotifications = filteredNotifications.filter(notification =>
+          notification.priority === priority
+        );
       }
 
       if (search) {
-        query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+        const searchLower = search.toLowerCase();
+        filteredNotifications = filteredNotifications.filter(notification =>
+          notification.title.toLowerCase().includes(searchLower) ||
+          notification.message.toLowerCase().includes(searchLower)
+        );
       }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching announcements:', error);
-        throw error;
-      }
-
-      
-      // Transform announcements to notification format
-      const notifications = data.map(announcement => ({
-        id: announcement.id,
-        title: announcement.title,
-        message: announcement.content,
-        type: announcement.notification_type || NOTIFICATION_TYPES.ANNOUNCEMENT,
-        priority: announcement.priority || NOTIFICATION_PRIORITIES.NORMAL,
-        created_at: announcement.created_at,
-        updated_at: announcement.updated_at,
-        read: false, // TODO: Implement read tracking with user_preferences or similar
-        sender_name: announcement.users?.name || 'System',
-        team_id: announcement.team_id,
-        task_id: announcement.task_id,
-        metadata: announcement.metadata
-      }));
 
       return {
-        notifications,
-        total: notifications.length,
-        hasMore: notifications.length === limit
+        notifications: filteredNotifications,
+        total: allNotifications.length,
+        hasMore: offset + filteredNotifications.length < allNotifications.length
       };
     } catch (error) {
-      console.error('Notifications table not found or error:', error);
+      console.error('Error fetching notifications:', error);
       // Return empty result if table doesn't exist
       return {
         notifications: [],
@@ -268,8 +238,8 @@ class NotificationService {
     }
   }
 
-  // Main method used by components
-  async getNotifications(options = {}) {
+  // Main method used by components (legacy - keeping for compatibility)
+  async getNotificationsLegacy(options = {}) {
     return this.fetchNotifications(options.userId, options.role, options.teamId, options);
   }
 
@@ -313,6 +283,151 @@ class NotificationService {
     }
   }
 
+  // Create a leave request notification
+  async createLeaveRequestNotification(leaveRequestId) {
+    try {
+      // Fetch the leave request details
+      const { data: leaveRequest, error } = await supabase
+        .from('leave_plans')
+        .select(`
+          id, start_date, end_date, status, created_at, reason, user_id,
+          users:user_id (id, name, teams:team_id(id, name))
+        `)
+        .eq('id', leaveRequestId)
+        .single();
+
+      if (error) throw error;
+
+      // Get the team to notify managers
+      const { data: team } = await supabase
+        .from('teams')
+        .select('id, company_id')
+        .eq('id', leaveRequest.users.teams?.id)
+        .single();
+
+      if (!team) {
+        console.error('Team not found for leave request');
+        return false;
+      }
+
+      const startDate = parseISO(leaveRequest.start_date);
+      const endDate = parseISO(leaveRequest.end_date);
+      const days = differenceInDays(endDate, startDate) + 1;
+
+      // Create announcement for managers
+      const announcementData = {
+        title: 'Leave Request',
+        content: `${leaveRequest.users.name} requested ${days} ${days === 1 ? 'day' : 'days'} off (${format(startDate, 'MMM dd')} - ${format(endDate, 'MMM dd')})${leaveRequest.reason ? ` - Reason: ${leaveRequest.reason}` : ''}`,
+        notification_type: NOTIFICATION_TYPES.LEAVE_REQUEST,
+        priority: NOTIFICATION_PRIORITIES.NORMAL,
+        team_id: team.id,
+        company_id: team.company_id,
+        created_by: leaveRequest.user_id,
+        metadata: {
+          leave_request_id: leaveRequestId,
+          user_id: leaveRequest.user_id,
+          start_date: leaveRequest.start_date,
+          end_date: leaveRequest.end_date,
+          days: days
+        }
+      };
+
+      const { error: insertError } = await supabase
+        .from('announcements')
+        .insert(announcementData);
+
+      if (insertError) throw insertError;
+
+      return true;
+    } catch (error) {
+      console.error('Error creating leave request notification:', error);
+      return false;
+    }
+  }
+
+  // Update leave request notification when status changes
+  async updateLeaveRequestNotification(leaveRequestId, newStatus) {
+    try {
+      // Find the related announcement
+      const { data: announcements, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('metadata->>leave_request_id', leaveRequestId.toString());
+
+      if (error) throw error;
+
+      if (announcements && announcements.length > 0) {
+        // Update or delete the announcement based on status
+        if (newStatus === 'approved' || newStatus === 'rejected') {
+          // Mark as processed by updating the notification_type
+          const { error: updateError } = await supabase
+            .from('announcements')
+            .update({
+              notification_type: `leave_request_${newStatus}`,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', announcements[0].id);
+
+          if (updateError) throw updateError;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating leave request notification:', error);
+      return false;
+    }
+  }
+
+  // Approve leave request from notification
+  async approveLeaveRequestFromNotification(leaveRequestId, managerId) {
+    try {
+      const { error } = await supabase
+        .from('leave_plans')
+        .update({
+          status: 'approved',
+          updated_at: new Date().toISOString(),
+          approved_by: managerId
+        })
+        .eq('id', leaveRequestId);
+
+      if (error) throw error;
+
+      // Update the notification
+      await this.updateLeaveRequestNotification(leaveRequestId, 'approved');
+
+      return true;
+    } catch (error) {
+      console.error('Error approving leave request from notification:', error);
+      return false;
+    }
+  }
+
+  // Reject leave request from notification
+  async rejectLeaveRequestFromNotification(leaveRequestId, managerId, rejectionReason = '') {
+    try {
+      const { error } = await supabase
+        .from('leave_plans')
+        .update({
+          status: 'rejected',
+          updated_at: new Date().toISOString(),
+          approved_by: managerId,
+          rejection_reason: rejectionReason
+        })
+        .eq('id', leaveRequestId);
+
+      if (error) throw error;
+
+      // Update the notification
+      await this.updateLeaveRequestNotification(leaveRequestId, 'rejected');
+
+      return true;
+    } catch (error) {
+      console.error('Error rejecting leave request from notification:', error);
+      return false;
+    }
+  }
+
   // Fetch timesheet notifications
   async fetchTimesheetNotifications(teamId, limit = 10) {
     try {
@@ -353,20 +468,63 @@ class NotificationService {
   detectAnnouncementType(announcement) {
     const title = (announcement.title || '').toLowerCase();
     const content = (announcement.content || '').toLowerCase();
+    const notificationType = announcement.notification_type;
 
-    // Sprint-related announcements
-    if (title.startsWith('sprint ') || content.includes('sprint')) {
+    // If notification_type is explicitly set, use it
+    if (notificationType) {
+      // Validate that it's a known notification type
+      if (Object.values(NOTIFICATION_TYPES).includes(notificationType)) {
+        return notificationType;
+      }
+    }
+
+    // Sprint-related announcements - enhanced detection
+    if (title.startsWith('sprint ') ||
+        title.includes('sprint update') ||
+        title.includes('sprint started') ||
+        title.includes('sprint completed') ||
+        content.includes('sprint') &&
+        (content.includes('started') || content.includes('completed') || content.includes('created'))) {
       return NOTIFICATION_TYPES.SPRINT_UPDATE;
     }
 
-    // Task-related phrasing
-    if (title.includes('task') || content.includes('task ')) {
-      return NOTIFICATION_TYPES.TASK_UPDATED;
+    // Task-related announcements - enhanced detection
+    if (title.includes('task') ||
+        title.includes('new task') ||
+        title.includes('task assigned') ||
+        title.includes('task updated') ||
+        title.includes('task status') ||
+        title.includes('comment on task') ||
+        content.includes('task ')) {
+      // More specific task type detection
+      if (title.includes('assigned') || title.includes('new task')) {
+        return NOTIFICATION_TYPES.TASK_ASSIGNED;
+      } else if (title.includes('status') || title.includes('completed')) {
+        return NOTIFICATION_TYPES.TASK_STATUS_CHANGE;
+      } else if (title.includes('comment')) {
+        return NOTIFICATION_TYPES.TASK_COMMENT;
+      } else {
+        return NOTIFICATION_TYPES.TASK_UPDATED;
+      }
     }
 
-    // Project update announcements
-    if (title.startsWith('project update') || content.includes('project')) {
+    // Project update announcements - enhanced detection
+    if (title.startsWith('project update') ||
+        title.includes('project created') ||
+        title.includes('project updated') ||
+        content.includes('project') &&
+        (content.includes('created') || content.includes('updated'))) {
       return NOTIFICATION_TYPES.PROJECT_UPDATE;
+    }
+
+    // Leave request announcements
+    if (title.includes('leave request') || content.includes('leave request')) {
+      return NOTIFICATION_TYPES.LEAVE_REQUEST;
+    }
+
+    // Timesheet announcements
+    if (title.includes('timesheet') || content.includes('timesheet')) {
+      return NOTIFICATION_TYPES.TIMESHEET_SUBMISSION;
     }
 
     return NOTIFICATION_TYPES.ANNOUNCEMENT;
@@ -676,7 +834,7 @@ class NotificationService {
     
     notifications.forEach(n => {
       const dateStr = new Date(n.created_at).toISOString().split('T')[0];
-      if (last7Days.hasOwnProperty(dateStr)) {
+      if (Object.prototype.hasOwnProperty.call(last7Days, dateStr)) {
         last7Days[dateStr]++;
       }
     });
@@ -699,31 +857,6 @@ class NotificationService {
 
   // Add missing methods for NotificationCreator
 
-  async archiveNotification(notificationId) {
-    try {
-      // For announcements, add to dismissed list
-      const parts = notificationId.split('-');
-      const type = parts[0];
-      const id = parts[1];
-      
-      // Announcements don't have dismissal tracking anymore
-      return true;
-    } catch (error) {
-      console.error('Error archiving notification:', error);
-      return false;
-    }
-  }
-
-  async deleteNotification(notificationId) {
-    try {
-      // For now, just archive the notification
-      return await this.archiveNotification(notificationId);
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-      return false;
-    }
-  }
-
   async bookmarkNotification(notificationId) {
     try {
       // This would require a bookmarks table - for now, just return success
@@ -745,7 +878,7 @@ class NotificationService {
           .from('teams')
           .select('id');
         const teamIds = (teams || []).map(t => t.id);
-        for (const tid of teamIds) {
+        for (const _tid of teamIds) {
           const { error } = await supabase
             .from('announcements')
             .insert({
@@ -760,7 +893,7 @@ class NotificationService {
         }
       } else if (data.recipients && data.recipients.teams) {
         // Create announcements for specific teams
-        for (const team of data.recipients.teams) {
+        for (const _team of data.recipients.teams) {
           const { error } = await supabase
             .from('announcements')
             .insert({
