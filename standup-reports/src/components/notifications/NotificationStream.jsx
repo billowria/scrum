@@ -1,395 +1,297 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiRefreshCw, FiCheckCircle, FiArchive, FiTrash2, FiMoreHorizontal,
-  FiArrowUp, FiSettings, FiPlay, FiPause, FiVolume2, FiVolumeX
+import {
+  FiRefreshCw, FiCheckCircle, FiArchive, FiTrash2, FiArrowUp,
+  FiBell, FiCheck, FiX, FiExternalLink, FiCalendar, FiPlus, FiEdit,
+  FiUser, FiMessageSquare, FiFolder, FiTarget, FiAlertTriangle, FiMessageCircle, FiClock
 } from 'react-icons/fi';
-import NotificationCard from './NotificationCard';
+import { supabase } from '../../supabaseClient';
+import notificationService from '../../services/notificationService';
 import NotificationDetailModal from './NotificationDetailModal';
-import { useNotifications } from '../../hooks/useNotifications';
+import NotificationCard from './NotificationCard';
 
-const LOAD_MORE_THRESHOLD = 200; // px from bottom
+const LOAD_MORE_THRESHOLD = 200;
 
-export default function NotificationStream({ 
-  filters = {}, 
+export default function NotificationStream({
+  filters = {},
   onNotificationAction,
-  realTimeEnabled = true 
+  realTimeEnabled = true,
+  notifications = [],
+  loading = false
 }) {
-  const {
-    notifications,
-    loading,
-    hasMore,
-    markAsRead,
-    archiveNotification,
-    deleteNotification,
-    bookmarkNotification,
-    loadMore,
-    refresh
-  } = useNotifications({ filters, realTime: realTimeEnabled });
-  
-  const [selectedNotifications, setSelectedNotifications] = useState(new Set());
+  const [localNotifications, setLocalNotifications] = useState([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(realTimeEnabled);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [bulkActionsOpen, setBulkActionsOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [showModal, setShowModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
   const streamRef = useRef(null);
-  const loadMoreRef = useRef(null);
-  const autoRefreshInterval = useRef(null);
-  const notificationSound = useRef(null);
-  
-  // Initialize notification sound
+
+  // Get current user
   useEffect(() => {
-    notificationSound.current = new Audio('/sounds/notification.mp3');
-    notificationSound.current.volume = 0.3;
-  }, []);
-  
-  // Auto-refresh setup
-  useEffect(() => {
-    if (autoRefresh && realTimeEnabled) {
-      autoRefreshInterval.current = setInterval(() => {
-        refresh();
-      }, 30000); // Refresh every 30 seconds
-    }
-    
-    return () => {
-      if (autoRefreshInterval.current) {
-        clearInterval(autoRefreshInterval.current);
+    const getCurrentUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('id, name, role, team_id')
+            .eq('id', user.id)
+            .single();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
       }
     };
-  }, [autoRefresh, realTimeEnabled, refresh]);
-  
-  // Scroll tracking
+    getCurrentUser();
+  }, []);
+
+  // Update local notifications when parent notifications change
+  useEffect(() => {
+    setLocalNotifications(notifications);
+  }, [notifications]);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!currentUser || !realTimeEnabled) return;
+
+    const subscription = supabase
+      .channel('announcements')
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'announcements'
+        },
+        (payload) => {
+          // Check if this announcement is relevant to current user
+          const announcement = payload.new;
+          if (notificationService.isNotificationRelevant(announcement, currentUser)) {
+            // Transform announcement to notification format
+            const notification = {
+              id: announcement.id,
+              title: announcement.title,
+              message: announcement.content,
+              type: announcement.notification_type || 'general',
+              priority: announcement.priority || 'Medium',
+              created_at: announcement.created_at,
+              updated_at: announcement.updated_at,
+              read: false,
+              sender_name: 'System', // Would need to fetch user details
+              team_id: announcement.team_id,
+              task_id: announcement.task_id,
+              metadata: announcement.metadata
+            };
+            setLocalNotifications(prev => [notification, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [currentUser, realTimeEnabled]);
+
+  // Scroll handling
   useEffect(() => {
     const handleScroll = () => {
       if (!streamRef.current) return;
-      
-      const { scrollTop, scrollHeight, clientHeight } = streamRef.current;
-      
-      // Show scroll to top button
+
+      const { scrollTop } = streamRef.current;
       setShowScrollTop(scrollTop > 500);
-      
-      // Load more when near bottom
-      if (scrollHeight - scrollTop - clientHeight < LOAD_MORE_THRESHOLD && hasMore && !loading) {
-        loadMore();
-      }
     };
-    
-    const streamElement = streamRef.current;
-    if (streamElement) {
-      streamElement.addEventListener('scroll', handleScroll);
-      return () => streamElement.removeEventListener('scroll', handleScroll);
+
+    const element = streamRef.current;
+    if (element) {
+      element.addEventListener('scroll', handleScroll);
+      return () => element.removeEventListener('scroll', handleScroll);
     }
-  }, [hasMore, loading, loadMore]);
-  
-  // Play notification sound for new notifications
-  useEffect(() => {
-    if (soundEnabled && notifications.length > 0) {
-      const unreadCount = notifications.filter(n => !n.read).length;
-      if (unreadCount > 0) {
-        notificationSound.current?.play().catch(() => {
-          // Ignore autoplay restrictions
-        });
-      }
+  }, []);
+
+  // Mark as read
+  const markAsRead = async (notificationId) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      setLocalNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+      onNotificationAction?.();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
     }
-  }, [notifications.length, soundEnabled]);
-  
+  };
+
+  // Archive notification
+  const archiveNotification = async (notificationId) => {
+    try {
+      await notificationService.archiveNotification(notificationId);
+      setLocalNotifications(prev => prev.filter(n => n.id !== notificationId));
+      onNotificationAction?.();
+    } catch (error) {
+      console.error('Error archiving notification:', error);
+    }
+  };
+
+  // Delete notification
+  const deleteNotification = async (notificationId) => {
+    try {
+      await notificationService.deleteNotification(notificationId);
+      setLocalNotifications(prev => prev.filter(n => n.id !== notificationId));
+      onNotificationAction?.();
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
+  };
+
+  // Quick actions
+  const handleQuickAction = async (action, notificationId) => {
+    switch (action) {
+      case 'markRead':
+        await markAsRead(notificationId);
+        break;
+      case 'archive':
+        await archiveNotification(notificationId);
+        break;
+      case 'delete':
+        await deleteNotification(notificationId);
+        break;
+      case 'view':
+        const notification = localNotifications.find(n => n.id === notificationId);
+        setSelectedNotification(notification);
+        setShowModal(true);
+        if (!notification.read) {
+          await markAsRead(notificationId);
+        }
+        break;
+    }
+  };
+
+  // Refresh
+  const refresh = () => {
+    fetchNotifications(true);
+  };
+
+  // Scroll to top
   const scrollToTop = () => {
     streamRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
-  const handleNotificationSelect = (notificationId, selected) => {
-    const newSelection = new Set(selectedNotifications);
-    if (selected) {
-      newSelection.add(notificationId);
-    } else {
-      newSelection.delete(notificationId);
-    }
-    setSelectedNotifications(newSelection);
+
+  // Get notification icon and colors
+  const getNotificationIcon = (type) => {
+    const iconMap = {
+      announcement: FiBell,
+      leave_request: FiCalendar,
+      timesheet_submission: FiClock,
+      task_created: FiPlus,
+      task_updated: FiEdit,
+      task_assigned: FiUser,
+      task_comment: FiMessageSquare,
+      project_update: FiFolder,
+      sprint_update: FiTarget,
+      system_alert: FiAlertTriangle,
+      general: FiMessageCircle,
+      meeting: FiCalendar,
+      task_status_change: FiEdit,
+      // Fallback for unknown types
+      default: FiBell
+    };
+    const Icon = iconMap[type] || iconMap.default;
+    return <Icon className="w-4 h-4" />;
   };
-  
-  const handleSelectAll = () => {
-    if (selectedNotifications.size === notifications.length) {
-      setSelectedNotifications(new Set());
-    } else {
-      setSelectedNotifications(new Set(notifications.map(n => n.id)));
-    }
+
+  const getNotificationColors = (type, priority) => {
+    const baseColors = {
+      announcement: 'border-blue-200 bg-blue-50 text-blue-700',
+      leave_request: 'border-purple-200 bg-purple-50 text-purple-700',
+      timesheet_submission: 'border-green-200 bg-green-50 text-green-700',
+      task_created: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+      task_updated: 'border-amber-200 bg-amber-50 text-amber-700',
+      task_assigned: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+      task_comment: 'border-teal-200 bg-teal-50 text-teal-700',
+      project_update: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      sprint_update: 'border-rose-200 bg-rose-50 text-rose-700',
+      system_alert: 'border-red-200 bg-red-50 text-red-700'
+    };
+
+    return baseColors[type] || 'border-gray-200 bg-gray-50 text-gray-700';
   };
-  
-  const handleBulkAction = async (action) => {
-    const notificationIds = Array.from(selectedNotifications);
-    setBulkActionsOpen(false);
-    
-    try {
-      switch (action) {
-        case 'read':
-          await Promise.all(notificationIds.map(id => markAsRead(id)));
-          break;
-        case 'archive':
-          await Promise.all(notificationIds.map(id => archiveNotification(id)));
-          break;
-        case 'delete':
-          await Promise.all(notificationIds.map(id => deleteNotification(id)));
-          break;
-      }
-      setSelectedNotifications(new Set());
-    } catch (error) {
-      console.error('Bulk action failed:', error);
-    }
-  };
-  
-  const handleNotificationAction = useCallback(async (action, notificationId) => {
-    try {
-      switch (action) {
-        case 'read':
-          await markAsRead(notificationId);
-          break;
-        case 'archive':
-          await archiveNotification(notificationId);
-          break;
-        case 'delete':
-          await deleteNotification(notificationId);
-          break;
-        case 'bookmark':
-          await bookmarkNotification(notificationId);
-          break;
-      }
-      onNotificationAction?.(action, notificationId);
-    } catch (error) {
-      console.error('Notification action failed:', error);
-    }
-  }, [markAsRead, archiveNotification, deleteNotification, bookmarkNotification, onNotificationAction]);
-  
-  const handleNotificationClick = (notification) => {
-    // Mark as read if unread
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-    // Open modal with notification details
-    setSelectedNotification(notification);
-    setIsModalOpen(true);
-  };
-  
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setSelectedNotification(null);
-  };
-  
-  const handleModalAction = async (action, notification) => {
-    // Refresh the notification list after an action
-    await refresh();
-  };
-  
-  const filteredNotifications = notifications.filter(notification => {
-    if (filters && typeof filters.search === 'string' && filters.search.trim() !== '') {
-      const searchTerm = filters.search.toLowerCase();
-      const title = (notification.title || '').toLowerCase();
-      const content = (notification.content || notification.message || '').toLowerCase();
-      const sender = (notification.sender || '').toLowerCase();
-      return title.includes(searchTerm) || content.includes(searchTerm) || sender.includes(searchTerm);
-    }
-    return true;
-  });
-  
-  return (
-    <div className="flex flex-col h-full bg-gray-50">
-      {/* Stream Header */}
-      <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Notification Stream
-            </h2>
-            
-            {filteredNotifications.length > 0 && (
-              <span className="text-sm text-gray-500">
-                {filteredNotifications.length} notifications
-              </span>
-            )}
-            
-            {realTimeEnabled && (
-              <div className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>Live</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Auto-refresh toggle */}
-            <motion.button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`p-2 rounded-lg transition-colors ${
-                autoRefresh ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title={autoRefresh ? 'Disable auto-refresh' : 'Enable auto-refresh'}
-            >
-              {autoRefresh ? <FiPlay className="w-4 h-4" /> : <FiPause className="w-4 h-4" />}
-            </motion.button>
-            
-            {/* Sound toggle */}
-            <motion.button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2 rounded-lg transition-colors ${
-                soundEnabled ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-              }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title={soundEnabled ? 'Disable sound' : 'Enable sound'}
-            >
-              {soundEnabled ? <FiVolume2 className="w-4 h-4" /> : <FiVolumeX className="w-4 h-4" />}
-            </motion.button>
-            
-            {/* Refresh button */}
-            <motion.button
-              onClick={refresh}
-              disabled={loading}
-              className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="Refresh notifications"
-            >
-              <FiRefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </motion.button>
-          </div>
-        </div>
-        
-        {/* Bulk actions bar */}
-        {selectedNotifications.size > 0 && (
+
+  if (loading && localNotifications.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-indigo-900">
-                  {selectedNotifications.size} selected
-                </span>
-                <button
-                  onClick={handleSelectAll}
-                  className="text-sm text-indigo-600 hover:text-indigo-800"
-                >
-                  {selectedNotifications.size === notifications.length ? 'Deselect all' : 'Select all'}
-                </button>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <motion.button
-                  onClick={() => handleBulkAction('read')}
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FiCheckCircle className="w-4 h-4" />
-                  Mark read
-                </motion.button>
-                
-                <motion.button
-                  onClick={() => handleBulkAction('archive')}
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FiArchive className="w-4 h-4" />
-                  Archive
-                </motion.button>
-                
-                <motion.button
-                  onClick={() => handleBulkAction('delete')}
-                  className="flex items-center gap-1 px-3 py-1 text-sm bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FiTrash2 className="w-4 h-4" />
-                  Delete
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        )}
+            className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full mx-auto"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+          <p className="mt-3 text-gray-600">Loading notifications...</p>
+        </div>
       </div>
-      
-      {/* Notification List */}
-      <div 
+    );
+  }
+
+  if (localNotifications.length === 0 && !loading) {
+    return (
+      <div className="text-center py-12">
+        <FiBell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
+        <p className="text-gray-600">You're all caught up! Check back later for new notifications.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Stream Container */}
+      <div
         ref={streamRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3"
+        className="h-[calc(100vh-8rem)] overflow-y-auto space-y-3 pr-2"
       >
-        <AnimatePresence mode="popLayout">
-          {filteredNotifications.map((notification) => (
+        <AnimatePresence>
+          {localNotifications.map((notification, index) => (
             <motion.div
               key={notification.id}
-              layout
-              className="relative"
+              transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              {/* Selection checkbox */}
-              <div className="absolute left-2 top-4 z-10">
-                <input
-                  type="checkbox"
-                  checked={selectedNotifications.has(notification.id)}
-                  onChange={(e) => handleNotificationSelect(notification.id, e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                />
-              </div>
-              
-              <div 
-                className="pl-8 cursor-pointer"
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <NotificationCard
-                  notification={notification}
-                  onRead={(id) => handleNotificationAction('read', id)}
-                  onArchive={(id) => handleNotificationAction('archive', id)}
-                  onDelete={(id) => handleNotificationAction('delete', id)}
-                  onBookmark={(id) => handleNotificationAction('bookmark', id)}
-                  onReply={(notification) => console.log('Reply to:', notification)}
-                />
-              </div>
+              <NotificationCard
+                notification={notification}
+                onAction={handleQuickAction}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
-        
-        {/* Empty state */}
-        {!loading && filteredNotifications.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
-            <div className="text-6xl mb-4">📭</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-500">You're all caught up!</p>
-          </motion.div>
-        )}
-        
+
         {/* Loading indicator */}
         {loading && (
-          <div className="text-center py-8">
-            <FiRefreshCw className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-            <p className="text-sm text-gray-500 mt-2">Loading notifications...</p>
+          <div className="flex justify-center py-4">
+            <motion.div
+              className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
           </div>
         )}
-        
-        {/* Load more trigger */}
-        {hasMore && !loading && (
-          <div ref={loadMoreRef} className="h-4" />
+
+        {/* End of notifications */}
+        {localNotifications.length > 0 && (
+          <div className="text-center py-6 text-gray-500 text-sm">
+            Showing all {localNotifications.length} notifications
+          </div>
         )}
       </div>
-      
+
       {/* Scroll to top button */}
       <AnimatePresence>
         {showScrollTop && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToTop}
-            className="fixed bottom-6 right-6 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 z-20"
+            className="fixed bottom-6 right-6 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
@@ -397,14 +299,21 @@ export default function NotificationStream({
           </motion.button>
         )}
       </AnimatePresence>
-      
-      {/* Notification Detail Modal */}
-      <NotificationDetailModal
-        notification={selectedNotification}
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onAction={handleModalAction}
-      />
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {showModal && selectedNotification && (
+          <NotificationDetailModal
+            isOpen={showModal}
+            notification={selectedNotification}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedNotification(null);
+            }}
+            onAction={handleQuickAction}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

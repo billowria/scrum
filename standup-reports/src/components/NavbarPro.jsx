@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { supabase } from '../supabaseClient';
-import { FiUser, FiGrid, FiAward, FiUsers, FiShield, FiLogOut, FiHome, FiCalendar, FiList, FiCheckSquare, FiClock, FiBell, FiChevronDown, FiMenu } from 'react-icons/fi';
+import { FiUser, FiGrid, FiAward, FiUsers, FiShield, FiLogOut, FiHome, FiCalendar, FiList, FiCheckSquare, FiClock, FiBell, FiChevronDown, FiMenu, FiTarget } from 'react-icons/fi';
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard', icon: <FiHome /> },
@@ -14,8 +14,7 @@ const navLinks = [
 
 const managerLinks = [
   { to: '/team-management', label: 'Workforce Management', icon: <FiUsers /> },
-  { to: '/manager-dashboard?tab=leave-requests', label: 'Leave Approvals', icon: <FiCheckSquare /> },
-  { to: '/manager-dashboard?tab=leave-history', label: 'Leave History', icon: <FiClock /> },
+
   { to: '/history', label: 'Report History', icon: <FiClock /> },
   { to: '/manager-dashboard?tab=announcements', label: 'Announcements', icon: <FiBell /> },
 ];

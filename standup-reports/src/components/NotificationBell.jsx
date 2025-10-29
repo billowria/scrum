@@ -250,18 +250,9 @@ const NotificationBell = ({ userRole }) => {
       
       // Fetch announcements for user's team
       const today = new Date().toISOString();
-      
-      // Fetch dismissed announcements for this user
-      const { data: dismissals, error: dismissalError } = await supabase
-        .from('announcement_dismissals')
-        .select('announcement_id')
-        .eq('user_id', user.id);
-        
-      if (dismissalError) throw dismissalError;
-      
-      // Create a Set of dismissed announcement IDs
-      const dismissedAnnouncementIds = new Set(dismissals?.map(d => d.announcement_id) || []);
-      setDismissedAnnouncements(dismissedAnnouncementIds);
+
+      // No dismissal tracking anymore
+      setDismissedAnnouncements(new Set());
       
       // Get announcements for user's team that haven't expired and haven't been dismissed
       let announcements = [];
@@ -286,10 +277,8 @@ const NotificationBell = ({ userRole }) => {
       
       if (announcementError) throw announcementError;
       
-      // Filter out dismissed announcements and transform them
-      const announcementNotifications = announcements
-        .filter(announcement => !dismissedAnnouncementIds.has(announcement.id))
-        .map(announcement => ({
+      // Transform announcements (no dismissal filtering)
+      const announcementNotifications = announcements.map(announcement => ({
           id: `announcement-${announcement.id}`,
           type: 'announcement',
           title: announcement.title,
@@ -366,28 +355,8 @@ const NotificationBell = ({ userRole }) => {
     
     if (type === 'announcement') {
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) return;
-        
-        // Record dismissal in database
-        const { error } = await supabase
-          .from('announcement_dismissals')
-          .insert({
-            user_id: user.id,
-            announcement_id: id,
-            dismissed_at: new Date().toISOString()
-          });
-          
-        if (error) throw error;
-        
-        // Update local state
-        setDismissedAnnouncements(prev => {
-          const updated = new Set(prev);
-          updated.add(id);
-          return updated;
-        });
+        // Dismissal tracking has been removed
+        console.log('Announcement dismissal not tracked anymore');
       } catch (error) {
         console.error('Error dismissing announcement:', error);
       }

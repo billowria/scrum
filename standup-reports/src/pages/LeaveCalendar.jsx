@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend, FiTarget, FiCheckSquare } from 'react-icons/fi';
 import { useCompany } from '../contexts/CompanyContext';
 
 // Import components
@@ -305,7 +305,7 @@ const CompactTabHeader = ({
                 {quickActions.map((action, index) => (
                   <motion.button
                     key={index}
-                    className="relative p-1.5 sm:p-2 rounded-xl bg-white/30 backdrop-blur-sm border border-cyan-200/30 text-gray-700 hover:text-cyan-700 transition-all group"
+                    className="relative px-3 py-2 rounded-xl bg-gradient-to-b from-white/50 via-white/30 to-white/20 backdrop-blur-xl border border-white/50 shadow-lg text-gray-700 hover:text-cyan-600 transition-all group hover:shadow-xl hover:shadow-cyan-500/20"
                     onClick={action.onClick}
                     whileHover={{ scale: 1.05, y: -1 }}
                     whileTap={{ scale: 0.95 }}
@@ -314,10 +314,13 @@ const CompactTabHeader = ({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 + index * 0.08, type: "spring", stiffness: 500 }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center relative z-10">
-                      {action.icon}
-                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-blue-500/10 to-indigo-500/10 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-xl opacity-100"></div>
+                    <div className="flex items-center gap-1.5 relative z-10">
+                      <span className="w-4 h-4 flex items-center justify-center">
+                        {action.icon}
+                      </span>
+                    </div>
                   </motion.button>
                 ))}
               </div>
@@ -375,8 +378,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   // New state for premium button hover
   const [isButtonHovered, setButtonHovered] = useState(false);
 
-  // New state for holiday calendar view
-  const [showHolidayCalendarModal, setShowHolidayCalendarModal] = useState(false);
+
 
   // Animation controls
   const controls = useAnimation();
@@ -1166,9 +1168,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         sidebarOpen={sidebarOpen}
         quickStats={[
           {
-            label: "Month",
-            value: format(currentMonth, 'MMM yyyy'),
-            onClick: () => setShowHolidayCalendarModal(true)
+            label: "Manage",
+            value: "",
+            onClick: () => window.location.href = '/leave-management',
+            icon: <FiTarget className="w-3 h-3" />
           },
           {
             label: "On Leave Today",
@@ -1233,8 +1236,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 </motion.button>
                 
                 <div 
-                  className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent cursor-pointer hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-600 transition-all duration-300 p-2 rounded-lg hover:bg-opacity-20"
-                  onClick={() => setShowHolidayCalendarModal(true)}
+                  className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent p-2 rounded-lg"
                 >
                   {format(currentMonth, 'MMMM yyyy')}
                 </div>
@@ -1613,13 +1615,6 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
 
 
 
-      {/* Holiday Calendar Modal */}
-      <HolidayCalendarModal
-        isOpen={showHolidayCalendarModal}
-        onClose={() => setShowHolidayCalendarModal(false)}
-        currentMonth={currentMonth}
-      />
-
       {/* Users on leave modal */}
       <UserListModal
         isOpen={showOnLeaveModal}
@@ -1663,219 +1658,3 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     </div>
   );
 }
-
-
-
-
-
-// Holiday Calendar Modal Component
-const HolidayCalendarModal = ({ isOpen, onClose, currentMonth }) => {
-  const [holidays, setHolidays] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  // In a real application, this would fetch from an API
-  const fetchHolidaysForMonth = async (month) => {
-    setLoading(true);
-    try {
-      // Simulate API call or fetch from a holiday API in a real implementation
-      // For demo purposes, I'll create realistic holidays based on the actual month
-      const year = new Date(currentMonth).getFullYear();
-      const monthNum = new Date(currentMonth).getMonth();
-      
-      // Create some realistic holidays for the given month
-      const monthHolidays = [];
-      
-      // Add some common recurring holidays based on the month
-      if (monthNum === 0) { // January
-        monthHolidays.push({ date: format(new Date(year, 0, 1), 'yyyy-MM-dd'), name: 'New Year\'s Day', type: 'Public' });
-        if (year === new Date().getFullYear()) {
-          monthHolidays.push({ date: format(new Date(year, 0, 15), 'yyyy-MM-dd'), name: 'Martin Luther King Jr. Day', type: 'Federal' });
-        }
-      } else if (monthNum === 1) { // February
-        monthHolidays.push({ date: format(new Date(year, 1, 14), 'yyyy-MM-dd'), name: 'Valentine\'s Day', type: 'Observance' });
-        if (year === new Date().getFullYear()) {
-          monthHolidays.push({ date: format(new Date(year, 1, 20), 'yyyy-MM-dd'), name: 'Presidents\' Day', type: 'Federal' });
-        }
-      } else if (monthNum === 6) { // July
-        monthHolidays.push({ date: format(new Date(year, 6, 4), 'yyyy-MM-dd'), name: 'Independence Day', type: 'Public' });
-      } else if (monthNum === 11) { // December
-        monthHolidays.push({ date: format(new Date(year, 11, 25), 'yyyy-MM-dd'), name: 'Christmas Day', type: 'Public' });
-      }
-      
-      // Add a few more random holidays for demonstration
-      if (new Date().getMonth() === monthNum) {
-        // Add weekend holidays for demonstration
-        const daysInMonth = eachDayOfInterval({
-          start: startOfMonth(currentMonth),
-          end: endOfMonth(currentMonth)
-        });
-        
-        daysInMonth.forEach(day => {
-          if (isWeekend(day) && Math.random() > 0.7) { // Random weekends as sample holidays
-            monthHolidays.push({
-              date: format(day, 'yyyy-MM-dd'),
-              name: 'Weekend Holiday',
-              type: 'Observance'
-            });
-          }
-        });
-      }
-      
-      // Sort holidays by date
-      monthHolidays.sort((a, b) => parseISO(a.date) - parseISO(b.date));
-      
-      setHolidays(monthHolidays);
-    } catch (error) {
-      console.error('Error fetching holidays:', error);
-      // Set some default holidays in case of error
-      setHolidays([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchHolidaysForMonth(currentMonth);
-    }
-  }, [isOpen, currentMonth]);
-
-  if (!isOpen) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/30 flex items-end sm:items-center justify-center"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="w-full sm:max-w-3xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Enhanced Header with Professional Gradient */}
-          <div className="p-5 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
-                  <FiCalendar className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Holiday Calendar</h3>
-                  <p className="text-indigo-100 text-sm">Holidays for {format(currentMonth, 'MMMM yyyy')}</p>
-                </div>
-              </div>
-              <button 
-                className="p-2 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-all"
-                onClick={onClose}
-                aria-label="Close modal"
-              >
-                <FiX className="w-5 h-5 text-white" />
-              </button>
-            </div>
-          </div>
-
-          <div className="p-5 sm:p-6">
-            {/* Enhanced Holiday Summary Card */}
-            <div className="mb-6 p-5 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-bold text-gray-800 text-lg">Holidays Summary</h4>
-                  <p className="text-gray-600">Public and special holidays for the month</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-indigo-700">{holidays.length}</div>
-                    <div className="text-sm text-gray-500">Total</div>
-                  </div>
-                  <div className="h-10 w-px bg-gray-200"></div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-700">
-                      {holidays.filter(h => h.type === 'Public' || h.type === 'Federal').length}
-                    </div>
-                    <div className="text-sm text-gray-500">Public</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Holiday List */}
-            <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-              {loading ? (
-                <div className="p-12 text-center">
-                  <div className="flex justify-center mb-4">
-                    <div className="w-10 h-10 border-t-2 border-indigo-600 border-solid rounded-full animate-spin"></div>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-1">Loading Holidays</h3>
-                  <p className="text-gray-500">Retrieving holiday information for {format(currentMonth, 'MMMM yyyy')}</p>
-                </div>
-              ) : holidays.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
-                    <FiCalendar className="w-8 h-8 text-indigo-600" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-1">No Holidays This Month</h3>
-                  <p className="text-gray-500">There are no holidays scheduled for {format(currentMonth, 'MMMM yyyy')}</p>
-                </div>
-              ) : (
-                <div className="overflow-y-auto max-h-[50vh] custom-scrollbar pr-2">
-                  <div className="divide-y divide-gray-100">
-                    {holidays.map((holiday, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="p-5 hover:bg-gray-50 transition-colors duration-200"
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Date Circle */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex flex-col items-center justify-center text-white text-sm font-bold">
-                              <div>{format(parseISO(holiday.date), 'dd')}</div>
-                              <div className="text-xs opacity-80">{format(parseISO(holiday.date), 'MMM')}</div>
-                            </div>
-                          </div>
-                          
-                          {/* Holiday Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="font-bold text-gray-800 text-lg">{holiday.name}</h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-gray-600 flex items-center gap-1">
-                                    <FiCalendar className="w-4 h-4" />
-                                    {format(parseISO(holiday.date), 'EEEE, MMMM d, yyyy')}
-                                  </span>
-                                </div>
-                              </div>
-                              <span className={`px-3 py-1.5 text-xs font-semibold rounded-full capitalize ${
-                                holiday.type === 'Public' || holiday.type === 'Federal' 
-                                  ? 'bg-red-100 text-red-800 border border-red-200' 
-                                  : holiday.type === 'Observance'
-                                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                                  : 'bg-purple-100 text-purple-800 border border-purple-200'
-                              }`}>
-                                {holiday.type}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-};

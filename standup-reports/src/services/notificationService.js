@@ -1,26 +1,31 @@
 import { supabase } from '../supabaseClient';
 import { format, parseISO, differenceInDays } from 'date-fns';
 
-// Notification types enum
+// Notification types enum (based on announcement notification_type)
 export const NOTIFICATION_TYPES = {
-  ANNOUNCEMENT: 'announcement',
+  ANNOUNCEMENT: 'general',
   LEAVE_REQUEST: 'leave_request',
-  TIMESHEET_SUBMISSION: 'timesheet_submission',
+  TIMESHEET_SUBMISSION: 'timesheet',
   TASK_CREATED: 'task_created',
   TASK_UPDATED: 'task_updated',
   TASK_ASSIGNED: 'task_assigned',
   TASK_COMMENT: 'task_comment',
   PROJECT_UPDATE: 'project_update',
   SPRINT_UPDATE: 'sprint_update',
-  SYSTEM_ALERT: 'system_alert'
+  SYSTEM_ALERT: 'system_alert',
+  TASK_STATUS_CHANGE: 'task_status_change',
+  MEETING: 'meeting',
+  ACHIEVEMENT: 'achievement',
+  URGENT: 'urgent',
+  TEAM_COMMUNICATION: 'team_communication'
 };
 
-// Notification priority levels
+// Notification priority levels (matching database schema)
 export const NOTIFICATION_PRIORITIES = {
-  LOW: 'low',
-  NORMAL: 'normal',
-  HIGH: 'high',
-  URGENT: 'urgent'
+  LOW: 'Low',
+  NORMAL: 'Medium',
+  HIGH: 'High',
+  URGENT: 'Critical'
 };
 
 // Notification categories for filtering
@@ -53,7 +58,11 @@ class NotificationService {
       [NOTIFICATION_TYPES.TASK_COMMENT]: 'FiMessageSquare',
       [NOTIFICATION_TYPES.PROJECT_UPDATE]: 'FiFolder',
       [NOTIFICATION_TYPES.SPRINT_UPDATE]: 'FiTarget',
-      [NOTIFICATION_TYPES.SYSTEM_ALERT]: 'FiAlertTriangle'
+      [NOTIFICATION_TYPES.SYSTEM_ALERT]: 'FiAlertTriangle',
+      [NOTIFICATION_TYPES.MEETING]: 'FiCalendar',
+      [NOTIFICATION_TYPES.ACHIEVEMENT]: 'FiStar',
+      [NOTIFICATION_TYPES.URGENT]: 'FiAlertCircle',
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: 'FiMessageCircle'
     };
     return iconMap[type] || 'FiBell';
   }
@@ -70,7 +79,8 @@ class NotificationService {
       [NOTIFICATION_TYPES.TASK_COMMENT]: { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-700' },
       [NOTIFICATION_TYPES.PROJECT_UPDATE]: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
       [NOTIFICATION_TYPES.SPRINT_UPDATE]: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
-      [NOTIFICATION_TYPES.SYSTEM_ALERT]: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' }
+      [NOTIFICATION_TYPES.SYSTEM_ALERT]: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700' }
     };
 
     let colors = baseColors[type] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700' };
@@ -98,81 +108,169 @@ class NotificationService {
       [NOTIFICATION_TYPES.TASK_UPDATED]: NOTIFICATION_CATEGORIES.TASK,
       [NOTIFICATION_TYPES.TASK_ASSIGNED]: NOTIFICATION_CATEGORIES.TASK,
       [NOTIFICATION_TYPES.TASK_COMMENT]: NOTIFICATION_CATEGORIES.TASK,
+      [NOTIFICATION_TYPES.TASK_STATUS_CHANGE]: NOTIFICATION_CATEGORIES.TASK,
       // Treat project and sprint updates as task-related per UX requirement
       [NOTIFICATION_TYPES.PROJECT_UPDATE]: NOTIFICATION_CATEGORIES.TASK,
       [NOTIFICATION_TYPES.SPRINT_UPDATE]: NOTIFICATION_CATEGORIES.TASK,
-      [NOTIFICATION_TYPES.SYSTEM_ALERT]: NOTIFICATION_CATEGORIES.SYSTEM
+      [NOTIFICATION_TYPES.SYSTEM_ALERT]: NOTIFICATION_CATEGORIES.SYSTEM,
+      [NOTIFICATION_TYPES.MEETING]: NOTIFICATION_CATEGORIES.COMMUNICATION,
+      [NOTIFICATION_TYPES.ACHIEVEMENT]: NOTIFICATION_CATEGORIES.ACHIEVEMENT,
+      [NOTIFICATION_TYPES.URGENT]: NOTIFICATION_CATEGORIES.SYSTEM,
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: NOTIFICATION_CATEGORIES.COMMUNICATION
     };
     return categoryMap[type] || NOTIFICATION_CATEGORIES.SYSTEM;
   }
 
-  // Fetch all notifications for a user
+  // Check if notification is relevant to current user
+  isNotificationRelevant(notification, currentUser) {
+    // If notification has specific recipients, check if current user is included
+    if (notification.recipients) {
+      const { teams = [], users = [], all = false } = notification.recipients;
+
+      // If sent to all users
+      if (all) return true;
+
+      // Check if user is explicitly included
+      if (users.includes(currentUser.id)) return true;
+
+      // Check if user's team is included
+      if (currentUser.team_id && teams.includes(currentUser.team_id)) return true;
+
+      return false;
+    }
+
+    // For announcements and system alerts, check based on scope
+    if (notification.type === NOTIFICATION_TYPES.ANNOUNCEMENT ||
+        notification.type === NOTIFICATION_TYPES.SYSTEM_ALERT) {
+      // If no specific recipients, assume it's for everyone
+      return true;
+    }
+
+    // For task-related notifications, check if user is involved
+    if (notification.type.startsWith('task_') ||
+        notification.type === NOTIFICATION_TYPES.PROJECT_UPDATE ||
+        notification.type === NOTIFICATION_TYPES.SPRINT_UPDATE) {
+      // Check if user is assignee, creator, or involved in the project
+      return notification.assignee_id === currentUser.id ||
+             notification.creator_id === currentUser.id ||
+             (notification.project_team_id === currentUser.team_id);
+    }
+
+    // Default to relevant for unknown notification types
+    return true;
+  }
+
+  // Fetch all notifications for a user (using announcements table)
   async fetchNotifications(userId, userRole, teamId, options = {}) {
     try {
-      const { 
-        limit = 50, 
-        offset = 0, 
-        types = null, 
-        categories = null, 
-        priority = null,
-        unreadOnly = false 
+      const {
+        limit = 50,
+        offset = 0,
+        category = 'all',
+        priority = 'all',
+        status = 'all',
+        search = ''
       } = options;
 
-      let allNotifications = [];
-
-      // Fetch leave requests (for managers)
-      if (userRole === 'manager') {
-        const leaveNotifications = await this.fetchLeaveRequestNotifications(teamId, limit);
-        allNotifications = [...allNotifications, ...leaveNotifications];
-
-        // Fetch timesheet submissions (for managers)
-        const timesheetNotifications = await this.fetchTimesheetNotifications(teamId, limit);
-        allNotifications = [...allNotifications, ...timesheetNotifications];
-      }
-
-      // Fetch announcements
-      const announcementNotifications = await this.fetchAnnouncementNotifications(userId, teamId, limit);
-      allNotifications = [...allNotifications, ...announcementNotifications];
-
-      // Fetch task notifications
-      const taskNotifications = await this.fetchTaskNotifications(userId, userRole, teamId, limit);
-      allNotifications = [...allNotifications, ...taskNotifications];
+      // Build query for announcements table
+      let query = supabase
+        .from('announcements')
+        .select(`
+          id,
+          title,
+          content,
+          notification_type,
+          priority,
+          created_at,
+          updated_at,
+          expiry_date,
+          team_id,
+          created_by,
+          task_id,
+          company_id,
+          metadata,
+          users!announcements_created_by_fkey (
+            name,
+            role
+          )
+        `)
+        .eq('company_id', teamId) // Assuming teamId is actually companyId for announcements
+        .gte('expiry_date', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       // Apply filters
-      if (types && types.length > 0) {
-        allNotifications = allNotifications.filter(n => types.includes(n.type));
+      if (category !== 'all') {
+        // Map category to notification_type
+        const categoryToType = {
+          [NOTIFICATION_CATEGORIES.COMMUNICATION]: 'general',
+          [NOTIFICATION_CATEGORIES.ADMINISTRATIVE]: 'leave_request',
+          [NOTIFICATION_CATEGORIES.PROJECT]: 'project_update',
+          [NOTIFICATION_CATEGORIES.TASK]: ['task_created', 'task_updated', 'task_assigned', 'task_comment'],
+          [NOTIFICATION_CATEGORIES.SYSTEM]: 'system_alert'
+        };
+
+        const types = categoryToType[category];
+        if (types) {
+          if (Array.isArray(types)) {
+            query = query.in('notification_type', types);
+          } else {
+            query = query.eq('notification_type', types);
+          }
+        }
       }
 
-      if (categories && categories.length > 0) {
-        allNotifications = allNotifications.filter(n => 
-          categories.includes(this.getNotificationCategory(n.type))
-        );
+      if (priority !== 'all') {
+        query = query.eq('priority', priority);
       }
 
-      if (priority) {
-        allNotifications = allNotifications.filter(n => n.priority === priority);
+      if (search) {
+        query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
       }
 
-      if (unreadOnly) {
-        allNotifications = allNotifications.filter(n => !n.read);
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        throw error;
       }
 
-      // Sort by creation date (newest first)
-      allNotifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      // Apply pagination
-      const paginatedNotifications = allNotifications.slice(offset, offset + limit);
+      
+      // Transform announcements to notification format
+      const notifications = data.map(announcement => ({
+        id: announcement.id,
+        title: announcement.title,
+        message: announcement.content,
+        type: announcement.notification_type || NOTIFICATION_TYPES.ANNOUNCEMENT,
+        priority: announcement.priority || NOTIFICATION_PRIORITIES.NORMAL,
+        created_at: announcement.created_at,
+        updated_at: announcement.updated_at,
+        read: false, // TODO: Implement read tracking with user_preferences or similar
+        sender_name: announcement.users?.name || 'System',
+        team_id: announcement.team_id,
+        task_id: announcement.task_id,
+        metadata: announcement.metadata
+      }));
 
       return {
-        notifications: paginatedNotifications,
-        total: allNotifications.length,
-        unreadCount: allNotifications.filter(n => !n.read).length
+        notifications,
+        total: notifications.length,
+        hasMore: notifications.length === limit
       };
-
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-      throw error;
+      console.error('Notifications table not found or error:', error);
+      // Return empty result if table doesn't exist
+      return {
+        notifications: [],
+        total: 0,
+        hasMore: false
+      };
     }
+  }
+
+  // Main method used by components
+  async getNotifications(options = {}) {
+    return this.fetchNotifications(options.userId, options.role, options.teamId, options);
   }
 
   // Fetch leave request notifications
@@ -284,16 +382,6 @@ class NotificationService {
 
       const today = new Date().toISOString();
 
-      // Get dismissed announcements for this user
-      const { data: dismissals, error: dismissalError } = await supabase
-        .from('announcement_dismissals')
-        .select('announcement_id')
-        .eq('user_id', userId);
-
-      if (dismissalError) throw dismissalError;
-
-      const dismissedIds = new Set(dismissals?.map(d => d.announcement_id) || []);
-
       // Get announcements
       const { data: announcements, error } = await supabase
         .from('announcements')
@@ -309,9 +397,7 @@ class NotificationService {
 
       if (error) throw error;
 
-      return announcements
-        .filter(announcement => !dismissedIds.has(announcement.id))
-        .map(announcement => {
+      return announcements.map(announcement => {
           const notifType = this.detectAnnouncementType(announcement);
           return {
             id: `announcement-${announcement.id}`,
@@ -427,16 +513,13 @@ class NotificationService {
       // Handle different notification types
       switch (type) {
         case 'announcement':
-          // Announcements are marked as read via dismissal
-          return await this.dismissAnnouncement(id, userId);
-        
         case 'leave':
         case 'timesheet':
-          // These don't have read state - they're either pending or processed
+          // These don't have read state tracking - they're either pending or processed
           return true;
-        
+
         default:
-          // For other types, implement in notifications table
+          // For other types, implement read tracking
           console.log(`Marking ${notificationId} as read for user ${userId}`);
           return true;
       }
@@ -446,24 +529,7 @@ class NotificationService {
     }
   }
 
-  // Dismiss an announcement
-  async dismissAnnouncement(announcementId, userId) {
-    try {
-      const { error } = await supabase
-        .from('announcement_dismissals')
-        .insert({
-          user_id: userId,
-          announcement_id: announcementId,
-          dismissed_at: new Date().toISOString()
-        });
-
-      return !error;
-    } catch (error) {
-      console.error('Error dismissing announcement:', error);
-      return false;
-    }
-  }
-
+  
   // Set up real-time subscription for notifications
   subscribeToNotifications(userId, userRole, teamId, callback) {
     const subscriptionKey = `notifications_${userId}`;
@@ -640,12 +706,7 @@ class NotificationService {
       const type = parts[0];
       const id = parts[1];
       
-      if (type === 'announcement') {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await this.dismissAnnouncement(id, user.id);
-        }
-      }
+      // Announcements don't have dismissal tracking anymore
       return true;
     } catch (error) {
       console.error('Error archiving notification:', error);
@@ -814,6 +875,100 @@ class NotificationService {
     } catch (error) {
       console.error('Error updating user preferences:', error);
       return false;
+    }
+  }
+
+  // Create a new notification (announcement)
+  async createNotification(notificationData) {
+    try {
+      // Map notification data to announcement schema
+      const announcementData = {
+        title: notificationData.title,
+        content: notificationData.message,
+        notification_type: notificationData.type || NOTIFICATION_TYPES.ANNOUNCEMENT,
+        priority: notificationData.priority || NOTIFICATION_PRIORITIES.NORMAL,
+        team_id: notificationData.recipients?.teams?.[0] || null,
+        created_by: notificationData.sender_id,
+        company_id: notificationData.company_id || notificationData.teamId,
+        task_id: notificationData.task_id || null,
+        expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        metadata: {
+          recipients: notificationData.recipients,
+          sender_name: notificationData.sender_name
+        }
+      };
+
+      const { data, error } = await supabase
+        .from('announcements')
+        .insert(announcementData)
+        .select(`
+          id,
+          title,
+          content,
+          notification_type,
+          priority,
+          created_at,
+          updated_at,
+          expiry_date,
+          team_id,
+          created_by,
+          task_id,
+          company_id,
+          metadata
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Transform to notification format
+      return {
+        id: data.id,
+        title: data.title,
+        message: data.content,
+        type: data.notification_type,
+        priority: data.priority,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        read: false,
+        team_id: data.team_id,
+        task_id: data.task_id,
+        metadata: data.metadata
+      };
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  }
+
+  // Archive notification (delete announcement)
+  async archiveNotification(notificationId) {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error archiving notification:', error);
+      throw error;
+    }
+  }
+
+  // Delete notification permanently (delete announcement)
+  async deleteNotification(notificationId) {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
     }
   }
 }

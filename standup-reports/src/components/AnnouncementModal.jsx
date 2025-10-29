@@ -49,15 +49,8 @@ export default function AnnouncementModal({
   
   const handleDismiss = async () => {
     try {
-      // Record dismissal in database
-      const { error } = await supabase
-        .from('announcement_dismissals')
-        .insert({
-          user_id: userId,
-          announcement_id: announcement.id,
-          dismissed_at: new Date().toISOString()
-        });
-      if (error) throw error;
+      // Dismissal tracking has been removed
+      console.log('Announcement dismissal not tracked anymore');
       if (onDismiss) onDismiss(announcement.id);
       onClose();
     } catch (error) {

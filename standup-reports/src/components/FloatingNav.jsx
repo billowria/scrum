@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiGrid, FiX } from 'react-icons/fi';
+import { FiGrid, FiX, FiTarget } from 'react-icons/fi';
 import { 
   TbLayoutDashboard,
   TbCalendarEvent,
@@ -154,13 +154,11 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
       { id: 'requests', icon: TbSettings, label: 'My Requests', path: '/leave-calendar?tab=requests' }
     ],
     'manager-dashboard': [
-      { id: 'leave-requests', icon: TbClipboardText, label: 'Leave Requests', path: '/manager-dashboard?tab=leave-requests' },
       { id: 'analytics-dashboard', icon: TbLayoutDashboard, label: 'Analytics', path: '/analytics-dashboard' },
       { id: 'team-management', icon: TbUsers, label: 'Team', path: '/manager-dashboard?tab=team-management' },
       { id: 'add-member', icon: TbUserPlus, label: 'Add Member', path: '/manager-dashboard?tab=add-member' },
       { id: 'project-manager', icon: TbFolder, label: 'Project Manager', path: '/manager-dashboard?tab=project-manager' },
       { id: 'announcements', icon: TbBell, label: 'Announcements', path: '/manager-dashboard?tab=announcements' },
-      { id: 'leave-history', icon: TbHistory, label: 'History', path: '/manager-dashboard?tab=leave-history' },
       { id: 'report-history', icon: TbHistory, label: 'Reports', path: '/manager-dashboard?tab=report-history' },
       { id: 'timesheets', icon: TbHistory, label: 'Timesheets', path: '/manager-dashboard?tab=timesheets' }
     ]

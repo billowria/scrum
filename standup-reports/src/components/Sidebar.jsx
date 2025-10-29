@@ -5,7 +5,7 @@ import {
   FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
   FiTrendingUp, FiShield, FiZap, FiHeart, FiSearch, FiStar,
   FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX,
-  FiMessageSquare, FiFileText
+  FiMessageSquare, FiFileText, FiTarget
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -98,23 +98,7 @@ const createManagerPortalSubtasks = (counts, user) => [
     description: 'Onboard new talent',
     status: 'normal'
   },
-  { 
-    label: 'Leave Requests', 
-    icon: <FiClipboard />, 
-    to: '/manager-dashboard?tab=leave-requests',
-    gradient: 'from-yellow-500 to-orange-600',
-    description: 'Review time-off requests',
-    status: counts.leaveRequests > 0 ? 'urgent' : 'normal',
-    badge: counts.leaveRequests
-  },
-  { 
-    label: 'Leave History', 
-    icon: <FiClock />, 
-    to: '/manager-dashboard?tab=leave-history',
-    gradient: 'from-purple-500 to-pink-600',
-    description: 'Historical records',
-    status: 'normal'
-  },
+
   { 
     label: 'Announcements', 
     icon: <FiBell />, 

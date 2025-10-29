@@ -23,6 +23,7 @@ import LeaveCalendar from './pages/LeaveCalendar';
 import ManagerDashboard from './pages/ManagerDashboard';
 import TeamManagement from './pages/TeamManagement';
 import AchievementsPage from './pages/AchievementsPage';
+import LeaveManagement from './components/LeaveManagement';
 import ManageAnnouncements from './components/ManageAnnouncements';
 import CreateUser from './pages/CreateUser';
 
@@ -255,7 +256,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <Route path="/leave-requests" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <ManagerDashboard activeTabDefault="leave-requests" />
+                          <ManagerDashboard activeTabDefault="team-management" />
                         </div>
                       </PageTransition>
                     } />
@@ -288,6 +289,16 @@ function AppContent({ session, userRole, sidebarOpen }) {
                       </PageTransition>
                     } />
                   </>
+                )}
+                {/* Manager and admin routes */}
+                {(userRole === 'manager' || userRole === 'admin') && (
+                  <Route path="/leave-management" element={
+                    <PageTransition>
+                      <div className="w-full py-6">
+                        <LeaveManagement />
+                      </div>
+                    </PageTransition>
+                  } />
                 )}
                 <Route path="/report" element={
                   <ReportEntry />

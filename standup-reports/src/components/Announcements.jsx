@@ -73,20 +73,11 @@ const Announcements = ({
       
       if (error) throw error;
       
-      // Fetch dismissed announcements by this user
-      const { data: dismissals, error: dismissalError } = await supabase
-        .from('announcement_dismissals')
-        .select('announcement_id')
-        .eq('user_id', userId);
-      
-      if (dismissalError) throw dismissalError;
-      
-      // Create a Set of dismissed announcement IDs for quick checking
-      const dismissedAnnouncementIds = new Set(dismissals?.map(d => d.announcement_id) || []);
-      setDismissedIds(dismissedAnnouncementIds);
-      
-      // Filter to only show announcements that haven't been dismissed
-      const filteredAnnouncements = data?.filter(a => !dismissedAnnouncementIds.has(a.id)) || [];
+      // Dismissal tracking has been removed
+      setDismissedIds(new Set());
+
+      // Show all announcements (no dismissal filtering)
+      const filteredAnnouncements = data || [];
       
       setAnnouncements(filteredAnnouncements);
     } catch (err) {
@@ -104,23 +95,8 @@ const Announcements = ({
   
   const handleDismiss = async (announcementId) => {
     try {
-      // Record dismissal in database
-      const { error } = await supabase
-        .from('announcement_dismissals')
-        .insert({
-          user_id: userId,
-          announcement_id: announcementId,
-          dismissed_at: new Date().toISOString()
-        });
-      
-      if (error) throw error;
-      
-      // Update local state
-      setDismissedIds(prev => {
-        const updated = new Set(prev);
-        updated.add(announcementId);
-        return updated;
-      });
+      // Dismissal tracking has been removed
+      console.log('Announcement dismissal not tracked anymore');
       
       // Update announcements list
       setAnnouncements(prev => prev.filter(a => a.id !== announcementId));

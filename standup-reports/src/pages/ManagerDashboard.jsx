@@ -296,7 +296,7 @@ const TabHeader = ({
   );
 };
 
-export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }) {
+export default function ManagerDashboard({ activeTabDefault = 'team-management' }) {
   const { currentCompany } = useCompany();
   const location = useLocation();
   const navigate = useNavigate();
@@ -305,8 +305,6 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   
   // Refs for scroll functionality
   const teamManagementRef = useRef(null);
-  const leaveRequestsRef = useRef(null);
-  const leaveHistoryRef = useRef(null);
   const announcementsRef = useRef(null);
   const reportHistoryRef = useRef(null);
   const projectManagerRef = useRef(null);
@@ -318,7 +316,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
     const tabParam = searchParams.get('tab');
     const subtabParam = searchParams.get('subtab');
 
-    if (tabParam && ['team-management', 'leave-requests', 'leave-history', 'announcements', 'report-history', 'projects', 'project-manager', 'timesheets'].includes(tabParam)) {
+    if (tabParam && ['team-management', 'announcements', 'report-history', 'projects', 'project-manager', 'timesheets'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else {
       setActiveTab(activeTabDefault);
@@ -383,16 +381,6 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
       id: 'add-member',
       label: 'Add Member',
       icon: <FiUserPlus />,
-    },
-    {
-      id: 'leave-requests',
-      label: 'Leave Requests',
-      icon: <FiClipboard />,
-    },
-    {
-      id: 'leave-history',
-      label: 'Leave History',
-      icon: <FiClock />,
     },
     {
       id: 'announcements',
@@ -721,8 +709,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
   const scrollToTab = (tabId) => {
     const refs = {
       'team-management': teamManagementRef,
-      'leave-requests': leaveRequestsRef,
-      'leave-history': leaveHistoryRef,
+      'leave-management': null, // Leave management doesn't need a specific ref since it's the whole section
       'announcements': announcementsRef,
       'report-history': reportHistoryRef,
       'project-manager': projectManagerRef,
@@ -796,257 +783,7 @@ export default function ManagerDashboard({ activeTabDefault = 'leave-requests' }
             />
           )}
 
-          {/* Leave Requests Tab */}
-          {activeTab === 'leave-requests' && (
-            <div ref={leaveRequestsRef}>
-              <TabHeader
-                title="Leave Requests"
-                subtitle="Approve & Manage Time Off"
-                description="Review and approve employee leave requests with comprehensive filtering and status management. Track pending approvals, manage team availability, and maintain leave policies."
-                icon={FiClipboard}
-                accentColor="green"
-                features={[
-                  "Request Approval",
-                  "Status Management",
-                  "Team Filtering",
-                  "Quick Actions"
-                ]}
-                stats={[
-                  { value: leaveRequests.length, label: "Total Requests" },
-                  { value: leaveRequests.filter(r => r.status === 'pending').length, label: "Pending" },
-                  { value: leaveRequests.filter(r => r.status === 'approved').length, label: "Approved" },
-                  { value: leaveRequests.filter(r => r.status === 'rejected').length, label: "Rejected" }
-                ]}
-              />
-              <motion.div
-                className="bg-white rounded-xl shadow-lg"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <FiCalendar className="text-primary-600" />
-                    Leave Requests
-                  </h2>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="flex bg-gray-100 rounded-lg p-1">
-                      <button
-                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          statusFilter === 'all' 
-                            ? 'bg-white shadow-sm text-primary-700'
-                            : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                        onClick={() => setStatusFilter('all')}
-                      >
-                        All
-                      </button>
-                      <button
-                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          statusFilter === 'pending' 
-                            ? 'bg-white shadow-sm text-primary-700'
-                            : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                        onClick={() => setStatusFilter('pending')}
-                      >
-                        Pending
-                      </button>
-                      <button
-                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          statusFilter === 'approved' 
-                            ? 'bg-white shadow-sm text-primary-700'
-                            : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                        onClick={() => setStatusFilter('approved')}
-                      >
-                        Approved
-                      </button>
-                      <button
-                        className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                          statusFilter === 'rejected' 
-                            ? 'bg-white shadow-sm text-primary-700'
-                            : 'text-gray-600 hover:text-gray-800'
-                        }`}
-                        onClick={() => setStatusFilter('rejected')}
-                      >
-                        Rejected
-                      </button>
-                    </div>
-                    
-                    <motion.button
-                      className="p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 transition-colors"
-                      onClick={handleRefresh}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      title="Refresh"
-                    >
-                      <FiRefreshCw />
-                    </motion.button>
-                  </div>
-                </div>
-                
-                {/* Table of Requests */}
-                {loading ? (
-                  <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-                  </div>
-                ) : filteredLeaveRequests.length === 0 ? (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <FiInfo className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                    <p className="text-gray-500 text-lg">No leave requests found</p>
-                    <p className="text-gray-400 mt-2">Try a different filter or check back later</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {paginatedLeaveRequests.map((request, index) => {
-                          const startDate = parseISO(request.start_date);
-                          const endDate = parseISO(request.end_date);
-                          const isPending = request.status === 'pending';
-                          const days = differenceInDays(endDate, startDate) + 1;
-                          
-                          return (
-                            <motion.tr
-                              key={request.id}
-                              className="hover:bg-gray-50 transition-colors"
-                              custom={index}
-                              variants={itemVariants}
-                            >
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700">
-                                    {request.users?.name?.charAt(0) || '?'}
-                                  </div>
-                                  <div className="ml-2">
-                                    <div className="text-sm font-medium text-gray-900">{request.users?.name || 'Unknown'}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className="text-sm text-gray-900">{request.users?.teams?.name || 'No Team'}</span>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {format(startDate, 'MMM dd, yyyy')} - {format(endDate, 'MMM dd, yyyy')}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {days} {days === 1 ? 'day' : 'days'}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full border ${getLeaveTypeBadgeClass('vacation')}`}>
-                                  {getFormattedLeaveType()}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                <span className={`px-2 py-1 inline-flex text-xs font-semibold rounded-full ${
-                                  isPending 
-                                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
-                                    : request.status === 'approved' 
-                                      ? 'bg-green-100 text-green-800 border border-green-200' 
-                                      : 'bg-red-100 text-red-800 border border-red-200'
-                                }`}>
-                                  {request.status === 'approved' ? (
-                                    <>
-                                      <FiCheck className="mr-1" />
-                                      Approved
-                                    </>
-                                  ) : request.status === 'rejected' ? (
-                                    <>
-                                      <FiX className="mr-1" />
-                                      Rejected
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FiClock className="mr-1" />
-                                      Pending
-                                    </>
-                                  )}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <p className="text-sm text-gray-900 max-w-xs truncate">
-                                  {request.reason || '-'}
-                                </p>
-                              </td>
-                              <td className="px-4 py-3 whitespace-nowrap">
-                                {isPending ? (
-                                  <div className="flex gap-2">
-                                    <motion.button
-                                      className="p-1.5 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                      onClick={() => handleLeaveAction(request.id, 'approved')}
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      title="Approve"
-                                    >
-                                      <FiCheck />
-                                    </motion.button>
-                                    
-                                    <motion.button
-                                      className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
-                                      onClick={() => handleLeaveAction(request.id, 'rejected')}
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      title="Reject"
-                                    >
-                                      <FiX />
-                                    </motion.button>
-                                  </div>
-                                ) : (
-                                  <span className="text-xs text-gray-500">
-                                    {format(parseISO(request.created_at), 'MMM dd, yyyy')}
-                                  </span>
-                                )}
-                              </td>
-                            </motion.tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </motion.div>
-            </div>
-          )}
 
-          {/* Leave History Tab */}
-          {activeTab === 'leave-history' && (
-            <div ref={leaveHistoryRef}>
-              <TabHeader
-                title="Leave History"
-                subtitle="Track Past Time Off Records"
-                description="Comprehensive historical view of all approved and completed leave requests. Analyze patterns, track team availability, and maintain detailed records for reporting and compliance."
-                icon={FiClock}
-                accentColor="purple"
-                features={[
-                  "Historical Records",
-                  "Pattern Analysis",
-                  "Team Availability",
-                  "Compliance Tracking"
-                ]}
-                stats={[
-                  { value: leaveRequests.filter(r => r.status === 'approved').length, label: "Approved" },
-                  { value: leaveRequests.filter(r => r.status === 'rejected').length, label: "Rejected" },
-                  { value: teams.length, label: "Teams" },
-                  { value: users.length, label: "Employees" }
-                ]}
-              />
-              <LeavePastRecords />
-            </div>
-          )}
 
           {/* Announcements Tab */}
           {activeTab === 'announcements' && (

@@ -1,347 +1,450 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiClock, FiUser, FiTag, FiMoreVertical, FiEye, FiArchive, 
-  FiTrash2, FiBookmark, FiShare2, FiCornerUpLeft, FiStar, FiCheck,
-  FiExternalLink, FiHeart, FiMessageSquare, FiArrowRight
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import {
+  FiClock, FiUser, FiCheckCircle, FiExternalLink, FiCalendar,
+  FiMessageCircle, FiTarget, FiFolder, FiPlus, FiEdit, FiAlertTriangle, FiBell,
+  FiStar, FiArchive, FiTrash2, FiArrowRight, FiActivity
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
+import notificationService from '../../services/notificationService';
 
-export default function NotificationCard({ 
-  notification, 
-  onRead, 
-  onArchive, 
-  onDelete,
-  onBookmark,
-  onReply,
-  compact = false,
-  showActions = true 
+export default function NotificationCard({
+  notification,
+  onAction, // Unified action handler
+  compact = false
 }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const menuRef = useRef(null);
-  
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'urgent': return 'border-red-500 bg-gradient-to-r from-red-50 to-rose-50';
-      case 'high': return 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50';
-      case 'medium': return 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50';
-      default: return 'border-gray-300 bg-gradient-to-r from-gray-50 to-slate-50';
-    }
-  };
-  
-  const getCategoryIcon = (category) => {
+
+  // Enhanced notification icons with different sizes
+  const getNotificationIcon = (type, size = 'normal') => {
     const iconMap = {
-      system: '🔧',
-      security: '🔒',
-      standup: '📅',
-      mention: '💬',
-      task: '✅',
-      update: '📢',
-      administrative: '📋',
-      project: '📁',
-      communication: '💬',
-      achievement: '🏆'
+      announcement: FiBell,
+      leave_request: FiCalendar,
+      timesheet_submission: FiClock,
+      task_created: FiPlus,
+      task_updated: FiEdit,
+      task_assigned: FiUser,
+      task_comment: FiMessageCircle,
+      project_update: FiFolder,
+      sprint_update: FiTarget,
+      system_alert: FiAlertTriangle,
+      general: FiMessageCircle,
+      meeting: FiCalendar,
+      task_status_change: FiEdit,
+      // Fallback for unknown types
+      default: FiBell
     };
-    return iconMap[category] || '📝';
+    const Icon = iconMap[type] || iconMap.default;
+    const sizeClass = size === 'large' ? 'w-6 h-6' : 'w-5 h-5';
+    return <Icon className={sizeClass} />;
   };
-  
-  const getCategoryColor = (category) => {
-    const colorMap = {
-      task: 'from-blue-400 to-indigo-500',
-      administrative: 'from-purple-400 to-indigo-500',
-      project: 'from-emerald-400 to-teal-500',
-      communication: 'from-cyan-400 to-blue-500',
-      system: 'from-gray-400 to-slate-500',
-      achievement: 'from-amber-400 to-orange-500'
-    };
-    return colorMap[category] || 'from-gray-400 to-slate-500';
-  };
-  
-  const handleAction = async (action, e) => {
-    e?.stopPropagation();
-    setIsMenuOpen(false);
-    
-    try {
-      switch (action) {
-        case 'read':
-          await onRead?.(notification.id);
-          break;
-        case 'archive':
-          await onArchive?.(notification.id);
-          break;
-        case 'delete':
-          await onDelete?.(notification.id);
-          break;
-        case 'bookmark':
-          await onBookmark?.(notification.id);
-          break;
-        case 'reply':
-          onReply?.(notification);
-          break;
+
+  // Enhanced color schemes with gradients and better visual hierarchy
+  const getNotificationDesign = (type, isRead, priority) => {
+    const baseDesign = {
+      announcement: {
+        gradient: 'from-blue-400 via-blue-500 to-indigo-600',
+        lightBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+        borderColor: 'border-blue-200',
+        iconBg: 'bg-gradient-to-br from-blue-500 to-indigo-600',
+        textColor: 'text-blue-900',
+        subTextColor: 'text-blue-700',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
+        shadowColor: 'shadow-blue-100',
+        glowColor: 'from-blue-400/20 to-indigo-600/20'
+      },
+      leave_request: {
+        gradient: 'from-purple-400 via-purple-500 to-pink-600',
+        lightBg: 'bg-gradient-to-br from-purple-50 to-pink-50',
+        borderColor: 'border-purple-200',
+        iconBg: 'bg-gradient-to-br from-purple-500 to-pink-600',
+        textColor: 'text-purple-900',
+        subTextColor: 'text-purple-700',
+        badgeColor: 'bg-purple-100 text-purple-800 border-purple-200',
+        shadowColor: 'shadow-purple-100',
+        glowColor: 'from-purple-400/20 to-pink-600/20'
+      },
+      timesheet_submission: {
+        gradient: 'from-green-400 via-emerald-500 to-teal-600',
+        lightBg: 'bg-gradient-to-br from-green-50 to-emerald-50',
+        borderColor: 'border-green-200',
+        iconBg: 'bg-gradient-to-br from-green-500 to-emerald-600',
+        textColor: 'text-green-900',
+        subTextColor: 'text-green-700',
+        badgeColor: 'bg-green-100 text-green-800 border-green-200',
+        shadowColor: 'shadow-green-100',
+        glowColor: 'from-green-400/20 to-emerald-600/20'
+      },
+      task_created: {
+        gradient: 'from-indigo-400 via-indigo-500 to-blue-600',
+        lightBg: 'bg-gradient-to-br from-indigo-50 to-blue-50',
+        borderColor: 'border-indigo-200',
+        iconBg: 'bg-gradient-to-br from-indigo-500 to-blue-600',
+        textColor: 'text-indigo-900',
+        subTextColor: 'text-indigo-700',
+        badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+        shadowColor: 'shadow-indigo-100',
+        glowColor: 'from-indigo-400/20 to-blue-600/20'
+      },
+      task_updated: {
+        gradient: 'from-amber-400 via-orange-500 to-yellow-600',
+        lightBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+        borderColor: 'border-amber-200',
+        iconBg: 'bg-gradient-to-br from-amber-500 to-orange-600',
+        textColor: 'text-amber-900',
+        subTextColor: 'text-amber-700',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
+        shadowColor: 'shadow-amber-100',
+        glowColor: 'from-amber-400/20 to-orange-600/20'
+      },
+      task_assigned: {
+        gradient: 'from-cyan-400 via-teal-500 to-blue-600',
+        lightBg: 'bg-gradient-to-br from-cyan-50 to-teal-50',
+        borderColor: 'border-cyan-200',
+        iconBg: 'bg-gradient-to-br from-cyan-500 to-teal-600',
+        textColor: 'text-cyan-900',
+        subTextColor: 'text-cyan-700',
+        badgeColor: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+        shadowColor: 'shadow-cyan-100',
+        glowColor: 'from-cyan-400/20 to-teal-600/20'
+      },
+      task_comment: {
+        gradient: 'from-teal-400 via-green-500 to-emerald-600',
+        lightBg: 'bg-gradient-to-br from-teal-50 to-green-50',
+        borderColor: 'border-teal-200',
+        iconBg: 'bg-gradient-to-br from-teal-500 to-green-600',
+        textColor: 'text-teal-900',
+        subTextColor: 'text-teal-700',
+        badgeColor: 'bg-teal-100 text-teal-800 border-teal-200',
+        shadowColor: 'shadow-teal-100',
+        glowColor: 'from-teal-400/20 to-green-600/20'
+      },
+      project_update: {
+        gradient: 'from-emerald-400 via-green-500 to-teal-600',
+        lightBg: 'bg-gradient-to-br from-emerald-50 to-green-50',
+        borderColor: 'border-emerald-200',
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-green-600',
+        textColor: 'text-emerald-900',
+        subTextColor: 'text-emerald-700',
+        badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        shadowColor: 'shadow-emerald-100',
+        glowColor: 'from-emerald-400/20 to-green-600/20'
+      },
+      sprint_update: {
+        gradient: 'from-rose-400 via-pink-500 to-red-600',
+        lightBg: 'bg-gradient-to-br from-rose-50 to-pink-50',
+        borderColor: 'border-rose-200',
+        iconBg: 'bg-gradient-to-br from-rose-500 to-pink-600',
+        textColor: 'text-rose-900',
+        subTextColor: 'text-rose-700',
+        badgeColor: 'bg-rose-100 text-rose-800 border-rose-200',
+        shadowColor: 'shadow-rose-100',
+        glowColor: 'from-rose-400/20 to-pink-600/20'
+      },
+      system_alert: {
+        gradient: 'from-red-400 via-red-500 to-rose-600',
+        lightBg: 'bg-gradient-to-br from-red-50 to-rose-50',
+        borderColor: 'border-red-200',
+        iconBg: 'bg-gradient-to-br from-red-500 to-rose-600',
+        textColor: 'text-red-900',
+        subTextColor: 'text-red-700',
+        badgeColor: 'bg-red-100 text-red-800 border-red-200',
+        shadowColor: 'shadow-red-100',
+        glowColor: 'from-red-400/20 to-rose-600/20'
+      },
+      // Add fallback for general and other types
+      general: {
+        gradient: 'from-gray-400 via-gray-500 to-slate-600',
+        lightBg: 'bg-gradient-to-br from-gray-50 to-slate-50',
+        borderColor: 'border-gray-200',
+        iconBg: 'bg-gradient-to-br from-gray-500 to-slate-600',
+        textColor: 'text-gray-900',
+        subTextColor: 'text-gray-700',
+        badgeColor: 'bg-gray-100 text-gray-800 border-gray-200',
+        shadowColor: 'shadow-gray-100',
+        glowColor: 'from-gray-400/20 to-slate-600/20'
+      },
+      meeting: {
+        gradient: 'from-violet-400 via-purple-500 to-indigo-600',
+        lightBg: 'bg-gradient-to-br from-violet-50 to-indigo-50',
+        borderColor: 'border-violet-200',
+        iconBg: 'bg-gradient-to-br from-violet-500 to-indigo-600',
+        textColor: 'text-violet-900',
+        subTextColor: 'text-violet-700',
+        badgeColor: 'bg-violet-100 text-violet-800 border-violet-200',
+        shadowColor: 'shadow-violet-100',
+        glowColor: 'from-violet-400/20 to-indigo-600/20'
       }
-    } catch (error) {
-      console.error('Action failed:', error);
+    };
+
+    const design = baseDesign[type] || baseDesign.general;
+
+    // Apply read state modifications
+    if (isRead) {
+      return {
+        ...design,
+        lightBg: 'bg-white',
+        borderColor: 'border-gray-200',
+        iconBg: 'bg-gray-100',
+        textColor: 'text-gray-700',
+        subTextColor: 'text-gray-500',
+        badgeColor: 'bg-gray-100 text-gray-600 border-gray-200',
+        shadowColor: 'shadow-gray-100',
+        glowColor: 'from-gray-400/10 to-gray-600/10'
+      };
+    }
+
+    return design;
+  };
+
+  // Enhanced priority indicator with animations
+  const getPriorityIndicator = (priority) => {
+    if (priority === 'urgent') {
+      return (
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [1, 0.7, 1]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="flex items-center gap-1"
+        >
+          <div className="w-2 h-2 bg-red-500 rounded-full shadow-sm" />
+          <div className="w-2 h-2 bg-red-400 rounded-full shadow-sm -ml-1" />
+        </motion.div>
+      );
+    } else if (priority === 'high') {
+      return (
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="w-2 h-2 bg-amber-500 rounded-full"
+        />
+      );
+    }
+    return null;
+  };
+
+  // Handle click to view details
+  const handleCardClick = () => {
+    onAction('view', notification.id);
+    if (!notification.read) {
+      // Also mark as read if unread
+      setTimeout(() => onAction('markRead', notification.id), 100);
     }
   };
-  
-  const truncateText = (text, maxLength = 150) => {
-    if (!text || text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+
+  // Handle quick actions
+  const handleQuickAction = (action, e) => {
+    e.stopPropagation();
+    onAction(action, notification.id);
   };
-  
+
+  const design = getNotificationDesign(notification.type, notification.read, notification.priority);
+  const category = notificationService.getNotificationCategory(notification.type);
+
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      whileHover={{ scale: 1.01, y: -2 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      whileHover={{
+        scale: 1.02,
+        y: -4,
+        boxShadow: `0 20px 60px -15px ${notification.read ? 'rgba(0,0,0,0.1)' : 'rgba(59, 130, 246, 0.15)'}`,
+        transition: { duration: 0.2, ease: "easeOut" }
+      }}
       className={`
-        relative group border-l-4 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer backdrop-blur-sm
-        ${!notification.read ? getPriorityColor(notification.priority) : 'border-gray-300 bg-white'}
-        ${compact ? 'p-3' : 'p-5'}
+        group relative border-2 rounded-2xl p-5 transition-all duration-300 cursor-pointer
+        ${design.lightBg} ${design.borderColor}
+        ${!notification.read ? `shadow-lg ${design.shadowColor}` : 'shadow-sm'}
+        hover:shadow-2xl
+        ${compact ? 'p-4' : 'p-5'}
+        overflow-hidden
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => !notification.read && handleAction('read')}
+      onClick={handleCardClick}
     >
-      {/* Unread indicator dot */}
+      {/* Enhanced unread indicator line */}
       {!notification.read && (
-        <motion.div 
-          className="absolute top-4 right-4 w-2.5 h-2.5 bg-blue-500 rounded-full"
-          animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
+        <motion.div
+          className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${design.gradient} rounded-l-xl`}
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
         />
       )}
-      
-      {/* Category badge */}
-      <div className="absolute top-3 right-3">
-        <motion.div 
-          className={`px-2 py-0.5 rounded-full text-[10px] font-semibold text-white bg-gradient-to-r ${getCategoryColor(notification.category)} shadow-sm`}
-          whileHover={{ scale: 1.05 }}
-        >
-          {notification.category || 'general'}
-        </motion.div>
-      </div>
-      
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3 flex-1">
-          {/* Category icon with gradient background */}
-          <motion.div 
-            className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getCategoryColor(notification.category)} flex items-center justify-center shadow-sm flex-shrink-0`}
-            whileHover={{ rotate: 5, scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <span className="text-xl">{getCategoryIcon(notification.category)}</span>
-          </motion.div>
-          
-          {/* Title and metadata */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
-              <h4 className={`font-semibold text-base ${!notification.read ? 'text-gray-900' : 'text-gray-700'} truncate`}>
-                {notification.title}
-              </h4>
-              {notification.priority === 'urgent' && (
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <FiStar className="w-4 h-4 text-red-500 fill-current flex-shrink-0" />
-                </motion.div>
-              )}
-              {notification.isBookmarked && (
-                <FiBookmark className="w-4 h-4 text-amber-500 fill-current flex-shrink-0" />
-              )}
-            </div>
-            
-            {/* Metadata row */}
-            <div className="flex items-center gap-3 text-xs text-gray-500 flex-wrap">
-              <div className="flex items-center gap-1.5 bg-gray-100 px-2 py-1 rounded-md">
-                <FiUser className="w-3 h-3 text-gray-600" />
-                <span className="font-medium">{notification.sender || 'System'}</span>
-              </div>
-              
-              <div className="flex items-center gap-1.5">
-                <FiClock className="w-3.5 h-3.5 text-blue-500" />
-                <span className="font-medium">{formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Actions menu */}
-        {showActions && (
-          <div className="relative" ref={menuRef}>
-            <motion.button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMenuOpen(!isMenuOpen);
-              }}
-              className={`p-1 rounded hover:bg-gray-100 transition-colors ${
-                isHovered || isMenuOpen ? 'opacity-100' : 'opacity-0'
-              }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <FiMoreVertical className="w-4 h-4 text-gray-400" />
-            </motion.button>
-            
-            <AnimatePresence>
-              {isMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border z-20"
-                >
-                  <div className="py-1">
-                    {!notification.read && (
-                      <button
-                        onClick={(e) => handleAction('read', e)}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <FiEye className="w-4 h-4" />
-                        Mark as read
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={(e) => handleAction('bookmark', e)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <FiBookmark className="w-4 h-4" />
-                      {notification.isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-                    </button>
-                    
-                    {notification.allowReply && (
-                      <button
-                        onClick={(e) => handleAction('reply', e)}
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <FiCornerUpLeft className="w-4 h-4" />
-                        Reply
-                      </button>
-                    )}
-                    
-                    <button
-                      onClick={(e) => handleAction('archive', e)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      <FiArchive className="w-4 h-4" />
-                      Archive
-                    </button>
-                    
-                    <div className="border-t my-1"></div>
-                    
-                    <button
-                      onClick={(e) => handleAction('delete', e)}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
-      
-      {/* Content */}
-      <div className={`${compact ? 'text-sm' : 'text-sm'} text-gray-700 mb-3 mt-3 leading-relaxed`}>
-        <div className={!notification.read ? 'font-medium' : ''}>
-          {isExpanded || !notification.content ? 
-            notification.content : 
-            truncateText(notification.content)
-          }
-        </div>
-        
-        {notification.content && notification.content.length > 150 && (
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsExpanded(!isExpanded);
-            }}
-            className="mt-1 text-indigo-600 hover:text-indigo-800 text-xs font-semibold flex items-center gap-1"
-            whileHover={{ x: 2 }}
-          >
-            {isExpanded ? 'Show less' : 'Show more'}
-            <FiArrowRight className="w-3 h-3" />
-          </motion.button>
-        )}
-      </div>
-      
-      {/* Actions (if any) */}
-      {notification.actions && notification.actions.length > 0 && (
-        <div className="flex gap-2 mb-3 flex-wrap">
-          {notification.actions.map((action, index) => (
-            <motion.button
-              key={index}
-              onClick={(e) => {
-                e.stopPropagation();
-                action.onClick(notification);
-              }}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all shadow-sm ${
-                action.primary ? 
-                'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent hover:shadow-md' :
-                'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50'
-              }`}
-              whileHover={{ scale: 1.03, y: -1 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              {action.label}
-            </motion.button>
-          ))}
-        </div>
-      )}
-      
-      {/* Footer with engagement stats */}
-      {(notification.likes || notification.comments || notification.url) && (
-        <div className="flex items-center gap-4 pt-3 mt-2 border-t border-gray-200">
-          {notification.likes > 0 && (
-            <motion.div 
-              className="flex items-center gap-1.5 text-xs text-gray-600 bg-red-50 px-2 py-1 rounded-full"
-              whileHover={{ scale: 1.05 }}
-            >
-              <FiHeart className="w-3.5 h-3.5 text-red-500" />
-              <span className="font-semibold">{notification.likes}</span>
-            </motion.div>
-          )}
-          
-          {notification.comments > 0 && (
-            <motion.div 
-              className="flex items-center gap-1.5 text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded-full"
-              whileHover={{ scale: 1.05 }}
-            >
-              <FiMessageSquare className="w-3.5 h-3.5 text-blue-500" />
-              <span className="font-semibold">{notification.comments}</span>
-            </motion.div>
-          )}
-          
-          {notification.url && (
-            <motion.button
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(notification.url, '_blank');
-              }}
-              className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 ml-auto font-semibold bg-indigo-50 px-3 py-1 rounded-full"
-              whileHover={{ scale: 1.05, x: 2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiExternalLink className="w-3.5 h-3.5" />
-              <span>View</span>
-            </motion.button>
-          )}
-        </div>
-      )}
-      
-      {/* Click overlay for unread notifications */}
+
+      {/* Animated glow effect for unread notifications */}
       {!notification.read && (
-        <div className="absolute inset-0 bg-transparent" />
+        <motion.div
+          className={`absolute inset-0 bg-gradient-to-br ${design.glowColor} rounded-2xl opacity-0`}
+          animate={{
+            opacity: isHovered ? 0.6 : 0.1,
+          }}
+          transition={{ duration: 0.3 }}
+        />
+      )}
+
+      <div className="relative flex items-start gap-4">
+        {/* Enhanced icon with gradient and animation */}
+        <motion.div
+          className={`
+            w-12 h-12 rounded-xl ${design.iconBg}
+            flex items-center justify-center text-white shadow-lg
+            flex-shrink-0 transition-all duration-300
+          `}
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{
+            scale: 1,
+            rotate: 0,
+            boxShadow: isHovered ? '0 10px 25px -5px rgba(0,0,0,0.2)' : '0 4px 6px -1px rgba(0,0,0,0.1)'
+          }}
+          whileHover={{
+            scale: 1.1,
+            rotate: 5,
+            transition: { duration: 0.2 }
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+            delay: 0.1
+          }}
+        >
+          {getNotificationIcon(notification.type, 'large')}
+        </motion.div>
+
+        {/* Enhanced content section */}
+        <div className="flex-1 min-w-0">
+          {/* Header with title and priority */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <motion.h4
+                  className={`font-bold text-base truncate ${design.textColor}`}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  {notification.title}
+                </motion.h4>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  {getPriorityIndicator(notification.priority)}
+                </motion.div>
+              </div>
+
+              {/* Enhanced message preview */}
+              <motion.p
+                className={`text-sm ${design.subTextColor} leading-relaxed overflow-hidden font-medium`}
+                style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {notification.message}
+              </motion.p>
+            </div>
+
+            {/* Enhanced quick actions with better visibility */}
+            <motion.div
+              className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+            >
+              {!notification.read && (
+                <motion.button
+                  onClick={(e) => handleQuickAction('markRead', e)}
+                  className="p-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg hover:bg-white transition-all duration-200 border border-gray-100"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  title="Mark as read"
+                >
+                  <FiCheckCircle className="w-4 h-4 text-green-600" />
+                </motion.button>
+              )}
+
+              <motion.button
+                onClick={(e) => handleQuickAction('view', e)}
+                className="p-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg hover:bg-white transition-all duration-200 border border-gray-100"
+                whileHover={{ scale: 1.1, y: -2 }}
+                whileTap={{ scale: 0.9 }}
+                title="View details"
+              >
+                <FiExternalLink className="w-4 h-4 text-blue-600" />
+              </motion.button>
+            </motion.div>
+          </div>
+
+          {/* Enhanced footer with better styling */}
+          <motion.div
+            className="flex items-center justify-between gap-4 mt-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {/* Enhanced metadata */}
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/70 backdrop-blur-sm rounded-lg border border-gray-100">
+                <FiUser className={`w-3.5 h-3.5 ${design.subTextColor}`} />
+                <span className={`font-medium ${design.subTextColor}`}>
+                  {notification.sender_name || 'System'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-white/70 backdrop-blur-sm rounded-lg border border-gray-100">
+                <FiClock className={`w-3.5 h-3.5 ${design.subTextColor}`} />
+                <span className={`font-medium ${design.subTextColor}`}>
+                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                </span>
+              </div>
+            </div>
+
+            {/* Enhanced category badge */}
+            <motion.div
+              className={`
+                px-3 py-1.5 rounded-full text-xs font-semibold border
+                ${design.badgeColor}
+                shadow-sm
+              `}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              {category}
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Activity indicator for real-time updates */}
+      {isHovered && (
+        <motion.div
+          className="absolute top-2 right-2"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <FiActivity className={`w-3 h-3 ${design.subTextColor} opacity-50`} />
+        </motion.div>
       )}
     </motion.div>
   );
