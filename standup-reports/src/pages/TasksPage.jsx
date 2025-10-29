@@ -1193,13 +1193,21 @@ export default function TasksPage({ sidebarOpen }) {
                             {view === tab.id && (
                               <>
                                 <motion.div
-                                  className="absolute inset-0 bg-gradient-to-r from-blue-500 via-teal-500 to-cyan-500 rounded-2xl shadow-2xl border border-white/30"
+                                  className={`absolute inset-0 rounded-2xl shadow-2xl border border-white/30 ${
+                                    tab.id === 'sprint'
+                                      ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500'
+                                      : 'bg-gradient-to-r from-blue-500 via-teal-500 to-cyan-500'
+                                  }`}
                                   layoutId="activeTab"
                                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                 />
                                 {/* Inner Glow */}
                                 <motion.div
-                                  className="absolute inset-0.5 bg-gradient-to-r from-blue-400 via-teal-400 to-cyan-400 rounded-2xl opacity-50"
+                                  className={`absolute inset-0.5 rounded-2xl opacity-50 ${
+                                    tab.id === 'sprint'
+                                      ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
+                                      : 'bg-gradient-to-r from-blue-400 via-teal-400 to-cyan-400'
+                                  }`}
                                   animate={{ opacity: [0.3, 0.7, 0.3] }}
                                   transition={{ duration: 2, repeat: Infinity }}
                                 />
