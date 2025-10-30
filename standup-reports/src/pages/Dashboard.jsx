@@ -571,13 +571,17 @@ export default function Dashboard({ sidebarOpen }) {
       return;
     }
     
-    // Filter team members who haven't submitted reports
+    // Get IDs of users who are on leave
+    const onLeaveUserIds = onLeaveMembers.map(member => member.id).filter(Boolean);
+    
+    // Filter team members who haven't submitted reports and are not on leave
     const missing = teamMembers.filter(
-      member => !submittedUserIds.includes(member.id)
+      member => !submittedUserIds.includes(member.id) && !onLeaveUserIds.includes(member.id)
     );
     
     console.log("Team members:", teamMembers.length);
     console.log("Submitted IDs:", submittedUserIds);
+    console.log("On leave IDs:", onLeaveUserIds);
     console.log("Missing reports:", missing.length);
     
     setMissingReports(missing);
@@ -997,9 +1001,11 @@ export default function Dashboard({ sidebarOpen }) {
 
   // Professional Dashboard Header component with Missing Reports summary
   const DashboardHeader = () => {
-    // Calculate completion percentage for reports
+    // Calculate completion percentage for reports, excluding on-leave users
     const reportCompletionPercentage = teamMembers.length > 0 
-      ? Math.round(((teamMembers.length - missingReports.length) / teamMembers.length) * 100) 
+      ? onLeaveMembers.length > 0
+        ? Math.round(((teamMembers.length - missingReports.length - onLeaveMembers.length) / (teamMembers.length - onLeaveMembers.length)) * 100) 
+        : Math.round(((teamMembers.length - missingReports.length) / teamMembers.length) * 100)
       : 0;
       
     return (
@@ -1377,30 +1383,36 @@ export default function Dashboard({ sidebarOpen }) {
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               layout
             >
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white flex flex-wrap items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3">
-                <FiAlertCircle className="h-5 w-5" />
+          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+            <div className="flex flex-wrap items-center justify-between">
+              <div className="flex items-start">
+                <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3 mt-1">
+                  <FiAlertCircle className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-lg font-semibold text-gray-800">Missing Reports</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {missingReports.length === 0 
+                      ? 'Everyone has submitted their reports today!' 
+                      : `${missingReports.length} team member${missingReports.length !== 1 ? 's' : ''} still need${missingReports.length === 1 ? 's' : ''} to submit a report`}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Missing Reports</h3>
-                <p className="text-sm text-gray-600">
-                  {missingReports.length === 0 
-                    ? 'Everyone has submitted their reports today!' 
-                    : `${missingReports.length} team member${missingReports.length !== 1 ? 's' : ''} still need${missingReports.length === 1 ? 's' : ''} to submit a report`}
-                </p>
-              </div>
+              
+              {isToday(date) && !loadingMissing && missingReports.length > 0 && (
+                <div className="mt-2 sm:mt-0">
+                  <button 
+                    className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    onClick={() => setShowMissingModal(true)}
+                  >
+                    <FiUsers className="h-4 w-4" />
+                    <span>View All</span>
+                  </button>
+                </div>
+              )}
             </div>
-            
-            {isToday(date) && !loadingMissing && missingReports.length > 0 && (
-              <button 
-                className="mt-2 sm:mt-0 px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                onClick={() => setShowMissingModal(true)}
-              >
-                <FiUsers className="h-4 w-4" />
-                <span>View All</span>
-              </button>
-            )}
           </div>
           
           {/* Missing Reports List */}
@@ -1473,45 +1485,6 @@ export default function Dashboard({ sidebarOpen }) {
                     <span className="text-sm font-medium text-gray-700">Close</span>
                   </button>
                 )}
-              </div>
-            </div>
-          )}
-          
-          {/* Beautiful and Thin Animated Progress Bar */}
-          {isToday(date) && teamMembers.length > 0 && (
-            <div className="px-5 py-3 bg-gradient-to-r from-white to-indigo-50/30 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
-                  Report Progress
-                </h4>
-                <motion.span 
-                  className="text-[10px] font-bold text-indigo-600 bg-indigo-100 px-1.5 py-0.5 rounded-full"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                >
-                  {reportCompletionPercentage}%
-                </motion.span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                <motion.div 
-                  className="h-full bg-gradient-to-r from-emerald-400 via-green-500 to-teal-500 rounded-full relative"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${reportCompletionPercentage}%` }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
-                </motion.div>
-              </div>
-              <div className="flex justify-between mt-1.5 text-[10px] text-gray-500">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
-                  <span>{teamMembers.length - missingReports.length}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                  <span>{missingReports.length}</span>
-                </div>
               </div>
             </div>
           )}
