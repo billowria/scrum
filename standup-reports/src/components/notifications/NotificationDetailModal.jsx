@@ -166,7 +166,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
 
           {/* Modal Content */}
           <motion.div
-            className="relative w-full max-w-6xl h-[95vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col m-4"
+            className="relative w-full max-w-6xl max-h-[90vh] min-h-fit bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col m-4"
             variants={modalVariants}
             initial="hidden"
             animate="visible"
@@ -174,7 +174,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
             onClick={(e) => e.stopPropagation()}
           >
             {/* Streamlined Header Section */}
-            <div className="relative bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 p-6 pb-4 flex-shrink-0">
+            <div className="relative bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 p-4 pb-3 flex-shrink-0">
               {/* Close Button */}
               <motion.button
                 onClick={onClose}
@@ -190,7 +190,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
                 {/* Smaller notification icon */}
                 <motion.div
                   className={`
-                    w-12 h-12 rounded-xl bg-gradient-to-br ${colorGradient}
+                    w-10 h-10 rounded-xl bg-gradient-to-br ${colorGradient}
                     flex items-center justify-center text-white shadow-lg
                     flex-shrink-0
                   `}
@@ -210,7 +210,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
                 {/* Title and metadata */}
                 <div className="flex-1 min-w-0 pr-12">
                   <motion.h1
-                    className="text-2xl font-bold text-gray-900 mb-2 leading-tight"
+                    className="text-2xl font-bold text-gray-900 mb-1 leading-tight"
                     initial={{ opacity: 0, x: -15 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
@@ -219,7 +219,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
                   </motion.h1>
 
                   <motion.div
-                    className="flex items-center gap-4 text-sm text-gray-600"
+                    className="flex items-center gap-3 text-sm text-gray-600"
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
@@ -236,7 +236,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
 
                   {/* Category and Priority badges */}
                   <motion.div
-                    className="flex items-center gap-2 mt-2"
+                    className="flex items-center gap-2 mt-1"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
@@ -257,14 +257,14 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
             </div>
 
             {/* Content Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
               <motion.div
-                className="p-8"
+                className="p-6"
                 variants={contentVariants}
                 transition={{ delay: 0.1 }}
               >
                 {/* Message content */}
-                <div className="bg-gray-50 rounded-xl p-8 border border-gray-200">
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                   <div className="prose prose-gray max-w-none">
                     <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
                       {notification.message}
@@ -276,7 +276,7 @@ const NotificationDetailModal = ({ notification, isOpen, onClose, onAction }) =>
 
             {/* Streamlined Action Buttons */}
             <motion.div
-              className="bg-gray-50 border-t border-gray-200 p-6 flex-shrink-0"
+              className="bg-gray-50 border-t border-gray-200 p-4 flex-shrink-0"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}

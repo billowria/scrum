@@ -1005,32 +1005,28 @@ export default function Dashboard({ sidebarOpen }) {
     return (
       <div className="space-y-8 mb-8">
 
-        {/* Professional Dashboard Stats Overview */}
-        <motion.div
-          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+        {/* Premium Quick Actions - Completely Redesigned */}
+        <motion.div 
+          className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
           variants={statCardVariants}
           initial="hidden"
           animate="visible"
         >
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-              
-              {/* Premium Quick Actions - Completely Redesigned */}
-              <motion.div 
-                className="md:col-span-3 bg-white/20 backdrop-blur-lg rounded-3xl p-6 shadow-xl border border-white/30 relative overflow-hidden"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                {/* Animated background elements */}
-                <div className="absolute inset-0 overflow-hidden">
-                  <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/10 rounded-full blur-3xl animate-pulse" />
-                  <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-cyan-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-amber-400/10 to-rose-400/10 rounded-full blur-3xl animate-pulse delay-1500" />
-                </div>
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-400/20 to-purple-400/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-cyan-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-br from-amber-400/10 to-rose-400/10 rounded-full blur-3xl animate-pulse delay-1500" />
+          </div>
 
-                <div className="relative z-10">
+          <div className="relative z-10">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Premium Quick Actions - Completely Redesigned */}
+                <div className="md:col-span-3">
                   {/* Header Section */}
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-6">
                     <div className="flex items-center gap-4">
@@ -1364,7 +1360,7 @@ export default function Dashboard({ sidebarOpen }) {
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </motion.div>
