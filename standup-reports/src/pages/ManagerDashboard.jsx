@@ -301,7 +301,7 @@ export default function ManagerDashboard({ activeTabDefault = 'team-management' 
   const location = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(activeTabDefault);
-  const [activeSubTab, setActiveSubTab] = useState('staff-oversight');
+  const [activeSubTab, setActiveSubTab] = useState('team-management');
   
   // Refs for scroll functionality
   const teamManagementRef = useRef(null);

@@ -287,7 +287,7 @@ export default function Dashboard({ sidebarOpen }) {
   const [showAllMissingReports, setShowAllMissingReports] = useState(false);
   // Toggle for Missing Reports header visibility
   const [showMissingHeader, setShowMissingHeader] = useState(true);
-  
+
   // State for animated time display
   const [currentTime, setCurrentTime] = useState(new Date());
   // Current user avatar
@@ -1012,14 +1012,12 @@ export default function Dashboard({ sidebarOpen }) {
       <div className="space-y-8 mb-8">
 
         {/* Premium Quick Actions - Completely Redesigned */}
-        <motion.div 
+        <motion.div
           className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          variants={statCardVariants}
           initial="hidden"
           animate="visible"
+          variants={statCardVariants}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
           {/* Animated background elements */}
           <div className="absolute inset-0 overflow-hidden">
@@ -1502,242 +1500,214 @@ export default function Dashboard({ sidebarOpen }) {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Sunset Bliss Glassmorphic Dashboard Header */}
+      {/* Apple-Style Glassmorphic Header */}
       <motion.header
-        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-200`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-200 apple-glass`}
         id="dashboard-header"
         style={{
           width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
           transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
-        }}>
-        {/* Indigo Pink Glassmorphic Background */}
-        <div className="relative bg-white/10 backdrop-blur-3xl border-b border-white/20 shadow-xl overflow-hidden">
-          {/* Animated Sunset-Themed Background */}
-          <div className="absolute inset-0">
-            {/* Vibrant Indigo Pink gradient layers with translucency */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-200/40 via-purple-200/45 to-pink-200/40"></div>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-200/25 via-indigo-200/35 to-rose-200/25"></div>
+        }}
+      >
+        {/* Apple-style background layers */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/72 via-white/85 to-white/72 backdrop-blur-xl"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-50/30 via-transparent to-blue-50/20"></div>
 
-            {/* Animated indigo pink glowing orbs */}
-            {[...Array(6)].map((_, i) => (
+        {/* Subtle border highlight */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"></div>
+
+        {/* Apple-style floating elements */}
+        <div className="absolute top-8 left-12 w-32 h-32 bg-blue-400/5 rounded-full blur-2xl"></div>
+        <div className="absolute top-6 right-16 w-24 h-24 bg-purple-400/5 rounded-full blur-xl"></div>
+        <div className="absolute bottom-8 left-1/3 w-28 h-28 bg-cyan-400/5 rounded-full blur-xl"></div>
+
+        <div className="relative z-10 px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left section - User information */}
+            <div className="flex items-center gap-3 sm:gap-4 flex-1">
               <motion.div
-                key={i}
-                className="absolute rounded-full blur-3xl"
-                style={{
-                  width: `${150 + Math.random() * 200}px`,
-                  height: `${150 + Math.random() * 200}px`,
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  x: [0, Math.random() * 50 - 25],
-                  y: [0, Math.random() * 50 - 25],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: Math.random() * 4 + 3,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: Math.random() * 2,
-                }}
+                className="relative group flex-shrink-0"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <div className={`w-full h-full rounded-full bg-gradient-to-r ${
-                  i % 3 === 0 ? 'from-indigo-300/35 to-purple-300/35' :
-                  i % 3 === 1 ? 'from-blue-300/35 to-indigo-300/35' :
-                  'from-pink-300/35 to-rose-300/35'
-                }`} />
-              </motion.div>
-            ))}
-
-            {/* Indigo Pink floating sparkles */}
-            {[...Array(15)].map((_, i) => (
-              <motion.div
-                key={`sparkle-${i}`}
-                className="absolute w-1 h-1 bg-white rounded-full"
-                animate={{
-                  x: [0, Math.random() * 60 - 30],
-                  y: [0, Math.random() * 60 - 30],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1, 0],
-                }}
-                transition={{
-                  duration: Math.random() * 2 + 1,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  filter: 'blur(0.5px)',
-                }}
-              >
-                <div className="w-full h-full bg-pink-300/60 rounded-full shadow-md shadow-pink-400/40" />
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Balanced glass reflection overlay for vibrant colors */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/15 via-transparent to-white/3"></div>
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20"></div>
-          {/* Subtle glass inner shadow */}
-          <div className="absolute inset-0 shadow-inner"></div>
-
-          {/* Content */}
-          <div className="relative px-4 sm:px-6 py-3">
-            <div className="flex items-center justify-between">
-              {/* Left section - Sunset-themed user info */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                <motion.div
-                  className="relative group flex-shrink-0"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                >
-                  {/* Indigo Pink glow effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                <div className="absolute -inset-1 bg-white/80 rounded-2xl shadow-lg transition-shadow group-hover:shadow-xl"></div>
+                <div className="relative p-0.5 rounded-2xl border border-white/60">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt="User avatar"
-                      className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover bg-white/50 backdrop-blur-sm border border-white/40 shadow-xl"
+                      className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover border border-gray-200/50"
                     />
                   ) : (
-                    <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-indigo-400/60 via-purple-400/60 to-pink-400/60 backdrop-blur-sm flex items-center justify-center text-white border border-white/40 shadow-xl">
-                      <FiUser className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/50 flex items-center justify-center">
+                      <FiUser className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                     </div>
                   )}
-                  {/* Indigo Pink orbiting dots */}
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute w-1.5 h-1.5 bg-gradient-to-r from-indigo-300 to-pink-300 rounded-full"
-                      animate={{
-                        rotate: [0, 360],
-                        opacity: [0.5, 1, 0.5],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "linear",
-                        delay: i * 0.3,
-                      }}
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transformOrigin: `0 ${15 + i * 6}px`,
-                        filter: 'blur(0.5px)',
-                      }}
-                    >
-                      <div className="w-full h-full bg-white rounded-full shadow-lg shadow-indigo-400/50" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <span className="text-sm font-medium text-gray-800 truncate">
-                      {userName || 'User'}
-                    </span>
-                    <motion.span
-                      className="text-lg sm:text-xl hidden sm:inline-block"
-                      animate={{ rotate: [0, 8, 0, -8, 0] }}
-                      transition={{ duration: 3, repeat: Infinity, repeatDelay: 3 }}
-                    >
-                      👋
-                    </motion.span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <FiCalendar className="w-3 h-3 text-indigo-500 flex-shrink-0" />
-                    <p className="text-xs text-gray-600 truncate">
-                      {format(currentTime, 'MMM d, yyyy')}
-                    </p>
-                  </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Right section - Indigo Pink themed action buttons */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                {/* Team button - indigo pink styled */}
-                <motion.button
-                  onClick={async () => {
-                    let currentTeamId = userTeamId;
-                    if (!currentTeamId) {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (user) {
-                        const { data: userData, error } = await supabase
-                          .from('users')
-                          .select('team_id')
-                          .eq('id', user.id)
-                          .single();
-                        if (!error && userData) {
-                          currentTeamId = userData.team_id;
-                          setUserTeamId(currentTeamId);
-                        }
+              <motion.div
+                className="min-w-0"
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-sm font-semibold text-gray-800 truncate">
+                    {userName || 'User'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <FiCalendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                  <p className="text-xs text-gray-600 truncate">
+                    {format(currentTime, 'MMM d, yyyy')}
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Center section - Company name with Apple-style shimmer */}
+            <div className="flex items-center justify-center flex-1">
+              <motion.div
+                className="relative cursor-pointer group"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {/* Apple-style shimmer effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                  animate={{ x: ['-100%', '100%'] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    repeatDelay: 4,
+                    ease: "easeInOut"
+                  }}
+                  style={{ mixBlendMode: 'overlay' }}
+                />
+
+                {/* Professional company name */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 20,
+                    delay: 0.3
+                  }}
+                  className="relative z-10 text-xl md:text-2xl lg:text-3xl font-thin bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 bg-clip-text text-transparent text-center px-6 tracking-wide"
+                  style={{ fontWeight: 100 }}
+                >
+                  {currentCompany?.name || 'ScrumSync'}
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Right section - Apple-style action buttons */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+              {/* Team button */}
+              <motion.button
+                whileHover={{
+                  scale: 1.02,
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  let currentTeamId = userTeamId;
+                  if (!currentTeamId) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      const { data: userData, error } = await supabase
+                        .from('users')
+                        .select('team_id')
+                        .eq('id', user.id)
+                        .single();
+                      if (!error && userData) {
+                        currentTeamId = userData.team_id;
+                        setUserTeamId(currentTeamId);
                       }
                     }
+                  }
 
-                    if (currentTeamId) {
-                      await fetchOnLeaveMembers();
-                    }
+                  if (currentTeamId) {
+                    await fetchOnLeaveMembers();
+                  }
 
-                    setTimeout(() => {
-                      setShowOnLeaveModal(true);
-                    }, 100);
+                  setTimeout(() => {
+                    setShowOnLeaveModal(true);
+                  }, 100);
+                }}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 apple-glass-card border border-white/40 text-gray-700 hover:text-gray-900 rounded-full text-sm font-medium transition-all shadow-sm"
+              >
+                <FiUsers className="w-4 h-4" />
+                <span className="truncate max-w-20">{userTeamName || 'Team'}</span>
+              </motion.button>
+
+              {/* Report reminder button */}
+              {isToday(date) && userId && !reports.some(report => report.users && report.users.id === userId) && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 20,
+                    delay: 0.5
                   }}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-gray-700 hover:text-indigo-700 rounded-lg text-sm font-medium transition-all group"
-                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: '0 4px 16px rgba(14, 165, 233, 0.3)'
+                  }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={handleNewReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-red-700 border border-gray-200 rounded-full text-sm font-medium transition-all shadow-md"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/35 to-purple-400/35 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative z-10 flex items-center gap-1.5">
-                    <FiUsers className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-20">{userTeamName || 'Team'}</span>
-                  </div>
+                  <FiAlertCircle className="w-4 h-4 flex-shrink-0 text-red-700" />
+                  <span className="hidden sm:inline block text-center leading-none">Report</span>
                 </motion.button>
+              )}
 
-                {/* Report reminder - indigo pink styled */}
-                {isToday(date) && userId && !reports.some(report => report.users && report.users.id === userId) && (
-                  <motion.button
-                    onClick={handleNewReport}
-                    className="relative flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500/90 via-purple-500/90 to-pink-500/90 backdrop-blur-sm text-white rounded-lg text-sm font-medium shadow-xl overflow-hidden group"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                    whileHover={{ scale: 1.02, y: -1 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {/* Indigo Pink shimmer effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                      animate={{ x: ['-100%', '100%'] }}
-                      transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1 }}
-                    />
-                    <div className="relative z-10 flex items-center gap-1.5">
-                      <FiAlertCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Report</span>
-                    </div>
-                  </motion.button>
-                )}
-
-                {/* Time display - indigo pink styled */}
-                <motion.div
-                  className="relative flex items-center gap-2 px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 rounded-lg transition-all group"
-                  whileHover={{ backgroundColor: 'rgba(248, 244, 255, 0.4)' }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/25 to-pink-400/25 rounded-lg blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative z-10 text-sm font-mono font-medium text-gray-900">
-                    {format(currentTime, 'h:mm')}
-                  </div>
-                  <div className="relative z-10 text-xs text-gray-600 font-medium">
-                    {format(currentTime, 'a').toLowerCase()}
-                  </div>
-                </motion.div>
-              </div>
+              {/* Time display */}
+              <motion.div
+                className="flex items-center gap-2 px-4 py-2 apple-glass-card border border-white/40 rounded-full shadow-sm"
+                whileHover={{
+                  scale: 1.02,
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)'
+                }}
+              >
+                <div className="text-sm font-mono font-semibold text-gray-800">
+                  {format(currentTime, 'h:mm')}
+                </div>
+                <div className="text-xs font-medium text-gray-600">
+                  {format(currentTime, 'a').toLowerCase()}
+                </div>
+              </motion.div>
             </div>
           </div>
         </div>
       </motion.header>
+
+      {/* Apple-style custom CSS */}
+      <style jsx>{`
+        .apple-glass {
+          background: rgba(255, 255, 255, 0.72);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .apple-glass-card {
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+      `}</style>
       {/* Spacer to prevent content overlap */}
-      <div className="h-16 sm:h-20" />
+      <div className="h-20" />
 
       {/* Dashboard Header with Missing Reports Component */}
       <div className="container mx-auto px-6 pt-6">

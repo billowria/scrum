@@ -81,31 +81,28 @@ const FloatingParticle = ({ delay, duration, size, color }) => {
 };
 
 export default function TeamManagement({ activeSubTab = 'team-management', setActiveSubTab }) {
+    const [filterOpen, setFilterOpen] = useState(false);
+      const [hoveredTab, setHoveredTab] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hoveredTab, setHoveredTab] = useState(null);
   const containerRef = useRef(null);
-  const { scrollY } = useScroll({ container: containerRef });
-
-  // Parallax effects
-  const headerY = useTransform(scrollY, [0, 100], [0, -20]);
-  const headerOpacity = useTransform(scrollY, [0, 50], [1, 0.8]);
-  const springConfig = { stiffness: 400, damping: 30 };
-  const headerScale = useSpring(1, springConfig);
-
+  
+  
   const handleTabChange = (tabId) => {
     if (setActiveSubTab) setActiveSubTab(tabId);
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Simulate refresh
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsRefreshing(false);
-  };
+  // Debounced search handler
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  
   const tabs = [
     {
       id: 'team-management',
@@ -148,139 +145,6 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
         ))}
       </div>
 
-      {/* Compact Glassmorphic Header */}
-      <motion.header
-        className="relative z-30 bg-white/60 backdrop-blur-xl border-b border-white/20 shadow-xl"
-        style={{ y: headerY, opacity: headerOpacity, scale: headerScale }}
-      >
-        <div className="px-6 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left Section */}
-            <div className="flex items-center gap-4">
-              {/* Logo/Icon with animation */}
-              <motion.div
-                className="p-2.5 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xl relative overflow-hidden group"
-                whileHover={{ scale: 1.05, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <FiUsers className="w-6 h-6 relative z-10" />
-              </motion.div>
-
-              {/* Title with gradient text */}
-              <div>
-                <motion.h1
-                  className="text-2xl font-bold bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  Workforce Management
-                </motion.h1>
-                <motion.p
-                  className="text-sm text-gray-600 font-medium"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  {activeTab?.description || 'Manage your organization'}
-                </motion.p>
-              </div>
-            </div>
-
-            {/* Right Section - Controls */}
-            <div className="flex items-center gap-3">
-              {/* Stats Pills */}
-              <motion.div className="hidden md:flex items-center gap-2">
-                {activeTab?.stats && (
-                  <>
-                    <motion.div
-                      className="px-3 py-1.5 bg-gradient-to-r from-violet-100 to-indigo-100 rounded-full flex items-center gap-2 border border-violet-200/50"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <FiTrendingUp className="w-3.5 h-3.5 text-violet-600" />
-                      <span className="text-sm font-semibold text-violet-700">{activeTab.stats.count}</span>
-                      <span className="text-xs text-green-600 font-medium">{activeTab.stats.trend}</span>
-                    </motion.div>
-                  </>
-                )}
-              </motion.div>
-
-              {/* Search Bar */}
-              <motion.div
-                className="relative hidden lg:block"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <div className="relative">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search team members..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-64 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 transition-all"
-                  />
-                </div>
-              </motion.div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                {/* View Mode Toggle */}
-                <motion.div className="flex bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl p-1">
-                  {[
-                    { mode: 'grid', icon: <FiGrid /> },
-                    { mode: 'list', icon: <FiList /> }
-                  ].map(({ mode, icon }) => (
-                    <motion.button
-                      key={mode}
-                      onClick={() => setViewMode(mode)}
-                      className={`p-2 rounded-lg transition-all ${
-                        viewMode === mode
-                          ? 'bg-violet-100 text-violet-600 shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {icon}
-                    </motion.button>
-                  ))}
-                </motion.div>
-
-                {/* Refresh Button */}
-                <motion.button
-                  onClick={handleRefresh}
-                  className="p-2.5 bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-xl text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-all shadow-sm"
-                  whileHover={{ scale: 1.05, rotate: 180 }}
-                  whileTap={{ scale: 0.95 }}
-                  animate={isRefreshing ? { rotate: 360 } : {}}
-                  transition={isRefreshing ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
-                >
-                  <FiRefreshCw className="w-4.5 h-4.5" />
-                </motion.button>
-
-                {/* Settings Button */}
-                <motion.button
-                  className="p-2.5 bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
-                  whileHover={{ scale: 1.05, rotate: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiSettings className="w-4.5 h-4.5" />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.header>
-
       {/* Main Content */}
       <motion.div
         className="relative z-20 px-6 py-8"
@@ -289,6 +153,7 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
         animate="visible"
         ref={containerRef}
       >
+        
         {/* Modern Tab Navigation */}
         <motion.div
           className="mb-8"
@@ -417,10 +282,10 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
                         </motion.div>
                       </div>
 
-                      {/* Beautiful Add Team Button */}
+                      {/* Create User Button */}
                       <motion.button
-                        onClick={() => window.location.href = '/manager-dashboard?tab=add-member'}
-                        className="group relative px-6 py-3 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        onClick={() => window.location.href = '/create-user'}
+                        className="group relative px-6 py-3 bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -437,13 +302,8 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
                           >
                             <FiUserPlus className="w-5 h-5" />
                           </motion.div>
-                          <span className="font-semibold">Add Team</span>
+                          <span className="font-semibold">Create User</span>
                         </div>
-
-                        {/* Glow effect on hover */}
-                        <motion.div
-                          className="absolute -inset-0.5 bg-gradient-to-r from-emerald-400/30 to-teal-400/30 rounded-xl opacity-0 group-hover:opacity-100 blur-md transition-opacity duration-300"
-                        />
                       </motion.button>
                     </div>
                   </div>
@@ -451,7 +311,11 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
 
                 {/* Component Content */}
                 <div className="p-6">
-                  <TeamManagementCombined />
+                  <TeamManagementCombined
+                    searchQuery={debouncedSearchQuery}
+                    setSearchQuery={setSearchQuery}
+                    searchValue={searchQuery}
+                  />
                 </div>
               </motion.div>
             )}

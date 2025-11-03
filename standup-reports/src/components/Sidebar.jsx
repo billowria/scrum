@@ -475,11 +475,10 @@ export default function Sidebar({ open, setOpen, user }) {
                   )}
                 </AnimatePresence>
 
-                {/* Hover glow effect */}
+                {/* Hover glow effect - Matching chat tab style */}
                 {hoveredItem === (link.to || index) && !isActiveLink && (
                   <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r opacity-20"
-                    style={{ backgroundImage: `linear-gradient(135deg, ${link.colors.gradient.split(' ')[1].replace('to-', '')}, ${link.colors.gradient.split(' ')[3]})` }}
+                    className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${link.colors.gradient} opacity-20`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.2 }}
                     exit={{ opacity: 0 }}

@@ -13,7 +13,7 @@ const navLinks = [
 ];
 
 const managerLinks = [
-  { to: '/team-management', label: 'Workforce Management', icon: <FiUsers /> },
+  { to: '/team-management', label: 'Team Management', icon: <FiUsers /> },
 
   { to: '/history', label: 'Report History', icon: <FiClock /> },
   { to: '/manager-dashboard?tab=announcements', label: 'Announcements', icon: <FiBell /> },

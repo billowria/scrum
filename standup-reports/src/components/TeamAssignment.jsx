@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
-import { FiUserPlus, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX, FiFilter, FiMail, FiShield, FiBriefcase, FiHome, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiUserPlus, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX, FiFilter, FiMail, FiShield, FiBriefcase, FiHome, FiPlus, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 
 // Animation variants
 const containerVariants = {
@@ -41,6 +41,7 @@ export default function TeamAssignment() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [teamFilter, setTeamFilter] = useState('all');
+  const [actionDropdown, setActionDropdown] = useState(null);
   
   // Add new team state
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
@@ -53,6 +54,18 @@ export default function TeamAssignment() {
     fetchUsers();
     fetchTeams();
   }, [refreshTrigger, currentCompany]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (actionDropdown) {
+        setActionDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [actionDropdown]);
   
   const fetchCurrentUser = async () => {
     try {
@@ -80,7 +93,7 @@ export default function TeamAssignment() {
       const { data, error } = await supabase
         .from('users')
         .select(`
-          id, name, email, role,
+          id, name, email, role, avatar_url,
           teams:team_id (id, name),
           manager:manager_id (id, name)
         `)
@@ -216,11 +229,11 @@ export default function TeamAssignment() {
     }
   };
   
-  const filteredUsers = teamFilter === 'all' 
-    ? users 
-    : teamFilter === 'unassigned' 
-      ? users.filter(user => !user.team_id) 
-      : users.filter(user => user.team_id === teamFilter);
+  const filteredUsers = teamFilter === 'all'
+    ? users
+    : teamFilter === 'unassigned'
+      ? users.filter(user => !user.teams?.id)
+      : users.filter(user => user.teams?.id === teamFilter);
   
   if (!currentUser || currentUser.role !== 'manager') {
     return (
@@ -270,8 +283,21 @@ export default function TeamAssignment() {
     >
       {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-       
+        {/* Left Section - Primary Action */}
+        <div className="flex items-center gap-3">
+          <motion.button
+            onClick={() => setShowAddTeamModal(true)}
+            className="relative group px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <FiPlus className="h-4 w-4 relative z-10" />
+            <span className="relative z-10">Add Team</span>
+          </motion.button>
+        </div>
 
+        {/* Right Section - Controls */}
         <div className="flex items-center gap-3">
           {/* Filter Dropdown */}
           <div className="relative">
@@ -290,18 +316,6 @@ export default function TeamAssignment() {
               <FiFilter size={14} />
             </div>
           </div>
-
-          {/* Add Team Button */}
-          <motion.button
-            onClick={() => setShowAddTeamModal(true)}
-            className="relative group px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <FiPlus className="h-4 w-4 relative z-10" />
-            <span className="relative z-10">Add Team</span>
-          </motion.button>
 
           <motion.button
             onClick={handleRefresh}
@@ -392,119 +406,127 @@ export default function TeamAssignment() {
               <motion.div
                 key={user.id}
                 variants={itemVariants}
-                whileHover={{ x: 8, scale: 1.01 }}
+                whileHover={{ y: -5, scale: 1.01 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className="relative group"
               >
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 p-1 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-sm" />
-
-                  <div className="relative bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                    <div className="flex items-center justify-between">
-                      {/* User Info Section */}
-                      <div className="flex items-center gap-4 flex-1">
-                        <motion.div
-                          className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold shadow-lg"
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                          style={{
-                            background: `linear-gradient(135deg,
+                <div className="relative bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-sm hover:shadow-md border border-white/30 transition-all duration-300">
+                  <div className="flex items-center justify-between">
+                    {/* User Info Section */}
+                    <div className="flex items-center gap-2.5 flex-1">
+                      <motion.div
+                        className="relative w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold shadow-md"
+                        whileHover={{ scale: 1.05, rotate: 3 }}
+                        style={{
+                          background: user.avatar_url
+                            ? 'transparent' // Use transparent so the image shows properly
+                            : `linear-gradient(135deg,
                               hsl(${280 + index * 15}, 70%, 60%),
                               hsl(${340 + index * 15}, 70%, 50%))`
-                          }}
-                        >
-                          <span>{user.name.charAt(0).toUpperCase()}</span>
-                        </motion.div>
+                        }}
+                      >
+                        {user.avatar_url ? (
+                          <img
+                            src={user.avatar_url}
+                            alt={user.name}
+                            className="w-full h-full rounded-lg object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=9333ea&color=fff`;
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xs font-bold">{user.name.charAt(0).toUpperCase()}</span>
+                        )}
+                      </motion.div>
 
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-gray-800 truncate">{user.name}</h3>
-                          <div className="flex items-center gap-3 mt-1">
-                            <div className="flex items-center gap-1 text-sm text-gray-600">
-                              <FiMail className="h-3 w-3" />
-                              <span className="truncate">{user.email}</span>
-                            </div>
-                            <span className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs font-semibold rounded-full">
-                              {user.role}
-                            </span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 truncate text-sm mb-1">
+                          {user.name}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="flex items-center gap-1 text-gray-600 truncate">
+                            <FiMail className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{user.email}</span>
                           </div>
+                          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 font-medium rounded text-xs">
+                            {user.role}
+                          </span>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Status and Actions */}
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600 font-medium mb-1">Team</div>
-                          {user.teams ? (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-full">
-                              <FiBriefcase className="h-3 w-3" />
-                              {user.teams.name}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white text-xs font-semibold rounded-full">
-                              <FiX className="h-3 w-3" />
-                              Unassigned
-                            </div>
-                          )}
-                        </div>
+                    {/* Status and Actions */}
+                    <div className="flex items-center gap-2 ml-3">
+                      {/* Team Status */}
+                      {user.teams ? (
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 font-medium rounded text-xs">
+                          {user.teams.name}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 font-medium rounded text-xs">
+                          Unassigned
+                        </span>
+                      )}
 
-                        <div className="text-right">
-                          <div className="text-sm text-gray-600 font-medium mb-1">Manager</div>
-                          {user.manager ? (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-semibold rounded-full">
-                              <FiUsers className="h-3 w-3" />
-                              {user.manager.name}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white text-xs font-semibold rounded-full">
-                              <FiX className="h-3 w-3" />
-                              None
-                            </div>
-                          )}
-                        </div>
+                      {/* Actions Dropdown */}
+                      <div className="relative">
+                        <motion.button
+                          onClick={() => setActionDropdown(actionDropdown === user.id ? null : user.id)}
+                          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FiMoreVertical className="w-4 h-4" />
+                        </motion.button>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          {user.teams ? (
-                            <>
-                              <motion.button
-                                onClick={() => openAssignModal(user)}
-                                className="relative group/btn overflow-hidden rounded-xl px-3 py-2 font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                <div className="relative z-10 flex items-center gap-1">
-                                  <FiEdit2 className="h-3 w-3" />
-                                  Change
-                                </div>
-                              </motion.button>
-                              <motion.button
-                                onClick={() => handleRemoveTeam(user.id)}
-                                className="relative group/btn overflow-hidden rounded-xl px-3 py-2 font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg hover:shadow-xl"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                <div className="relative z-10 flex items-center gap-1">
-                                  <FiTrash2 className="h-3 w-3" />
-                                  Remove
-                                </div>
-                              </motion.button>
-                            </>
-                          ) : (
-                            <motion.button
-                              onClick={() => openAssignModal(user)}
-                              className="relative group/btn overflow-hidden rounded-xl px-4 py-2 font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg hover:shadow-xl"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                        <AnimatePresence>
+                          {actionDropdown === user.id && (
+                            <motion.div
+                              className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[9999]"
+                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                              transition={{ duration: 0.15 }}
                             >
-                              <div className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                              <div className="relative z-10 flex items-center gap-2">
-                                <FiUserPlus className="h-4 w-4" />
-                                Assign Team
-                              </div>
-                            </motion.button>
+                              {user.teams ? (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      openAssignModal(user);
+                                      setActionDropdown(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                  >
+                                    <FiEdit2 className="w-4 h-4" />
+                                    Change Team
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleRemoveTeam(user.id);
+                                      setActionDropdown(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                  >
+                                    <FiTrash2 className="w-4 h-4" />
+                                    Remove Team
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    openAssignModal(user);
+                                    setActionDropdown(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <FiUserPlus className="w-4 h-4" />
+                                  Assign Team
+                                </button>
+                              )}
+                            </motion.div>
                           )}
-                        </div>
+                        </AnimatePresence>
                       </div>
                     </div>
                   </div>
@@ -513,7 +535,6 @@ export default function TeamAssignment() {
             ))}
           </motion.div>
         )}
-      </div>
       
       {/* Team Assignment Modal */}
       <AnimatePresence>
@@ -813,6 +834,7 @@ export default function TeamAssignment() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
