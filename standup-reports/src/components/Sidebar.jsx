@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   FiHome, FiCalendar, FiList, FiAward, FiUser, FiChevronLeft,
   FiChevronRight, FiBriefcase, FiUsers, FiClipboard, FiClock,
@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
 
 
@@ -203,79 +204,67 @@ const Badge = ({ count, className = "" }) => {
   return null;
 };
 
-// Tooltip Component for collapsed sidebar
-const Tooltip = ({ show, label, colors }) => {
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, x: -10, scale: 0.9 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          exit={{ opacity: 0, x: -10, scale: 0.9 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none"
-        >
-          <div className={`
-            px-3 py-2 rounded-lg text-sm font-medium text-white shadow-lg
-            bg-gradient-to-r ${colors.gradient}
-            border border-white/20 backdrop-blur-sm
-          `}>
-            {label}
-            <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2
-                      bg-inherit border-t border-l border-white/20 rotate-45" />
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-};
+// Enhanced Tooltip Component for collapsed sidebar - Portal-based
+const Tooltip = ({ show, label, colors, elementRef }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
 
-// Enhanced User Profile Component with glassmorphism
-const UserProfile = ({ open, user, onLogout }) => {
-  return (
-    <div className="flex items-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:bg-white/60">
-      <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white shadow-lg">
-        <FiUser size={18} />
-        {/* Glass reflection on avatar */}
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-white/20 to-transparent" />
+  // Calculate position based on element reference
+  useEffect(() => {
+    if (show && elementRef?.current) {
+      const rect = elementRef.current.getBoundingClientRect();
+      const sidebarWidth = elementRef.current.closest('aside')?.offsetWidth || 100;
+
+      setPosition({
+        x: rect.right + 8, // 8px offset from sidebar edge (moved closer)
+        y: rect.top + rect.height / 2 - 12 // 12px higher than center
+      });
+    }
+  }, [show, elementRef]);
+
+  const tooltipContent = show ? (
+    <motion.div
+      initial={{ opacity: 0, x: -20, scale: 0.9 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: -20, scale: 0.9 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="fixed z-[60] pointer-events-none"
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: 'translateY(-50%)'
+      }}
+    >
+      {/* Clean tooltip with glassmorphism - no arrow */}
+      <div className={`
+        px-3 py-2 rounded-xl text-sm font-medium text-white shadow-xl
+        bg-gradient-to-r ${colors.gradient} bg-opacity-80
+        border border-white/20 backdrop-blur-lg
+        relative overflow-hidden
+      `}>
+        {/* Glass reflection */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent" />
+
+        {/* Content */}
+        <span className="relative z-10">{label}</span>
+
+        {/* Subtle glow effect */}
+        <div className={`
+          absolute inset-0 rounded-xl bg-gradient-to-r ${colors.gradient}
+          opacity-20 blur-sm
+        `} />
       </div>
+    </motion.div>
+  ) : null;
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            variants={textAnimationVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            className="ml-4 flex-1"
-          >
-            <div className="font-semibold text-base text-slate-900 truncate">
-              {user?.name || 'User'}
-            </div>
-            <div className="text-sm text-slate-600 truncate opacity-80">
-              {user?.role || 'Member'}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {open && (
-          <motion.button
-            variants={textAnimationVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            onClick={onLogout}
-            className="p-3 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white/50 transition-all duration-200"
-          >
-            <FiLogOut size={16} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </div>
+  // Use React Portal to render tooltip at document body level
+  return createPortal(
+    <AnimatePresence>
+      {tooltipContent}
+    </AnimatePresence>,
+    document.body
   );
 };
+
 
 // Modern simplified sidebar component
 export default function Sidebar({ open, setOpen, user }) {
@@ -399,9 +388,12 @@ export default function Sidebar({ open, setOpen, user }) {
 
   const prefersReducedMotion = useReducedMotion();
 
+  // Create refs for navigation items to position tooltips
+  const navItemRefs = useRef({});
+
   return (
     <aside className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out"
-          style={{ width: open ? 320 : 100 }}>
+          style={{ width: open ? 272 : 100 }}>
 
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-white/30 backdrop-blur-xl border-r border-white/20" />
@@ -412,6 +404,7 @@ export default function Sidebar({ open, setOpen, user }) {
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent transform skew-y-12" />
       </div>
 
+  
       {/* Main navigation container */}
       <nav className="relative flex-1 px-4 py-6 space-y-3 overflow-y-auto">
         {navLinks.map((link, index) => {
@@ -428,9 +421,10 @@ export default function Sidebar({ open, setOpen, user }) {
           return (
             <div key={link.to || index} className="relative">
               <button
+                ref={(el) => { navItemRefs.current[link.to || index] = el; }}
                 onClick={() => link.to && navigate(link.to)}
                 className={`
-                  w-full flex items-center px-4 py-4 rounded-2xl transition-all duration-300 relative group
+                  w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
                   backdrop-blur-sm border border-white/20
                   ${isActiveLink
                     ? `${link.colors.activeBg} ${link.colors.activeText} border-l-4 ${link.colors.activeBorder} shadow-lg`
@@ -447,13 +441,13 @@ export default function Sidebar({ open, setOpen, user }) {
               >
                 {/* Enhanced icon container */}
                 <div className={`
-                  flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300
+                  flex items-center justify-center ${open ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl transition-all duration-300
                   ${isActiveLink
                     ? `${link.colors.iconBg} ${link.colors.iconText} shadow-lg scale-110`
                     : `bg-white/80 text-slate-600 group-hover:scale-105 group-hover:shadow-md`
                   }
                 `}>
-                  <span className="text-xl relative">
+                  <span className={`${open ? 'text-lg' : 'text-xl'} relative transition-all duration-300`}>
                     {link.icon}
                     <Badge count={link.badge} />
                   </span>
@@ -469,12 +463,12 @@ export default function Sidebar({ open, setOpen, user }) {
                       exit="hidden"
                       className="ml-4 flex-1 text-left"
                     >
-                      <div className={`font-semibold text-base leading-none ${
+                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${
                         isActiveLink ? link.colors.activeText : 'text-slate-800'
                       }`}>
                         {link.label}
                       </div>
-                      <div className="text-sm text-slate-600 mt-1 leading-none opacity-80">
+                      <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>
                         {link.description}
                       </div>
                     </motion.div>
@@ -499,6 +493,7 @@ export default function Sidebar({ open, setOpen, user }) {
                     show={hoveredItem === (link.to || index)}
                     label={link.label}
                     colors={link.colors}
+                    elementRef={{ current: navItemRefs.current[link.to || index] }}
                   />
                 )}
               </button>
@@ -509,9 +504,10 @@ export default function Sidebar({ open, setOpen, user }) {
         {/* Chat Portal - Always visible */}
         <div className="relative">
           <button
+            ref={(el) => { navItemRefs.current['chat'] = el; }}
             onClick={() => navigate('/chat')}
             className={`
-              w-full flex items-center px-4 py-4 rounded-2xl transition-all duration-300 relative group
+              w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
               backdrop-blur-sm border border-white/20
               ${location.pathname === '/chat'
                 ? 'bg-cyan-100 text-cyan-700 border-l-4 border-cyan-500 shadow-lg'
@@ -527,13 +523,13 @@ export default function Sidebar({ open, setOpen, user }) {
             }}
           >
             <div className={`
-              flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300
+              flex items-center justify-center ${open ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl transition-all duration-300
               ${location.pathname === '/chat'
                 ? 'bg-cyan-500 text-white shadow-lg scale-110'
                 : 'bg-white/80 text-slate-600 group-hover:scale-105 group-hover:shadow-md'
               }
             `}>
-              <span className="text-xl relative">
+              <span className={`${open ? 'text-lg' : 'text-xl'} relative transition-all duration-300`}>
                 <FiMessageSquare />
                 {counts.unreadMessages > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-medium">
@@ -552,12 +548,12 @@ export default function Sidebar({ open, setOpen, user }) {
                   exit="hidden"
                   className="ml-4 flex-1 text-left"
                 >
-                  <div className={`font-semibold text-base leading-none ${
+                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${
                     location.pathname === '/chat' ? 'text-cyan-700' : 'text-slate-800'
                   }`}>
                     Chat
                   </div>
-                  <div className="text-sm text-slate-600 mt-1 leading-none opacity-80">
+                  <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>
                     Team messaging & DMs
                   </div>
                 </motion.div>
@@ -583,22 +579,12 @@ export default function Sidebar({ open, setOpen, user }) {
                 colors={{
                   gradient: 'from-cyan-400 to-cyan-600'
                 }}
+                elementRef={{ current: navItemRefs.current['chat'] }}
               />
             )}
           </button>
         </div>
       </nav>
-
-      {/* Enhanced user profile section with glass effect */}
-      <div className="relative border-t border-white/20 p-4">
-        <div className="bg-white/30 backdrop-blur-lg rounded-2xl border border-white/20 p-4">
-          <UserProfile
-            open={open}
-            user={user}
-            onLogout={() => console.log('Logout')}
-          />
-        </div>
-      </div>
     </aside>
   );
 }

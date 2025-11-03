@@ -283,8 +283,8 @@ const ProjectsSidebar = ({
   onToggleSidebarCollapse,
   className = ''
 }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [favoritesExpanded, setFavoritesExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const [favoritesExpanded, setFavoritesExpanded] = useState(false);
 
   const toggleSection = () => {
     setExpanded(!expanded);
@@ -310,13 +310,7 @@ const ProjectsSidebar = ({
     }
   };
 
-  const getProgressColor = (progress) => {
-    if (progress >= 80) return 'bg-green-500';
-    if (progress >= 50) return 'bg-blue-500';
-    if (progress >= 30) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
+  
   return (
     <>
       {/* Mobile Overlay with Enhanced Animation */}
@@ -421,7 +415,6 @@ const ProjectsSidebar = ({
                           className="space-y-2 mt-2 overflow-hidden"
                         >
                           {favoriteProjectsList.map((project) => {
-                            const progress = Math.floor(Math.random() * 100); // Mock progress
                             const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
                             
                             return (
@@ -447,20 +440,11 @@ const ProjectsSidebar = ({
                                   {project.description && (
                                     <div className="text-xs text-gray-500 truncate">{project.description}</div>
                                   )}
-                                  <div className="flex items-center gap-3 mt-2">
+                                  <div className="flex items-center gap-2 mt-2">
                                     <div className="flex items-center gap-1">
                                       <FiUsers className="w-3 h-3 text-gray-500" />
                                       <span className="text-xs text-gray-500">{teamCount}</span>
                                     </div>
-                                    <div className="flex-1">
-                                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div
-                                          className={`h-1.5 rounded-full ${getProgressColor(progress)}`}
-                                          style={{ width: `${progress}%` }}
-                                        />
-                                      </div>
-                                    </div>
-                                    <span className="text-xs text-gray-500">{progress}%</span>
                                   </div>
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
@@ -509,7 +493,6 @@ const ProjectsSidebar = ({
                       className="space-y-2 mt-2 overflow-hidden"
                     >
                       {projects.map((project) => {
-                        const progress = Math.floor(Math.random() * 100); // Mock progress
                         const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
                         
                         return (
@@ -658,7 +641,6 @@ const ProjectsSidebar = ({
                           className="space-y-2 mt-2 overflow-hidden"
                         >
                           {favoriteProjectsList.map((project) => {
-                            const progress = Math.floor(Math.random() * 100); // Mock progress
                             const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
                             
                             return (
@@ -684,20 +666,11 @@ const ProjectsSidebar = ({
                                   {project.description && (
                                     <div className="text-xs text-gray-500 truncate">{project.description}</div>
                                   )}
-                                  <div className="flex items-center gap-3 mt-2">
+                                  <div className="flex items-center gap-2 mt-2">
                                     <div className="flex items-center gap-1">
                                       <FiUsers className="w-3 h-3 text-gray-500" />
                                       <span className="text-xs text-gray-500">{teamCount}</span>
                                     </div>
-                                    <div className="flex-1">
-                                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div
-                                          className={`h-1.5 rounded-full ${getProgressColor(progress)}`}
-                                          style={{ width: `${progress}%` }}
-                                        />
-                                      </div>
-                                    </div>
-                                    <span className="text-xs text-gray-500">{progress}%</span>
                                   </div>
                                 </div>
                                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
@@ -746,7 +719,6 @@ const ProjectsSidebar = ({
                       className="space-y-2 mt-2 overflow-hidden"
                     >
                       {projects.map((project) => {
-                        const progress = Math.floor(Math.random() * 100); // Mock progress
                         const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
                         
                         return (
@@ -1117,47 +1089,8 @@ const ProjectCard = ({
     });
   };
 
-  // Calculate progress with real data
-  const [progress, setProgress] = useState(0);
-  const [loadingProgress, setLoadingProgress] = useState(true);
-  
-  // Fetch task data for progress calculation
-  useEffect(() => {
-    const fetchTaskProgress = async () => {
-      try {
-        setLoadingProgress(true);
-        const { data: tasks, error } = await supabase
-          .from('tasks')
-          .select('status')
-          .eq('project_id', project.id);
-          
-        if (error) throw error;
-        
-        if (tasks && tasks.length > 0) {
-          const completedTasks = tasks.filter(task => task.status === 'done').length;
-          const calculatedProgress = Math.round((completedTasks / tasks.length) * 100);
-          setProgress(calculatedProgress);
-        } else {
-          setProgress(0);
-        }
-      } catch (err) {
-        console.error('Error fetching task progress:', err);
-        setProgress(0);
-      } finally {
-        setLoadingProgress(false);
-      }
-    };
     
-    fetchTaskProgress();
-  }, [project.id]);
-  
-  const getProgressColor = (progress) => {
-    if (progress >= 80) return 'bg-gradient-to-r from-green-500 to-emerald-500';
-    if (progress >= 50) return 'bg-gradient-to-r from-blue-500 to-indigo-500';
-    if (progress >= 30) return 'bg-gradient-to-r from-yellow-500 to-amber-500';
-    return 'bg-gradient-to-r from-red-500 to-pink-500';
-  };
-  
+    
   // Glassmorphic icon styles
   const getGlassmorphicIconStyle = (iconType, viewMode = 'grid') => {
     const baseTextColor = viewMode === 'list' ? 'text-gray-700' : 'text-white';
@@ -1187,12 +1120,12 @@ const ProjectCard = ({
         whileHover="hover"
         onClick={() => navigate(`/projects/${project.id}?editMode=${isEditMode}`)}
       >
-        <div className="p-6">
-          <div className="flex items-center gap-6">
+        <div className="p-4">
+          <div className="flex items-center gap-4">
             {/* Project Icon */}
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <FiFolder className="w-8 h-8" />
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <FiFolder className="w-7 h-7" />
               </div>
             </div>
 
@@ -1207,13 +1140,13 @@ const ProjectCard = ({
               </div>
               
               <div
-                className="text-gray-600 mb-3 line-clamp-2 prose prose-sm max-w-none"
+                className="text-gray-600 mb-2 line-clamp-2 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: project.description || 'No description available'
                 }}
               />
               
-              <div className="flex items-center gap-6 text-sm text-gray-500">
+              <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span className="flex items-center gap-2">
                   <FiCalendar className="w-4 h-4" />
                   {formatDate(project.start_date)} - {formatDate(project.end_date)}
@@ -1231,38 +1164,14 @@ const ProjectCard = ({
               </div>
             </div>
 
-            {/* Progress */}
-            <div className="flex-shrink-0 w-40">
-              <div className="text-sm font-medium text-gray-700 mb-2">Progress</div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                {loadingProgress ? (
-                  <div className="h-3 rounded-full bg-gray-300 animate-pulse" />
-                ) : (
-                  <div
-                    className={`h-3 rounded-full ${getProgressColor(progress)}`}
-                    style={{ width: `${progress}%` }}
-                  />
-                )}
-              </div>
-              <div className="text-xs text-gray-500 mt-1 text-center">
-                {loadingProgress ? (
-                  <span className="flex items-center justify-center gap-1">
-                    <FiLoader className="w-3 h-3 animate-spin" />
-                    Loading
-                  </span>
-                ) : (
-                  `${progress}%`
-                )}
-              </div>
-            </div>
-
+  
             {/* Team Avatars */}
             <div className="flex-shrink-0">
               <AvatarGroup users={teamMembers} max={4} size="sm" />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {/* View/Edit Mode Toggle */}
               {canManageProject && (
                 <motion.button
@@ -1369,7 +1278,7 @@ const ProjectCard = ({
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Card Header with Gradient - Reduced height */}
-      <div className={`relative h-20 bg-gradient-to-br from-blue-500 to-indigo-600 p-4`}>
+      <div className={`relative h-16 bg-gradient-to-br from-blue-500 to-indigo-600 p-4`}>
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
           <span className={`flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30`}>
@@ -1556,12 +1465,12 @@ const ProjectCard = ({
       </div>
 
       {/* Card Content */}
-      <div className="p-6 space-y-4">
+      <div className="p-4 space-y-3">
         {/* Project Title */}
-        <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+        <h3 className="text-base font-bold text-gray-900 line-clamp-1">
           {project.name}
         </h3>
-        
+
         {/* Description */}
         <div
           className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
@@ -1570,36 +1479,7 @@ const ProjectCard = ({
           }}
         />
 
-        {/* Progress Bar */}
-        <div>
-          <div className="flex justify-between text-xs text-gray-600 mb-2">
-            <span className="font-medium">Progress</span>
-            <span className="font-bold">
-              {loadingProgress ? (
-                <span className="flex items-center gap-1">
-                  <FiLoader className="w-3 h-3 animate-spin" />
-                  Loading
-                </span>
-              ) : (
-                `${progress}%`
-              )}
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-            {loadingProgress ? (
-              <div className="h-2 rounded-full bg-gray-300 animate-pulse" />
-            ) : (
-              <motion.div
-                className={`h-2 rounded-full ${getProgressColor(progress)}`}
-                style={{ width: `${progress}%` }}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 1, delay: 0.5 }}
-              />
-            )}
-          </div>
-        </div>
-
+  
         {/* Date Range */}
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <FiCalendar className="w-3 h-3" />
@@ -1608,9 +1488,9 @@ const ProjectCard = ({
 
         {/* Team Members */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500">
             <FiUsers className="w-3 h-3" />
-            <span>{teamMembers.length} members</span>
+            <span>{teamMembers.length}</span>
           </div>
           <AvatarGroup users={teamMembers} max={3} size="xs" />
         </div>
@@ -2337,7 +2217,7 @@ export default function ProjectsPage() {
   const [userProjectRoles, setUserProjectRoles] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);

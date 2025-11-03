@@ -922,6 +922,7 @@ export default function TaskBoard({
                         console.error('Error clearing filters:', err);
                       }
                     }
+                    
                   }}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-red-50 to-rose-50 text-red-600 border-2 border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300 transition-all shadow-md hover:shadow-lg"
                 >
@@ -931,18 +932,7 @@ export default function TaskBoard({
               )}
             </AnimatePresence>
 
-            {/* Manage Sprints - Prominent Button */}
-            <motion.button
-              onClick={() => onOpenSprintManagement()}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-2 border-indigo-500/70 shadow-lg hover:shadow-xl hover:from-indigo-500 hover:to-purple-500 transition-all"
-              whileHover={{ scale: 1.06, y: -2 }}
-              whileTap={{ scale: 0.96 }}
-              title="Open Sprint Management"
-            >
-              <FiTarget className="w-4 h-4" />
-              <span className="hidden sm:inline">Manage Sprints</span>
-              <span className="sm:hidden">Sprints</span>
-            </motion.button>
+           
 
 
 
@@ -1027,22 +1017,6 @@ export default function TaskBoard({
 
             {/* Compact Stats Badges */}
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5 bg-blue-50 border border-blue-200 rounded-full px-2 py-1 text-xs">
-                <FiGrid className="w-2.5 h-2.5 text-blue-600" />
-                <span className="text-blue-700 font-bold">{boardStats.total}</span>
-              </div>
-              {boardStats.dueToday > 0 && (
-                <div className="flex items-center gap-0.5 bg-orange-50 border border-orange-200 rounded-full px-2 py-1 text-xs">
-                  <FiClock className="w-2.5 h-2.5 text-orange-600" />
-                  <span className="text-orange-700 font-bold">{boardStats.dueToday}</span>
-                </div>
-              )}
-              {boardStats.overdue > 0 && (
-                <div className="flex items-center gap-0.5 bg-red-50 border border-red-200 rounded-full px-2 py-1 text-xs">
-                  <FiAlertCircle className="w-2.5 h-2.5 text-red-600" />
-                  <span className="text-red-700 font-bold">{boardStats.overdue}</span>
-                </div>
-              )}
 
               {/* Board/List Toggle in Stats Section */}
               <motion.div

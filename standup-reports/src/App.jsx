@@ -195,9 +195,9 @@ function App() {
                   className="flex-1 bg-gray-50 overflow-hidden relative"
                   style={{
                     marginLeft: sidebarOpen
-                      ? 'clamp(232px, 20vw, 336px)'  // Responsive: 232px (mobile) to 336px (desktop)
-                      : 'clamp(52px, 8vw, 96px)',   // Responsive: 52px (mobile) to 96px (desktop)
-                    transition: 'margin-left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+                      ? 'clamp(292px, 20vw, 308px)'  // Responsive: 292px (mobile) to 308px (desktop) - 20px buffer (reduced for 272px sidebar)
+                      : 'clamp(120px, 10vw, 116px)',   // Responsive: 120px (mobile) to 116px (desktop) - 20px buffer
+                    transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                 >
                   <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
