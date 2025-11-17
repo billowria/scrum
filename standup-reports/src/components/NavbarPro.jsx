@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { supabase } from '../supabaseClient';
-import { FiUser, FiGrid, FiAward, FiUsers, FiShield, FiLogOut, FiHome, FiCalendar, FiList, FiCheckSquare, FiClock, FiBell, FiChevronDown, FiMenu, FiTarget } from 'react-icons/fi';
+import { FiUser, FiGrid, FiAward, FiUsers, FiLogOut, FiHome, FiCalendar, FiList, FiCheckSquare, FiClock, FiBell, FiChevronDown, FiMenu, FiTarget } from 'react-icons/fi';
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard', icon: <FiHome /> },
@@ -12,12 +12,6 @@ const navLinks = [
   { to: '/achievements', label: 'Achievements', icon: <FiAward /> },
 ];
 
-const managerLinks = [
-  { to: '/team-management', label: 'Team Management', icon: <FiUsers /> },
-
-  { to: '/history', label: 'Report History', icon: <FiClock /> },
-  { to: '/manager-dashboard?tab=announcements', label: 'Announcements', icon: <FiBell /> },
-];
 
 const NavbarPro = ({ session }) => {
   const location = useLocation();
@@ -237,17 +231,7 @@ const NavbarPro = ({ session }) => {
             <NotificationBell userRole={userProfile?.role} />
           )}
 
-          {/* Manager Portal */}
-          {userProfile?.role === 'manager' && (
-            <button
-              onClick={() => navigate('/manager-dashboard')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-blue-600 transition-all"
-            >
-              <FiShield className="text-lg" />
-              <span>Manager Portal</span>
-            </button>
-          )}
-
+  
           {/* Profile Dropdown */}
           {session && userProfile && (
             <div className="relative">
@@ -274,23 +258,7 @@ const NavbarPro = ({ session }) => {
                       </p>
                     )}
                   </div>
-                  {userProfile.role === 'manager' && (
-                    <>
-                      <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">Manager Portal</div>
-                      {managerLinks.map(link => (
-                        <Link
-                          key={link.to}
-                          to={link.to}
-                          className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center"
-                          onClick={() => setProfileDropdownOpen(false)}
-                        >
-                          <span className="mr-2 h-4 w-4">{link.icon}</span>
-                          <span>{link.label}</span>
-                        </Link>
-                      ))}
-                    </>
-                  )}
-                  <div className="border-t border-gray-100 mt-1">
+                    <div className="border-t border-gray-100 mt-1">
                     <button
                       onClick={handleSignOut}
                       className="block w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors flex items-center"
@@ -332,28 +300,7 @@ const NavbarPro = ({ session }) => {
                     </div>
                   </Link>
                 ))}
-                {/* Manager-specific links for mobile */}
-                {userProfile?.role === 'manager' && (
-                  <>
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="px-4 py-1 text-xs font-medium text-gray-500 uppercase tracking-wider">Manager Actions</div>
-                    </div>
-                    {managerLinks.map(link => (
-                      <Link
-                        key={link.to}
-                        to={link.to}
-                        className={`block px-3 py-2 text-base font-medium rounded-md transition-colors ${isActive(link.to) ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <div className="flex items-center">
-                          <span className="mr-3 h-5 w-5">{link.icon}</span>
-                          {link.label}
-                        </div>
-                      </Link>
-                    ))}
-                  </>
-                )}
-                <div className="pt-4 pb-2 border-t border-gray-200">
+                  <div className="pt-4 pb-2 border-t border-gray-200">
                   <div className="flex items-center px-4 py-2">
                     <div className="flex-shrink-0">
                       {userProfile?.avatar_url ? (

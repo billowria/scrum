@@ -1,11 +1,10 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
 import LeaveCalendar from './pages/LeaveCalendar';
 import AchievementsPage from './pages/AchievementsPage';
 import UserAchievements from './pages/UserAchievements';
-import ManagerDashboard from './pages/ManagerDashboard';
 import History from './pages/History';
 import TeamManagement from './pages/TeamManagement';
 import AuthPage from './pages/AuthPage';
@@ -25,7 +24,7 @@ function App() {
       
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="manager-dashboard" element={<ManagerDashboard />} />
+        <Route path="manager-dashboard" element={<Navigate to="/team-management" replace />} />
         <Route path="calendar" element={<LeaveCalendar />} />
         <Route path="achievements" element={<AchievementsPage />} />
         <Route path="my-achievements" element={<UserAchievements />} />

@@ -1,0 +1,159 @@
+/* ============================================
+   CHAT DESIGN TOKENS
+   Extends the main design system for chat components
+   ============================================ */
+
+:root {
+  /* Chat-specific colors - extending the main design system */
+  --chat-bg-primary: #ffffff;
+  --chat-bg-secondary: #f8fafc;
+  --chat-bg-tertiary: #f1f5f9;
+  --chat-bg-hover: #f1f5f9;
+  --chat-bg-active: #e2e8f0;
+
+  /* Message bubble colors */
+  --message-bg-sent: #10b981;
+  --message-bg-sent-hover: #059669;
+  --message-text-sent: #ffffff;
+  --message-bg-received: #ffffff;
+  --message-bg-received-hover: #f8fafc;
+  --message-text-received: #1e293b;
+
+  /* Status colors */
+  --status-online: #22c55e;
+  --status-away: #f59e0b;
+  --status-busy: #ef4444;
+  --status-offline: #64748b;
+
+  /* Chat state colors */
+  --chat-typing: #3b82f6;
+  --chat-unread: #3b82f6;
+  --chat-selected: #dbeafe;
+  --chat-border: #e2e8f0;
+  --chat-border-focus: #3b82f6;
+
+  /* Input colors */
+  --input-bg: #ffffff;
+  --input-bg-focus: #ffffff;
+  --input-border: #d1d5db;
+  --input-border-focus: #3b82f6;
+  --input-placeholder: #9ca3af;
+  --input-text: #1f2937;
+
+  /* Animation timing */
+  --chat-transition-fast: 150ms;
+  --chat-transition-normal: 300ms;
+  --chat-transition-slow: 500ms;
+
+  /* Chat spacing */
+  --chat-spacing-xs: 0.25rem;  /* 4px */
+  --chat-spacing-sm: 0.5rem;   /* 8px */
+  --chat-spacing-md: 0.75rem;  /* 12px */
+  --chat-spacing-lg: 1rem;     /* 16px */
+  --chat-spacing-xl: 1.25rem;  /* 20px */
+  --chat-spacing-2xl: 1.5rem;  /* 24px */
+  --chat-spacing-3xl: 2rem;    /* 32px */
+
+  /* Chat border radius */
+  --chat-radius-sm: 0.375rem;  /* 6px */
+  --chat-radius-md: 0.5rem;    /* 8px */
+  --chat-radius-lg: 0.75rem;   /* 12px */
+  --chat-radius-xl: 1rem;      /* 16px */
+  --chat-radius-2xl: 1.25rem;  /* 20px */
+  --chat-radius-3xl: 1.5rem;   /* 24px */
+
+  /* Chat shadows */
+  --chat-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --chat-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --chat-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --chat-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Message-specific dimensions */
+  --message-max-width: 70%;
+  --message-min-width: 120px;
+  --message-avatar-size: 2.5rem;
+  --message-bubble-padding: 0.75rem 1rem;
+  --message-gap: 0.5rem;
+
+  /* Sidebar dimensions */
+  --sidebar-width: 20rem;    /* 320px */
+  --sidebar-width-collapsed: 4rem;
+  --sidebar-border-width: 1px;
+
+  /* Typing indicator */
+  --typing-dot-size: 0.375rem;
+  --typing-dot-gap: 0.25rem;
+  --typing-animation-duration: 1.4s;
+
+  /* Reaction emoji */
+  --reaction-size: 1.25rem;
+  --reaction-bg: #f3f4f6;
+  --reaction-bg-hover: #e5e7eb;
+  --reaction-radius: 9999px;
+
+  /* File attachment */
+  --attachment-preview-width: 6rem;
+  --attachment-preview-height: 6rem;
+  --attachment-bg: #f9fafb;
+  --attachment-border: #e5e7eb;
+
+  /* Voice message */
+  --voice-bg: #fef2f2;
+  --voice-border: #fecaca;
+  --voice-wave-height: 1rem;
+  --voice-progress-height: 0.5rem;
+
+  /* Glass morphism effects */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-hover: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: 12px;
+
+  }
+
+/* Dark mode overrides */
+[data-theme="dark"] {
+  --chat-bg-primary: #1f2937;
+  --chat-bg-secondary: #111827;
+  --chat-bg-tertiary: #0f172a;
+  --chat-bg-hover: #374151;
+  --chat-bg-active: #4b5563;
+
+  --message-bg-received: #374151;
+  --message-bg-received-hover: #4b5563;
+  --message-text-received: #f9fafb;
+
+  --chat-border: #374151;
+  --chat-border-focus: #60a5fa;
+
+  --input-bg: #374151;
+  --input-bg-focus: #1f2937;
+  --input-border: #4b5563;
+  --input-border-focus: #60a5fa;
+  --input-placeholder: #9ca3af;
+  --input-text: #f9fafb;
+
+  --glass-bg: rgba(31, 41, 55, 0.7);
+  --glass-bg-hover: rgba(31, 41, 55, 0.8);
+  --glass-border: rgba(75, 85, 99, 0.2);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  :root {
+    --message-max-width: 85%;
+    --sidebar-width: 100%;
+    --message-bubble-padding: 0.625rem 0.875rem;
+    --message-gap: 0.375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --message-max-width: 90%;
+    --message-bubble-padding: 0.5rem 0.75rem;
+    --message-gap: 0.25rem;
+    --chat-spacing-lg: 0.875rem;
+    --chat-spacing-xl: 1rem;
+  }
+}

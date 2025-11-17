@@ -1,6 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiPlus, FiSearch, FiRefreshCw, FiUsers, FiMessageSquare, FiHash } from 'react-icons/fi';
+import {
+  FiPlus,
+  FiSearch,
+  FiRefreshCw,
+  FiUsers,
+  FiMessageSquare,
+  FiHash,
+  FiSettings,
+  FiChevronDown,
+  FiChevronRight,
+  FiChevronLeft,
+  FiUser,
+  FiMoreVertical,
+  FiArchive,
+  FiBell,
+  FiFilter,
+  FiX,
+  FiCheck,
+  FiCircle,
+  FiWifi,
+  FiWifiOff
+} from 'react-icons/fi';
 import ConversationCard from './ConversationCard';
 import UserPresence from './UserPresence';
 
@@ -13,34 +34,83 @@ const ChatSidebar = ({
   isRefreshing = false,
   currentUser,
   onlineUsers = [],
+  isCollapsed = false,
+  onToggleCollapse,
+  onShowNewChatModal,
   className = ""
 }) => {
   const [showUserList, setShowUserList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [conversationFilter, setConversationFilter] = useState('all');
-  const [showTeamPresence, setShowTeamPresence] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [expandedSections, setExpandedSections] = useState({
+    direct: true,
+    team: true,
+    archived: false
+  });
+  const [mutedConversations, setMutedConversations] = useState(new Set());
+  const [pinnedConversations, setPinnedConversations] = useState(new Set());
 
-  // Filter options
+  // Enhanced filter options
   const filterOptions = [
-    { value: 'all', label: 'All Conversations', icon: FiMessageSquare },
-    { value: 'unread', label: 'Unread', icon: FiMessageSquare },
-    { value: 'direct', label: 'Direct Messages', icon: FiUsers },
-    { value: 'team', label: 'Team Chats', icon: FiHash }
+    { value: 'all', label: 'All', icon: FiMessageSquare, color: 'blue' },
+    { value: 'unread', label: 'Unread', icon: FiCircle, color: 'red' },
+    { value: 'direct', label: 'Direct', icon: FiUser, color: 'green' },
+    { value: 'team', label: 'Teams', icon: FiHash, color: 'purple' },
+    { value: 'pinned', label: 'Pinned', icon: FiCheck, color: 'yellow' },
+    { value: 'archived', label: 'Archived', icon: FiArchive, color: 'gray' }
   ];
 
-  // Separate team and direct conversations
-  const teamConversations = conversations.filter(c => c.type === 'team');
-  const directConversations = conversations.filter(c => c.type === 'direct');
+  // Separate and categorize conversations
+  const categorizedConversations = useMemo(() => {
+    const direct = [];
+    const team = [];
+    const archived = [];
+    const unread = [];
 
-  // Filter conversations based on search and filter
-  const filterConversations = (convos) => {
-    let filtered = convos;
+    conversations.forEach(conv => {
+      // Mark as unread if there are unread messages
+      if (conv.unread_count > 0) {
+        unread.push(conv);
+      }
 
-    // Apply conversation type filter
-    if (conversationFilter === 'direct') {
-      filtered = filtered.filter(c => c.type === 'direct');
-    } else if (conversationFilter === 'team') {
-      filtered = filtered.filter(c => c.type === 'team');
+      // Categorize by type and status
+      if (conv.archived) {
+        archived.push(conv);
+      } else if (conv.type === 'direct') {
+        direct.push(conv);
+      } else if (conv.type === 'team') {
+        team.push(conv);
+      }
+    });
+
+    return { direct, team, archived, unread, all: conversations };
+  }, [conversations]);
+
+  // Filter conversations based on search and selected filter
+  const filteredConversations = useMemo(() => {
+    let filtered = [];
+
+    switch (selectedFilter) {
+      case 'unread':
+        filtered = categorizedConversations.unread;
+        break;
+      case 'direct':
+        filtered = categorizedConversations.direct;
+        break;
+      case 'team':
+        filtered = categorizedConversations.team;
+        break;
+      case 'pinned':
+        filtered = Array.from(pinnedConversations).map(id =>
+          conversations.find(c => c.id === id)
+        ).filter(Boolean);
+        break;
+      case 'archived':
+        filtered = categorizedConversations.archived;
+        break;
+      default:
+        filtered = categorizedConversations.all;
     }
 
     // Apply search filter
@@ -48,332 +118,441 @@ const ChatSidebar = ({
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(c =>
         c.name?.toLowerCase().includes(query) ||
-        c.last_message?.content?.toLowerCase().includes(query) ||
-        (c.type === 'direct' && c.otherUser?.name?.toLowerCase().includes(query))
+        c.participants?.some(p =>
+          p.name?.toLowerCase().includes(query) ||
+          p.email?.toLowerCase().includes(query)
+        ) ||
+        c.last_message?.content?.toLowerCase().includes(query)
       );
     }
 
-    // Apply unread filter
-    if (conversationFilter === 'unread') {
-      filtered = filtered.filter(c => c.unread_count > 0);
-    }
-
+    // Sort conversations
     return filtered.sort((a, b) => {
-      // Sort by pinned status first
-      if (a.is_pinned && !b.is_pinned) return -1;
-      if (!a.is_pinned && b.is_pinned) return 1;
+      // Pinned conversations first
+      const aPinned = pinnedConversations.has(a.id);
+      const bPinned = pinnedConversations.has(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
 
       // Then by last message time
       const aTime = new Date(a.last_message_at || 0);
       const bTime = new Date(b.last_message_at || 0);
       return bTime - aTime;
     });
+  }, [categorizedConversations, selectedFilter, searchQuery, pinnedConversations, conversations]);
+
+  // Get unread count for each category
+  const getUnreadCount = (convs) => {
+    return convs.reduce((total, conv) => total + (conv.unread_count || 0), 0);
   };
 
-  const filteredConversations = filterConversations(conversations);
-  const filteredTeams = filterConversations(teamConversations);
-  const filteredDirect = filterConversations(directConversations);
+  // Toggle conversation pinned status
+  const togglePin = useCallback((conversationId) => {
+    setPinnedConversations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(conversationId)) {
+        newSet.delete(conversationId);
+      } else {
+        newSet.add(conversationId);
+      }
+      return newSet;
+    });
+  }, []);
 
-  // Get unread counts
-  const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-  const teamUnread = teamConversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-  const directUnread = directConversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+  // Toggle conversation mute status
+  const toggleMute = useCallback((conversationId) => {
+    setMutedConversations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(conversationId)) {
+        newSet.delete(conversationId);
+      } else {
+        newSet.add(conversationId);
+      }
+      return newSet;
+    });
+  }, []);
 
-  const handleStartDM = (user) => {
-    setShowUserList(false);
-    onStartDirectMessage?.(user);
+  // Toggle section expansion
+  const toggleSection = useCallback((section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  }, []);
+
+  // Handle section click for expansion
+  const handleSectionClick = (section) => {
+    if (!isCollapsed) {
+      toggleSection(section);
+    }
   };
 
-  const handlePinConversation = (conversationId) => {
-    // This would be implemented to pin/unpin conversations
-    console.log('Toggle pin for conversation:', conversationId);
+  // Render conversation section header
+  const renderSectionHeader = (title, section, conversations, Icon) => {
+    const unreadCount = getUnreadCount(conversations);
+    const isExpanded = expandedSections[section];
+
+    return (
+      <motion.button
+        onClick={() => handleSectionClick(section)}
+        className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${
+          isCollapsed ? 'justify-center' : ''
+        }`}
+        whileHover={{ scale: isCollapsed ? 1.05 : 1 }}
+        whileTap={{ scale: isCollapsed ? 0.95 : 1 }}
+      >
+        <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
+          <Icon className="w-4 h-4 text-gray-500" />
+          {!isCollapsed && (
+            <>
+              <span className="text-sm font-medium text-gray-700">{title}</span>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        {!isCollapsed && (
+          <motion.div
+            animate={{ rotate: isExpanded ? 90 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <FiChevronRight className="w-4 h-4 text-gray-400" />
+          </motion.div>
+        )}
+      </motion.button>
+    );
   };
 
+  // If collapsed, render minimal version
+  if (isCollapsed) {
+    return (
+      <motion.div
+        initial={{ width: 320 }}
+        animate={{ width: 64 }}
+        exit={{ width: 320 }}
+        transition={{ duration: 0.3 }}
+        className="bg-white border-r border-gray-200 h-full flex flex-col"
+      >
+        {/* Header */}
+        <div className="p-3 border-b border-gray-200">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onToggleCollapse}
+            className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg"
+          >
+            <FiMessageSquare className="w-5 h-5" />
+          </motion.button>
+        </div>
+
+        {/* Quick actions */}
+        <div className="flex-1 flex flex-col gap-3 p-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowUserList(true)}
+            className="w-10 h-10 bg-green-50 hover:bg-green-100 rounded-full flex items-center justify-center text-green-600 transition-colors"
+            title="New Conversation"
+          >
+            <FiPlus className="w-4 h-4" />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="w-10 h-10 bg-blue-50 hover:bg-blue-100 rounded-full flex items-center justify-center text-blue-600 transition-colors disabled:opacity-50"
+            title="Refresh"
+          >
+            <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </motion.button>
+        </div>
+
+        {/* Online status */}
+        <div className="p-3 border-t border-gray-200">
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"
+            title={`${onlineUsers.length} online`}
+          >
+            <FiWifi className="w-4 h-4 text-green-600" />
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Full sidebar
   return (
-    <div className={`w-80 bg-white border-r border-gray-200 flex flex-col h-full ${className}`}>
-      {/* Enhanced Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-3">
+    <motion.div
+      initial={{ width: 64 }}
+      animate={{ width: 320 }}
+      exit={{ width: 64 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white border-r border-gray-200 h-full flex flex-col"
+    >
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            Messages
+          </h2>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
-            {totalUnread > 0 && (
-              <span className="px-2 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full">
-                {totalUnread > 99 ? '99+' : totalUnread}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            {/* Team Presence Toggle */}
-            <button
-              onClick={() => setShowTeamPresence(!showTeamPresence)}
-              className={`p-2 rounded-lg transition-colors ${
-                showTeamPresence
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-              title="Team presence"
+            {/* Online indicator */}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full"
             >
-              <FiUsers className="w-5 h-5" />
-            </button>
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-xs text-green-700 font-medium">{onlineUsers.length}</span>
+            </motion.div>
 
-            {/* Refresh Button */}
+            {/* Collapse button */}
             <motion.button
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors group disabled:opacity-50"
-              title="Refresh conversations"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onToggleCollapse}
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <FiRefreshCw
-                className={`w-5 h-5 text-gray-500 group-hover:text-gray-700 transition-colors ${
-                  isRefreshing ? 'animate-spin text-blue-600' : ''
-                }`}
-              />
+              <FiChevronLeft className="w-4 h-4 text-gray-500" />
             </motion.button>
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search bar */}
         <div className="relative mb-3">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Search conversations..."
+            className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            autoComplete="off"
+            data-form-type="other"
           />
           {searchQuery && (
-            <button
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
-              <FiPlus className="w-4 h-4 rotate-45" />
-            </button>
+              <FiX className="w-4 h-4" />
+            </motion.button>
           )}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-1">
-          {filterOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setConversationFilter(option.value)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                conversationFilter === option.value
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <option.icon className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate max-w-20">{option.label}</span>
-              {option.value === 'unread' && totalUnread > 0 && (
-                <span className="px-1 py-0.5 bg-blue-500 text-white text-xs rounded-full min-w-[1.25rem] text-center">
-                  {totalUnread > 99 ? '99+' : totalUnread}
-                </span>
-              )}
-            </button>
-          ))}
+        {/* Filter pills */}
+        <div className="flex gap-1 overflow-x-auto pb-2">
+          {filterOptions.map((filter) => {
+            const Icon = filter.icon;
+            const isSelected = selectedFilter === filter.value;
+            const count = filter.value === 'unread'
+              ? getUnreadCount(categorizedConversations.all)
+              : filter.value === 'pinned'
+              ? pinnedConversations.size
+              : filter.value === 'archived'
+              ? categorizedConversations.archived.length
+              : filter.value === 'direct'
+              ? categorizedConversations.direct.length
+              : filter.value === 'team'
+              ? categorizedConversations.team.length
+              : 0;
+
+            return (
+              <motion.button
+                key={filter.value}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSelectedFilter(filter.value)}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  isSelected
+                    ? `bg-${filter.color}-100 text-${filter.color}-700 border-2 border-${filter.color}-300`
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Icon className="w-3 h-3" />
+                <span>{filter.label}</span>
+                {count > 0 && (
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+                    isSelected ? 'bg-white' : 'bg-gray-300'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Team Presence Panel */}
-      <AnimatePresence>
-        {showTeamPresence && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="border-b border-gray-200 overflow-hidden"
+      {/* Quick actions */}
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98, y: 0 }}
+            onClick={onShowNewChatModal}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2
+                     bg-gradient-to-r from-blue-500 to-blue-600 text-white
+                     rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg
+                     relative overflow-hidden border border-blue-400/30"
           >
-            <div className="px-6 py-4 bg-gray-50">
-              <UserPresence
-                users={onlineUsers}
-                currentUser={currentUser}
-                showStatus={true}
-                showActivity={true}
-                maxVisible={4}
-                onUserClick={handleStartDM}
-                onStartChat={handleStartDM}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {/* Shimmer effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-      {/* Conversations List */}
+            {/* Icon container with subtle glow */}
+            <motion.div
+              whileHover={{ rotate: 90 }}
+              transition={{ duration: 0.3 }}
+              className="relative flex items-center justify-center"
+            >
+              <FiPlus className="w-4 h-4 relative z-10 text-white" />
+            </motion.div>
+
+            <span className="text-sm font-medium text-white relative z-10">New Chat</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow-sm disabled:opacity-50"
+          >
+            <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
+          >
+            <FiSettings className="w-4 h-4" />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Conversations list */}
       <div className="flex-1 overflow-y-auto">
-        {conversationFilter === 'all' ? (
+        {filteredConversations.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center h-64 text-gray-400"
+          >
+            <FiMessageSquare className="w-12 h-12 mb-3" />
+            <p className="text-sm font-medium">No conversations found</p>
+            <p className="text-xs mt-1">Try adjusting your search or filters</p>
+          </motion.div>
+        ) : (
           <>
-            {/* Team Chats Section */}
-            {filteredTeams.length > 0 && (
-              <div className="py-2">
-                <div className="flex items-center justify-between px-6 py-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                    <FiHash className="w-3 h-3" />
-                    Team Chats
-                  </h3>
-                  {teamUnread > 0 && (
-                    <span className="text-xs text-gray-500">
-                      {teamUnread} unread
-                    </span>
-                  )}
-                </div>
+            {/* Direct Messages */}
+            {categorizedConversations.direct.length > 0 && (
+              <div>
+                {renderSectionHeader('Direct Messages', 'direct', categorizedConversations.direct, FiUser)}
                 <AnimatePresence>
-                  {filteredTeams.map(conversation => (
-                    <ConversationCard
-                      key={conversation.id}
-                      conversation={conversation}
-                      currentUser={currentUser}
-                      isActive={conversation.id === activeConversationId}
-                      onSelect={() => onConversationSelect?.(conversation)}
-                      onPin={handlePinConversation}
-                    />
-                  ))}
+                  {expandedSections.direct && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {categorizedConversations.direct
+                        .filter(conv => selectedFilter === 'all' || selectedFilter === 'direct' || selectedFilter === 'unread')
+                        .map((conversation) => (
+                          <motion.div
+                            key={conversation.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            layout
+                          >
+                            <ConversationCard
+                              conversation={conversation}
+                              isActive={activeConversationId === conversation.id}
+                              onClick={() => onConversationSelect(conversation)}
+                              isPinned={pinnedConversations.has(conversation.id)}
+                              isMuted={mutedConversations.has(conversation.id)}
+                              onPin={() => togglePin(conversation.id)}
+                              onMute={() => toggleMute(conversation.id)}
+                              onlineUsers={onlineUsers}
+                            />
+                          </motion.div>
+                        ))}
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
             )}
 
-            {/* Direct Messages Section */}
-            <div className="py-2">
-              <div className="flex items-center justify-between px-6 py-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                  <FiUsers className="w-3 h-3" />
-                  Direct Messages
-                </h3>
-                <div className="flex items-center gap-2">
-                  {directUnread > 0 && (
-                    <span className="text-xs text-gray-500">
-                      {directUnread} unread
-                    </span>
-                  )}
-                  <button
-                    onClick={() => setShowUserList(true)}
-                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors group"
-                    title="New direct message"
-                  >
-                    <FiPlus className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {filteredDirect.length > 0 ? (
-                  filteredDirect.map(conversation => (
-                    <ConversationCard
-                      key={conversation.id}
-                      conversation={conversation}
-                      currentUser={currentUser}
-                      isActive={conversation.id === activeConversationId}
-                      isOnline={onlineUsers.some(u => u.id === conversation.otherUser?.id)}
-                      onSelect={() => onConversationSelect?.(conversation)}
-                      onPin={handlePinConversation}
-                    />
-                  ))
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="px-6 py-8 text-center"
-                  >
-                    <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <FiUsers className="w-6 h-6 text-gray-400" />
-                    </div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-1">No direct messages yet</h4>
-                    <p className="text-sm text-gray-500 mb-4">Start a conversation with your team members</p>
-                    <button
-                      onClick={() => setShowUserList(true)}
-                      className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
+            {/* Team Chats */}
+            {categorizedConversations.team.length > 0 && (
+              <div>
+                {renderSectionHeader('Team Chats', 'team', categorizedConversations.team, FiHash)}
+                <AnimatePresence>
+                  {expandedSections.team && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <FiPlus className="w-4 h-4 mr-2" />
-                      Start a conversation
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      {categorizedConversations.team
+                        .filter(conv => selectedFilter === 'all' || selectedFilter === 'team' || selectedFilter === 'unread')
+                        .map((conversation) => (
+                          <motion.div
+                            key={conversation.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            layout
+                          >
+                            <ConversationCard
+                              conversation={conversation}
+                              isActive={activeConversationId === conversation.id}
+                              onClick={() => onConversationSelect(conversation)}
+                              isPinned={pinnedConversations.has(conversation.id)}
+                              isMuted={mutedConversations.has(conversation.id)}
+                              onPin={() => togglePin(conversation.id)}
+                              onMute={() => toggleMute(conversation.id)}
+                              onlineUsers={onlineUsers}
+                            />
+                          </motion.div>
+                        ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </>
-        ) : (
-          /* Filtered View */
-          <div className="py-2">
-            <AnimatePresence>
-              {filteredConversations.length > 0 ? (
-                filteredConversations.map(conversation => (
-                  <ConversationCard
-                    key={conversation.id}
-                    conversation={conversation}
-                    currentUser={currentUser}
-                    isActive={conversation.id === activeConversationId}
-                    isOnline={onlineUsers.some(u => u.id === conversation.otherUser?.id)}
-                    onSelect={() => onConversationSelect?.(conversation)}
-                    onPin={handlePinConversation}
-                  />
-                ))
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="px-6 py-8 text-center"
-                >
-                  <div className="w-12 h-12 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                    <FiSearch className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-1">No conversations found</h4>
-                  <p className="text-sm text-gray-500">
-                    {searchQuery ? 'Try adjusting your search' : 'No conversations match this filter'}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         )}
       </div>
 
-      {/* User List Modal */}
+      {/* User Presence Modal */}
       <AnimatePresence>
         {showUserList && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowUserList(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96 overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Start a conversation</h3>
-                  <button
-                    onClick={() => setShowUserList(false)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <FiPlus className="w-4 h-4 rotate-45 text-gray-500" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="max-h-80 overflow-y-auto">
-                <UserPresence
-                  users={onlineUsers}
-                  currentUser={currentUser}
-                  showStatus={true}
-                  onUserClick={handleStartDM}
-                  onStartChat={handleStartDM}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
+          <UserPresence
+            onlineUsers={onlineUsers}
+            allUsers={[]}
+            currentUser={currentUser}
+            onSelectUser={onStartDirectMessage}
+            onClose={() => setShowUserList(false)}
+          />
         )}
       </AnimatePresence>
-    </div>
+
+    </motion.div>
   );
 };
 

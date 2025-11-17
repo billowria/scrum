@@ -150,17 +150,20 @@ const MessageBubble = ({
       {/* Avatar for other users */}
       {!isOwnMessage && (
         <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full overflow-hidden flex-shrink-0">
-          {message.user_avatar_url && message.user_avatar_url.trim() !== '' ? (
+          {message.user?.avatar_url && message.user.avatar_url.trim() !== '' ? (
             <img
-              src={message.user_avatar_url}
-              alt={message.user_name}
+              src={message.user.avatar_url}
+              alt={message.user?.name || message.user_name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white text-xs font-semibold">
-              {message.user_name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-          )}
+          ) : null}
+          <div className="w-full h-full flex items-center justify-center text-white text-xs font-semibold">
+            {(message.user?.name || message.user_name)?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
         </div>
       )}
 
@@ -169,7 +172,7 @@ const MessageBubble = ({
         {/* Sender name for group chats */}
         {!isOwnMessage && message.conversation_type === 'team' && (
           <span className="text-xs font-semibold text-gray-700 mb-1 ml-1">
-            {message.user_name}
+            {message.user?.name || message.user_name}
           </span>
         )}
 
@@ -307,4 +310,4 @@ const MessageBubble = ({
   );
 };
 
-export default MessageBubble;
+export default React.memo(MessageBubble);

@@ -4,12 +4,14 @@ import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
+import { useCompany } from '../contexts/CompanyContext';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarOpen, setSidebarOpen }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
   const navigate = useNavigate();
+  const { currentCompany } = useCompany();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -370,7 +372,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     <span className="text-xs text-slate-500">Online</span>
                   </div>
                   <div className="text-xs text-slate-400">
-                    v2.1.0
+                    {currentCompany?.name || 'v2.1.0'}
                   </div>
                 </div>
               </div>

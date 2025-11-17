@@ -36,7 +36,7 @@ Complete notification system integration across all major features of the applic
 - **Expiry:** 7 days
 
 #### Leave Request Approval/Rejection
-**File:** `src/pages/ManagerDashboard.jsx`
+**File:** `src/components/LeaveManagement.jsx`
 - **Trigger:** When a manager approves or rejects a leave request
 - **Notification Type:** Announcement
 - **Recipients:** The employee who requested leave

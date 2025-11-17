@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiArrowDown, FiUsers, FiInfo, FiMoreVertical, FiPhone, FiVideo,
-  FiSearch, FiFilter, FiCheckCircle, FiCircle, FiX, FiCornerUpLeft, FiEdit2
+  FiSearch, FiFilter, FiCheckCircle, FiCircle, FiX, FiCornerUpLeft, FiEdit2,
+  FiChevronLeft, FiSettings, FiMic, FiUser
 } from 'react-icons/fi';
 
 import ChatHeader from './ChatHeader';
@@ -27,6 +28,7 @@ const ChatWindow = ({
   hasMore = false,
   onlineUsers = [],
   typingUsers = [],
+  onBack = null,
   className = ""
 }) => {
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -36,6 +38,9 @@ const ChatWindow = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [showConversationInfo, setShowConversationInfo] = useState(false);
   const [showUserList, setShowUserList] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [messageInput, setMessageInput] = useState("");
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -46,6 +51,16 @@ const ChatWindow = ({
       scrollToBottom();
     }
   }, [messages, showScrollToBottom]);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Handle scroll detection
   const handleScroll = () => {
@@ -63,14 +78,19 @@ const ChatWindow = ({
 
   // Handle message send
   const handleSend = async ({ content, attachments }) => {
+    const messageData = { content, attachments: attachments || [] };
+
     if (editingMessage) {
       await onEditMessage?.(editingMessage.id, content);
       setEditingMessage(null);
+      setMessageInput("");
     } else if (replyingTo) {
-      await onSendMessage?.(content, attachments, { replyTo: replyingTo.id });
+      await onSendMessage?.({ ...messageData, replyTo: replyingTo.id });
       setReplyingTo(null);
+      setMessageInput("");
     } else {
-      await onSendMessage?.(content, attachments);
+      await onSendMessage?.(messageData);
+      setMessageInput("");
     }
   };
 
@@ -78,11 +98,13 @@ const ChatWindow = ({
   const handleEdit = (message) => {
     setEditingMessage(message);
     setReplyingTo(null);
+    setMessageInput(message.content || "");
   };
 
   const handleReply = (message) => {
     setReplyingTo(message);
     setEditingMessage(null);
+    setMessageInput("");
   };
 
   const handleDelete = async (messageId) => {
@@ -164,7 +186,7 @@ const ChatWindow = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col bg-white h-full ${className}`}>
+    <div className={`flex-1 flex flex-col bg-white min-h-0 ${className}`}>
 
       {/* Search Bar */}
       <AnimatePresence>
@@ -199,79 +221,229 @@ const ChatWindow = ({
         )}
       </AnimatePresence>
 
-      {/* Conversation Info Bar */}
-      <div className="flex-shrink-0 px-4 py-2 border-b border-gray-200 bg-gray-50">
+      {/* Enhanced Compact Modern Header */}
+      <div className="flex-shrink-0 px-4 py-3 bg-white border-b border-gray-200/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h2 className="font-semibold text-gray-900">
+          {/* Left Section - Back Button, Avatar, and Title */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Back Button (Mobile Only) */}
+            {onBack && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onBack}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors md:hidden"
+                title="Back to conversations"
+              >
+                <FiChevronLeft className="w-5 h-5" />
+              </motion.button>
+            )}
+
+            {/* Conversation Avatar */}
+            <div className="relative flex-shrink-0">
+              {conversation.type === 'direct' ? (
+                conversation.otherUser?.avatar_url ? (
+                  <img
+                    src={conversation.otherUser.avatar_url}
+                    alt={conversation.otherUser.name}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full border-2 border-white flex items-center justify-center text-white font-semibold shadow-sm">
+                    {conversation.otherUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full border-2 border-white flex items-center justify-center text-white font-semibold shadow-sm">
+                  <FiUsers className="w-5 h-5" />
+                </div>
+              )}
+
+              {/* Online Status Indicator */}
+              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${
+                conversation.type === 'direct'
+                  ? isOnline ? 'bg-green-500' : 'bg-gray-400'
+                  : 'bg-blue-500'
+              }`} />
+            </div>
+
+            {/* Conversation Title and Status */}
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-gray-900 truncate">
                 {conversation.type === 'direct'
-                  ? conversation.otherUser?.name
-                  : conversation.name
+                  ? conversation.otherUser?.name || 'Unknown User'
+                  : conversation.name || 'Unnamed Group'
                 }
               </h2>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 {conversation.type === 'direct' ? (
                   <>
-                    <div className={`w-2 h-2 rounded-full ${
-                      isOnline ? 'bg-green-500' : 'bg-gray-400'
-                    }`} />
-                    <span>{isOnline ? 'Online' : 'Offline'}</span>
+                    <span className={`text-xs font-medium ${
+                      isOnline ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      {isOnline ? 'Active now' : 'Offline'}
+                    </span>
                   </>
                 ) : (
                   <>
                     <FiUsers className="w-3 h-3" />
                     <span>{conversation.participant_count || 0} members</span>
+                    <span className="text-xs text-gray-500">
+                      • {conversation.type === 'team' ? 'Team' : 'Group'}
+                    </span>
                   </>
                 )}
               </div>
             </div>
           </div>
 
+          {/* Center Section - Typing Indicator */}
+          <div className="hidden lg:flex items-center flex-1 justify-center">
+            {typingUsers.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full"
+              >
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 bg-blue-400 rounded-full"
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.4,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-blue-600 font-medium truncate">
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0]} is typing...`
+                    : `${typingUsers.length} people are typing...`
+                  }
+                </span>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Right Section - Action Buttons */}
           <div className="flex items-center gap-1">
-            {/* Search */}
-            <button
+            {/* Search Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg transition-colors ${
-                showSearch ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
+                showSearch
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
               title="Search messages"
             >
               <FiSearch className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            {/* Voice/Video call */}
-            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Voice call">
-              <FiPhone className="w-4 h-4" />
-            </button>
-            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Video call">
-              <FiVideo className="w-4 h-4" />
-            </button>
-
-            {/* Conversation info */}
-            <button
-              onClick={() => setShowConversationInfo(true)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Conversation info"
+            {/* Voice Call */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="Start voice call"
             >
-              <FiInfo className="w-4 h-4" />
-            </button>
+              <FiPhone className="w-4 h-4" />
+            </motion.button>
 
-            {/* Team members (for team chats) */}
-            {conversation.type === 'team' && (
-              <button
-                onClick={() => setShowUserList(true)}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Team members"
+            {/* Video Call */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Start video call"
+            >
+              <FiVideo className="w-4 h-4" />
+            </motion.button>
+
+            {/* More Options Dropdown */}
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowMoreOptions(!showMoreOptions)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showMoreOptions
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+                title="More options"
               >
-                <FiUsers className="w-4 h-4" />
-              </button>
+                <FiMoreVertical className="w-4 h-4" />
+              </motion.button>
+
+              <AnimatePresence>
+                {showMoreOptions && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
+                  >
+                    {/* Conversation Info */}
+                    <button
+                      onClick={() => {
+                        setShowConversationInfo(true);
+                        setShowMoreOptions(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FiInfo className="w-4 h-4 text-blue-500" />
+                      <span>Conversation info</span>
+                    </button>
+
+                    {/* Team Members (for team chats) */}
+                    {conversation.type === 'team' && (
+                      <button
+                        onClick={() => {
+                          setShowUserList(true);
+                          setShowMoreOptions(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <FiUsers className="w-4 h-4 text-purple-500" />
+                        <span>Team members</span>
+                      </button>
+                    )}
+
+                    {/* Settings */}
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FiSettings className="w-4 h-4 text-gray-500" />
+                      <span>Settings</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Mobile: Reduce visible buttons */}
+            {isMobile && (
+              <>
+                {/* Hide some buttons on mobile to save space */}
+              </>
             )}
           </div>
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area - Ensure proper scrolling */}
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
@@ -387,12 +559,11 @@ const ChatWindow = ({
 
       {/* Message Input */}
       <MessageInput
-        value={editingMessage?.content || replyingTo?.content || ""}
+        value={messageInput}
         onChange={(content) => {
+          setMessageInput(content);
           if (editingMessage) {
             setEditingMessage({ ...editingMessage, content });
-          } else if (replyingTo) {
-            // For replies, we don't modify the original content
           }
         }}
         onSend={handleSend}
@@ -408,7 +579,7 @@ const ChatWindow = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={scrollToBottom}
-            className="absolute bottom-20 right-8 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+            className="self-center mb-4 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors z-10"
           >
             <FiArrowDown className="w-5 h-5" />
           </motion.button>

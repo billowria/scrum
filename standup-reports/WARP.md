@@ -98,9 +98,10 @@ src/
 
 #### Dashboard Architecture
 The main dashboard is modular:
-- Role-specific dashboard components (`Dashboard`, `ManagerDashboard`)
+- Role-specific dashboard components (`Dashboard`)
 - Widget-based layout with `DashboardWidgets`
 - Real-time data updates via Supabase subscriptions
+- Direct access to specific management pages (Team Management, History, etc.)
 
 ### State Management Patterns
 

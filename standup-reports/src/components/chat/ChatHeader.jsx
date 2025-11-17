@@ -36,16 +36,16 @@ const ChatHeader = ({
     <header className={`bg-white border-b border-gray-200 px-4 py-3 ${className}`}>
       <div className="flex items-center justify-between">
         {/* Left Side - Search and Filters */}
-        <div className="flex items-center gap-3 flex-1 max-w-2xl">
+        <div className="flex items-center gap-3 flex-1 max-w-2xl min-w-0">
           {/* Search Bar */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
             />
             {searchQuery && (
               <button
@@ -57,8 +57,8 @@ const ChatHeader = ({
             )}
           </div>
 
-          {/* Filter Dropdown */}
-          <div className="relative">
+          {/* Filter Dropdown - Hidden on small screens to save space */}
+          <div className="relative hidden sm:block">
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
               className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors"
@@ -109,7 +109,7 @@ const ChatHeader = ({
         </div>
 
         {/* Right Side - Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {/* New Direct Message */}
           <button
             onClick={onStartDirectMessage}
@@ -142,7 +142,7 @@ const ChatHeader = ({
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors min-w-0"
             >
               {currentUser?.avatar_url ? (
                 <img
@@ -155,10 +155,10 @@ const ChatHeader = ({
                   {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
               )}
-              <span className="hidden sm:block text-sm font-medium text-gray-700">
+              <span className="hidden sm:block text-sm font-medium text-gray-700 truncate max-w-[80px]">
                 {currentUser?.name?.split(' ')[0] || 'User'}
               </span>
-              <FiChevronDown className="w-3.5 h-3.5 text-gray-500" />
+              <FiChevronDown className="w-3.5 h-3.5 text-gray-500 hidden sm:block" />
             </button>
 
             <AnimatePresence>

@@ -95,6 +95,20 @@ export const useConversations = () => {
   }, [fetchConversations]);
 
   /**
+   * Create a group conversation
+   */
+  const createGroupConversation = useCallback(async (groupData) => {
+    try {
+      const conversation = await chatService.createGroupConversation(groupData);
+      await fetchConversations(); // Refresh list
+      return conversation;
+    } catch (err) {
+      console.error('Error creating group conversation:', err);
+      throw err;
+    }
+  }, [fetchConversations]);
+
+  /**
    * Get conversation by ID
    */
   const getConversationById = useCallback((conversationId) => {
@@ -144,6 +158,7 @@ export const useConversations = () => {
     fetchConversations,
     silentRefresh,
     startDirectConversation,
+    createGroupConversation,
     getConversationById,
     getTotalUnreadCount,
     updateConversation

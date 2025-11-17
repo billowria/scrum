@@ -20,7 +20,6 @@ import Dashboard from './pages/Dashboard';
 import ReportEntry from './pages/ReportEntryNew';
 import History from './pages/History';
 import LeaveCalendar from './pages/LeaveCalendar';
-import ManagerDashboard from './pages/ManagerDashboard';
 import TeamManagement from './pages/TeamManagement';
 import AchievementsPage from './pages/AchievementsPage';
 import LeaveManagement from './components/LeaveManagement';
@@ -249,22 +248,20 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     <Route path="/team-management" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <ManagerDashboard activeTabDefault="team-management" />
+                          <TeamManagement />
                         </div>
                       </PageTransition>
                     } />
                     <Route path="/leave-requests" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <ManagerDashboard activeTabDefault="team-management" />
+                          <LeaveManagement />
                         </div>
                       </PageTransition>
                     } />
                     <Route path="/manager-dashboard" element={
                       <PageTransition>
-                        <div className="w-full py-6">
-                          <ManagerDashboard />
-                        </div>
+                        <Navigate to="/team-management" replace />
                       </PageTransition>
                     } />
                     <Route path="/history" element={

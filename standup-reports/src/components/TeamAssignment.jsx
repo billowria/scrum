@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
-import { FiUserPlus, FiUsers, FiInfo, FiRefreshCw, FiCheck, FiX, FiFilter, FiMail, FiShield, FiBriefcase, FiHome, FiPlus, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { FiUserPlus, FiUsers, FiRefreshCw, FiCheck, FiX, FiFilter, FiMail, FiShield, FiBriefcase, FiHome, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 // Animation variants
 const containerVariants = {
@@ -39,33 +39,24 @@ export default function TeamAssignment() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [teamFilter, setTeamFilter] = useState('all');
-  const [actionDropdown, setActionDropdown] = useState(null);
+  const [showAssignOverlay, setShowAssignOverlay] = useState(false);
+    const [teamFilter, setTeamFilter] = useState('all');
+
   
   // Add new team state
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [addingTeam, setAddingTeam] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
     fetchTeams();
   }, [refreshTrigger, currentCompany]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (actionDropdown) {
-        setActionDropdown(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [actionDropdown]);
+  
+  
   
   const fetchCurrentUser = async () => {
     try {
@@ -129,11 +120,11 @@ export default function TeamAssignment() {
     setLoading(true);
     setRefreshTrigger(prev => prev + 1);
   };
-  
-  const openAssignModal = (user) => {
+
+  const openAssignOverlay = (user) => {
     setSelectedUser(user);
     setSelectedTeam(user.team_id || null);
-    setShowAssignModal(true);
+    setShowAssignOverlay(true);
   };
   
   const handleAssignTeam = async () => {
@@ -151,7 +142,8 @@ export default function TeamAssignment() {
       if (error) throw error;
       
       setMessage({ type: 'success', text: 'Team assigned successfully' });
-      setShowAssignModal(false);
+      setShowAssignOverlay(false);
+      setActiveButtonId(null);
       setSelectedUser(null);
       setSelectedTeam(null);
       handleRefresh();
@@ -276,59 +268,69 @@ export default function TeamAssignment() {
 
   return (
     <motion.div
-      className="relative"
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 relative overflow-hidden"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
-        {/* Left Section - Primary Action */}
-        <div className="flex items-center gap-3">
-          <motion.button
-            onClick={() => setShowAddTeamModal(true)}
-            className="relative group px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-purple-600 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <FiPlus className="h-4 w-4 relative z-10" />
-            <span className="relative z-10">Add Team</span>
-          </motion.button>
-        </div>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradient orbs */}
+        <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 right-20 w-80 h-80 bg-gradient-to-br from-violet-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-gradient-to-br from-amber-400/20 to-orange-400/20 rounded-full blur-3xl animate-pulse delay-1500" />
+      </div>
 
-        {/* Right Section - Controls */}
-        <div className="flex items-center gap-3">
-          {/* Filter Dropdown */}
-          <div className="relative">
-            <select
-              className="appearance-none bg-white border border-gray-200 rounded-xl py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md"
-              value={teamFilter}
-              onChange={(e) => setTeamFilter(e.target.value)}
+      {/* Header Section */}
+      <motion.div variants={itemVariants} className="relative z-10 mb-6">
+        <div className="flex justify-between items-center">
+          {/* Left Section - Primary Action */}
+          <div className="flex items-center gap-3">
+            <motion.button
+              onClick={() => setShowAddTeamModal(true)}
+              className="relative group px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <option value="all">All Users</option>
-              <option value="unassigned">Unassigned</option>
-              {teams.map(team => (
-                <option key={team.id} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <FiFilter size={14} />
-            </div>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <FiPlus className="h-4 w-4 relative z-10" />
+              <span className="relative z-10">Add Team</span>
+            </motion.button>
           </div>
 
-          <motion.button
-            onClick={handleRefresh}
-            className="relative group p-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-            whileHover={{ scale: 1.05, rotate: 180 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={loading}
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <FiRefreshCw className={`h-4 w-4 relative z-10 ${loading ? 'animate-spin' : ''}`} />
-          </motion.button>
+          {/* Right Section - Controls */}
+          <div className="flex items-center gap-3">
+            {/* Filter Dropdown */}
+            <div className="relative">
+              <select
+                className="appearance-none bg-white border border-gray-200 rounded-xl py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 shadow-sm hover:shadow-md"
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+              >
+                <option value="all">All Users</option>
+                <option value="unassigned">Unassigned</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                <FiFilter size={14} />
+              </div>
+            </div>
+
+            <motion.button
+              onClick={handleRefresh}
+              className="relative group p-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              whileHover={{ scale: 1.05, rotate: 180 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={loading}
+            >
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <FiRefreshCw className={`h-4 w-4 relative z-10 ${loading ? 'animate-spin' : ''}`} />
+            </motion.button>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Success/Error message */}
       <AnimatePresence>
@@ -469,64 +471,40 @@ export default function TeamAssignment() {
                         </span>
                       )}
 
-                      {/* Actions Dropdown */}
-                      <div className="relative">
-                        <motion.button
-                          onClick={() => setActionDropdown(actionDropdown === user.id ? null : user.id)}
-                          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <FiMoreVertical className="w-4 h-4" />
-                        </motion.button>
-
-                        <AnimatePresence>
-                          {actionDropdown === user.id && (
-                            <motion.div
-                              className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[9999]"
-                              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                              transition={{ duration: 0.15 }}
+                      {/* Direct Action Buttons */}
+                      <div className="flex items-center gap-2 ml-3">
+                        {user.teams ? (
+                          <>
+                            <motion.button
+                              onClick={() => openAssignOverlay(user)}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-md hover:bg-blue-600 transition-colors shadow-sm hover:shadow-md"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
-                              {user.teams ? (
-                                <>
-                                  <button
-                                    onClick={() => {
-                                      openAssignModal(user);
-                                      setActionDropdown(null);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                  >
-                                    <FiEdit2 className="w-4 h-4" />
-                                    Change Team
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      handleRemoveTeam(user.id);
-                                      setActionDropdown(null);
-                                    }}
-                                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                                  >
-                                    <FiTrash2 className="w-4 h-4" />
-                                    Remove Team
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    openAssignModal(user);
-                                    setActionDropdown(null);
-                                  }}
-                                  className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                >
-                                  <FiUserPlus className="w-4 h-4" />
-                                  Assign Team
-                                </button>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                              <FiEdit2 className="w-3 h-3" />
+                              <span className="hidden sm:inline">Change Team</span>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handleRemoveTeam(user.id)}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors shadow-sm hover:shadow-md"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <FiTrash2 className="w-3 h-3" />
+                              <span className="hidden sm:inline">Remove</span>
+                            </motion.button>
+                          </>
+                        ) : (
+                          <motion.button
+                            onClick={() => openAssignOverlay(user)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-md hover:bg-emerald-600 transition-colors shadow-sm hover:shadow-md"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <FiUserPlus className="w-3 h-3" />
+                            <span className="hidden sm:inline">Assign Team</span>
+                          </motion.button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -536,116 +514,68 @@ export default function TeamAssignment() {
           </motion.div>
         )}
       
-      {/* Team Assignment Modal */}
+      {/* Simple Team Assignment Modal */}
       <AnimatePresence>
-        {showAssignModal && (
+        {showAssignOverlay && selectedUser && (
           <motion.div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowAssignModal(false)}
+            onClick={() => setShowAssignOverlay(false)}
           >
             <motion.div
-              className="relative bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl max-w-md w-full p-8 border border-white/20 overflow-hidden"
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="bg-white rounded-lg shadow-xl max-w-sm w-full p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
               onClick={e => e.stopPropagation()}
             >
-              {/* Decorative Background */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/40 to-pink-200/40 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-200/40 to-indigo-200/40 rounded-full blur-2xl" />
-
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <motion.div
-                    className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    <FiBriefcase className="h-6 w-6 text-white" />
-                  </motion.div>
-                  <div>
-                    <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      Assign Team
-                    </h3>
-                    <p className="text-sm text-gray-600">Select a team for this user</p>
-                  </div>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900">
+                    {selectedUser.teams ? 'Change Team' : 'Assign Team'}
+                  </h3>
+                  <p className="text-sm text-gray-600">{selectedUser.name}</p>
                 </div>
-
-                {selectedUser && (
-                  <motion.div
-                    className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/60"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <FiUsers className="h-4 w-4" />
-                      User
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                        {selectedUser.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-800">{selectedUser.name}</div>
-                        <div className="text-sm text-gray-600">{selectedUser.email}</div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                <motion.div
-                  className="mb-6"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                <button
+                  onClick={() => setShowAssignOverlay(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors"
                 >
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <FiHome className="h-4 w-4" />
-                    Team Selection
-                  </label>
-                  <motion.select
-                    className="w-full px-4 py-3 border-2 border-purple-200/60 rounded-2xl bg-white/80 backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-gray-800 font-medium"
-                    value={selectedTeam || ''}
-                    onChange={(e) => setSelectedTeam(e.target.value)}
-                    whileFocus={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <option value="">Select a team...</option>
-                    {teams.map(team => (
-                      <option key={team.id} value={team.id}>{team.name}</option>
-                    ))}
-                  </motion.select>
-                </motion.div>
+                  <FiX className="w-4 h-4" />
+                </button>
+              </div>
 
-                <motion.div
-                  className="flex justify-end gap-3 mt-8"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+              {/* Team Selection */}
+              <div className="mb-4">
+                <select
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={selectedTeam || ''}
+                  onChange={(e) => setSelectedTeam(e.target.value)}
                 >
-                  <motion.button
-                    type="button"
-                    className="px-6 py-3 rounded-2xl border-2 border-gray-200/60 text-gray-700 bg-white/80 backdrop-blur-md font-semibold hover:bg-gray-100 transition-all duration-300"
-                    onClick={() => setShowAssignModal(false)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                    onClick={handleAssignTeam}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Assign Team
-                  </motion.button>
-                </motion.div>
+                  <option value="">Select team...</option>
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowAssignOverlay(false)}
+                  className="flex-1 px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAssignTeam}
+                  className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                >
+                  {selectedUser.teams ? 'Change' : 'Assign'}
+                </button>
               </div>
             </motion.div>
           </motion.div>

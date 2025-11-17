@@ -256,11 +256,7 @@ const CreateUser = () => {
       if (error) throw error;
       setTeams(data || []);
 
-      // Animate success
-      if (data && data.length > 0) {
-        showToast('success', 'Teams Loaded', `Found ${data.length} teams in your company`);
-      }
-    } catch (error) {
+      } catch (error) {
       console.error('Error fetching teams:', error);
       showToast('error', 'Failed to load teams', 'Please try refreshing the page');
     } finally {

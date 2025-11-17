@@ -80,15 +80,16 @@ const FloatingParticle = ({ delay, duration, size, color }) => {
   );
 };
 
-export default function TeamManagement({ activeSubTab = 'team-management', setActiveSubTab }) {
+export default function TeamManagement() {
     const [filterOpen, setFilterOpen] = useState(false);
       const [hoveredTab, setHoveredTab] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState('team-management');
   const containerRef = useRef(null);
-  
-  
+
+
   const handleTabChange = (tabId) => {
-    if (setActiveSubTab) setActiveSubTab(tabId);
+    setActiveSubTab(tabId);
   };
 
   // Debounced search handler
@@ -127,7 +128,7 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-purple-50 relative overflow-hidden">
       {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient orbs */}
         <div className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-br from-violet-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-1/2 right-20 w-80 h-80 bg-gradient-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -161,24 +162,23 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
         >
           <div className="relative bg-white/40 backdrop-blur-xl border border-white/30 rounded-2xl p-2 shadow-2xl">
             {/* Tab Buttons */}
-            <div className="relative flex z-10">
+            <div className="relative flex z-30">
               {tabs.map((tab, index) => {
                 const isActive = activeSubTab === tab.id;
                 const isHovered = hoveredTab === tab.id;
 
                 return (
-                  <motion.button
+                  <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     onMouseEnter={() => setHoveredTab(tab.id)}
                     onMouseLeave={() => setHoveredTab(null)}
-                    className={`flex-1 flex flex-col items-center gap-2 py-4 px-4 rounded-xl transition-all ${
+                    className={`flex-1 flex flex-col items-center gap-2 py-4 px-4 rounded-xl transition-all cursor-pointer ${
                       isActive
                         ? 'text-white bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    style={{ zIndex: 40 }}
                   >
                     {/* Icon with animation */}
                     <motion.div
@@ -226,7 +226,7 @@ export default function TeamManagement({ activeSubTab = 'team-management', setAc
                         {tab.stats.count}
                       </motion.div>
                     )}
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>

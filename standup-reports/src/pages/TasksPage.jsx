@@ -549,10 +549,10 @@ export default function TasksPage({ sidebarOpen }) {
   // Fetch employees/team members for filter
   useEffect(() => {
     const fetchEmployees = async () => {
-      if (!currentUser || !userRole) return;
+      if (!currentUser || !userRole || !currentCompany?.id) return;
       try {
         let query = supabase.from('users').select('id, name')
-          .eq('company_id', currentCompany?.id);
+          .eq('company_id', currentCompany.id);
         if (userRole === 'manager' && currentUser.team_id) {
           query = query.eq('team_id', currentUser.team_id);
         } else if (userRole === 'member') {
@@ -562,6 +562,7 @@ export default function TasksPage({ sidebarOpen }) {
         if (error) throw error;
         setEmployees(data || []);
       } catch (err) {
+        console.error('Error fetching employees:', err);
         setEmployees([]);
       }
     };
@@ -1426,9 +1427,12 @@ export default function TasksPage({ sidebarOpen }) {
                   selectedProjectId={selectedProjectId}
                   setSelectedProjectId={setSelectedProjectId}
                   projects={projects}
+                  teams={[]} // TODO: Add teams data fetching if needed
                   getStatusConfig={getStatusConfig}
                   onClearAllFilters={handleClearAllFilters}
                   onOpenSprintManagement={() => setView('sprint')}
+                  currentUser={currentUser}
+                  userRole={userRole}
                 />
               ) : (
                 <SprintManagement

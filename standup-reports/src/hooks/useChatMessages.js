@@ -45,19 +45,30 @@ export const useChatMessages = (conversationId) => {
    * Send a new message
    */
   const sendMessage = useCallback(async (content) => {
-    if (!conversationId) return null;
+    console.log('useChatMessages.sendMessage called:', {
+      content,
+      conversationId,
+      hasConversationId: !!conversationId
+    });
+
+    if (!conversationId) {
+      console.error('No conversationId provided to sendMessage');
+      return null;
+    }
 
     // Validate message
     const validation = validateMessage(content);
     if (!validation.valid) {
+      console.error('Message validation failed:', validation.error);
       setError(validation.error);
       return null;
     }
 
     try {
+      console.log('Attempting to send message to chatService...');
       setSending(true);
       setError(null);
-      
+
       // Optimistic update
       const tempMessage = {
         id: `temp-${Date.now()}`,
@@ -66,12 +77,18 @@ export const useChatMessages = (conversationId) => {
         created_at: new Date().toISOString(),
         sending: true
       };
-      setMessages(prev => [...prev, tempMessage]);
+      console.log('Adding temp message:', tempMessage);
+      setMessages(prev => {
+        const newMessages = [...prev, tempMessage];
+        console.log('Messages after temp addition:', newMessages);
+        return newMessages;
+      });
 
       const newMessage = await chatService.sendMessage(conversationId, content);
-      
+      console.log('Message sent successfully:', newMessage);
+
       // Replace temp message with real one
-      setMessages(prev => prev.map(msg => 
+      setMessages(prev => prev.map(msg =>
         msg.id === tempMessage.id ? newMessage : msg
       ));
 

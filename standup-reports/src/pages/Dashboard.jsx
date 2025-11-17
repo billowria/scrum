@@ -347,32 +347,7 @@ export default function Dashboard({ sidebarOpen }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-    
-    // Set up intersection observer for scroll animations
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('animate-slide-up');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-    
-    // Observe report elements when they're added to the DOM
-    reportRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-    
-    return () => {
-      if (reportRefs.current) {
-        reportRefs.current.forEach((ref) => {
-          if (ref) observer.unobserve(ref);
-        });
-      }
-    };
+  
   }, [date, cardControls, currentCompany?.id]);
 
   // Effect to fetch data once company context is loaded
@@ -1369,121 +1344,169 @@ export default function Dashboard({ sidebarOpen }) {
           </div>
         </motion.div>
         
-        {/* Integrated Missing Reports Summary */}
+        {/* Compact Missing Reports Summary */}
         <AnimatePresence initial={false}>
           {showMissingHeader && (
             <motion.div
               id="missing-reports-header"
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+              className="bg-gradient-to-r from-slate-50 to-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden"
               initial={{ opacity: 0, height: 0, y: -10 }}
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -10 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               layout
             >
-          <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
-            <div className="flex flex-wrap items-center justify-between">
-              <div className="flex items-start">
-                <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-md text-white mr-3 mt-1">
-                  <FiAlertCircle className="h-5 w-5" />
+          {/* Compact Header with orange theme */}
+          <div className="px-4 py-2 border-b border-orange-100/50 bg-gradient-to-r from-orange-50/30 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500">
+                  <FiAlertCircle className="h-3.5 w-3.5 text-white" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-gray-800">Missing Reports</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {missingReports.length === 0 
-                      ? 'Everyone has submitted their reports today!' 
-                      : `${missingReports.length} team member${missingReports.length !== 1 ? 's' : ''} still need${missingReports.length === 1 ? 's' : ''} to submit a report`}
-                  </p>
+                <div>
+                  <h3 className="text-xs font-semibold text-orange-800">Missing Reports</h3>
                 </div>
               </div>
-              
-              {isToday(date) && !loadingMissing && missingReports.length > 0 && (
-                <div className="mt-2 sm:mt-0">
-                  <button 
-                    className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                    onClick={() => setShowMissingModal(true)}
-                  >
-                    <FiUsers className="h-4 w-4" />
-                    <span>View All</span>
-                  </button>
-                </div>
+              {isToday(date) && missingReports.length > 0 && (
+                <motion.button
+                  className="px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 shadow-sm shadow-orange-200"
+                  onClick={() => setShowMissingModal(true)}
+                  whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.2)" }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiUsers className="h-2.5 w-2.5" />
+                  <span>View</span>
+                </motion.button>
               )}
             </div>
           </div>
           
-          {/* Missing Reports List */}
+          {/* Compact Missing Reports List */}
           {isToday(date) && missingReports.length > 0 && (
-            <div className="p-4 bg-white">
-              <div className="flex flex-wrap gap-2">
-                {(showAllMissingReports ? missingReports : missingReports.slice(0, 5)).map((member, index) => (
-                  <motion.div 
-                    key={member.id} 
-                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                    animate={{ 
-                      opacity: 1, 
-                      y: 0, 
-                      scale: 1,
-                      transition: { 
-                        delay: showAllMissingReports ? index * 0.05 : 0 
-                      }
-                    }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ 
-                      type: 'spring', 
-                      stiffness: 300,
-                      damping: 20
-                    }}
-                    layout
-                  >
-                    <div 
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer"
-                      onClick={() => navigate(`/profile/${member.id}`)}
+            <div className="px-4 py-3 bg-white/50">
+              {showAllMissingReports ? (
+                // Vertical layout when showing all - using flex wrap for multiple rows
+                <div className="flex flex-wrap gap-2">
+                  {missingReports.map((member, index) => (
+                    <motion.div
+                      key={member.id}
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        transition: {
+                          delay: index * 0.03
+                        }
+                      }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 25
+                      }}
+                      layout
                     >
-                      {member.avatar_url ? (
-                        <img
-                          src={member.avatar_url}
-                          alt={member.name}
-                          className="w-8 h-8 rounded-full object-cover shadow border-2 border-indigo-100"
+                      <div
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group relative overflow-hidden"
+                        onClick={() => navigate(`/profile/${member.id}`)}
+                        title={`${member.name} - Missing report`}
+                      >
+                        {/* Animated background on hover */}
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-medium text-sm shadow">
-                          {member.name.charAt(0).toUpperCase()}
+                        <div className="relative z-10">
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-700">{member.name}</span>
-                    </div>
-                  </motion.div>
-                ))}
-                
-                {missingReports.length > 5 && !showAllMissingReports && (
-                  <button
-                     type="button"
-                     className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                     onClick={() => {
-                      setIsAnimating(true);
-                      setShowAllMissingReports(true);
-                      setTimeout(() => setIsAnimating(false), 300);
-                    }}
-                   >
-                    <span className="text-sm font-medium text-gray-700">+{missingReports.length - 5} more</span>
-                  </button>
-                )}
-                {showAllMissingReports && (
-                  <button
-                     type="button"
-                     className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                     onClick={() => {
+                        <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
+                          {member.name}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                  <motion.button
+                    type="button"
+                    className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300"
+                    onClick={() => {
                       setIsAnimating(true);
                       setShowAllMissingReports(false);
                       setTimeout(() => setIsAnimating(false), 300);
                     }}
-                   >
-                    <span className="text-sm font-medium text-gray-700">Close</span>
-                  </button>
-                )}
-              </div>
+                    whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-xs font-semibold text-orange-700">Show Less</span>
+                  </motion.button>
+                </div>
+              ) : (
+                // Horizontal layout when showing limited items
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+                  {missingReports.slice(0, 6).map((member, index) => (
+                    <motion.div
+                      key={member.id}
+                      initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      layout
+                    >
+                      <div
+                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group flex-shrink-0 relative overflow-hidden"
+                        onClick={() => navigate(`/profile/${member.id}`)}
+                        title={`${member.name} - Missing report`}
+                      >
+                        {/* Animated background on hover */}
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        />
+                        <div className="relative z-10">
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.name}
+                              className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
+                              {member.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
+                          {member.name}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                  
+                  {missingReports.length > 6 && (
+                    <motion.button
+                      type="button"
+                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300 flex-shrink-0"
+                      onClick={() => {
+                        setIsAnimating(true);
+                        setShowAllMissingReports(true);
+                        setTimeout(() => setIsAnimating(false), 300);
+                      }}
+                      whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="text-xs font-semibold text-orange-700">+{missingReports.length - 6}</span>
+                    </motion.button>
+                  )}
+                </div>
+              )}
             </div>
           )}
             </motion.div>
@@ -1567,43 +1590,7 @@ export default function Dashboard({ sidebarOpen }) {
               </motion.div>
             </div>
 
-            {/* Center section - Company name with Apple-style shimmer */}
-            <div className="flex items-center justify-center flex-1">
-              <motion.div
-                className="relative cursor-pointer group"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {/* Apple-style shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                  animate={{ x: ['-100%', '100%'] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    repeatDelay: 4,
-                    ease: "easeInOut"
-                  }}
-                  style={{ mixBlendMode: 'overlay' }}
-                />
-
-                {/* Professional company name */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 20,
-                    delay: 0.3
-                  }}
-                  className="relative z-10 text-xl md:text-2xl lg:text-3xl font-thin bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 bg-clip-text text-transparent text-center px-6 tracking-wide"
-                  style={{ fontWeight: 100 }}
-                >
-                  {currentCompany?.name || 'ScrumSync'}
-                </motion.div>
-              </motion.div>
-            </div>
+          
 
             {/* Right section - Apple-style action buttons */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
@@ -1768,7 +1755,7 @@ export default function Dashboard({ sidebarOpen }) {
                     <span className="text-amber-600 ml-1">Missing</span>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
                   {/* Filter button moved here from top section */}
                   <motion.button
@@ -1855,6 +1842,34 @@ export default function Dashboard({ sidebarOpen }) {
           >
                       <FiPlus />
           </motion.button>
+
+          {/* Report History Button */}
+                      <motion.button
+                        onClick={() => navigate('/history')}
+                        title="Report History"
+                        className="relative p-2.5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm"
+                        whileHover={{
+                          scale: 1.1,
+                          y: -1,
+                          boxShadow: '0 20px 25px -5px rgba(79, 70, 229, 0.3), 0 10px 10px -5px rgba(79, 70, 229, 0.2)'
+                        }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {/* Animated background gradient on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"
+                        />
+
+                        {/* Icon container */}
+                        <div className="relative z-10">
+                          <FiClock className="w-4 h-4" />
+                        </div>
+
+                        {/* Subtle glow effect */}
+                        <motion.div
+                          className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 opacity-0 hover:opacity-20 blur-md transition-opacity duration-300"
+                        />
+                      </motion.button>
         </div>
                 </div>
               </div>
@@ -1999,20 +2014,23 @@ export default function Dashboard({ sidebarOpen }) {
           </div>
                 
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center text-sm">
-                    <span className="text-gray-500">Showing</span>
-                    <span className="mx-1.5 text-indigo-700 font-medium">{filteredReports.length}</span>
-                    <span className="text-gray-500">reports</span>
-            </div>
-                  
             <motion.button
-                    className="flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
-              whileHover={{ scale: 1.05 }}
+              onClick={() => navigate('/history')}
+              className="flex items-center gap-2 px-4 py-2 bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 rounded-lg transition-all shadow-md"
+              title="Report History"
+              whileHover={{ 
+                scale: 1.05,
+                y: -2,
+                boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.2), 0 8px 10px -6px rgba(79, 70, 229, 0.1)'
+              }}
               whileTap={{ scale: 0.95 }}
-                    onClick={handleRefresh}
             >
-                    <FiRefreshCw className="h-3.5 w-3.5" />
-                    <span>Refresh</span>
+              <div className="relative">
+                <FiClock className="w-4 h-4" />
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-20 blur-md" />
+              </div>
+              <span className="font-medium text-sm">History</span>
             </motion.button>
           </div>
               </div>

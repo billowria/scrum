@@ -152,30 +152,12 @@ const FloatingNav = ({ activeTab, setActiveTab, context = 'leave-calendar', onTa
       { id: 'team', icon: TbUsers, label: 'Overview', path: '/leave-calendar?tab=team' },
       { id: 'analytics', icon: TbLayoutDashboard, label: 'Analytics', path: '/leave-calendar?tab=analytics' },
       { id: 'requests', icon: TbSettings, label: 'My Requests', path: '/leave-calendar?tab=requests' }
-    ],
-    'manager-dashboard': [
-      { id: 'analytics-dashboard', icon: TbLayoutDashboard, label: 'Analytics', path: '/analytics-dashboard' },
-      { id: 'add-member', icon: TbUserPlus, label: 'Add Member', path: '/manager-dashboard?tab=add-member' },
-      { id: 'project-manager', icon: TbFolder, label: 'Project Manager', path: '/manager-dashboard?tab=project-manager' },
-      { id: 'announcements', icon: TbBell, label: 'Announcements', path: '/manager-dashboard?tab=announcements' },
-      { id: 'report-history', icon: TbHistory, label: 'Reports', path: '/manager-dashboard?tab=report-history' },
-      { id: 'timesheets', icon: TbHistory, label: 'Timesheets', path: '/manager-dashboard?tab=timesheets' }
     ]
   };
 
   let tabs = tabConfigs[context] || tabConfigs['leave-calendar'];
   
-  // Filter tabs based on user role
-  if (context === 'manager-dashboard' && userRole) {
-    tabs = tabs.filter(tab => {
-      // Show Project Manager tab only for managers and admins
-      if (tab.id === 'project-manager') {
-        return userRole === 'manager' || userRole === 'admin';
-      }
-      return true;
-    });
-  }
-
+  
   useEffect(() => {
     if (isVisible) {
       setShowBurst(true);

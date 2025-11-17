@@ -702,6 +702,193 @@ export const getTeamMembers = async (teamId) => {
   }
 };
 
+/**
+ * Create a group conversation
+ * @param {Object} groupData - Group creation data
+ * @returns {Promise<Object>} Created conversation data
+ */
+export const createGroupConversation = async (groupData) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.rpc('create_group_conversation', {
+      p_name: groupData.name,
+      p_description: groupData.description || null,
+      p_privacy: groupData.privacy || 'private',
+      p_created_by: user.id,
+      p_participant_ids: groupData.members?.map(member => member.id) || []
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating group conversation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Add participants to a conversation
+ * @param {string} conversationId - Conversation ID
+ * @param {Array} userIds - Array of user IDs to add
+ * @returns {Promise<number>} Number of users added
+ */
+export const addParticipantsToConversation = async (conversationId, userIds) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.rpc('add_users_to_conversation', {
+      p_conversation_id: conversationId,
+      p_user_ids: userIds,
+      p_added_by: user.id
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error adding participants to conversation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Remove user from a conversation
+ * @param {string} conversationId - Conversation ID
+ * @param {string} userId - User ID to remove
+ * @returns {Promise<boolean>} Whether the removal was successful
+ */
+export const removeUserFromConversation = async (conversationId, userId) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase.rpc('remove_user_from_conversation', {
+      p_conversation_id: conversationId,
+      p_user_id: userId,
+      p_removed_by: user.id
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error removing user from conversation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get conversation participants
+ * @param {string} conversationId - Conversation ID
+ * @returns {Promise<Array>} Array of participants
+ */
+export const getConversationParticipants = async (conversationId) => {
+  try {
+    const { data, error } = await supabase
+      .from('conversation_participants')
+      .select(`
+        user_id,
+        role,
+        joined_at,
+        created_at,
+        updated_at
+      `)
+      .eq('conversation_id', conversationId)
+      .order('joined_at');
+
+    if (error) throw error;
+
+    // Get user details for each participant
+    if (data && data.length > 0) {
+      const userIds = data.map(p => p.user_id);
+      const { data: users, error: userError } = await supabase
+        .from('users')
+        .select('id, name, email, avatar_url')
+        .in('id', userIds);
+
+      if (userError) throw userError;
+
+      return data.map(participant => ({
+        ...participant,
+        user: users.find(u => u.id === participant.user_id)
+      }));
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching conversation participants:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all teams
+ * @returns {Promise<Array>} Array of teams with member counts
+ */
+export const getTeams = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // First, try to get teams from a teams table if it exists
+    const { data: teamsData, error: teamsError } = await supabase
+      .from('teams')
+      .select('id, name, description, created_at')
+      .order('name');
+
+    if (teamsError) {
+      console.warn('Teams table not found, falling back to user team data:', teamsError.message);
+
+      // Fallback: Get unique teams from users table
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('team_id')
+        .not('team_id', 'is', null)
+        .not('team_id', 'eq', '');
+
+      if (usersError) throw usersError;
+
+      // Count members per team
+      const teamCounts = {};
+      usersData?.forEach(user => {
+        if (user.team_id) {
+          teamCounts[user.team_id] = (teamCounts[user.team_id] || 0) + 1;
+        }
+      });
+
+      // Convert to team format
+      return Object.entries(teamCounts).map(([teamId, memberCount]) => ({
+        id: teamId,
+        name: teamId.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        description: `${memberCount} members`,
+        member_count: memberCount,
+        created_at: new Date().toISOString()
+      }));
+    }
+
+    // If teams table exists, get member counts
+    const teamsWithCounts = await Promise.all(
+      (teamsData || []).map(async (team) => {
+        const { count, error: countError } = await supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .eq('team_id', team.id);
+
+        return {
+          ...team,
+          member_count: countError ? 0 : count || 0
+        };
+      })
+    );
+
+    return teamsWithCounts;
+  } catch (error) {
+    console.error('Error fetching teams:', error);
+    throw error;
+  }
+};
+
 export default {
   // Conversations
   getConversations,
@@ -725,7 +912,8 @@ export default {
   updateOnlineStatus,
   getOnlineStatus,
   
-  // Users
+  // Users & Teams
   getUsers,
-  getTeamMembers
+  getTeamMembers,
+  getTeams
 };

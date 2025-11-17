@@ -352,4 +352,4 @@ const UserPresence = ({
   );
 };
 
-export default UserPresence;
+export default React.memo(UserPresence);
