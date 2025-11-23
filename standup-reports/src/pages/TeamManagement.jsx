@@ -10,6 +10,7 @@ import {
 import { useLocation, useNavigate } from 'react-router-dom';
 import TeamAssignment from '../components/TeamAssignment';
 import TeamManagementCombined from '../components/TeamManagementCombined';
+import UserManagement from '../components/UserManagement';
 
 // Advanced animation variants
 const containerVariants = {
@@ -84,7 +85,7 @@ export default function TeamManagement() {
     const [filterOpen, setFilterOpen] = useState(false);
       const [hoveredTab, setHoveredTab] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSubTab, setActiveSubTab] = useState('team-management');
+  const [activeSubTab, setActiveSubTab] = useState('user-management');
   const containerRef = useRef(null);
 
 
@@ -106,18 +107,26 @@ export default function TeamManagement() {
   
   const tabs = [
     {
-      id: 'team-management',
+      id: 'user-management',
       label: 'User Management',
       icon: <FiUsers />,
-      color: 'from-violet-600 to-indigo-600',
-      description: 'Manage team and delegation',
+      color: 'from-slate-700 to-slate-900',
+      description: 'Manage user accounts',
       stats: { count: 24, trend: '+12%' }
+    },
+    {
+      id: 'team-management',
+      label: 'Team Management',
+      icon: <FiUserCheck />,
+      color: 'from-blue-700 to-indigo-800',
+      description: 'Manage team and delegation',
+      stats: { count: 18, trend: '+8%' }
     },
     {
       id: 'team-assignment',
       label: 'Team Assignment',
       icon: <FiUserPlus />,
-      color: 'from-emerald-600 to-teal-600',
+      color: 'from-teal-700 to-emerald-800',
       description: 'Assign to teams',
       stats: { count: 8, trend: '+3' }
     },
@@ -236,9 +245,9 @@ export default function TeamManagement() {
         {/* Tab Content with Enhanced Animations */}
         <motion.div variants={itemVariants}>
           <AnimatePresence mode="wait">
-            {activeSubTab === 'team-management' && (
+            {activeSubTab === 'user-management' && (
               <motion.div
-                key="team-management"
+                key="user-management"
                 variants={tabVariants}
                 initial="hidden"
                 animate="visible"
@@ -246,11 +255,11 @@ export default function TeamManagement() {
                 className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-hidden"
               >
                 {/* Enhanced Content Header with Actions */}
-                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-violet-50 to-indigo-50">
+                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-slate-50 to-slate-100">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <motion.div
-                        className="p-3 bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-xl shadow-lg relative overflow-hidden group"
+                        className="p-3 bg-gradient-to-br from-slate-700 to-slate-900 text-white rounded-xl shadow-lg relative overflow-hidden group"
                         animate={{ rotate: [0, 5, -5, 0] }}
                         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                       >
@@ -263,6 +272,90 @@ export default function TeamManagement() {
                         <FiUsers className="w-6 h-6 relative z-10" />
                       </motion.div>
                       <div>
+                        <h2 className="text-xl font-bold text-gray-900">User Management</h2>
+                        <p className="text-sm text-gray-600">Manage user accounts, permissions, and access within your organization</p>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3">
+                      {/* Quick Stats */}
+                      <div className="flex items-center gap-4">
+                        <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-slate-200/50">
+                          <div className="text-2xl font-bold text-slate-700">24</div>
+                          <div className="text-xs text-gray-500">Total Users</div>
+                        </motion.div>
+                        <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-amber-200/50">
+                          <div className="text-2xl font-bold text-amber-600">5</div>
+                          <div className="text-xs text-gray-500">Active</div>
+                        </motion.div>
+                      </div>
+
+                      {/* Create User Button */}
+                      <motion.button
+                        onClick={() => window.location.href = '/create-user'}
+                        className="group relative px-6 py-3 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {/* Animated background effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        />
+
+                        {/* Button content */}
+                        <div className="relative z-10 flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: [0, 10, -10, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                          >
+                            <FiUserPlus className="w-5 h-5" />
+                          </motion.div>
+                          <span className="font-semibold">Create User</span>
+                        </div>
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Component Content */}
+                <div className="p-6">
+                  <UserManagement
+                    searchQuery={debouncedSearchQuery}
+                    setSearchQuery={setSearchQuery}
+                    searchValue={searchQuery}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {activeSubTab === 'team-management' && (
+              <motion.div
+                key="team-management"
+                variants={tabVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-hidden"
+              >
+                {/* Enhanced Content Header with Actions */}
+                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <motion.div
+                        className="p-3 bg-gradient-to-br from-blue-700 to-indigo-800 text-white rounded-xl shadow-lg relative overflow-hidden group"
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        {/* Animated shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                        <FiUserCheck className="w-6 h-6 relative z-10" />
+                      </motion.div>
+                      <div>
                         <h2 className="text-xl font-bold text-gray-900">Team Management</h2>
                         <p className="text-sm text-gray-600">View and manage all team members and their managers in your organization</p>
                       </div>
@@ -272,9 +365,9 @@ export default function TeamManagement() {
                     <div className="flex items-center gap-3">
                       {/* Quick Stats */}
                       <div className="flex items-center gap-4">
-                        <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-violet-200/50">
-                          <div className="text-2xl font-bold text-violet-600">24</div>
-                          <div className="text-xs text-gray-500">Total Members</div>
+                        <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-blue-200/50">
+                          <div className="text-2xl font-bold text-blue-700">18</div>
+                          <div className="text-xs text-gray-500">Team Members</div>
                         </motion.div>
                         <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-amber-200/50">
                           <div className="text-2xl font-bold text-amber-600">5</div>
@@ -285,7 +378,7 @@ export default function TeamManagement() {
                       {/* Create User Button */}
                       <motion.button
                         onClick={() => window.location.href = '/create-user'}
-                        className="group relative px-6 py-3 bg-gradient-to-br from-violet-600 via-indigo-600 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                        className="group relative px-6 py-3 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -330,11 +423,11 @@ export default function TeamManagement() {
                 className="bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 overflow-hidden"
               >
                 {/* Content Header */}
-                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-emerald-50 to-teal-50">
+                <div className="p-6 border-b border-gray-200/50 bg-gradient-to-r from-teal-50 to-emerald-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <motion.div
-                        className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-xl shadow-lg"
+                        className="p-3 bg-gradient-to-br from-teal-700 to-emerald-800 text-white rounded-xl shadow-lg"
                         animate={{ rotate: [0, -5, 5, 0] }}
                         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
                       >
@@ -348,12 +441,12 @@ export default function TeamManagement() {
 
                     {/* Quick Stats */}
                     <div className="flex items-center gap-4">
-                      <motion.div className="text-center">
-                        <div className="text-2xl font-bold text-emerald-600">8</div>
+                      <motion.div className="text-center bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 border border-teal-200/50">
+                        <div className="text-2xl font-bold text-teal-700">8</div>
                         <div className="text-xs text-gray-500">Teams</div>
                       </motion.div>
                       <motion.div className="text-center">
-                        <div className="text-2xl font-bold text-teal-600">+3</div>
+                        <div className="text-2xl font-bold text-emerald-600">+3</div>
                         <div className="text-xs text-gray-500">New This Week</div>
                       </motion.div>
                     </div>

@@ -207,7 +207,109 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 5px 15px 0 rgba(0, 0, 0, 0.1), 0 3px 6px 0 rgba(0, 0, 0, 0.06);
 }
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styles - Global Light Grey Glassmorphic Application */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track:vertical {
+  background: linear-gradient(180deg, rgba(209, 213, 219, 0.1), rgba(209, 213, 219, 0.05));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+::-webkit-scrollbar-track:horizontal {
+  background: linear-gradient(90deg, rgba(209, 213, 219, 0.1), rgba(209, 213, 219, 0.05));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(209, 213, 219, 0.4), rgba(209, 213, 219, 0.2));
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.2),
+    0 0 3px rgba(0, 0, 0, 0.1);
+  min-height: 20px;
+  min-width: 20px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(209, 213, 219, 0.6), rgba(209, 213, 219, 0.4));
+  box-shadow:
+    inset 0 0 12px rgba(255, 255, 255, 0.3),
+    0 0 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(209, 213, 219, 0.4) transparent;
+}
+
+/* Enhanced light grey glassmorphic scrollbar for light backgrounds */
+.light-grey-glass-scrollbar-light::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(209, 213, 219, 0.5), rgba(209, 213, 219, 0.25));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 0 8px rgba(255, 255, 255, 0.25),
+    0 0 3px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Enhanced light grey glassmorphic scrollbar for dark backgrounds */
+.light-grey-glass-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(156, 163, 175, 0.4), rgba(156, 163, 175, 0.15));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.15),
+    0 0 3px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Glassmorphic animation */
+@keyframes glassGlow {
+  0% {
+    box-shadow:
+      inset 0 0 8px rgba(255, 255, 255, 0.2),
+      0 0 3px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    box-shadow:
+      inset 0 0 12px rgba(255, 255, 255, 0.3),
+      0 0 5px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Special light grey glassmorphic effect for specific containers */
+.light-grey-glass-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(209, 213, 219, 0.45), rgba(209, 213, 219, 0.25));
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset 0 0 10px rgba(255, 255, 255, 0.25),
+    0 0 4px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Custom scrollbar styles for specific classes */
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;

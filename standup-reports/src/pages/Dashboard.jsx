@@ -220,6 +220,7 @@ export default function Dashboard({ sidebarOpen }) {
   const [error, setError] = useState(null);
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState('all');
+  const [selectedUser, setSelectedUser] = useState(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -632,10 +633,12 @@ export default function Dashboard({ sidebarOpen }) {
     navigate('/report');
   };
 
-  // Filter reports by team
-  const filteredReports = selectedTeam === 'all'
-    ? reports
-    : reports.filter(report => report.users && report.users.teams && report.users.teams.id === selectedTeam);
+  // Filter reports by team and user
+  const filteredReports = reports.filter(report => {
+    const matchesTeam = selectedTeam === 'all' || (report.users && report.users.teams && report.users.teams.id === selectedTeam);
+    const matchesUser = !selectedUser || (report.users && report.users.id === selectedUser);
+    return matchesTeam && matchesUser;
+  });
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -1875,66 +1878,98 @@ export default function Dashboard({ sidebarOpen }) {
               </div>
             </div>
 
-            {/* Filters - moved inside the container */}
+            {/* Modern Filter Section with enhanced design and user avatars */}
       <AnimatePresence>
         {showFilters && (
           <motion.div 
-                  className="bg-white/80 backdrop-blur-sm rounded-lg shadow-card p-2 mt-2"
+                  className="bg-gradient-to-br from-slate-50 to-indigo-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 p-6 mt-4 overflow-hidden"
                   initial={{ opacity: 0, y: -20, height: 0 }}
                   animate={{ opacity: 1, y: 0, height: 'auto' }}
                   exit={{ opacity: 0, y: -20, height: 0 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div 
-                      className="flex-1"
-                      variants={filterVariants}
-                      initial="hidden"
-                      animate="visible"
-                      whileHover="active"
-                    >
-                <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
+            {/* Decorative background elements */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-32 h-32 bg-gradient-to-br from-cyan-400/10 to-blue-400/15 rounded-full blur-2xl"></div>
+            
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* User Filter with avatar display */}
+              <motion.div 
+                className="space-y-2"
+                variants={filterVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="active"
+              >
+                <label htmlFor="user-filter" className="block text-sm font-semibold text-slate-700">
+                  User
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiCalendar className="h-4 w-4 text-gray-400" />
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <FiUser className="h-4 w-4 text-slate-500" />
                   </div>
-                        <motion.input
-                    type="date"
-                    id="date-filter"
-                    value={date}
-                          onChange={(e) => {
-                            setDate(e.target.value);
-                            handleRefresh();
-                          }}
-                    className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm"
-                    max={new Date().toISOString().split('T')[0]}
-                          whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
-                  />
+                  <select
+                    id="user-filter"
+                    value={selectedUser || 'all'}
+                    onChange={(e) => setSelectedUser(e.target.value === 'all' ? null : e.target.value)}
+                    className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
+                  >
+                    <option value="all">All Users</option>
+                    {teamMembers.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <FiChevronDown className="h-4 w-4 text-slate-400" />
+                  </div>
+                  
+                  {/* Avatar preview for selected user */}
+                  {selectedUser && (
+                    <div className="absolute inset-y-0 right-8 flex items-center">
+                      {(() => {
+                        const user = teamMembers.find(m => m.id === selectedUser);
+                        return user ? (
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-xs">
+                            {user.avatar_url ? (
+                              <img 
+                                src={user.avatar_url} 
+                                alt={user.name} 
+                                className="w-6 h-6 rounded-full object-cover border border-white/80"
+                              />
+                            ) : (
+                              user.name.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
                 </div>
-                    </motion.div>
-                    <motion.div 
-                      className="flex-1"
-                      variants={filterVariants}
-                      initial="hidden"
-                      animate="visible"
-                      whileHover="active"
-                      transition={{ delay: 0.1 }}
-                    >
-                <label htmlFor="team-filter" className="block text-sm font-medium text-gray-700 mb-1">
+              </motion.div>
+              
+              {/* Team Filter */}
+              <motion.div 
+                className="space-y-2"
+                variants={filterVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="active"
+                transition={{ delay: 0.1 }}
+              >
+                <label htmlFor="team-filter" className="block text-sm font-semibold text-slate-700">
                   Team
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUsers className="h-4 w-4 text-gray-400" />
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <FiUsers className="h-4 w-4 text-slate-500" />
                   </div>
-                        <motion.select
+                  <select
                     id="team-filter"
                     value={selectedTeam}
                     onChange={(e) => setSelectedTeam(e.target.value)}
-                          className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-sm appearance-none"
-                          whileFocus={{ boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.2)' }}
+                    className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
                   >
                     <option value="all">All Teams</option>
                     {teams.map((team) => (
@@ -1942,99 +1977,77 @@ export default function Dashboard({ sidebarOpen }) {
                         {team.name}
                       </option>
                     ))}
-                        </motion.select>
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <motion.div
-                            animate={{ rotate: showFilters ? 180 : 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <FiChevronDown className="h-4 w-4 text-gray-400" />
-                          </motion.div>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <FiChevronDown className="h-4 w-4 text-slate-400" />
+                  </div>
                 </div>
-              </div>
-                    </motion.div>
+              </motion.div>
+              
+              {/* Date Filter */}
+              <motion.div 
+                className="space-y-2"
+                variants={filterVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="active"
+                transition={{ delay: 0.2 }}
+              >
+                <label htmlFor="date-filter" className="block text-sm font-semibold text-slate-700">
+                  Date
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <FiCalendar className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <input
+                    type="date"
+                    id="date-filter"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="pl-10 pr-3 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm"
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
+              </motion.div>
             </div>
-                  <motion.div 
-                    className="mt-4 flex justify-end"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <motion.button
-                      className="text-sm text-primary-600 hover:text-primary-800 flex items-center"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleRefresh}
-                    >
-                      <FiRefreshCw className="mr-1 h-3 w-3" />
-                      Refresh Results
-                    </motion.button>
-                  </motion.div>
+            
+            <motion.div 
+              className="mt-6 flex justify-end gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <motion.button
+                className="px-6 py-3 border border-slate-300 text-slate-700 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm font-medium transition-all duration-300 flex items-center gap-2"
+                whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setShowFilters(false);
+                }}
+              >
+                <FiX className="h-4 w-4" />
+                <span>Cancel</span>
+              </motion.button>
+              <motion.button
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 font-medium transition-all duration-300 flex items-center gap-2"
+                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.3)" }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  handleRefresh();
+                  setShowFilters(false);
+                }}
+              >
+                <FiRefreshCw className="h-4 w-4" />
+                <span>Apply Filters</span>
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-            {/* Date navigation bar */}
-        <motion.div 
-              className="relative p-4 bg-gradient-to-r from-indigo-50 to-slate-50"
-              initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="flex flex-wrap justify-between items-center gap-4">
-                <div className="flex items-center space-x-3">
-                  <motion.button 
-                    onClick={() => setDate(subDays(new Date(date), 1).toISOString().split('T')[0])}
-                    className="p-2 hover:bg-indigo-100 rounded-full text-indigo-600 transition-colors shadow-sm bg-white border border-indigo-100"
-                    whileHover={{ scale: 1.1, rotate: -5 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <FiChevronLeft />
-                  </motion.button>
-                  
-                  <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-400 to-primary-400 rounded-lg blur opacity-20 group-hover:opacity-50 transition-opacity"></div>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="relative bg-white border border-indigo-200 rounded-lg py-2.5 px-4 text-sm font-medium focus:ring-2 focus:ring-primary-300 focus:border-primary-500 shadow-sm transition-all outline-none cursor-pointer"
-                    />
-          </div>
-                  
-                  <motion.button 
-                    onClick={() => setDate(new Date().toISOString().split('T')[0])}
-                    className="px-4 py-2 rounded-lg shadow-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors font-medium text-sm flex items-center gap-1.5"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <FiCalendar className="h-3.5 w-3.5" />
-                    Today
-                  </motion.button>
-          </div>
-                
-                <div className="flex items-center gap-3">
-            <motion.button
-              onClick={() => navigate('/history')}
-              className="flex items-center gap-2 px-4 py-2 bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 rounded-lg transition-all shadow-md"
-              title="Report History"
-              whileHover={{ 
-                scale: 1.05,
-                y: -2,
-                boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.2), 0 8px 10px -6px rgba(79, 70, 229, 0.1)'
-              }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="relative">
-                <FiClock className="w-4 h-4" />
-                {/* Subtle glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-20 blur-md" />
-              </div>
-              <span className="font-medium text-sm">History</span>
-            </motion.button>
-          </div>
-              </div>
-            </motion.div>
+            
+            
             
             {/* Reports Content */}
             <div className="p-4 bg-white/90 backdrop-blur-sm min-h-[300px]">
