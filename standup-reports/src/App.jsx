@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AnimatePresence, motion } from 'framer-motion';
 import { supabase } from './supabaseClient';
 import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
-import squadsyncLogo from './assets/brand/squadsync-logo.png';
+import brandLogo from './assets/brand/squadsync-logo.png';
 import { CompanyProvider } from './contexts/CompanyContext';
 
 // Components
@@ -68,8 +68,8 @@ function AppLoader() {
             />
             <div className="absolute inset-6 grid place-items-center rounded-full bg-white shadow-inner">
               <img
-                src={squadsyncLogo}
-                alt="SquadSync"
+                src={brandLogo}
+                alt="WorkOS"
                 className="h-10 w-10 object-contain"
                 decoding="async"
               />
@@ -77,7 +77,7 @@ function AppLoader() {
           </div>
 
           <div className="text-center">
-            <div className="font-display text-lg font-semibold text-gray-800">Loading SquadSync</div>
+            <div className="font-display text-lg font-semibold text-gray-800">Loading WorkOS</div>
             <motion.div
               className="mt-1 text-sm text-gray-500"
               initial={{ opacity: 0.4 }}

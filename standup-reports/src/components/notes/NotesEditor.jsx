@@ -47,7 +47,7 @@ const NotesEditor = ({
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center">
               <FiFileText className="w-12 h-12 text-blue-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to SquadSync Notes</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to WorkOS Notes</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
               Create beautiful notes with our professional editor. Organize your thoughts, collaborate with your team, and never lose an idea again.
             </p>

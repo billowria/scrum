@@ -202,7 +202,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
               }}
             >
-              Sync
+              WorkOS
             </motion.h1>
             
             {/* Subtle underline animation */}

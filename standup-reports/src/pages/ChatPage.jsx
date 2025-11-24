@@ -380,7 +380,7 @@ const ChatPage = () => {
                 <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
                   <FiMessageSquare className="w-16 h-16 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to SquadSync Chat</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to WorkOS Chat</h2>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   Connect with your team in real-time. Select a conversation from the sidebar to start chatting.
                 </p>

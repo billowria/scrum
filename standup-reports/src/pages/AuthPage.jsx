@@ -16,7 +16,7 @@ import { FcGoogle } from "react-icons/fc";
 
 /**
  * Enhanced Auth Page
- * - Left: Animated SYNC logo (SVG + rotating arrows) + typewriter quote + floating avatars + soft particles
+ * - Left: Animated logo (SVG + rotating arrows) + typewriter quote + floating avatars + soft particles
  * - Right: Glassmorphism form card with animated inputs, social buttons, password show/hide, success confetti
  *
  * Usage: <AuthPage mode="login" /> or <AuthPage mode="signup" />
@@ -49,9 +49,9 @@ export default function AuthPage({ mode = "login" }) {
 
   // Typewriter quote for left side
   const quotes = [
-    "Sync your team members — build together, faster.",
-    "Bring clarity to collaboration. Sync, share, succeed.",
-    "One standup. One rhythm. One synced team.",
+    "Manage your team members — build together, faster.",
+    "Bring clarity to collaboration. Organize, share, succeed.",
+    "One standup. One rhythm. One connected team.",
     "Align goals • Share progress • Celebrate wins.",
   ];
   const [quoteIndex, setQuoteIndex] = useState(0);
@@ -207,10 +207,10 @@ export default function AuthPage({ mode = "login" }) {
 
         // Sanitize company name to create a URL-friendly slug
         const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        
+
         const { error: signUpError, data } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
-        
+
         if (data?.user) {
           // First, create the user profile in the users table without company association
           const randomAvatarUrl = AVATAR_URLS[Math.floor(Math.random() * AVATAR_URLS.length)];
@@ -238,7 +238,7 @@ export default function AuthPage({ mode = "login" }) {
             ])
             .select()
             .single();
-            
+
           if (companyError) throw companyError;
 
           // Finally, update the user record to link to the created company
@@ -246,7 +246,7 @@ export default function AuthPage({ mode = "login" }) {
             .from('users')
             .update({ company_id: companyData.id })
             .eq('id', data.user.id);
-            
+
           if (updateError) throw updateError;
         }
         setSuccess(true);
@@ -360,10 +360,10 @@ export default function AuthPage({ mode = "login" }) {
               <div className="absolute inset-0 rounded-full blur-2xl opacity-70" style={{ background: "radial-gradient(circle, rgba(124,58,237,0.12), transparent 40%)" }} />
             </motion.div>
 
-            {/* Letters: S Y N C - animated */}
+            {/* Letters: W O R K O S - animated */}
             <div className="flex flex-col">
               <div className="text-6xl font-extrabold tracking-tight leading-none flex gap-1">
-                {["S", "Y", "N", "C"].map((ltr, idx) => (
+                {["W", "o", "r", "k", "O", "S"].map((ltr, idx) => (
                   <motion.span
                     key={ltr}
                     initial={{ y: 20, opacity: 0, scale: 0.9 }}
@@ -385,7 +385,7 @@ export default function AuthPage({ mode = "login" }) {
               {/* tagline */}
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
                 <div className="mt-2 text-sm text-neutral-300 max-w-sm">
-                  <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.9)" }}>Sync your team members</span>{" "}
+                  <span style={{ fontStyle: "italic", color: "rgba(255,255,255,0.9)" }}>Manage your team members</span>{" "}
                   <span className="block mt-2 text-xs text-neutral-400">{typed}<span className="blink">|</span></span>
                 </div>
               </motion.div>
@@ -425,7 +425,7 @@ export default function AuthPage({ mode = "login" }) {
                 {a.name}
               </motion.div>
             ))}
-            <div className="text-xs text-neutral-400 ml-2">4 people already using SquadSync</div>
+            <div className="text-xs text-neutral-400 ml-2">4 people already using WorkOS</div>
           </div>
         </div>
 

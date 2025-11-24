@@ -280,7 +280,7 @@ export const exportProjectData = (project, sections) => {
       })) || []
     })) || [],
     exported_at: new Date().toISOString(),
-    exported_by: 'SquadSync Project Management System'
+    exported_by: 'WorkOS Project Management System'
   };
 
   return exportData;

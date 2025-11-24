@@ -97,11 +97,11 @@ const SprintDetailView = ({
         .from('tasks')
         .select(`
           id, title, description, status, due_date, created_at, updated_at,
-          assignee:team_members_view!assignee_id(
-            id, name, email
+          assignee:users!assignee_id(
+            id, name, email, avatar_url
           ),
-          reporter:team_members_view!reporter_id(
-            id, name
+          reporter:users!reporter_id(
+            id, name, avatar_url
           )
         `)
         .eq('sprint_id', sprint.id)

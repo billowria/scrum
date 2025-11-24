@@ -26,7 +26,9 @@ const InlineSectionEditor = ({
   topics = [],
   currentUser,
   canEdit = false,
-  isDragging = false
+  isDragging = false,
+  onSelectTopic,
+  selectedTopic
 }) => {
   const [formData, setFormData] = useState({
     name: section?.name || '',
@@ -129,9 +131,8 @@ const InlineSectionEditor = ({
 
   return (
     <motion.div
-      className={`bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm ${
-        isDragging ? 'shadow-lg rotate-1 scale-105' : 'hover:shadow-md'
-      } transition-all duration-200`}
+      className={`bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm ${isDragging ? 'shadow-lg rotate-1 scale-105' : 'hover:shadow-md'
+        } transition-all duration-200`}
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -160,9 +161,8 @@ const InlineSectionEditor = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full text-lg font-semibold bg-transparent border-b-2 outline-none transition-colors ${
-                  errors.name ? 'border-red-500' : 'border-blue-500 focus:border-blue-600'
-                }`}
+                className={`w-full text-lg font-semibold bg-transparent border-b-2 outline-none transition-colors ${errors.name ? 'border-red-500' : 'border-blue-500 focus:border-blue-600'
+                  }`}
                 placeholder="Section name..."
                 autoFocus
               />
@@ -339,14 +339,20 @@ const InlineSectionEditor = ({
                     {topics.map((topic) => (
                       <div
                         key={topic.id}
-                        className="p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors cursor-pointer"
+                        onClick={() => onSelectTopic && onSelectTopic(topic)}
+                        className={`p-3 border rounded-lg transition-colors cursor-pointer ${selectedTopic?.id === topic.id
+                            ? 'bg-blue-50 border-blue-300 shadow-sm'
+                            : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-100 rounded-lg">
+                          <div className={`p-2 rounded-lg ${selectedTopic?.id === topic.id ? 'bg-blue-200' : 'bg-blue-100'
+                            }`}>
                             <div className="w-4 h-4 bg-blue-600 rounded"></div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-gray-900">{topic.name}</h4>
+                            <h4 className={`font-medium ${selectedTopic?.id === topic.id ? 'text-blue-900' : 'text-gray-900'
+                              }`}>{topic.name}</h4>
                             {topic.description && (
                               <p className="text-sm text-gray-600 line-clamp-1">{topic.description}</p>
                             )}
@@ -357,7 +363,8 @@ const InlineSectionEditor = ({
                                 ✓ {topic.project_topic_content.length} {topic.project_topic_content.length === 1 ? 'item' : 'items'}
                               </span>
                             )}
-                            <FiChevronRight className="w-4 h-4 text-gray-400" />
+                            <FiChevronRight className={`w-4 h-4 ${selectedTopic?.id === topic.id ? 'text-blue-500' : 'text-gray-400'
+                              }`} />
                           </div>
                         </div>
                       </div>

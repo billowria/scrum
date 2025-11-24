@@ -1263,7 +1263,7 @@ export default function Dashboard({ sidebarOpen }) {
                         <motion.button
                           onClick={action.onClick}
                           className={`w-full h-28 rounded-2xl backdrop-blur-sm flex flex-col items-center justify-center gap-3 transition-all duration-300 relative overflow-hidden border border-white/30 shadow-md bg-white/20 hover:shadow-lg hover:bg-white/30`}
-                          whileHover={{ 
+                          whileHover={{
                             scale: 1.05,
                             y: -5,
                             boxShadow: `0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.05)`
@@ -1271,20 +1271,19 @@ export default function Dashboard({ sidebarOpen }) {
                           whileTap={{ scale: 0.95 }}
                         >
                           {/* Animated background on hover */}
-                          <motion.div 
+                          <motion.div
                             className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300`}
                           />
-                          
-                          {/* Icon container with gradient background */}
-                          <motion.div 
-                            className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient} text-white shadow-lg relative z-10 border border-white/20 backdrop-blur-sm`}
-                            whileHover={{ scale: 1.1, rotate: 5 }}
-                            transition={{ type: 'spring', stiffness: 400 }}
+
+                          {/* Icon container with gradient background - subtle bouncy transform on card hover */}
+                          <div
+                            className={`p-3 rounded-xl bg-gradient-to-br ${action.gradient} text-white shadow-lg relative z-10 border border-white/20 backdrop-blur-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-200 ease-out`}
+                            style={{ transformOrigin: 'center' }}
                           >
                             {action.icon}
                             {/* Show count badge for actions that have counts */}
                             {action.count !== undefined && action.count !== null && (
-                              <motion.span 
+                              <motion.span
                                 className="absolute -top-1 -right-1 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-1.5 py-0.5 min-w-[18px] h-[18px] flex items-center justify-center shadow-lg border border-white/30 backdrop-blur-sm"
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
@@ -1292,45 +1291,45 @@ export default function Dashboard({ sidebarOpen }) {
                                 {action.count > 99 ? '99+' : action.count}
                               </motion.span>
                             )}
-                          </motion.div>
-                          
+                          </div>
+
                           {/* Label with animated underline */}
                           <div className="relative z-10 w-full flex flex-col items-center">
                             <span className="text-xs font-semibold text-gray-700 group-hover:text-gray-900 transition-colors">
                               {action.label}
                             </span>
-                            
+
                             {/* Subtext for team status */}
                             {action.subText && (
                               <span className="text-[10px] text-gray-500 mt-0.5">
                                 {action.subText}
                               </span>
                             )}
-                            
+
                             {/* Animated underline */}
-                            <motion.div 
+                            <motion.div
                               className={`h-0.5 bg-gradient-to-r ${action.gradient} rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity`}
                               initial={{ width: 0 }}
                               whileHover={{ width: '100%' }}
                             />
                           </div>
-                          
+
                           {/* Pulse animation on hover */}
-                          <motion.div 
+                          <motion.div
                             className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100"
-                            animate={{ 
+                            animate={{
                               scale: [1, 1.5, 1],
                               opacity: [0, 0.3, 0]
                             }}
-                            transition={{ 
-                              duration: 2, 
+                            transition={{
+                              duration: 2,
                               repeat: Infinity
                             }}
                           />
                         </motion.button>
-                        
+
                         {/* Floating tooltip */}
-                        <motion.div 
+                        <motion.div
                           className={`absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-3 py-1.5 rounded-lg bg-gradient-to-r ${action.gradient} text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all z-20 shadow-xl pointer-events-none`}
                           initial={{ y: 10 }}
                           whileHover={{ opacity: 1, y: 0 }}

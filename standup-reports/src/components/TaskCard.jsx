@@ -2,12 +2,13 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { format, parseISO, isAfter, isToday, isTomorrow } from 'date-fns';
 import { useDraggable } from '@dnd-kit/core';
-import { 
-  FiCalendar, 
-  FiUser, 
-  FiUsers, 
-  FiEdit2, 
-  FiTrash2, 
+import Avatar from './shared/Avatar';
+import {
+  FiCalendar,
+  FiUser,
+  FiUsers,
+  FiEdit2,
+  FiTrash2,
   FiMoreVertical,
   FiClock,
   FiCheckCircle,
@@ -218,9 +219,7 @@ export default function TaskCard({
               {/* Assignee */}
               {assignee && (
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    {assignee.name?.charAt(0)?.toUpperCase()}
-                  </div>
+                  <Avatar user={assignee} size="xs" className="ring-1 ring-white" />
                   <span className="font-medium text-gray-700 text-xs truncate max-w-[70px] hidden sm:inline">
                     {assignee.name}
                   </span>
@@ -230,7 +229,7 @@ export default function TaskCard({
               {/* Reporter - New Feature */}
               {task.reporter && task.reporter.name && task.reporter.name !== assignee?.name && (
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <FiUser className="w-3 h-3 text-gray-400" />
+                  <Avatar user={task.reporter} size="xs" className="ring-1 ring-white" />
                   <span className="font-medium text-gray-600 text-xs truncate max-w-[60px] hidden sm:inline">
                     Rep: {task.reporter.name.split(' ')[0]}
                   </span>

@@ -1,8 +1,0 @@
-// Add this import at the top of Dashboard.jsx
-import DashboardWidgets from '../components/DashboardWidgets';
-
-// Then in the JSX where you want to add the widgets, add this component:
-{/* Dashboard Widgets Section */}
-<div className="container mx-auto px-6 mt-6">
-  <DashboardWidgets userTeamId={userTeamId} currentUser={currentUser} />
-</div>

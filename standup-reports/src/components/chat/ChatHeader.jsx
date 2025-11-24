@@ -105,7 +105,7 @@ const ChatHeader = ({
 
         {/* Center - App Title (Desktop) */}
         <div className="hidden md:flex items-center">
-          <h1 className="text-lg font-semibold text-gray-900">SquadSync Chat</h1>
+          <h1 className="text-lg font-semibold text-gray-900">WorkOS Chat</h1>
         </div>
 
         {/* Right Side - Actions */}

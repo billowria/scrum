@@ -585,18 +585,18 @@ export default function TasksPage({ sidebarOpen }) {
         .from('tasks')
         .select(`
           id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id,
-          assignee:team_members_view!assignee_id(
+          assignee:users!assignee_id(
             id,
             name,
             email,
             role,
             team_id,
-            team_name
+            avatar_url
           ),
-          reporter:team_members_view!reporter_id(
+          reporter:users!reporter_id(
             id,
             name,
-            team_name
+            avatar_url
           ),
           team:team_id(id, name),
           project:project_id(id, name),
