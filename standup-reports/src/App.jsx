@@ -105,7 +105,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [sidebarMode, setSidebarMode] = useState('expanded'); // 'expanded', 'collapsed', 'hidden'
+  const [sidebarMode, setSidebarMode] = useState('collapsed'); // 'expanded', 'collapsed', 'hidden'
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {

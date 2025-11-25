@@ -94,6 +94,20 @@ const ChatPage = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Auto-select first conversation when conversations are loaded and no active conversation
+  useEffect(() => {
+    if (conversations.length > 0 && !activeConversation && !loading) {
+      // Select the first conversation (most recent by default)
+      const firstConversation = conversations[0];
+      setActiveConversation(firstConversation);
+
+      // On desktop, keep sidebar visible when auto-selecting
+      if (!isMobile) {
+        setShowSidebar(true);
+      }
+    }
+  }, [conversations, activeConversation, loading, isMobile]);
+
   // Manual refresh handler
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -275,67 +289,8 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-
-      {/* Fixed Header at the top of the page */}
-      <header className="fixed top-0 left-0 right-0 z-[40] bg-white/80 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
-        <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            {/* Logo/Branding */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <FiMessageSquare className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                WorkOS Chat
-              </h1>
-            </div>
-
-            {/* Navigation indicator if needed */}
-            {activeConversation && (
-              <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
-                <span className="text-gray-400">/</span>
-                <span className="font-medium text-gray-900">
-                  {activeConversation.name || (activeConversation.type === 'direct' && activeConversation.otherUser?.name) || 'Chat'}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* User presence indicator */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowUserPresence(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-sm"
-            >
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span>{onlineUsers.length} online</span>
-            </motion.button>
-
-            {/* Settings button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              title="Settings"
-            >
-              <FiSettings className="w-5 h-5 text-gray-700" />
-            </motion.button>
-
-            {/* User menu (simplified) */}
-            {currentUser && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-semibold">
-                  {currentUser.email?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
+      {/* pt-16 accounts for the main app navbar */}
 
       {/* Mobile back button overlay */}
       <AnimatePresence>
@@ -345,15 +300,15 @@ const ChatPage = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             onClick={handleBackToConversations}
-            className="absolute top-24 left-4 z-30 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+            className="absolute top-20 left-4 z-30 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
           >
             <FiChevronLeft className="w-6 h-6 text-gray-700" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Main Content Area - Adjusted for fixed header */}
-      <div className="flex flex-1 overflow-hidden pt-16"> {/* pt-16 accounts for header height */}
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Enhanced with Glass Morphism */}
         <div
           className={`
@@ -381,18 +336,17 @@ const ChatPage = () => {
           />
         </div>
 
-        {/* Sidebar Toggle Button (Desktop) - Adjusted for header */}
+        {/* Sidebar Toggle Button (Desktop) - Glass Morphism */}
         {!isMobile && (
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`fixed z-30 p-3 bg-white/80 backdrop-blur-md border border-gray-200
+            className={`absolute top-1/2 z-10 p-3 bg-white/80 backdrop-blur-md border border-gray-200
                       rounded-full shadow-lg hover:bg-white/90 transition-all duration-200
-                      transform ${
+                      transform -translate-y-1/2 ${
                         sidebarCollapsed ? 'left-16' : 'left-80'
                       }`}
-            style={{ top: 'calc(50% + 2rem)' }} // Account for header height (2rem = 32px)
           >
             <FiChevronLeft className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
               sidebarCollapsed ? '' : 'rotate-180'
