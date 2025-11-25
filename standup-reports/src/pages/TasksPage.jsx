@@ -4,11 +4,11 @@ import { supabase } from '../supabaseClient';
 import { notifySprintUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../contexts/CompanyContext';
 import { format, addWeeks, parseISO, isWithinInterval } from 'date-fns';
-import { 
-  FiGrid, 
-  FiList, 
-  FiPlus, 
-  FiFilter, 
+import {
+  FiGrid,
+  FiList,
+  FiPlus,
+  FiFilter,
   FiSearch,
   FiCalendar,
   FiUsers,
@@ -148,18 +148,17 @@ const FilterButton = ({ icon: Icon, label, color, isActive, expandedContent, onC
         setIsExpanded(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  const buttonClass = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${
-    isActive 
-      ? `${color} text-white shadow-lg` 
-      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
-  }`;
+  const buttonClass = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${isActive
+    ? `${color} text-white shadow-lg`
+    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
+    }`;
 
   return (
     <div className="relative" ref={ref}>
@@ -191,7 +190,7 @@ const FilterTag = ({ label, color, onRemove }) => (
     exit={{ opacity: 0, scale: 0.8 }}
   >
     <span>{label}</span>
-    <button 
+    <button
       onClick={onRemove}
       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/10"
     >
@@ -230,7 +229,7 @@ export default function TasksPage({ sidebarOpen }) {
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [showHeader, setShowHeader] = useState(true);
-  
+
   // Sprint planning state
   const [sprints, setSprints] = useState([]);
   const [selectedSprintId, setSelectedSprintId] = useState('all');
@@ -243,18 +242,18 @@ export default function TasksPage({ sidebarOpen }) {
   const fetchSprints = async () => {
     try {
       setSprintLoading(true);
-      
+
       let query = supabase
         .from('sprints')
         .select('*');
-      
+
       // Filter by project if selected
       if (selectedProjectId !== 'all') {
         query = query.eq('project_id', selectedProjectId);
       }
-      
+
       const { data, error } = await query.order('start_date', { ascending: false });
-      
+
       if (error) throw error;
       setSprints(data || []);
     } catch (err) {
@@ -269,7 +268,7 @@ export default function TasksPage({ sidebarOpen }) {
   const handleSprintSubmit = async (sprintData) => {
     try {
       const { name, goal, start_date, end_date, project_id } = sprintData;
-      
+
       if (editingSprint) {
         // Update existing sprint
         const { error } = await supabase
@@ -283,7 +282,7 @@ export default function TasksPage({ sidebarOpen }) {
             updated_at: new Date().toISOString()
           })
           .eq('id', editingSprint.id);
-          
+
         if (error) throw error;
       } else {
         // Create new sprint
@@ -300,10 +299,10 @@ export default function TasksPage({ sidebarOpen }) {
             updated_at: new Date().toISOString(),
             status: 'Planning'
           });
-          
+
         if (error) throw error;
       }
-      
+
       // Refresh sprints
       fetchSprints();
       setShowSprintModal(false);
@@ -322,13 +321,13 @@ export default function TasksPage({ sidebarOpen }) {
         sprint_id: sprintId,
         updated_at: new Date().toISOString()
       }));
-      
+
       const { error } = await supabase
         .from('tasks')
         .upsert(updates);
-        
+
       if (error) throw error;
-      
+
       // Refresh tasks
       fetchTasks();
       setShowSprintAssignModal(false);
@@ -343,7 +342,7 @@ export default function TasksPage({ sidebarOpen }) {
     try {
       // Get sprint details
       const sprint = sprints.find(s => s.id === sprintId);
-      
+
       const { error } = await supabase
         .from('sprints')
         .update({
@@ -351,9 +350,9 @@ export default function TasksPage({ sidebarOpen }) {
           updated_at: new Date().toISOString()
         })
         .eq('id', sprintId);
-        
+
       if (error) throw error;
-      
+
       // Send notification about sprint start
       if (sprint && sprint.project_id) {
         try {
@@ -362,7 +361,7 @@ export default function TasksPage({ sidebarOpen }) {
             .select('team_id')
             .eq('id', sprint.project_id)
             .single();
-          
+
           if (projectData?.team_id && currentUser) {
             await notifySprintUpdate(
               sprint.name,
@@ -376,7 +375,7 @@ export default function TasksPage({ sidebarOpen }) {
           // Continue even if notification fails
         }
       }
-      
+
       // Refresh sprints
       fetchSprints();
     } catch (err) {
@@ -390,7 +389,7 @@ export default function TasksPage({ sidebarOpen }) {
     try {
       // Get sprint details
       const sprint = sprints.find(s => s.id === sprintId);
-      
+
       const { error } = await supabase
         .from('sprints')
         .update({
@@ -398,9 +397,9 @@ export default function TasksPage({ sidebarOpen }) {
           updated_at: new Date().toISOString()
         })
         .eq('id', sprintId);
-        
+
       if (error) throw error;
-      
+
       // Send notification about sprint completion
       if (sprint && sprint.project_id) {
         try {
@@ -409,7 +408,7 @@ export default function TasksPage({ sidebarOpen }) {
             .select('team_id')
             .eq('id', sprint.project_id)
             .single();
-          
+
           if (projectData?.team_id && currentUser) {
             await notifySprintUpdate(
               sprint.name,
@@ -423,7 +422,7 @@ export default function TasksPage({ sidebarOpen }) {
           // Continue even if notification fails
         }
       }
-      
+
       // Refresh sprints
       fetchSprints();
     } catch (err) {
@@ -439,9 +438,9 @@ export default function TasksPage({ sidebarOpen }) {
         .from('sprints')
         .delete()
         .eq('id', sprintId);
-        
+
       if (error) throw error;
-      
+
       // Refresh sprints
       fetchSprints();
     } catch (err) {
@@ -471,10 +470,10 @@ export default function TasksPage({ sidebarOpen }) {
       setSelectedProjectId('all');
       setSelectedSprintId('all');
       setSearch('');
-      
+
       // Clear any error state
       setError(null);
-      
+
       console.log('All filters cleared successfully');
     } catch (err) {
       console.error('Error clearing filters:', err);
@@ -502,7 +501,7 @@ export default function TasksPage({ sidebarOpen }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `tasks_${selectedProjectId !== 'all' ? selectedProjectId : 'all'}_${new Date().toISOString().slice(0,10)}.csv`;
+    link.download = `tasks_${selectedProjectId !== 'all' ? selectedProjectId : 'all'}_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -551,7 +550,7 @@ export default function TasksPage({ sidebarOpen }) {
     const fetchEmployees = async () => {
       if (!currentUser || !userRole || !currentCompany?.id) return;
       try {
-        let query = supabase.from('users').select('id, name')
+        let query = supabase.from('users').select('id, name, avatar_url')
           .eq('company_id', currentCompany.id);
         if (userRole === 'manager' && currentUser.team_id) {
           query = query.eq('team_id', currentUser.team_id);
@@ -630,7 +629,7 @@ export default function TasksPage({ sidebarOpen }) {
       // Apply filters with validation using debounced values
       const currentFilters = debouncedFilters || filters;
       const currentSearch = debouncedSearch || search;
-      
+
       if (currentFilters && typeof currentFilters === 'object') {
         if (currentFilters.status && currentFilters.status !== 'all' && currentFilters.status.trim() !== '') {
           const validStatuses = ['To Do', 'In Progress', 'Review', 'Completed'];
@@ -638,15 +637,22 @@ export default function TasksPage({ sidebarOpen }) {
             query = query.eq('status', currentFilters.status);
           }
         }
-        
-        if (currentFilters.assignee && currentFilters.assignee !== 'all' && currentFilters.assignee.trim() !== '') {
-          try {
-            query = query.eq('assignee_id', currentFilters.assignee);
-          } catch (assigneeError) {
-            console.warn('Invalid assignee ID in filter:', currentFilters.assignee);
+
+        if (currentFilters.assignee && currentFilters.assignee !== 'all') {
+          // Handle both array (multi-select) and string (single-select)
+          if (Array.isArray(currentFilters.assignee)) {
+            if (currentFilters.assignee.length > 0) {
+              query = query.in('assignee_id', currentFilters.assignee);
+            }
+          } else if (currentFilters.assignee.trim() !== '') {
+            try {
+              query = query.eq('assignee_id', currentFilters.assignee);
+            } catch (assigneeError) {
+              console.warn('Invalid assignee ID in filter:', currentFilters.assignee);
+            }
           }
         }
-        
+
         if (currentFilters.team && currentFilters.team !== 'all' && currentFilters.team.trim() !== '') {
           try {
             query = query.eq('team_id', currentFilters.team);
@@ -655,7 +661,7 @@ export default function TasksPage({ sidebarOpen }) {
           }
         }
       }
-      
+
       // Apply search filter with validation
       if (currentSearch && typeof currentSearch === 'string' && currentSearch.trim() !== '') {
         const searchTerm = currentSearch.trim();
@@ -663,7 +669,7 @@ export default function TasksPage({ sidebarOpen }) {
           query = query.ilike('title', `%${searchTerm}%`);
         }
       }
-      
+
       // Sprint filter with validation using debounced value
       const currentSprintId = debouncedSelectedSprintId || selectedSprintId;
       if (currentSprintId && currentSprintId !== 'all' && currentSprintId.trim() !== '') {
@@ -675,19 +681,19 @@ export default function TasksPage({ sidebarOpen }) {
       }
 
       const { data, error } = await query;
-      
+
       if (error) {
         console.error('Supabase query error:', error);
         throw error;
       }
-      
+
       // Validate data before setting
       const validatedTasks = Array.isArray(data) ? data : [];
       setTasks(validatedTasks);
-      
+
     } catch (err) {
       console.error('Error fetching tasks:', err);
-      setError(`Failed to load tasks: ${err.message || 'Please try again.'}`); 
+      setError(`Failed to load tasks: ${err.message || 'Please try again.'}`);
       setTasks([]); // Set empty array as fallback
     } finally {
       setLoading(false);
@@ -743,12 +749,12 @@ export default function TasksPage({ sidebarOpen }) {
     // Set up real-time subscription
     const subscription = supabase
       .channel('tasks_changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'tasks' 
-        }, 
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
         (payload) => {
           console.log('Change received!', payload);
           // Only refetch if we have user data
@@ -766,7 +772,7 @@ export default function TasksPage({ sidebarOpen }) {
       subscription.unsubscribe();
     };
   }, [debouncedFilters, userRole, currentUser, debouncedSelectedProjectId, debouncedSelectedSprintId, debouncedSearch]);
-  
+
   // Fetch sprints when project changes
   useEffect(() => {
     if (currentUser && userRole) {
@@ -883,7 +889,7 @@ export default function TasksPage({ sidebarOpen }) {
     setEditingTask(task);
     setShowCreateModal(true);
   };
-  
+
   const handleTaskView = (task) => {
     setViewingTask(task);
     setShowDetailModal(true);
@@ -898,7 +904,7 @@ export default function TasksPage({ sidebarOpen }) {
           .eq('id', task.id);
 
         if (error) throw error;
-        
+
         // Refresh tasks after deletion
         fetchTasks();
       } catch (err) {
@@ -907,7 +913,7 @@ export default function TasksPage({ sidebarOpen }) {
       }
     }
   };
-  
+
   const handleSprintAssign = (task) => {
     setCurrentTask(task);
     setShowSprintAssignModal(true);
@@ -1018,11 +1024,10 @@ export default function TasksPage({ sidebarOpen }) {
                     delay: Math.random() * 2,
                   }}
                 >
-                  <div className={`w-full h-full rounded-full bg-gradient-to-r ${
-                    i % 3 === 0 ? 'from-blue-200/40 to-teal-200/40' :
+                  <div className={`w-full h-full rounded-full bg-gradient-to-r ${i % 3 === 0 ? 'from-blue-200/40 to-teal-200/40' :
                     i % 3 === 1 ? 'from-cyan-200/40 to-emerald-200/40' :
-                    'from-pink-200/40 to-rose-200/40'
-                  }`} />
+                      'from-pink-200/40 to-rose-200/40'
+                    }`} />
                 </motion.div>
               ))}
 
@@ -1173,11 +1178,10 @@ export default function TasksPage({ sidebarOpen }) {
                         ].map((tab, index) => (
                           <motion.button
                             key={tab.id}
-                            className={`relative px-4 sm:px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-                              view === tab.id
-                                ? 'text-white shadow-2xl'
-                                : 'text-gray-700/90 hover:text-gray-900 hover:bg-white/20'
-                            }`}
+                            className={`relative px-4 sm:px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-300 ${view === tab.id
+                              ? 'text-white shadow-2xl'
+                              : 'text-gray-700/90 hover:text-gray-900 hover:bg-white/20'
+                              }`}
                             onClick={() => setView(tab.id)}
                             whileHover={{
                               scale: 1.05,
@@ -1194,21 +1198,19 @@ export default function TasksPage({ sidebarOpen }) {
                             {view === tab.id && (
                               <>
                                 <motion.div
-                                  className={`absolute inset-0 rounded-2xl shadow-2xl border border-white/30 ${
-                                    tab.id === 'sprint'
-                                      ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500'
-                                      : 'bg-gradient-to-r from-blue-500 via-teal-500 to-cyan-500'
-                                  }`}
+                                  className={`absolute inset-0 rounded-2xl shadow-2xl border border-white/30 ${tab.id === 'sprint'
+                                    ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500'
+                                    : 'bg-gradient-to-r from-blue-500 via-teal-500 to-cyan-500'
+                                    }`}
                                   layoutId="activeTab"
                                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                 />
                                 {/* Inner Glow */}
                                 <motion.div
-                                  className={`absolute inset-0.5 rounded-2xl opacity-50 ${
-                                    tab.id === 'sprint'
-                                      ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
-                                      : 'bg-gradient-to-r from-blue-400 via-teal-400 to-cyan-400'
-                                  }`}
+                                  className={`absolute inset-0.5 rounded-2xl opacity-50 ${tab.id === 'sprint'
+                                    ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
+                                    : 'bg-gradient-to-r from-blue-400 via-teal-400 to-cyan-400'
+                                    }`}
                                   animate={{ opacity: [0.3, 0.7, 0.3] }}
                                   transition={{ duration: 2, repeat: Infinity }}
                                 />
@@ -1338,11 +1340,11 @@ export default function TasksPage({ sidebarOpen }) {
                 </div>
               </div>
 
-              </div>
+            </div>
           </div>
         </motion.div>
       )}
-      
+
       {/* Main Content */}
       <div className="pt-6 sm:pt-10 md:pt-12">
         {/* Light Glowing Header Toggle Button - appears when header is hidden */}
@@ -1387,12 +1389,12 @@ export default function TasksPage({ sidebarOpen }) {
             </motion.div>
           </motion.button>
         )}
-        
 
-        
+
+
         {/* Content */}
-        <motion.div 
-          variants={itemVariants} 
+        <motion.div
+          variants={itemVariants}
           className="bg-transparent overflow-hidden"
         >
           {loading ? (
@@ -1479,7 +1481,7 @@ export default function TasksPage({ sidebarOpen }) {
             userRole={userRole}
           />
         )}
-        
+
         {showUpdateModal && (
           <TaskUpdateModal
             isOpen={showUpdateModal}
@@ -1494,7 +1496,7 @@ export default function TasksPage({ sidebarOpen }) {
             task={updatingTask}
           />
         )}
-        
+
         {showDetailModal && viewingTask && (
           <TaskDetailView
             isOpen={showDetailModal}
@@ -1513,17 +1515,17 @@ export default function TasksPage({ sidebarOpen }) {
               // Close current detail view and open new one for the clicked task
               setShowDetailModal(false);
               setViewingTask(null);
-              
+
               // Find the task and open its detail view, passing current task as parent
               const clickedTask = tasks.find(t => t.id === taskId);
               if (clickedTask) {
-                setViewingTask({...clickedTask, parentTaskId: viewingTask?.id}); // Pass current task ID as parent
+                setViewingTask({ ...clickedTask, parentTaskId: viewingTask?.id }); // Pass current task ID as parent
                 setShowDetailModal(true);
               }
             }}
           />
         )}
-        
+
         {/* Sprint Modal */}
         <SprintModal
           isOpen={showSprintModal}
@@ -1535,7 +1537,7 @@ export default function TasksPage({ sidebarOpen }) {
           sprint={editingSprint}
           projects={projects}
         />
-        
+
         {/* Sprint Assignment Modal */}
         {showSprintAssignModal && (
           <motion.div
@@ -1544,7 +1546,7 @@ export default function TasksPage({ sidebarOpen }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
@@ -1559,18 +1561,18 @@ export default function TasksPage({ sidebarOpen }) {
                   const selectedTaskIds = tasks
                     .filter(task => task.selected)
                     .map(task => task.id);
-                  
+
                   if (selectedTaskIds.length === 0) {
                     setError('Please select at least one task to assign');
                     return;
                   }
-                  
+
                   assignTasksToSprint(selectedTaskIds, sprintId);
                 }}>
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sprint</label>
-                    <select 
-                      name="sprint_id" 
+                    <select
+                      name="sprint_id"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       required
                     >
@@ -1585,7 +1587,7 @@ export default function TasksPage({ sidebarOpen }) {
                       }
                     </select>
                   </div>
-                  
+
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Selected Tasks</label>
                     <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
@@ -1606,17 +1608,17 @@ export default function TasksPage({ sidebarOpen }) {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-end gap-3">
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                       onClick={() => setShowSprintAssignModal(false)}
                     >
                       Cancel
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
                       disabled={tasks.filter(task => task.selected).length === 0}
                     >
@@ -1628,7 +1630,7 @@ export default function TasksPage({ sidebarOpen }) {
             </motion.div>
           </motion.div>
         )}
-        
+
         {/* Sprint Detail View Modal */}
         {showSprintDetailView && selectedSprintForDetail && (
           <SprintDetailView
