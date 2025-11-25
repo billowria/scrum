@@ -267,10 +267,12 @@ const Tooltip = ({ show, label, colors, elementRef }) => {
 
 
 // Modern simplified sidebar component
-export default function Sidebar({ open, setOpen, user }) {
+export default function Sidebar({ mode, setMode, user }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  const open = mode === 'expanded';
 
   // Real-time counts state
   const [counts, setCounts] = useState({
@@ -391,9 +393,19 @@ export default function Sidebar({ open, setOpen, user }) {
   // Create refs for navigation items to position tooltips
   const navItemRefs = useRef({});
 
+  const getSidebarWidth = () => {
+    if (mode === 'hidden') return 0;
+    if (mode === 'collapsed') return 100;
+    return 272;
+  };
+
   return (
     <aside className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out"
-          style={{ width: open ? 272 : 100 }}>
+      style={{
+        width: getSidebarWidth(),
+        transform: mode === 'hidden' ? 'translateX(-100%)' : 'translateX(0)',
+        opacity: mode === 'hidden' ? 0 : 1
+      }}>
 
       {/* Glassmorphism background */}
       <div className="absolute inset-0 bg-white/30 backdrop-blur-xl border-r border-white/20" />
@@ -404,7 +416,7 @@ export default function Sidebar({ open, setOpen, user }) {
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent transform skew-y-12" />
       </div>
 
-  
+
       {/* Main navigation container */}
       <nav className="relative flex-1 px-4 py-6 space-y-3 overflow-y-auto">
         {navLinks.map((link, index) => {
@@ -463,9 +475,8 @@ export default function Sidebar({ open, setOpen, user }) {
                       exit="hidden"
                       className="ml-4 flex-1 text-left"
                     >
-                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${
-                        isActiveLink ? link.colors.activeText : 'text-slate-800'
-                      }`}>
+                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${isActiveLink ? link.colors.activeText : 'text-slate-800'
+                        }`}>
                         {link.label}
                       </div>
                       <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>
@@ -547,9 +558,8 @@ export default function Sidebar({ open, setOpen, user }) {
                   exit="hidden"
                   className="ml-4 flex-1 text-left"
                 >
-                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${
-                    location.pathname === '/chat' ? 'text-cyan-700' : 'text-slate-800'
-                  }`}>
+                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${location.pathname === '/chat' ? 'text-cyan-700' : 'text-slate-800'
+                    }`}>
                     Chat
                   </div>
                   <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>

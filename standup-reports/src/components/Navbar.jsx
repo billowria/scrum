@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiMenu, FiX } from 'react-icons/fi';
+import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiMenu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
 
-export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarOpen, setSidebarOpen }) {
+export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
@@ -41,60 +41,64 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
   return (
     <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-4 md:px-6 h-16">
-      {/* Left side - Sidebar Toggle */}
+      {/* Left side - Sidebar Control (Wonder Design) */}
       <div className="flex items-center">
-        <motion.button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-slate-800 hover:bg-white/70 transition-all duration-200 shadow-sm"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-          title={sidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-        >
-          <AnimatePresence mode="wait">
-            {sidebarOpen ? (
-              <motion.div
-                key="collapse"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30,
-                  duration: 0.2
-                }}
+        <AnimatePresence mode="wait">
+          {sidebarMode === 'hidden' ? (
+            <motion.button
+              key="show-sidebar"
+              onClick={() => setSidebarMode('expanded')}
+              className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 shadow-sm group"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Show Sidebar"
+            >
+              <FiSidebar size={20} />
+              <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Show Sidebar
+              </span>
+            </motion.button>
+          ) : (
+            <motion.div
+              key="sidebar-controls"
+              className="flex items-center bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-xl p-1 shadow-sm"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              {/* Expand/Collapse Toggle */}
+              <motion.button
+                onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
+                className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                  }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title={sidebarMode === 'expanded' ? "Collapse Sidebar" : "Expand Sidebar"}
               >
-                <FiX size={20} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="expand"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 30,
-                  duration: 0.2
-                }}
-              >
-                <FiMenu size={20} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {sidebarMode === 'expanded' ? <FiChevronLeft size={18} /> : <FiMenu size={18} />}
+              </motion.button>
 
-          {/* Animated glow effect */}
-          <motion.div
-            className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300"
-            whileHover={{
-              scale: 1.1,
-              opacity: 1
-            }}
-            whileTap={{ scale: 0.9 }}
-          />
-        </motion.button>
+              {/* Divider */}
+              <div className="w-px h-4 bg-slate-300/50 mx-1" />
+
+              {/* Hide Button */}
+              <motion.button
+                onClick={() => setSidebarMode('hidden')}
+                className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Hide Sidebar"
+              >
+                <FiEyeOff size={18} />
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Brand - Centered */}
@@ -128,7 +132,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 }
               }}
             />
-            
+
             {/* Middle Ring */}
             <motion.div
               className="absolute inset-1 rounded-full border border-purple-400"
@@ -141,7 +145,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 ease: "linear"
               }}
             />
-            
+
             {/* Inner Element */}
             <motion.div
               className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600"
@@ -155,7 +159,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 ease: "easeInOut"
               }}
             />
-            
+
             {/* Pulsing Center Dot */}
             <motion.div
               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"
@@ -169,7 +173,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 ease: "easeInOut"
               }}
             />
-            
+
             {/* Glow Effect */}
             <motion.div
               className="absolute inset-0 rounded-full bg-blue-500 opacity-20 blur-md"
@@ -184,10 +188,10 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
               }}
             />
           </motion.div>
-          
+
           {/* Animated Brand Name */}
           <div className="relative overflow-hidden">
-            <motion.h1 
+            <motion.h1
               className="text-xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"
               animate={{
                 backgroundPosition: ["0%", "100%", "0%"],
@@ -197,14 +201,14 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              style={{ 
+              style={{
                 backgroundSize: "200% auto",
                 backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
               }}
             >
               WorkOS
             </motion.h1>
-            
+
             {/* Subtle underline animation */}
             <motion.div
               className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
@@ -255,21 +259,21 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
         {/* Enhanced Cool Dropdown */}
         <AnimatePresence>
           {dropdownOpen && (
-            <motion.div 
+            <motion.div
               key="dropdown"
               ref={dropdownRef}
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ 
-                duration: 0.25, 
+              transition={{
+                duration: 0.25,
                 ease: "easeOut",
                 type: 'spring',
                 stiffness: 300,
                 damping: 25
               }}
               className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 overflow-hidden z-50 origin-top"
-              style={{ 
+              style={{
                 transformOrigin: 'top right',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2)'
               }}
@@ -278,16 +282,16 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
               <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50">
                 <div className="flex items-center gap-3">
                   {avatarUrl ? (
-                    <motion.img 
-                      src={avatarUrl} 
-                      alt={user.name} 
+                    <motion.img
+                      src={avatarUrl}
+                      alt={user.name}
                       className="w-12 h-12 rounded-xl object-cover shadow-md border-2 border-white"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
                     />
                   ) : (
-                    <motion.div 
+                    <motion.div
                       className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -297,7 +301,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     </motion.div>
                   )}
                   <div>
-                    <motion.div 
+                    <motion.div
                       className="font-bold text-slate-800 text-base"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -305,7 +309,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     >
                       {user.name}
                     </motion.div>
-                    <motion.div 
+                    <motion.div
                       className="text-slate-500 text-sm capitalize"
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -334,7 +338,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                   </div>
                   <span>My Profile</span>
                 </motion.button>
-                
+
                 {/* Settings Menu Item */}
                 <motion.button
                   className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
@@ -346,10 +350,10 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                   </div>
                   <span>Settings</span>
                 </motion.button>
-                
+
                 {/* Divider */}
                 <div className="border-t border-slate-100/50 my-2 mx-4"></div>
-                
+
                 {/* Sign Out Menu Item */}
                 <motion.button
                   onClick={handleSignOut}
@@ -363,7 +367,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                   <span>Sign out</span>
                 </motion.button>
               </div>
-              
+
               {/* Footer with Status */}
               <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100/50">
                 <div className="flex items-center justify-between">

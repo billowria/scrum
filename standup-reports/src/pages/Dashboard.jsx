@@ -7,7 +7,7 @@ import { useCompany } from '../contexts/CompanyContext';
 // import TaskDetailView from '../components/tasks/TaskDetailView';
 
 // Icons
-import { FiFilter,FiAward,FiZap,FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare, FiUserPlus } from 'react-icons/fi';
+import { FiFilter, FiAward, FiZap, FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle, FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight, FiPlus, FiList, FiGrid, FiMaximize, FiMinimize, FiX, FiFileText, FiArrowRight, FiChevronDown, FiBell, FiBarChart2, FiMessageSquare, FiUserPlus } from 'react-icons/fi';
 
 // Components
 import AnnouncementModal from '../components/AnnouncementModal';
@@ -62,23 +62,23 @@ const switchVariants = {
 
 const dropdownVariants = {
   hidden: { opacity: 0, y: -10, scaleY: 0.8, transformOrigin: "top" },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     scaleY: 1,
-    transition: { 
-      type: "spring", 
-      stiffness: 500, 
+    transition: {
+      type: "spring",
+      stiffness: 500,
       damping: 30,
       staggerChildren: 0.05,
       delayChildren: 0.02
     }
   },
-  exit: { 
-    opacity: 0, 
-    y: -10, 
+  exit: {
+    opacity: 0,
+    y: -10,
     scaleY: 0.8,
-    transition: { duration: 0.2 } 
+    transition: { duration: 0.2 }
   }
 };
 
@@ -210,7 +210,7 @@ function RichTextDisplay({ content, onTaskClick }) {
   );
 }
 
-export default function Dashboard({ sidebarOpen }) {
+export default function Dashboard({ sidebarOpen, sidebarMode }) {
   const { currentCompany, loading: companyLoading, error: companyError } = useCompany();
   const [reports, setReports] = useState([]);
   // Task modal state
@@ -226,35 +226,35 @@ export default function Dashboard({ sidebarOpen }) {
   const [showFilters, setShowFilters] = useState(false);
   const [userName, setUserName] = useState('');
   const [currentReportIndex, setCurrentReportIndex] = useState(0);
-  const [viewMode, setViewMode] = useState('carousel'); 
+  const [viewMode, setViewMode] = useState('carousel');
   const [showFullscreenModal, setShowFullscreenModal] = useState(false);
-  
+
   // User state
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [userTeamId, setUserTeamId] = useState(null);
   const [userTeamName, setUserTeamName] = useState(null);
-  
+
   // Missing reports state
   const [teamMembers, setTeamMembers] = useState([]);
   const [missingReports, setMissingReports] = useState([]);
   const [loadingMissing, setLoadingMissing] = useState(false);
-  
+
   // On-leave count and announcements count
   const [onLeaveCount, setOnLeaveCount] = useState(0);
   const [announcementsCount, setAnnouncementsCount] = useState(0);
-  
+
   // New messages count
   const [newMessagesCount, setNewMessagesCount] = useState(0);
-  
+
   // Project count
   const [projectCount, setProjectCount] = useState(0);
 
   // Animation controls
   const cardControls = useAnimation();
   const navigate = useNavigate();
-  
+
   // Ref for scroll animations
   const reportRefs = useRef([]);
   const carouselRef = useRef(null);
@@ -276,7 +276,7 @@ export default function Dashboard({ sidebarOpen }) {
     quality: 0,
     happiness: 0
   });
-  
+
 
   // Add new state for modals and on-leave members
   const [showMissingModal, setShowMissingModal] = useState(false);
@@ -295,8 +295,8 @@ export default function Dashboard({ sidebarOpen }) {
   const [avatarUrl, setAvatarUrl] = useState(null);
 
   useEffect(() => {
-      // Get current user information including their team
-      const getUserInfo = async () => {
+    // Get current user information including their team
+    const getUserInfo = async () => {
       try {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) return;
@@ -309,7 +309,7 @@ export default function Dashboard({ sidebarOpen }) {
           .select('id, name, role, avatar_url, team_id, company_id, teams:team_id (id, name)')
           .eq('id', authUser.id)
           .single();
-        
+
         if (!error && data) {
           setAvatarUrl(data.avatar_url || null);
           setUserRole(data.role || null);
@@ -325,10 +325,10 @@ export default function Dashboard({ sidebarOpen }) {
         console.error('Error getting user info:', error);
       }
     };
-    
+
     getUserInfo();
     // fetchReports and fetchTeams will be called after company context is loaded
-    
+
     // Initialize animation controls
     cardControls.start({
       opacity: 1,
@@ -336,19 +336,19 @@ export default function Dashboard({ sidebarOpen }) {
       scale: 1,
       transition: { duration: 0.5 }
     });
-    
+
     // Add keyboard listener for ESC key to exit fullscreen modal
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && showFullscreenModal) {
         setShowFullscreenModal(false);
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  
+
   }, [date, cardControls, currentCompany?.id]);
 
   // Effect to fetch data once company context is loaded
@@ -359,21 +359,21 @@ export default function Dashboard({ sidebarOpen }) {
       fetchTeams();
     }
   }, [companyLoading, currentCompany, date]);
-  
+
   // Clock display component that only re-renders when necessary
   const ClockDisplay = React.memo(() => {
     const [time, setTime] = useState(new Date());
-    
+
     useEffect(() => {
       const timer = setInterval(() => {
         setTime(new Date());
       }, 1000);
-      
+
       return () => clearInterval(timer);
     }, []);
-    
+
     return (
-      <motion.div 
+      <motion.div
         className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-3"
         whileHover={{ scale: 1.03 }}
         transition={{ type: 'spring', stiffness: 300, damping: 10 }}
@@ -387,7 +387,7 @@ export default function Dashboard({ sidebarOpen }) {
               </div>
             </div>
           </div>
-          <motion.div 
+          <motion.div
             className="text-2xl font-bold text-gray-800 min-w-[40px] text-center"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1, repeat: Infinity, repeatType: "reverse" }}
@@ -408,7 +408,7 @@ export default function Dashboard({ sidebarOpen }) {
   const fetchTeams = async () => {
     // Don't fetch if company context is not available yet or is loading
     if (companyLoading || !currentCompany?.id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('teams')
@@ -432,7 +432,7 @@ export default function Dashboard({ sidebarOpen }) {
         setLoading(false);
         return;
       }
-      
+
       // Query to get reports with user and team information
       // Filter by company_id to ensure we only get reports from the current company
       let query = supabase
@@ -451,12 +451,12 @@ export default function Dashboard({ sidebarOpen }) {
       if (error) throw error;
 
       setReports(data || []);
-      
+
       // If today's date is selected, update missing reports
       if (date === new Date().toISOString().split('T')[0] && userTeamId) {
         identifyMissingReports(data || [], userTeamId);
       }
-      
+
       // Reset refs array to match new reports length
       reportRefs.current = Array(data && data.length || 0).fill().map((_, i) => reportRefs.current[i] || null);
     } catch (error) {
@@ -469,7 +469,7 @@ export default function Dashboard({ sidebarOpen }) {
 
   const fetchTeamMembers = async (teamId) => {
     if (!teamId || !currentCompany?.id) return;
-    
+
     setLoadingMissing(true);
     try {
       const { data, error } = await supabase
@@ -477,16 +477,16 @@ export default function Dashboard({ sidebarOpen }) {
         .select('id, name, role, avatar_url, team_id, company_id, teams:team_id (id, name)')
         .eq('team_id', teamId)
         .eq('company_id', currentCompany?.id); // Filter by company
-        
+
       if (error) throw error;
-      
+
       setTeamMembers(data || []);
-      
+
       // If reports are already loaded, identify missing reports
       if (reports.length > 0 && date === new Date().toISOString().split('T')[0]) {
         identifyMissingReports(reports, teamId);
       }
-      
+
     } catch (error) {
       console.error('Error fetching team members:', error);
     } finally {
@@ -497,7 +497,7 @@ export default function Dashboard({ sidebarOpen }) {
   // This function is used for fetching team members when team is selected in filter
   const fetchTeamMembersForStatus = async (teamId) => {
     if (!teamId || teamId === 'all' || !currentCompany?.id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -505,77 +505,77 @@ export default function Dashboard({ sidebarOpen }) {
         .eq('team_id', teamId)
         .eq('company_id', currentCompany?.id) // Filter by company
         .order('name', { ascending: true });
-        
+
       if (error) throw error;
-      
+
       setTeamMembers(data || []);
-      
+
     } catch (error) {
       console.error('Error fetching team members for status:', error);
     }
   };
-  
+
   // Effect to fetch team members when team filter changes
   useEffect(() => {
     if (selectedTeam !== 'all') {
       fetchTeamMembersForStatus(selectedTeam);
     }
   }, [selectedTeam]);
-  
+
   // Update missing reports when team members data changes
   useEffect(() => {
     if (teamMembers.length > 0 && date === new Date().toISOString().split('T')[0]) {
       identifyMissingReports(reports, userTeamId);
     }
   }, [teamMembers, reports, userTeamId, date]);
-  
+
   // Utility function to check if a team member has submitted a report
   const hasSubmittedReport = (userId) => {
     return reports.some(report => report.users && report.users.id === userId);
   };
-  
+
   const identifyMissingReports = (reportsList, teamId) => {
     // Only run for today's date
     if (date !== new Date().toISOString().split('T')[0]) return;
-    
+
     // Get IDs of users who have submitted reports
     const submittedUserIds = reportsList.map(report => report.users && report.users.id).filter(Boolean);
-    
+
     // Make sure we have team members loaded
     if (teamMembers.length === 0) {
       console.log("No team members loaded yet");
       return;
     }
-    
+
     // Get IDs of users who are on leave
     const onLeaveUserIds = onLeaveMembers.map(member => member.id).filter(Boolean);
-    
+
     // Filter team members who haven't submitted reports and are not on leave
     const missing = teamMembers.filter(
       member => !submittedUserIds.includes(member.id) && !onLeaveUserIds.includes(member.id)
     );
-    
+
     console.log("Team members:", teamMembers.length);
     console.log("Submitted IDs:", submittedUserIds);
     console.log("On leave IDs:", onLeaveUserIds);
     console.log("Missing reports:", missing.length);
-    
+
     setMissingReports(missing);
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchReports(date);
-    
+
     // If today's date is selected, also refresh team members data
     if (date === new Date().toISOString().split('T')[0] && userTeamId) {
       await fetchTeamMembers(userTeamId);
     }
-    
+
     setTimeout(() => setRefreshing(false), 600); // Add a small delay for animation
     setCurrentReportIndex(0); // Reset to first report after refresh
   };
-  
+
   const handleDragStart = (e) => {
     setDragStart(e.clientX);
   };
@@ -583,7 +583,7 @@ export default function Dashboard({ sidebarOpen }) {
   const handleDragEnd = (e) => {
     setDragEnd(e.clientX);
     const dragDistance = dragStart - dragEnd;
-    
+
     if (Math.abs(dragDistance) > 50) { // Minimum drag distance to trigger slide
       if (dragDistance > 0 && currentReportIndex < filteredReports.length - 1) {
         nextReport();
@@ -601,7 +601,7 @@ export default function Dashboard({ sidebarOpen }) {
       setTimeout(() => setIsAnimating(false), 400);
     }
   };
-  
+
   const prevReport = () => {
     if (currentReportIndex > 0 && !isAnimating) {
       setIsAnimating(true);
@@ -610,25 +610,25 @@ export default function Dashboard({ sidebarOpen }) {
       setTimeout(() => setIsAnimating(false), 400);
     }
   };
-  
+
   // Toggle fullscreen modal
   const openFullscreenModal = () => {
     setShowFullscreenModal(true);
     // Lock body scroll when fullscreen modal is open
     document.body.style.overflow = 'hidden';
   };
-  
+
   // Close fullscreen modal
   const closeFullscreenModal = () => {
     setShowFullscreenModal(false);
     // Restore body scroll when fullscreen modal is closed
     document.body.style.overflow = 'auto';
   };
-  
+
   const toggleViewMode = () => {
     setViewMode(prev => prev === 'carousel' ? 'list' : 'carousel');
   };
-  
+
   const handleNewReport = () => {
     navigate('/report');
   };
@@ -656,7 +656,7 @@ export default function Dashboard({ sidebarOpen }) {
   const fetchOnLeaveCount = async () => {
     // Don't fetch if company context is not available yet or is loading
     if (companyLoading || !currentCompany?.id) return;
-    
+
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error, count } = await supabase
@@ -707,10 +707,10 @@ export default function Dashboard({ sidebarOpen }) {
     fetchAnnouncementsCount();
     fetchNewMessagesCount();
     fetchProjectCount();
-    
+
     // Set up interval to refresh message count every 30 seconds
     const messageCountInterval = setInterval(fetchNewMessagesCount, 30000);
-    
+
     // Add event listener to update counts when page becomes visible
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -719,9 +719,9 @@ export default function Dashboard({ sidebarOpen }) {
         fetchAnnouncementsCount();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     // Cleanup interval and event listener on unmount
     return () => {
       if (messageCountInterval) {
@@ -737,7 +737,7 @@ export default function Dashboard({ sidebarOpen }) {
       fetchOnLeaveMembers();
     }
   }, [userTeamId, currentCompany?.id]);
-  
+
   // Function to fetch new messages count for the user
   const fetchNewMessagesCount = async () => {
     try {
@@ -748,14 +748,14 @@ export default function Dashboard({ sidebarOpen }) {
       // Try multiple approaches to get conversations for user
       let conversations = [];
       let approachUsed = 'none';
-      
+
       // Approach 1: Try chat_participants table
       try {
         const result = await supabase
           .from('chat_participants')
           .select('conversation_id')
           .eq('user_id', user.id);
-          
+
         if (!result.error && result.data && result.data.length > 0) {
           conversations = result.data;
           approachUsed = 'chat_participants';
@@ -773,7 +773,7 @@ export default function Dashboard({ sidebarOpen }) {
             .from('chat_conversation_list')
             .select('id as conversation_id')
             .eq('participant_user_id', user.id);
-            
+
           if (!result.error && result.data && result.data.length > 0) {
             conversations = result.data;
             approachUsed = 'chat_conversation_list';
@@ -792,7 +792,7 @@ export default function Dashboard({ sidebarOpen }) {
             .from('chat_conversations')
             .select('id as conversation_id')
             .contains('participants', [user.id]); // Assuming participants is an array column
-            
+
           if (!result.error && result.data && result.data.length > 0) {
             conversations = result.data;
             approachUsed = 'chat_conversations';
@@ -805,7 +805,7 @@ export default function Dashboard({ sidebarOpen }) {
       }
 
       console.log(`Using approach: ${approachUsed} with ${conversations.length} conversations`);
-      
+
       if (conversations.length === 0) {
         setNewMessagesCount(0);
         return;
@@ -813,14 +813,14 @@ export default function Dashboard({ sidebarOpen }) {
 
       // Get the latest read timestamp for each conversation for this user
       let lastReads = [];
-      
+
       try {
         if (approachUsed === 'chat_participants') {
           const readResult = await supabase
             .from('chat_participants')
             .select('conversation_id, last_read_at')
             .eq('user_id', user.id);
-            
+
           if (!readResult.error) {
             lastReads = readResult.data || [];
           }
@@ -834,7 +834,7 @@ export default function Dashboard({ sidebarOpen }) {
       for (const conv of conversations) {
         try {
           const convId = conv.conversation_id;
-          
+
           // Find the last read time for this conversation
           const lastReadRecord = lastReads && lastReads.find(lr => lr.conversation_id === convId);
           const lastReadTime = lastReadRecord && lastReadRecord.last_read_at;
@@ -870,7 +870,7 @@ export default function Dashboard({ sidebarOpen }) {
       setNewMessagesCount(0);
     }
   };
-  
+
   // Function to fetch project count for the user
   const fetchProjectCount = async () => {
     try {
@@ -891,13 +891,13 @@ export default function Dashboard({ sidebarOpen }) {
           .from('project_teams')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id);
-        
+
         if (altError) {
           console.error('Error fetching project teams:', altError);
           setProjectCount(0);
           return;
         }
-        
+
         setProjectCount(altCount || 0);
       } else {
         setProjectCount(count || 0);
@@ -943,10 +943,10 @@ export default function Dashboard({ sidebarOpen }) {
         console.error('Error fetching on-leave members:', leaveError);
         throw leaveError;
       }
-      
+
       const onLeaveUserIds = leaveData.map(item => item.users && item.users.id).filter(Boolean);
       setOnLeaveMembers(leaveData.map(item => item.users).filter(Boolean));
-      
+
       // Fetch all team members to determine available ones
       if (userTeamId) {
         const { data: allMembers, error: membersError } = await supabase
@@ -954,7 +954,7 @@ export default function Dashboard({ sidebarOpen }) {
           .select('id, name, avatar_url, role, company_id, teams:team_id (id, name)')
           .eq('team_id', userTeamId)
           .eq('company_id', currentCompany.id); // Filter by company
-          
+
         if (membersError) {
           console.error('Error fetching team members:', membersError);
         } else {
@@ -980,12 +980,12 @@ export default function Dashboard({ sidebarOpen }) {
   // Professional Dashboard Header component with Missing Reports summary
   const DashboardHeader = () => {
     // Calculate completion percentage for reports, excluding on-leave users
-    const reportCompletionPercentage = teamMembers.length > 0 
+    const reportCompletionPercentage = teamMembers.length > 0
       ? onLeaveMembers.length > 0
-        ? Math.round(((teamMembers.length - missingReports.length - onLeaveMembers.length) / (teamMembers.length - onLeaveMembers.length)) * 100) 
+        ? Math.round(((teamMembers.length - missingReports.length - onLeaveMembers.length) / (teamMembers.length - onLeaveMembers.length)) * 100)
         : Math.round(((teamMembers.length - missingReports.length) / teamMembers.length) * 100)
       : 0;
-      
+
     return (
       <div className="space-y-8 mb-8">
 
@@ -1012,7 +1012,7 @@ export default function Dashboard({ sidebarOpen }) {
                   {/* Header Section */}
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-6">
                     <div className="flex items-center gap-4">
-                      <motion.div 
+                      <motion.div
                         className="p-4 rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 backdrop-blur-sm text-white shadow-xl shadow-cyan-500/20 border border-white/20"
                         whileHover={{ scale: 1.05, rotate: 5 }}
                         transition={{ type: 'spring', stiffness: 400 }}
@@ -1024,7 +1024,7 @@ export default function Dashboard({ sidebarOpen }) {
                         <p className="text-gray-600 text-sm mt-1">Accelerate your workflow with one-click actions</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                       {/* Enhanced Team Availability Indicators - Clickable to open modal */}
                       <motion.button
@@ -1049,11 +1049,11 @@ export default function Dashboard({ sidebarOpen }) {
                               }
                             }
                           }
-                          
+
                           if (currentTeamId) {
                             await fetchOnLeaveMembers();
                           }
-                          
+
                           setTimeout(() => {
                             setShowOnLeaveModal(true);
                           }, 100);
@@ -1061,19 +1061,19 @@ export default function Dashboard({ sidebarOpen }) {
                       >
                         {/* Available members indicator */}
                         <div className="flex items-center gap-1.5">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full bg-emerald-500"
                             title={`Available: ${availableMembers.length} team members`}
                           >
                           </div>
                           <span className="text-xs font-bold text-emerald-700">{availableMembers.length}</span>
                         </div>
-                        
+
                         <div className="w-0.5 h-4 bg-gray-300"></div>
-                        
+
                         {/* On leave members indicator */}
                         <div className="flex items-center gap-1.5">
-                          <div 
+                          <div
                             className="w-3 h-3 rounded-full bg-amber-500"
                             title={`On Leave: ${onLeaveMembers.length} team members`}
                           >
@@ -1113,9 +1113,9 @@ export default function Dashboard({ sidebarOpen }) {
                       >
                         <FiBell className="w-5 h-5" />
                         {announcementsCount > 0 && (
-                          <motion.span 
+                          <motion.span
                             className="absolute -top-2 -right-2 text-[10px] font-bold bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-2 py-1 min-w-[20px] h-[20px] flex items-center justify-center shadow-lg border border-white/30 backdrop-blur-sm"
-                            animate={{ 
+                            animate={{
                               scale: [1, 1.2, 1],
                               boxShadow: [
                                 '0 0 0 0 rgba(239, 68, 68, 0.4)',
@@ -1123,8 +1123,8 @@ export default function Dashboard({ sidebarOpen }) {
                                 '0 0 0 0 rgba(239, 68, 68, 0.4)'
                               ]
                             }}
-                            transition={{ 
-                              repeat: Infinity, 
+                            transition={{
+                              repeat: Infinity,
                               duration: 2
                             }}
                           >
@@ -1132,7 +1132,7 @@ export default function Dashboard({ sidebarOpen }) {
                           </motion.span>
                         )}
                       </motion.button>
-                      
+
                       <motion.button
                         onClick={handleRefresh}
                         className="p-3 rounded-xl bg-white/30 backdrop-blur-sm border border-white/40 text-gray-700 hover:bg-white/40 transition-all shadow-md"
@@ -1147,23 +1147,23 @@ export default function Dashboard({ sidebarOpen }) {
                   </div>
 
                   {/* Action Cards Row - Horizontal scroll, no wrapping */}
-<div className="flex flex-nowrap gap-4 overflow-x-auto pt-6 pb-10 snap-x snap-mandatory no-scrollbar">
+                  <div className="flex flex-nowrap gap-4 overflow-x-auto pt-6 pb-10 snap-x snap-mandatory no-scrollbar">
                     {[
-                      { 
-                        key: 'chat', 
+                      {
+                        key: 'chat',
                         icon: (
                           <motion.div
                             initial={{ rotate: -15 }}
-                            animate={{ rotate: [ -15, 15, -15 ] }}
+                            animate={{ rotate: [-15, 15, -15] }}
                             transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
                           >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                           </motion.div>
-                        ), 
-                        onClick: () => navigate('/chat'), 
-                        label: 'Communications', 
+                        ),
+                        onClick: () => navigate('/chat'),
+                        label: 'Communications',
                         gradient: 'from-indigo-600 to-purple-600',
                         bg: 'bg-indigo-500/15',
                         border: 'border-indigo-500/40',
@@ -1171,22 +1171,22 @@ export default function Dashboard({ sidebarOpen }) {
                         hoverText: 'Open communications center',
                         count: newMessagesCount > 0 ? newMessagesCount : null
                       },
-                      { 
-                        key: 'notes', 
-                        icon: <FiFileText className="w-6 h-6" />, 
-                        onClick: () => navigate('/notes'), 
-                        label: 'Notes', 
+                      {
+                        key: 'notes',
+                        icon: <FiFileText className="w-6 h-6" />,
+                        onClick: () => navigate('/notes'),
+                        label: 'Notes',
                         gradient: 'from-emerald-500 to-teal-600',
                         bg: 'bg-emerald-500/10',
                         border: 'border-emerald-500/30',
                         glow: 'shadow-emerald-500/20',
                         hoverText: 'Take and manage notes'
                       },
-                      { 
-                        key: 'tasks', 
-                        icon: <FiList className="w-6 h-6" />, 
-                        onClick: () => navigate('/tasks?assignee=me'), 
-                        label: 'My Tasks', 
+                      {
+                        key: 'tasks',
+                        icon: <FiList className="w-6 h-6" />,
+                        onClick: () => navigate('/tasks?assignee=me'),
+                        label: 'My Tasks',
                         gradient: 'from-blue-500 to-indigo-600',
                         bg: 'bg-blue-500/10',
                         border: 'border-blue-500/30',
@@ -1219,17 +1219,17 @@ export default function Dashboard({ sidebarOpen }) {
                       },
 
                       {
-                        key: 'ach', 
-                        icon: <FiAward className="w-6 h-6" />, 
-                        onClick: () => navigate('/achievements'), 
-                        label: 'Achievements', 
+                        key: 'ach',
+                        icon: <FiAward className="w-6 h-6" />,
+                        onClick: () => navigate('/achievements'),
+                        label: 'Achievements',
                         gradient: 'from-amber-500 to-orange-600',
                         bg: 'bg-amber-500/10',
                         border: 'border-amber-500/30',
                         glow: 'shadow-amber-500/20'
-                      },                 
-                     
-                      { 
+                      },
+
+                      {
                         key: 'analytics',
                         icon: <FiBarChart2 className="w-6 h-6" />,
                         onClick: () => navigate('/analytics-dashboard'),
@@ -1240,12 +1240,12 @@ export default function Dashboard({ sidebarOpen }) {
                         glow: 'shadow-rose-500/20',
                         hoverText: 'View my analytics'
                       },
-                   
-                      { 
-                        key: 'profile', 
-                        icon: <FiUser className="w-6 h-6" />, 
-                        onClick: () => navigate('/profile'), 
-                        label: 'Profile', 
+
+                      {
+                        key: 'profile',
+                        icon: <FiUser className="w-6 h-6" />,
+                        onClick: () => navigate('/profile'),
+                        label: 'Profile',
                         gradient: 'from-fuchsia-500 to-pink-600',
                         bg: 'bg-fuchsia-500/10',
                         border: 'border-fuchsia-500/30',
@@ -1345,7 +1345,7 @@ export default function Dashboard({ sidebarOpen }) {
             </div>
           </div>
         </motion.div>
-        
+
         {/* Compact Missing Reports Summary */}
         <AnimatePresence initial={false}>
           {showMissingHeader && (
@@ -1358,159 +1358,159 @@ export default function Dashboard({ sidebarOpen }) {
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               layout
             >
-          {/* Compact Header with orange theme */}
-          <div className="px-4 py-2 border-b border-orange-100/50 bg-gradient-to-r from-orange-50/30 to-transparent">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500">
-                  <FiAlertCircle className="h-3.5 w-3.5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-semibold text-orange-800">Missing Reports</h3>
-                </div>
-              </div>
-              {isToday(date) && missingReports.length > 0 && (
-                <motion.button
-                  className="px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 shadow-sm shadow-orange-200"
-                  onClick={() => setShowMissingModal(true)}
-                  whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.2)" }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FiUsers className="h-2.5 w-2.5" />
-                  <span>View</span>
-                </motion.button>
-              )}
-            </div>
-          </div>
-          
-          {/* Compact Missing Reports List */}
-          {isToday(date) && missingReports.length > 0 && (
-            <div className="px-4 py-3 bg-white/50">
-              {showAllMissingReports ? (
-                // Vertical layout when showing all - using flex wrap for multiple rows
-                <div className="flex flex-wrap gap-2">
-                  {missingReports.map((member, index) => (
-                    <motion.div
-                      key={member.id}
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                        transition: {
-                          delay: index * 0.03
-                        }
-                      }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 25
-                      }}
-                      layout
-                    >
-                      <div
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group relative overflow-hidden"
-                        onClick={() => navigate(`/profile/${member.id}`)}
-                        title={`${member.name} - Missing report`}
-                      >
-                        {/* Animated background on hover */}
-                        <motion.div 
-                          className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        />
-                        <div className="relative z-10">
-                          {member.avatar_url ? (
-                            <img
-                              src={member.avatar_url}
-                              alt={member.name}
-                              className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
-                              {member.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
-                          {member.name}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-                  <motion.button
-                    type="button"
-                    className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300"
-                    onClick={() => {
-                      setIsAnimating(true);
-                      setShowAllMissingReports(false);
-                      setTimeout(() => setIsAnimating(false), 300);
-                    }}
-                    whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span className="text-xs font-semibold text-orange-700">Show Less</span>
-                  </motion.button>
-                </div>
-              ) : (
-                // Horizontal layout when showing limited items
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-                  {missingReports.slice(0, 6).map((member, index) => (
-                    <motion.div
-                      key={member.id}
-                      initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -10, scale: 0.95 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                      layout
-                    >
-                      <div
-                        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group flex-shrink-0 relative overflow-hidden"
-                        onClick={() => navigate(`/profile/${member.id}`)}
-                        title={`${member.name} - Missing report`}
-                      >
-                        {/* Animated background on hover */}
-                        <motion.div 
-                          className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        />
-                        <div className="relative z-10">
-                          {member.avatar_url ? (
-                            <img
-                              src={member.avatar_url}
-                              alt={member.name}
-                              className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
-                              {member.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
-                          {member.name}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-                  
-                  {missingReports.length > 6 && (
+              {/* Compact Header with orange theme */}
+              <div className="px-4 py-2 border-b border-orange-100/50 bg-gradient-to-r from-orange-50/30 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-400 to-orange-500">
+                      <FiAlertCircle className="h-3.5 w-3.5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-orange-800">Missing Reports</h3>
+                    </div>
+                  </div>
+                  {isToday(date) && missingReports.length > 0 && (
                     <motion.button
-                      type="button"
-                      className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300 flex-shrink-0"
-                      onClick={() => {
-                        setIsAnimating(true);
-                        setShowAllMissingReports(true);
-                        setTimeout(() => setIsAnimating(false), 300);
-                      }}
-                      whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
+                      className="px-3 py-1.5 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white rounded-lg text-xs font-medium transition-all duration-200 flex items-center gap-1 shadow-sm shadow-orange-200"
+                      onClick={() => setShowMissingModal(true)}
+                      whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.2)" }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <span className="text-xs font-semibold text-orange-700">+{missingReports.length - 6}</span>
+                      <FiUsers className="h-2.5 w-2.5" />
+                      <span>View</span>
                     </motion.button>
                   )}
                 </div>
+              </div>
+
+              {/* Compact Missing Reports List */}
+              {isToday(date) && missingReports.length > 0 && (
+                <div className="px-4 py-3 bg-white/50">
+                  {showAllMissingReports ? (
+                    // Vertical layout when showing all - using flex wrap for multiple rows
+                    <div className="flex flex-wrap gap-2">
+                      {missingReports.map((member, index) => (
+                        <motion.div
+                          key={member.id}
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                            transition: {
+                              delay: index * 0.03
+                            }
+                          }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 400,
+                            damping: 25
+                          }}
+                          layout
+                        >
+                          <div
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group relative overflow-hidden"
+                            onClick={() => navigate(`/profile/${member.id}`)}
+                            title={`${member.name} - Missing report`}
+                          >
+                            {/* Animated background on hover */}
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            />
+                            <div className="relative z-10">
+                              {member.avatar_url ? (
+                                <img
+                                  src={member.avatar_url}
+                                  alt={member.name}
+                                  className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
+                                  {member.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
+                              {member.name}
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+                      <motion.button
+                        type="button"
+                        className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300"
+                        onClick={() => {
+                          setIsAnimating(true);
+                          setShowAllMissingReports(false);
+                          setTimeout(() => setIsAnimating(false), 300);
+                        }}
+                        whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <span className="text-xs font-semibold text-orange-700">Show Less</span>
+                      </motion.button>
+                    </div>
+                  ) : (
+                    // Horizontal layout when showing limited items
+                    <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+                      {missingReports.slice(0, 6).map((member, index) => (
+                        <motion.div
+                          key={member.id}
+                          initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                          layout
+                        >
+                          <div
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-white to-orange-50 rounded-xl border border-orange-100/70 cursor-pointer hover:border-orange-300 hover:shadow-sm hover:shadow-orange-100/50 transition-all duration-300 group flex-shrink-0 relative overflow-hidden"
+                            onClick={() => navigate(`/profile/${member.id}`)}
+                            title={`${member.name} - Missing report`}
+                          >
+                            {/* Animated background on hover */}
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-orange-400/5 to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            />
+                            <div className="relative z-10">
+                              {member.avatar_url ? (
+                                <img
+                                  src={member.avatar_url}
+                                  alt={member.name}
+                                  className="w-6 h-6 rounded-full object-cover border-2 border-orange-200 group-hover:border-orange-300 transition-colors"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white font-medium text-xs border-2 border-orange-200 group-hover:border-orange-300 transition-colors">
+                                  {member.name.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-gray-700 truncate max-w-20 group-hover:text-orange-700 transition-colors relative z-10">
+                              {member.name}
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+
+                      {missingReports.length > 6 && (
+                        <motion.button
+                          type="button"
+                          className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl border border-orange-200/70 hover:from-orange-200 hover:to-amber-200 transition-all duration-300 flex-shrink-0"
+                          onClick={() => {
+                            setIsAnimating(true);
+                            setShowAllMissingReports(true);
+                            setTimeout(() => setIsAnimating(false), 300);
+                          }}
+                          whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(249, 115, 22, 0.15)" }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <span className="text-xs font-semibold text-orange-700">+{missingReports.length - 6}</span>
+                        </motion.button>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-          )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1518,8 +1518,16 @@ export default function Dashboard({ sidebarOpen }) {
     );
   };
 
+  // Calculate header styles based on sidebarMode
+  const getHeaderStyles = () => {
+    if (sidebarMode === 'hidden') return { left: '0px', width: '100%' };
+    if (sidebarMode === 'collapsed') return { left: '100px', width: 'calc(100% - 100px)' };
+    return { left: '272px', width: 'calc(100% - 272px)' };
+  };
+  const headerStyles = getHeaderStyles();
+
   return (
-    <motion.div 
+    <motion.div
       className="w-full"
       initial="hidden"
       animate="visible"
@@ -1530,11 +1538,12 @@ export default function Dashboard({ sidebarOpen }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-30 transition-all duration-200 apple-glass`}
+        className={`fixed top-16 right-0 z-30 transition-all duration-300 apple-glass`}
         id="dashboard-header"
         style={{
-          width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
-          transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+          left: headerStyles.left,
+          width: headerStyles.width,
+          transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
         {/* Apple-style background layers */}
@@ -1592,7 +1601,7 @@ export default function Dashboard({ sidebarOpen }) {
               </motion.div>
             </div>
 
-          
+
 
             {/* Right section - Apple-style action buttons */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
@@ -1705,660 +1714,654 @@ export default function Dashboard({ sidebarOpen }) {
 
       {/* Main Content: Daily Reports View with Carousel and Missing Reports */}
       <div className="grid grid-cols-1 gap-6 w-full mt-6 px-6">
-        
-          <motion.div
-            variants={itemVariants}
-            className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-xl border border-indigo-100 dark:border-indigo-900/20"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              whileHover={{ 
-              boxShadow: "0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.05)",
-              y: -3, 
-              transition: { type: "spring", stiffness: 400, damping: 15 }
-            }}
-          >
-            {/* Glass overlay decorative elements */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-emerald-400/10 rounded-full blur-3xl"></div>
-            
-            {/* Header */}
-            <div className="relative p-4 border-b border-indigo-100/50 bg-white/50 backdrop-blur-sm">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <motion.h2 
-                  className="text-2xl font-bold text-gray-800 flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg shadow-md text-white">
-                    <FiFileText className="h-5 w-5" />
-                  </div>
-                  <span className="bg-gradient-to-r from-gray-900 to-indigo-700 bg-clip-text text-transparent">
-                    Daily Standup Reports
-                  </span>
-                </motion.h2>
-                
-                {/* Quick Stats Bar */}
-                <div className="hidden md:flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-medium">
-                    <FiFileText className="w-3 h-3" />
-                    <span>{reports.length}</span>
-                    <span className="text-blue-600 ml-1">Reports</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-medium">
-                    <FiCheckCircle className="w-3 h-3" />
-                    <span>{teamMembers.length - missingReports.length}</span>
-                    <span className="text-emerald-600 ml-1">Submitted</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-xs font-medium">
-                    <FiAlertCircle className="w-3 h-3" />
-                    <span>{missingReports.length}</span>
-                    <span className="text-amber-600 ml-1">Missing</span>
-                  </div>
+
+        <motion.div
+          variants={itemVariants}
+          className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-white rounded-2xl shadow-xl border border-indigo-100 dark:border-indigo-900/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          whileHover={{
+            boxShadow: "0 20px 25px -5px rgba(79, 70, 229, 0.1), 0 10px 10px -5px rgba(79, 70, 229, 0.05)",
+            y: -3,
+            transition: { type: "spring", stiffness: 400, damping: 15 }
+          }}
+        >
+          {/* Glass overlay decorative elements */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-emerald-400/10 rounded-full blur-3xl"></div>
+
+          {/* Header */}
+          <div className="relative p-4 border-b border-indigo-100/50 bg-white/50 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <motion.h2
+                className="text-2xl font-bold text-gray-800 flex items-center gap-3"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <div className="p-2 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg shadow-md text-white">
+                  <FiFileText className="h-5 w-5" />
                 </div>
+                <span className="bg-gradient-to-r from-gray-900 to-indigo-700 bg-clip-text text-transparent">
+                  Daily Standup Reports
+                </span>
+              </motion.h2>
 
-                <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
-                  {/* Filter button moved here from top section */}
-                  <motion.button
-                    className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    animate={activeFilter ? "active" : ""}
-                    onClick={() => {
-                      setShowFilters(!showFilters);
-                      setActiveFilter(!activeFilter);
-                    }}
-                  >
-                    <FiFilter className={showFilters ? "text-primary-600" : ""} />
-                    {activeFilter && (
-                      <motion.span 
-                        className="absolute -top-1 -right-1 bg-primary-500 rounded-full w-2 h-2"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 500 }}
-                      />
-                    )}
-            </motion.button>
-                  
-                  {/* View mode switcher - redesigned */}
-                  <motion.div 
-                    className="relative overflow-hidden border border-indigo-200 rounded-full flex items-center p-1 bg-white shadow-sm"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <motion.div 
-                      className="absolute top-1 bottom-1 rounded-full bg-indigo-100"
-                      variants={switchVariants}
-                      animate={viewMode === 'carousel' ? 'list' : 'grid'}
-                      initial={false}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      style={{ width: '48%', height: '85%', left: viewMode === 'list' ? '1%' : '51%' }}
+              {/* Quick Stats Bar */}
+              <div className="hidden md:flex items-center gap-4">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-medium">
+                  <FiFileText className="w-3 h-3" />
+                  <span>{reports.length}</span>
+                  <span className="text-blue-600 ml-1">Reports</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-medium">
+                  <FiCheckCircle className="w-3 h-3" />
+                  <span>{teamMembers.length - missingReports.length}</span>
+                  <span className="text-emerald-600 ml-1">Submitted</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 text-xs font-medium">
+                  <FiAlertCircle className="w-3 h-3" />
+                  <span>{missingReports.length}</span>
+                  <span className="text-amber-600 ml-1">Missing</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 mt-2 md:mt-0">
+                {/* Filter button moved here from top section */}
+                <motion.button
+                  className={`p-2 rounded-lg border border-gray-300 text-gray-600 hover:text-primary-600 hover:border-primary-300 transition-colors relative ${activeFilter ? 'border-primary-300 text-primary-600 bg-primary-50' : ''}`}
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                  animate={activeFilter ? "active" : ""}
+                  onClick={() => {
+                    setShowFilters(!showFilters);
+                    setActiveFilter(!activeFilter);
+                  }}
+                >
+                  <FiFilter className={showFilters ? "text-primary-600" : ""} />
+                  {activeFilter && (
+                    <motion.span
+                      className="absolute -top-1 -right-1 bg-primary-500 rounded-full w-2 h-2"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 500 }}
                     />
-          <motion.button
-                      className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                        viewMode === 'list' 
-                          ? 'text-indigo-700' 
-                          : 'text-gray-600'
+                  )}
+                </motion.button>
+
+                {/* View mode switcher - redesigned */}
+                <motion.div
+                  className="relative overflow-hidden border border-indigo-200 rounded-full flex items-center p-1 bg-white shadow-sm"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <motion.div
+                    className="absolute top-1 bottom-1 rounded-full bg-indigo-100"
+                    variants={switchVariants}
+                    animate={viewMode === 'carousel' ? 'list' : 'grid'}
+                    initial={false}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{ width: '48%', height: '85%', left: viewMode === 'list' ? '1%' : '51%' }}
+                  />
+                  <motion.button
+                    className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${viewMode === 'list'
+                        ? 'text-indigo-700'
+                        : 'text-gray-600'
                       }`}
-            whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setViewMode('list')}
-                    >
-                      <FiList className={viewMode === 'list' ? 'text-indigo-600' : 'text-gray-500'} />
-                      <span>List</span>
-          </motion.button>
-          <motion.button
-                      className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                        viewMode === 'carousel' 
-                          ? 'text-indigo-700' 
-                          : 'text-gray-600'
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <FiList className={viewMode === 'list' ? 'text-indigo-600' : 'text-gray-500'} />
+                    <span>List</span>
+                  </motion.button>
+                  <motion.button
+                    className={`relative z-10 flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${viewMode === 'carousel'
+                        ? 'text-indigo-700'
+                        : 'text-gray-600'
                       }`}
-            whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setViewMode('carousel')}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setViewMode('carousel')}
+                  >
+                    <FiGrid className={viewMode === 'carousel' ? 'text-indigo-600' : 'text-gray-500'} />
+                    <span>Cards</span>
+                  </motion.button>
+                </motion.div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  {viewMode === 'carousel' && filteredReports.length > 0 && (
+                    <motion.button
+                      className="p-2.5 rounded-full border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 shadow-sm transition-colors flex items-center justify-center"
+                      whileHover={{ scale: 1.05, rotate: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={openFullscreenModal}
                     >
-                      <FiGrid className={viewMode === 'carousel' ? 'text-indigo-600' : 'text-gray-500'} />
-                      <span>Cards</span>
+                      <FiMaximize />
                     </motion.button>
-                  </motion.div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex gap-2">
-                    {viewMode === 'carousel' && filteredReports.length > 0 && (
-                      <motion.button
-                        className="p-2.5 rounded-full border border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 shadow-sm transition-colors flex items-center justify-center"
-                        whileHover={{ scale: 1.05, rotate: 5 }}
-            whileTap={{ scale: 0.95 }}
-                        onClick={openFullscreenModal}
-          >
-                        <FiMaximize />
-          </motion.button>
-                    )}
-          
-          <motion.button
-                      className="p-2.5 rounded-full border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors flex items-center justify-center"
-                      whileHover={{ scale: 1.05, rotate: -5 }}
-            whileTap={{ scale: 0.95 }}
-                      onClick={handleNewReport}
-          >
-                      <FiPlus />
-          </motion.button>
+                  )}
 
-          {/* Report History Button */}
-                      <motion.button
-                        onClick={() => navigate('/history')}
-                        title="Report History"
-                        className="relative p-2.5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm"
-                        whileHover={{
-                          scale: 1.1,
-                          y: -1,
-                          boxShadow: '0 20px 25px -5px rgba(79, 70, 229, 0.3), 0 10px 10px -5px rgba(79, 70, 229, 0.2)'
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {/* Animated background gradient on hover */}
-                        <motion.div
-                          className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"
-                        />
+                  <motion.button
+                    className="p-2.5 rounded-full border border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50 shadow-sm transition-colors flex items-center justify-center"
+                    whileHover={{ scale: 1.05, rotate: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleNewReport}
+                  >
+                    <FiPlus />
+                  </motion.button>
 
-                        {/* Icon container */}
-                        <div className="relative z-10">
-                          <FiClock className="w-4 h-4" />
-                        </div>
+                  {/* Report History Button */}
+                  <motion.button
+                    onClick={() => navigate('/history')}
+                    title="Report History"
+                    className="relative p-2.5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm"
+                    whileHover={{
+                      scale: 1.1,
+                      y: -1,
+                      boxShadow: '0 20px 25px -5px rgba(79, 70, 229, 0.3), 0 10px 10px -5px rgba(79, 70, 229, 0.2)'
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {/* Animated background gradient on hover */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300"
+                    />
 
-                        {/* Subtle glow effect */}
-                        <motion.div
-                          className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 opacity-0 hover:opacity-20 blur-md transition-opacity duration-300"
-                        />
-                      </motion.button>
-        </div>
+                    {/* Icon container */}
+                    <div className="relative z-10">
+                      <FiClock className="w-4 h-4" />
+                    </div>
+
+                    {/* Subtle glow effect */}
+                    <motion.div
+                      className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-400 to-purple-400 opacity-0 hover:opacity-20 blur-md transition-opacity duration-300"
+                    />
+                  </motion.button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Modern Filter Section with enhanced design and user avatars */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div 
-                  className="bg-gradient-to-br from-slate-50 to-indigo-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 p-6 mt-4 overflow-hidden"
-                  initial={{ opacity: 0, y: -20, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -20, height: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          >
-            {/* Decorative background elements */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl"></div>
-            <div className="absolute -bottom-20 -left-20 w-32 h-32 bg-gradient-to-br from-cyan-400/10 to-blue-400/15 rounded-full blur-2xl"></div>
-            
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* User Filter with avatar display */}
-              <motion.div 
-                className="space-y-2"
-                variants={filterVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="active"
-              >
-                <label htmlFor="user-filter" className="block text-sm font-semibold text-slate-700">
-                  User
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <FiUser className="h-4 w-4 text-slate-500" />
-                  </div>
-                  <select
-                    id="user-filter"
-                    value={selectedUser || 'all'}
-                    onChange={(e) => setSelectedUser(e.target.value === 'all' ? null : e.target.value)}
-                    className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
-                  >
-                    <option value="all">All Users</option>
-                    {teamMembers.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <FiChevronDown className="h-4 w-4 text-slate-400" />
-                  </div>
-                  
-                  {/* Avatar preview for selected user */}
-                  {selectedUser && (
-                    <div className="absolute inset-y-0 right-8 flex items-center">
-                      {(() => {
-                        const user = teamMembers.find(m => m.id === selectedUser);
-                        return user ? (
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-xs">
-                            {user.avatar_url ? (
-                              <img 
-                                src={user.avatar_url} 
-                                alt={user.name} 
-                                className="w-6 h-6 rounded-full object-cover border border-white/80"
-                              />
-                            ) : (
-                              user.name.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                        ) : null;
-                      })()}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-              
-              {/* Team Filter */}
-              <motion.div 
-                className="space-y-2"
-                variants={filterVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="active"
-                transition={{ delay: 0.1 }}
-              >
-                <label htmlFor="team-filter" className="block text-sm font-semibold text-slate-700">
-                  Team
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <FiUsers className="h-4 w-4 text-slate-500" />
-                  </div>
-                  <select
-                    id="team-filter"
-                    value={selectedTeam}
-                    onChange={(e) => setSelectedTeam(e.target.value)}
-                    className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
-                  >
-                    <option value="all">All Teams</option>
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <FiChevronDown className="h-4 w-4 text-slate-400" />
-                  </div>
-                </div>
-              </motion.div>
-              
-              {/* Date Filter */}
-              <motion.div 
-                className="space-y-2"
-                variants={filterVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="active"
-                transition={{ delay: 0.2 }}
-              >
-                <label htmlFor="date-filter" className="block text-sm font-semibold text-slate-700">
-                  Date
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                    <FiCalendar className="h-4 w-4 text-slate-500" />
-                  </div>
-                  <input
-                    type="date"
-                    id="date-filter"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="pl-10 pr-3 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm"
-                    max={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-              </motion.div>
-            </div>
-            
-            <motion.div 
-              className="mt-6 flex justify-end gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <motion.button
-                className="px-6 py-3 border border-slate-300 text-slate-700 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm font-medium transition-all duration-300 flex items-center gap-2"
-                whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setShowFilters(false);
-                }}
-              >
-                <FiX className="h-4 w-4" />
-                <span>Cancel</span>
-              </motion.button>
-              <motion.button
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 font-medium transition-all duration-300 flex items-center gap-2"
-                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.3)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  handleRefresh();
-                  setShowFilters(false);
-                }}
-              >
-                <FiRefreshCw className="h-4 w-4" />
-                <span>Apply Filters</span>
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-            
-            
-            
-            {/* Reports Content */}
-            <div className="p-4 bg-white/90 backdrop-blur-sm min-h-[300px]">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <div className="w-16 h-16 relative">
-                    <div className="absolute inset-0 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
-                    <div className="absolute inset-4 rounded-full border-t-2 border-emerald-500 animate-spin animate-delay-300"></div>
-                    <div className="absolute inset-8 rounded-full border-t-2 border-amber-500 animate-spin animate-delay-500"></div>
-                  </div>
-                  <p className="mt-4 text-gray-500 animate-pulse">Loading reports...</p>
-                </div>
-              ) : filteredReports.length === 0 ? (
-                <motion.div 
-                  className="flex flex-col items-center justify-center py-16 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                >
-                  <div className="w-20 h-20 mb-4 text-gray-300">
-                    <FiFileText className="w-full h-full" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">No reports found</h3>
-                  <p className="text-gray-500 max-w-md mb-6">
-                    {isToday(date) ? 
-                      "No standup reports have been submitted for today yet." : 
-                      `No standup reports were found for ${formatDate(date)}.`}
-                  </p>
-          <motion.button
-                    onClick={handleNewReport}
-                    className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-medium text-sm flex items-center gap-2"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <FiPlus className="h-4 w-4" />
-                    Add Your Report
-          </motion.button>
-                </motion.div>
-              ) : viewMode === 'carousel' ? (
-                <div className="relative">
-                  <AnimatePresence mode="wait">
+          {/* Modern Filter Section with enhanced design and user avatars */}
+          <AnimatePresence>
+            {showFilters && (
               <motion.div
-                key={currentReportIndex}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                      className="relative"
-                    >
-                      <div className="bg-gradient-to-b from-indigo-50/50 to-transparent rounded-xl overflow-hidden p-5 shadow-sm">
-                        <div className="flex flex-col sm:flex-row gap-4 items-start mb-6">
-                          <div className="flex items-center gap-3">
-                            {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.image_url ? (
-                              <img
-                                src={filteredReports[currentReportIndex].users.image_url}
-                                alt={filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
-                                {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name && filteredReports[currentReportIndex].users.name.charAt(0) || "U"}
+                className="bg-gradient-to-br from-slate-50 to-indigo-50/30 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 p-6 mt-4 overflow-hidden"
+                initial={{ opacity: 0, y: -20, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -20, height: 0 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              >
+                {/* Decorative background elements */}
+                <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-indigo-400/15 to-purple-400/10 rounded-full blur-2xl"></div>
+                <div className="absolute -bottom-20 -left-20 w-32 h-32 bg-gradient-to-br from-cyan-400/10 to-blue-400/15 rounded-full blur-2xl"></div>
+
+                <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* User Filter with avatar display */}
+                  <motion.div
+                    className="space-y-2"
+                    variants={filterVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="active"
+                  >
+                    <label htmlFor="user-filter" className="block text-sm font-semibold text-slate-700">
+                      User
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <FiUser className="h-4 w-4 text-slate-500" />
+                      </div>
+                      <select
+                        id="user-filter"
+                        value={selectedUser || 'all'}
+                        onChange={(e) => setSelectedUser(e.target.value === 'all' ? null : e.target.value)}
+                        className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
+                      >
+                        <option value="all">All Users</option>
+                        {teamMembers.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <FiChevronDown className="h-4 w-4 text-slate-400" />
+                      </div>
+
+                      {/* Avatar preview for selected user */}
+                      {selectedUser && (
+                        <div className="absolute inset-y-0 right-8 flex items-center">
+                          {(() => {
+                            const user = teamMembers.find(m => m.id === selectedUser);
+                            return user ? (
+                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 text-white text-xs">
+                                {user.avatar_url ? (
+                                  <img
+                                    src={user.avatar_url}
+                                    alt={user.name}
+                                    className="w-6 h-6 rounded-full object-cover border border-white/80"
+                                  />
+                                ) : (
+                                  user.name.charAt(0).toUpperCase()
+                                )}
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
-                            )}
-                        <div>
-                              <h3 className="font-semibold text-gray-900">
-                                {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name || "Unknown User"}
-                              </h3>
-                              <div className="text-sm text-gray-500 flex items-center gap-1.5">
-                                <FiClock className="h-3 w-3" />
-                                <span>
-                                  {filteredReports[currentReportIndex].created_at 
-                                    ? format(new Date(filteredReports[currentReportIndex].created_at), "MMM d, h:mm a") 
-                                    : "Unknown time"}
-                                </span>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Team Filter */}
+                  <motion.div
+                    className="space-y-2"
+                    variants={filterVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="active"
+                    transition={{ delay: 0.1 }}
+                  >
+                    <label htmlFor="team-filter" className="block text-sm font-semibold text-slate-700">
+                      Team
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <FiUsers className="h-4 w-4 text-slate-500" />
+                      </div>
+                      <select
+                        id="team-filter"
+                        value={selectedTeam}
+                        onChange={(e) => setSelectedTeam(e.target.value)}
+                        className="pl-10 pr-10 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm appearance-none"
+                      >
+                        <option value="all">All Teams</option>
+                        {teams.map((team) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <FiChevronDown className="h-4 w-4 text-slate-400" />
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Date Filter */}
+                  <motion.div
+                    className="space-y-2"
+                    variants={filterVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover="active"
+                    transition={{ delay: 0.2 }}
+                  >
+                    <label htmlFor="date-filter" className="block text-sm font-semibold text-slate-700">
+                      Date
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <FiCalendar className="h-4 w-4 text-slate-500" />
+                      </div>
+                      <input
+                        type="date"
+                        id="date-filter"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        className="pl-10 pr-3 py-3 border border-slate-200/70 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 block w-full shadow-sm text-sm bg-white/90 backdrop-blur-sm"
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  className="mt-6 flex justify-end gap-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.button
+                    className="px-6 py-3 border border-slate-300 text-slate-700 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm font-medium transition-all duration-300 flex items-center gap-2"
+                    whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)" }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setShowFilters(false);
+                    }}
+                  >
+                    <FiX className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </motion.button>
+                  <motion.button
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 font-medium transition-all duration-300 flex items-center gap-2"
+                    whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.3)" }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      handleRefresh();
+                      setShowFilters(false);
+                    }}
+                  >
+                    <FiRefreshCw className="h-4 w-4" />
+                    <span>Apply Filters</span>
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+
+
+
+          {/* Reports Content */}
+          <div className="p-4 bg-white/90 backdrop-blur-sm min-h-[300px]">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-16 h-16 relative">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-indigo-500 animate-spin"></div>
+                  <div className="absolute inset-4 rounded-full border-t-2 border-emerald-500 animate-spin animate-delay-300"></div>
+                  <div className="absolute inset-8 rounded-full border-t-2 border-amber-500 animate-spin animate-delay-500"></div>
+                </div>
+                <p className="mt-4 text-gray-500 animate-pulse">Loading reports...</p>
+              </div>
+            ) : filteredReports.length === 0 ? (
+              <motion.div
+                className="flex flex-col items-center justify-center py-16 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              >
+                <div className="w-20 h-20 mb-4 text-gray-300">
+                  <FiFileText className="w-full h-full" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No reports found</h3>
+                <p className="text-gray-500 max-w-md mb-6">
+                  {isToday(date) ?
+                    "No standup reports have been submitted for today yet." :
+                    `No standup reports were found for ${formatDate(date)}.`}
+                </p>
+                <motion.button
+                  onClick={handleNewReport}
+                  className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors font-medium text-sm flex items-center gap-2"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiPlus className="h-4 w-4" />
+                  Add Your Report
+                </motion.button>
+              </motion.div>
+            ) : viewMode === 'carousel' ? (
+              <div className="relative">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentReportIndex}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                    className="relative"
+                  >
+                    <div className="bg-gradient-to-b from-indigo-50/50 to-transparent rounded-xl overflow-hidden p-5 shadow-sm">
+                      <div className="flex flex-col sm:flex-row gap-4 items-start mb-6">
+                        <div className="flex items-center gap-3">
+                          {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.image_url ? (
+                            <img
+                              src={filteredReports[currentReportIndex].users.image_url}
+                              alt={filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
+                              {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name && filteredReports[currentReportIndex].users.name.charAt(0) || "U"}
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name || "Unknown User"}
+                            </h3>
+                            <div className="text-sm text-gray-500 flex items-center gap-1.5">
+                              <FiClock className="h-3 w-3" />
+                              <span>
+                                {filteredReports[currentReportIndex].created_at
+                                  ? format(new Date(filteredReports[currentReportIndex].created_at), "MMM d, h:mm a")
+                                  : "Unknown time"}
+                              </span>
+                            </div>
                           </div>
+                        </div>
+
+                        <div className="ml-auto flex flex-wrap gap-2 items-center">
+                          {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name && (
+                            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
+                              <FiUsers className="mr-1 h-3 w-3" />
+                              {filteredReports[currentReportIndex].users.teams.name}
+                            </span>
+                          )}
+
+                          {(() => {
+                            const blockers = filteredReports[currentReportIndex]?.blockers;
+                            const isEmptyContent = !blockers ||
+                              blockers === null ||
+                              blockers === undefined ||
+                              blockers.toString().trim() === '' ||
+                              blockers.toString().trim() === '<p></p>' ||
+                              blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            const hasBlockers = !isEmptyContent;
+                            return (
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${hasBlockers
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-emerald-100 text-emerald-700"
+                                }`}>
+                                {hasBlockers
+                                  ? <FiAlertCircle className="mr-1 h-3 w-3" />
+                                  : <FiCheckCircle className="mr-1 h-3 w-3" />}
+                                {hasBlockers ? "Has Blockers" : "No Blockers"}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
-                      
-                          <div className="ml-auto flex flex-wrap gap-2 items-center">
-                            {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name && (
-                              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
-                                <FiUsers className="mr-1 h-3 w-3" />
-                                {filteredReports[currentReportIndex].users.teams.name}
-                              </span>
-                            )}
-                            
-                            {(() => {
-                              const blockers = filteredReports[currentReportIndex]?.blockers;
-                              const isEmptyContent = !blockers ||
-                                                    blockers === null ||
-                                                    blockers === undefined ||
-                                                    blockers.toString().trim() === '' ||
-                                                    blockers.toString().trim() === '<p></p>' ||
-                                                    blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                              const hasBlockers = !isEmptyContent;
-                              return (
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
-                                  hasBlockers
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-emerald-100 text-emerald-700"
-                                }`}>
-                                  {hasBlockers
-                                    ? <FiAlertCircle className="mr-1 h-3 w-3" />
-                                    : <FiCheckCircle className="mr-1 h-3 w-3" />}
-                                  {hasBlockers ? "Has Blockers" : "No Blockers"}
-                                </span>
-                              );
-                            })()}
+
+                      <div className={`grid gap-6 flex-1 ${(() => {
+                        const blockers = filteredReports[currentReportIndex]?.blockers;
+                        const isEmptyContent = !blockers ||
+                          blockers === null ||
+                          blockers === undefined ||
+                          blockers.toString().trim() === '' ||
+                          blockers.toString().trim() === '<p></p>' ||
+                          blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                        return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
+                      })()}`}>
+                        <motion.div
+                          className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                          whileHover={{ scale: 1.02, y: -3 }}
+                        >
+                          <div className="bg-indigo-600 text-white px-4 py-1">
+                            <h4 className="font-medium flex items-center justify-center text-sm">
+                              <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">1</span>
+                              Yesterday
+                            </h4>
                           </div>
-                    </div>
-                    
-                        <div className={`grid gap-6 flex-1 ${(() => {
-                          const blockers = filteredReports[currentReportIndex]?.blockers;
-                          const isEmptyContent = !blockers ||
-                                                blockers === null ||
-                                                blockers === undefined ||
-                                                blockers.toString().trim() === '' ||
-                                                blockers.toString().trim() === '<p></p>' ||
-                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                          return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
-                        })()}`}>
-                        <motion.div 
-                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
-                            whileHover={{ scale: 1.02, y: -3 }}
-                          >
-                            <div className="bg-indigo-600 text-white px-4 py-1">
-                              <h4 className="font-medium flex items-center justify-center text-sm">
-                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">1</span>
-                            Yesterday
-                          </h4>
+                          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[273px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
+                            <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                              {filteredReports[currentReportIndex].yesterday ? (
+                                <RichTextDisplay
+                                  content={filteredReports[currentReportIndex].yesterday}
+                                  onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                />
+                              ) : (
+                                <span className="italic text-gray-400 flex items-center gap-2">
+                                  <FiInfo className="h-4 w-4" />
+                                  No update provided
+                                </span>
+                              )}
                             </div>
-                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-5 h-[273px] flex flex-col group-hover:from-indigo-100 group-hover:to-indigo-50 transition-colors">
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
-                                {filteredReports[currentReportIndex].yesterday ? (
-                                  <RichTextDisplay 
-                                    content={filteredReports[currentReportIndex].yesterday}
-                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
-                                  />
-                                ) : (
-                                  <span className="italic text-gray-400 flex items-center gap-2">
-                                    <FiInfo className="h-4 w-4" />
-                                    No update provided
-                                  </span>
-                                )}
-                              </div>
                           </div>
                         </motion.div>
-                        
-                        <motion.div 
-                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
-                            whileHover={{ scale: 1.02, y: -3 }}
-                          >
-                            <div className="bg-emerald-600 text-white px-4 py-1">
-                              <h4 className="font-medium flex items-center justify-center text-sm">
-                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">2</span>
-                            Today
-                          </h4>
+
+                        <motion.div
+                          className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                          whileHover={{ scale: 1.02, y: -3 }}
+                        >
+                          <div className="bg-emerald-600 text-white px-4 py-1">
+                            <h4 className="font-medium flex items-center justify-center text-sm">
+                              <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">2</span>
+                              Today
+                            </h4>
+                          </div>
+                          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[273px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
+                            <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
+                              {filteredReports[currentReportIndex].today ? (
+                                <RichTextDisplay
+                                  content={filteredReports[currentReportIndex].today}
+                                  onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                />
+                              ) : (
+                                <span className="italic text-gray-400 flex items-center gap-2">
+                                  <FiInfo className="h-4 w-4" />
+                                  No update provided
+                                </span>
+                              )}
                             </div>
-                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 h-[273px] flex flex-col group-hover:from-emerald-100 group-hover:to-emerald-50 transition-colors">
-                              <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
-                                {filteredReports[currentReportIndex].today ? (
-                                  <RichTextDisplay 
-                                    content={filteredReports[currentReportIndex].today}
-                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
-                                  />
-                                ) : (
-                                  <span className="italic text-gray-400 flex items-center gap-2">
-                                    <FiInfo className="h-4 w-4" />
-                                    No update provided
-                                  </span>
-                                )}
-                              </div>
                           </div>
                         </motion.div>
 
                         {(() => {
                           const blockers = filteredReports[currentReportIndex]?.blockers;
                           const isEmptyContent = !blockers ||
-                                                blockers === null ||
-                                                blockers === undefined ||
-                                                blockers.toString().trim() === '' ||
-                                                blockers.toString().trim() === '<p></p>' ||
-                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            blockers === null ||
+                            blockers === undefined ||
+                            blockers.toString().trim() === '' ||
+                            blockers.toString().trim() === '<p></p>' ||
+                            blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
                           return !isEmptyContent;
                         })() && (
-                          <motion.div
-                            className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
-                            whileHover={{ scale: 1.02, y: -3 }}
-                          >
-                            <div className="px-4 py-1 text-white bg-amber-600">
-                              <h4 className="font-medium flex items-center justify-center text-sm">
-                                <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">3</span>
-                            Blockers
-                          </h4>
-                            </div>
-                            <div className="p-5 h-[273px] flex flex-col transition-colors bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50">
-                              <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-amber-700">
-                                <RichTextDisplay
-                                  content={filteredReports[currentReportIndex].blockers}
-                                  onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
-                                />
+                            <motion.div
+                              className="rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group"
+                              whileHover={{ scale: 1.02, y: -3 }}
+                            >
+                              <div className="px-4 py-1 text-white bg-amber-600">
+                                <h4 className="font-medium flex items-center justify-center text-sm">
+                                  <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">3</span>
+                                  Blockers
+                                </h4>
                               </div>
-                          </div>
-                        </motion.div>
-                      )}
+                              <div className="p-5 h-[273px] flex flex-col transition-colors bg-gradient-to-br from-amber-50 to-amber-100/50 group-hover:from-amber-100 group-hover:to-amber-50">
+                                <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-amber-700">
+                                  <RichTextDisplay
+                                    content={filteredReports[currentReportIndex].blockers}
+                                    onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }}
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
                       </div>
                     </div>
-              </motion.div>
-            </AnimatePresence>
-                  
-                  {/* Navigation controls */}
-                  <div className="flex justify-between mt-6">
-                <motion.button 
-                      onClick={prevReport}
-                      disabled={filteredReports.length <= 1}
-                      className={`p-3 rounded-full shadow-md flex items-center justify-center ${
-                        filteredReports.length <= 1 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Navigation controls */}
+                <div className="flex justify-between mt-6">
+                  <motion.button
+                    onClick={prevReport}
+                    disabled={filteredReports.length <= 1}
+                    className={`p-3 rounded-full shadow-md flex items-center justify-center ${filteredReports.length <= 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
                       } transition-all`}
-                      whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
-                      whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
-                    >
-                      <FiChevronLeft className="h-5 w-5" />
-                    </motion.button>
-                    
-                    <div className="flex items-center justify-center">
-                      <span className="text-sm text-gray-600">
-                        {filteredReports.length > 0 ? `${currentReportIndex + 1} of ${filteredReports.length}` : '0 of 0'}
-                      </span>
-        </div>
-                    
-                    <motion.button 
-                      onClick={nextReport}
-                      disabled={filteredReports.length <= 1}
-                      className={`p-3 rounded-full shadow-md flex items-center justify-center ${
-                        filteredReports.length <= 1 
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                          : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-                      } transition-all`}
-                      whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
-                      whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
-                    >
-                      <FiChevronRight className="h-5 w-5" />
-                    </motion.button>
-          </div>
-                </div>
-              ) : (
-                // List view
-        <motion.div 
-                  className="flex flex-col space-y-4"
-                  variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-                  {filteredReports.map((report) => (
-            <motion.div 
-              key={report.id} 
-                      className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 overflow-hidden"
-              variants={itemVariants}
-                      whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
-                    >
-                      <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 pb-4 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                          {report.users && report.users.image_url ? (
-                            <img
-                              src={report.users.image_url}
-                              alt={report.users && report.users.name}
-                              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
-                              {report.users && report.users.name && report.users.name.charAt(0) || "U"}
-                    </div>
-                            )}
-                    <div>
-                            <h3 className="font-medium text-gray-900">{report.users && report.users.name || "Unknown User"}</h3>
-                            <div className="text-xs text-gray-500 flex items-center gap-1">
-                              <FiClock className="h-3 w-3" />
-                              <span>{report.created_at ? format(new Date(report.created_at), "MMM d, h:mm a") : "Unknown time"}</span>
-                    </div>
+                    whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
+                    whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
+                  >
+                    <FiChevronLeft className="h-5 w-5" />
+                  </motion.button>
+
+                  <div className="flex items-center justify-center">
+                    <span className="text-sm text-gray-600">
+                      {filteredReports.length > 0 ? `${currentReportIndex + 1} of ${filteredReports.length}` : '0 of 0'}
+                    </span>
                   </div>
+
+                  <motion.button
+                    onClick={nextReport}
+                    disabled={filteredReports.length <= 1}
+                    className={`p-3 rounded-full shadow-md flex items-center justify-center ${filteredReports.length <= 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-indigo-600 hover:bg-indigo-50 hover:scale-105'
+                      } transition-all`}
+                    whileHover={filteredReports.length > 1 ? { scale: 1.1 } : {}}
+                    whileTap={filteredReports.length > 1 ? { scale: 0.9 } : {}}
+                  >
+                    <FiChevronRight className="h-5 w-5" />
+                  </motion.button>
                 </div>
-                
-                        <div className="flex flex-wrap gap-2 items-center">
-                          {report.users && report.users.teams && report.users.teams.name && (
-                            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
-                              <FiUsers className="mr-1 h-3 w-3" />
-                              {report.users.teams.name}
-                            </span>
-                          )}
-                          
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${
-                            (() => {
-                              const blockers = report?.blockers;
-                              const isEmptyContent = !blockers ||
-                                                    blockers === null ||
-                                                    blockers === undefined ||
-                                                    blockers.toString().trim() === '' ||
-                                                    blockers.toString().trim() === '<p></p>' ||
-                                                    blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                              return !isEmptyContent ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
-                            })()
-                          }`}>
-                            {(() => {
+              </div>
+            ) : (
+              // List view
+              <motion.div
+                className="flex flex-col space-y-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {filteredReports.map((report) => (
+                  <motion.div
+                    key={report.id}
+                    className="bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all p-5 overflow-hidden"
+                    variants={itemVariants}
+                    whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+                  >
+                    <div className="flex flex-col sm:flex-row gap-4 items-start mb-4 pb-4 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        {report.users && report.users.image_url ? (
+                          <img
+                            src={report.users.image_url}
+                            alt={report.users && report.users.name}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-primary-600 text-white flex items-center justify-center font-medium shadow-sm">
+                            {report.users && report.users.name && report.users.name.charAt(0) || "U"}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-medium text-gray-900">{report.users && report.users.name || "Unknown User"}</h3>
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <FiClock className="h-3 w-3" />
+                            <span>{report.created_at ? format(new Date(report.created_at), "MMM d, h:mm a") : "Unknown time"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {report.users && report.users.teams && report.users.teams.name && (
+                          <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium inline-flex items-center">
+                            <FiUsers className="mr-1 h-3 w-3" />
+                            {report.users.teams.name}
+                          </span>
+                        )}
+
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center ${(() => {
                             const blockers = report?.blockers;
                             const isEmptyContent = !blockers ||
-                                                  blockers === null ||
-                                                  blockers === undefined ||
-                                                  blockers.toString().trim() === '' ||
-                                                  blockers.toString().trim() === '<p></p>' ||
-                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                              blockers === null ||
+                              blockers === undefined ||
+                              blockers.toString().trim() === '' ||
+                              blockers.toString().trim() === '<p></p>' ||
+                              blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            return !isEmptyContent ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
+                          })()
+                          }`}>
+                          {(() => {
+                            const blockers = report?.blockers;
+                            const isEmptyContent = !blockers ||
+                              blockers === null ||
+                              blockers === undefined ||
+                              blockers.toString().trim() === '' ||
+                              blockers.toString().trim() === '<p></p>' ||
+                              blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
                             const hasBlockers = !isEmptyContent;
                             return (
                               <>
@@ -2369,88 +2372,88 @@ export default function Dashboard({ sidebarOpen }) {
                               </>
                             );
                           })()}
-                          </span>
-                  </div>
-                  </div>
-                      
-                      <div className={`grid gap-3 ${(() => {
-                            const blockers = report?.blockers;
-                            const isEmptyContent = !blockers ||
-                                                  blockers === null ||
-                                                  blockers === undefined ||
-                                                  blockers.toString().trim() === '' ||
-                                                  blockers.toString().trim() === '<p></p>' ||
-                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                            return !isEmptyContent ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
-                          })()}`}>
-                        <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
-                          <span className="font-medium text-indigo-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
-                            <span className="w-4 h-4 rounded-full bg-indigo-200 flex items-center justify-center text-[10px] font-bold text-indigo-700">1</span>
-                            Yesterday:
-                          </span>
-                          <div className="text-gray-700 break-words text-sm">
-                            {report.yesterday ? (
-                              <RichTextDisplay content={report.yesterday} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
-                            ) : (
-                              <span className="italic text-gray-400">No update</span>
-                            )}
-                          </div>
+                        </span>
                       </div>
-                        
-                        <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
-                          <span className="font-medium text-emerald-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
-                            <span className="w-4 h-4 rounded-full bg-emerald-200 flex items-center justify-center text-[10px] font-bold text-emerald-700">2</span>
-                            Today:
-                          </span>
-                          <div className="text-gray-700 break-words text-sm">
-                            {report.today ? (
-                              <RichTextDisplay content={report.today} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
-                            ) : (
-                              <span className="italic text-gray-400">No update</span>
-                            )}
-                          </div>
                     </div>
-                    
-                        {(() => {
-                            const blockers = report?.blockers;
-                            const isEmptyContent = !blockers ||
-                                                  blockers === null ||
-                                                  blockers === undefined ||
-                                                  blockers.toString().trim() === '' ||
-                                                  blockers.toString().trim() === '<p></p>' ||
-                                                  blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                            return !isEmptyContent;
-                          })() && (
-                          <div className="rounded-lg p-3 bg-amber-50 border border-amber-100 hover:bg-amber-100/50 hover:bg-opacity-70 transition-colors"> 
-                          <span className="font-medium block mb-0.5 flex items-center justify-center gap-1 text-amber-700 text-xs">
-                            <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-amber-200 text-amber-700">
-                              3
-                            </span>
-                            Blockers:
-                          </span>
-                          <div className="break-words text-sm text-amber-700">
-                            <RichTextDisplay content={report.blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
-                          </div>
+
+                    <div className={`grid gap-3 ${(() => {
+                      const blockers = report?.blockers;
+                      const isEmptyContent = !blockers ||
+                        blockers === null ||
+                        blockers === undefined ||
+                        blockers.toString().trim() === '' ||
+                        blockers.toString().trim() === '<p></p>' ||
+                        blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                      return !isEmptyContent ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
+                    })()}`}>
+                      <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 hover:bg-indigo-100/50 transition-colors">
+                        <span className="font-medium text-indigo-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
+                          <span className="w-4 h-4 rounded-full bg-indigo-200 flex items-center justify-center text-[10px] font-bold text-indigo-700">1</span>
+                          Yesterday:
+                        </span>
+                        <div className="text-gray-700 break-words text-sm">
+                          {report.yesterday ? (
+                            <RichTextDisplay content={report.yesterday} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                          ) : (
+                            <span className="italic text-gray-400">No update</span>
+                          )}
                         </div>
-                      )}
+                      </div>
+
+                      <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100 hover:bg-emerald-100/50 transition-colors">
+                        <span className="font-medium text-emerald-700 block mb-0.5 flex items-center justify-center gap-1 text-xs">
+                          <span className="w-4 h-4 rounded-full bg-emerald-200 flex items-center justify-center text-[10px] font-bold text-emerald-700">2</span>
+                          Today:
+                        </span>
+                        <div className="text-gray-700 break-words text-sm">
+                          {report.today ? (
+                            <RichTextDisplay content={report.today} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                          ) : (
+                            <span className="italic text-gray-400">No update</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {(() => {
+                        const blockers = report?.blockers;
+                        const isEmptyContent = !blockers ||
+                          blockers === null ||
+                          blockers === undefined ||
+                          blockers.toString().trim() === '' ||
+                          blockers.toString().trim() === '<p></p>' ||
+                          blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                        return !isEmptyContent;
+                      })() && (
+                          <div className="rounded-lg p-3 bg-amber-50 border border-amber-100 hover:bg-amber-100/50 hover:bg-opacity-70 transition-colors">
+                            <span className="font-medium block mb-0.5 flex items-center justify-center gap-1 text-amber-700 text-xs">
+                              <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold bg-amber-200 text-amber-700">
+                                3
+                              </span>
+                              Blockers:
+                            </span>
+                            <div className="break-words text-sm text-amber-700">
+                              <RichTextDisplay content={report.blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            </div>
+                          </div>
+                        )}
                     </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-                    
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+
         {/* Missing Reports Widget - Redesigned to be more compact and professional */}
-        <motion.div 
+        <motion.div
           id="missing-reports-section"
           className="w-full max-w-5xl mx-auto mb-10 hidden"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.div 
-            variants={itemVariants} 
+          <motion.div
+            variants={itemVariants}
             className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
             whileHover={{ boxShadow: "0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(79, 70, 229, 0.1)" }}
             transition={{ duration: 0.3 }}
@@ -2467,7 +2470,7 @@ export default function Dashboard({ sidebarOpen }) {
                   <p className="text-gray-500 text-sm">Team members who haven't submitted their daily standup</p>
                 </div>
               </div>
-              
+
               {isToday(date) && !loadingMissing && (
                 <div className="flex items-center mt-2 sm:mt-0">
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex items-center px-3 py-1.5 mr-2">
@@ -2480,7 +2483,7 @@ export default function Dashboard({ sidebarOpen }) {
                       <div className="font-bold text-lg text-indigo-700">{missingReports.length}</div>
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={handleRefresh}
                     className="text-xs bg-indigo-600 text-white rounded-lg px-3 py-1.5 flex items-center hover:bg-indigo-700 transition-colors"
@@ -2491,7 +2494,7 @@ export default function Dashboard({ sidebarOpen }) {
                 </div>
               )}
             </div>
-            
+
             <div className="relative">
               {isToday(date) ? (
                 <>
@@ -2520,17 +2523,17 @@ export default function Dashboard({ sidebarOpen }) {
                     <div className="p-5">
                       <div className="flex flex-wrap justify-between items-center mb-4">
                         <p className="text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-1.5 rounded-full inline-flex items-center">
-                          <FiAlertCircle className="mr-1 h-4 w-4" /> 
+                          <FiAlertCircle className="mr-1 h-4 w-4" />
                           {missingReports.length} {missingReports.length === 1 ? 'person' : 'people'} still need to submit a report
                         </p>
-                        
+
                         {missingReports.length > 0 && (
                           <div className="mt-2 sm:mt-0 flex">
                             <div className="text-xs bg-indigo-50 text-indigo-700 rounded-lg px-3 py-1.5 mr-2 flex items-center">
                               <span className="inline-block w-2 h-2 rounded-full bg-indigo-600 mr-1"></span>
                               <span>Last updated: {format(new Date(), 'h:mm a')}</span>
                             </div>
-                            
+
                             <button
                               onClick={() => handleNewReport()}
                               className="text-xs bg-indigo-600 text-white rounded-lg px-3 py-1.5 flex items-center hover:bg-indigo-700 transition-colors"
@@ -2541,7 +2544,7 @@ export default function Dashboard({ sidebarOpen }) {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {missingReports.map((member, index) => (
                           <motion.div
@@ -2584,7 +2587,7 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                     <h3 className="text-xl font-bold text-gray-700 mb-2">Historical View</h3>
                     <p className="text-gray-500 mb-4">Missing reports are only available for the current date.</p>
-                    <motion.button 
+                    <motion.button
                       onClick={() => setDate(new Date().toISOString().split('T')[0])}
                       className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors text-sm font-medium"
                       whileHover={{ scale: 1.03 }}
@@ -2599,10 +2602,10 @@ export default function Dashboard({ sidebarOpen }) {
           </motion.div>
         </motion.div>
       </div>
-      
+
       {/* Fullscreen Modal */}
       <AnimatePresence>
-      {showFullscreenModal && (
+        {showFullscreenModal && (
           <motion.div
             className="fixed inset-0 bg-black/95 z-50 p-6 flex items-center justify-center"
             initial={{ opacity: 0 }}
@@ -2610,41 +2613,41 @@ export default function Dashboard({ sidebarOpen }) {
             exit={{ opacity: 0 }}
             onClick={closeFullscreenModal}
           >
-          <motion.button
+            <motion.button
               className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={closeFullscreenModal}
             >
               <FiX className="h-6 w-6" />
-          </motion.button>
-          
-            <div 
-              className="w-full max-w-5xl mx-auto" 
+            </motion.button>
+
+            <div
+              className="w-full max-w-5xl mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {filteredReports.length > 0 && (
                 <div className="relative bg-white rounded-2xl overflow-hidden shadow-2xl">
-          <AnimatePresence initial={false} custom={slideDirection} mode="wait">
-            <motion.div
-              key={currentReportIndex}
-              custom={slideDirection}
-              initial={(direction) => ({
+                  <AnimatePresence initial={false} custom={slideDirection} mode="wait">
+                    <motion.div
+                      key={currentReportIndex}
+                      custom={slideDirection}
+                      initial={(direction) => ({
                         x: direction === 'right' ? '100%' : '-100%',
                         opacity: 0
-              })}
-              animate={{
-                x: 0,
+                      })}
+                      animate={{
+                        x: 0,
                         opacity: 1
-              }}
-              exit={(direction) => ({
+                      }}
+                      exit={(direction) => ({
                         x: direction === 'right' ? '-100%' : '100%',
                         opacity: 0
-              })}
-              transition={{
-                type: 'spring',
-                stiffness: 300,
-                damping: 30,
+                      })}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 300,
+                        damping: 30,
                         mass: 0.8
                       }}
                       className="p-8"
@@ -2655,110 +2658,110 @@ export default function Dashboard({ sidebarOpen }) {
                       <div className="flex items-center gap-5 mb-8 pb-5 border-b border-gray-200">
                         <div className="h-20 w-20 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-3xl shadow-md">
                           {filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name && filteredReports[currentReportIndex].users.name.charAt(0) || '?'}
-                      </div>
-                      <div>
+                        </div>
+                        <div>
                           <h3 className="text-3xl font-bold text-gray-900 mb-1">{filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.name || 'Unknown User'}</h3>
                           <div className="text-gray-500 flex items-center gap-3 text-lg">
-                          <span className="font-medium">{filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name || 'Unassigned'}</span>
+                            <span className="font-medium">{filteredReports[currentReportIndex].users && filteredReports[currentReportIndex].users.teams && filteredReports[currentReportIndex].users.teams.name || 'Unassigned'}</span>
                             <span>&bull;</span>
                             <span className="flex items-center">
                               <FiClock className="mr-1.5" />
-                              {filteredReports[currentReportIndex].created_at 
-                                ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a') 
+                              {filteredReports[currentReportIndex].created_at
+                                ? format(parseISO(filteredReports[currentReportIndex].created_at), 'MMM d, h:mm a')
                                 : ''}
                             </span>
-                      </div>
-                    </div>
-                    
+                          </div>
+                        </div>
+
                         <div className="ml-auto text-sm bg-primary-50 text-primary-700 rounded-full px-4 py-1 border border-primary-100">
                           Report {currentReportIndex + 1} of {filteredReports.length}
+                        </div>
                       </div>
-                  </div>
-                  
+
                       <div className={`grid gap-8 ${(() => {
-                          const blockers = filteredReports[currentReportIndex]?.blockers;
-                          const isEmptyContent = !blockers ||
-                                                blockers === null ||
-                                                blockers === undefined ||
-                                                blockers.toString().trim() === '' ||
-                                                blockers.toString().trim() === '<p></p>' ||
-                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
-                          return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
-                        })()}`}>
+                        const blockers = filteredReports[currentReportIndex]?.blockers;
+                        const isEmptyContent = !blockers ||
+                          blockers === null ||
+                          blockers === undefined ||
+                          blockers.toString().trim() === '' ||
+                          blockers.toString().trim() === '<p></p>' ||
+                          blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                        return !isEmptyContent ? 'md:grid-cols-3' : 'md:grid-cols-2';
+                      })()}`}>
                         <div className="bg-primary-50 rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border border-primary-100">
                           <h4 className="font-semibold text-primary-700 mb-1 flex items-center justify-center text-sm border-b border-primary-100 pb-0.5">
                             <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">1</span>
-                          Yesterday
-                        </h4>
+                            Yesterday
+                          </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
                             {filteredReports[currentReportIndex].yesterday ? (
                               <RichTextDisplay content={filteredReports[currentReportIndex].yesterday} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
                             ) : (
                               <span className="italic text-gray-400">No update</span>
                             )}
+                          </div>
                         </div>
-                        </div>
-                        
+
                         <div className="bg-green-50 rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border border-green-100">
                           <h4 className="font-semibold text-green-700 mb-1 flex items-center justify-center text-sm border-b border-green-100 pb-0.5">
                             <span className="h-5 w-5 rounded-full bg-white/20 flex items-center justify-center mr-2 text-xs font-bold">2</span>
-                          Today
-                        </h4>
+                            Today
+                          </h4>
                           <div className="text-gray-700 flex-1 overflow-y-auto custom-scrollbar px-1">
                             {filteredReports[currentReportIndex].today ? (
                               <RichTextDisplay content={filteredReports[currentReportIndex].today} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
                             ) : (
                               <span className="italic text-gray-400">No update</span>
                             )}
+                          </div>
                         </div>
-                        </div>
-                        
+
                         {(() => {
                           const blockers = filteredReports[currentReportIndex]?.blockers;
                           const isEmptyContent = !blockers ||
-                                                blockers === null ||
-                                                blockers === undefined ||
-                                                blockers.toString().trim() === '' ||
-                                                blockers.toString().trim() === '<p></p>' ||
-                                                blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
+                            blockers === null ||
+                            blockers === undefined ||
+                            blockers.toString().trim() === '' ||
+                            blockers.toString().trim() === '<p></p>' ||
+                            blockers.toString().trim().replace(/<p><\/p>/g, '').trim() === '';
                           return !isEmptyContent;
                         })() && (
-                          <div className="rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border bg-red-50 border-red-100">
-                            <h4 className="font-semibold mb-1 flex items-center justify-center text-sm pb-0.5 border-b text-red-700 border-red-100">
-                              <span className="h-5 w-5 rounded-full flex items-center justify-center mr-2 text-xs font-bold bg-red-100 text-red-700">3</span>
-                            Blockers
-                          </h4>
-                            <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-red-700">
-                              <RichTextDisplay content={filteredReports[currentReportIndex].blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                            <div className="rounded-xl p-6 shadow-sm h-[390px] flex flex-col hover:shadow-md transition-all duration-300 border bg-red-50 border-red-100">
+                              <h4 className="font-semibold mb-1 flex items-center justify-center text-sm pb-0.5 border-b text-red-700 border-red-100">
+                                <span className="h-5 w-5 rounded-full flex items-center justify-center mr-2 text-xs font-bold bg-red-100 text-red-700">3</span>
+                                Blockers
+                              </h4>
+                              <div className="flex-1 overflow-y-auto custom-scrollbar px-1 text-red-700">
+                                <RichTextDisplay content={filteredReports[currentReportIndex].blockers} onTaskClick={(id) => { setActiveTaskId(id); setShowTaskModal(true); }} />
+                              </div>
                             </div>
-                        </div>
-                      )}
-                  </div>
-                      
+                          )}
+                      </div>
+
                       {/* Navigation indicator */}
                       <div className="flex items-center justify-center mt-8 gap-2">
                         {filteredReports.map((_, idx) => (
-                          <div 
-                            key={idx} 
+                          <div
+                            key={idx}
                             className={`h-3 rounded-full transition-all cursor-pointer hover:scale-110 ${idx === currentReportIndex ? 'bg-primary-500 w-8' : 'bg-gray-300 w-3 hover:bg-gray-400'}`}
                             onClick={() => setCurrentReportIndex(idx)}
-              />
-            ))}
-          </div>
+                          />
+                        ))}
+                      </div>
                     </motion.div>
                   </AnimatePresence>
-                  
+
                   {/* Left/Right Buttons for Navigation */}
                   {filteredReports.length > 1 && (
                     <>
-                      <button 
+                      <button
                         className={`absolute left-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-lg hover:shadow-xl ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
                         onClick={prevReport}
                         disabled={currentReportIndex === 0}
                       >
                         <FiChevronLeft size={28} />
                       </button>
-                      <button 
+                      <button
                         className={`absolute right-5 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 text-gray-600 hover:bg-primary-100 hover:text-primary-700 transition-colors shadow-lg hover:shadow-xl ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'opacity-100 cursor-pointer'}`}
                         onClick={nextReport}
                         disabled={currentReportIndex === filteredReports.length - 1}
@@ -2767,14 +2770,14 @@ export default function Dashboard({ sidebarOpen }) {
                       </button>
                     </>
                   )}
-      </div>
-    )}
-    </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      
+
 
       {/* Modal for Missing Reports */}
       <UserListModal
@@ -2811,7 +2814,7 @@ export default function Dashboard({ sidebarOpen }) {
             exit={{ opacity: 0 }}
             onClick={() => setShowOnLeaveModal(false)}
           >
-            <motion.div 
+            <motion.div
               className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
@@ -2821,7 +2824,7 @@ export default function Dashboard({ sidebarOpen }) {
               <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-bold text-gray-900">Team Availability</h2>
-                  <button 
+                  <button
                     className="text-gray-400 hover:text-gray-600"
                     onClick={() => setShowOnLeaveModal(false)}
                   >
@@ -2849,7 +2852,7 @@ export default function Dashboard({ sidebarOpen }) {
                   </span>
                 </div>
               </div>
-              
+
               <div className="p-6 overflow-y-auto max-h-[60vh]">
                 {/* On Leave Members Section */}
                 {onLeaveMembers.length > 0 && (
@@ -2863,8 +2866,8 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                     <div className="space-y-3">
                       {onLeaveMembers.map((member) => (
-                        <div 
-                          key={member.id} 
+                        <div
+                          key={member.id}
                           className="flex items-center gap-4 p-3 bg-red-50 rounded-lg border border-red-100 hover:bg-red-100 cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
                           onClick={() => navigate(`/profile/${member.id}`)}
                         >
@@ -2890,7 +2893,7 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Available Members Section */}
                 {availableMembers.length > 0 && (
                   <div>
@@ -2903,8 +2906,8 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                     <div className="space-y-3">
                       {availableMembers.map((member) => (
-                        <div 
-                          key={member.id} 
+                        <div
+                          key={member.id}
                           className="flex items-center gap-4 p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
                           onClick={() => navigate(`/profile/${member.id}`)}
                         >
@@ -2930,7 +2933,7 @@ export default function Dashboard({ sidebarOpen }) {
                     </div>
                   </div>
                 )}
-                
+
                 {/* No members message */}
                 {onLeaveMembers.length === 0 && availableMembers.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
@@ -2943,7 +2946,7 @@ export default function Dashboard({ sidebarOpen }) {
           </motion.div>
         )}
       </AnimatePresence>
-   
+
     </motion.div>
   );
 }

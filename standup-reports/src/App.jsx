@@ -105,7 +105,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState('expanded'); // 'expanded', 'collapsed', 'hidden'
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
@@ -137,7 +137,7 @@ function App() {
 
     return () => subscription.unsubscribe();
   }, []);
-  
+
   // Fetch user role from database
   const fetchUserRole = async (userId) => {
     try {
@@ -146,7 +146,7 @@ function App() {
         .select('role')
         .eq('id', userId)
         .single();
-      
+
       if (error) throw error;
       setUserRole(data?.role || 'member');
     } catch (error) {
@@ -177,6 +177,19 @@ function App() {
     return <AppLoader />;
   }
 
+  const getMarginLeft = () => {
+    switch (sidebarMode) {
+      case 'expanded':
+        return 'clamp(292px, 20vw, 308px)';
+      case 'collapsed':
+        return 'clamp(120px, 10vw, 116px)';
+      case 'hidden':
+        return '0px';
+      default:
+        return 'clamp(292px, 20vw, 308px)';
+    }
+  };
+
   return (
     <Router>
       {session ? (
@@ -184,22 +197,24 @@ function App() {
           <>
             <Navbar
               user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
-              sidebarOpen={sidebarOpen}
-              setSidebarOpen={setSidebarOpen}
+              sidebarMode={sidebarMode}
+              setSidebarMode={setSidebarMode}
             />
             <div className="flex pt-16">
-              <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }} />
+              <Sidebar
+                mode={sidebarMode}
+                setMode={setSidebarMode}
+                user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
+              />
               <div className="flex-1 flex min-h-screen">
                 <div
                   className="flex-1 bg-gray-50 overflow-hidden relative"
                   style={{
-                    marginLeft: sidebarOpen
-                      ? 'clamp(292px, 20vw, 308px)'  // Responsive: 292px (mobile) to 308px (desktop) - 20px buffer (reduced for 272px sidebar)
-                      : 'clamp(120px, 10vw, 116px)',   // Responsive: 120px (mobile) to 116px (desktop) - 20px buffer
+                    marginLeft: getMarginLeft(),
                     transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                 >
-                  <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+                  <AppContent session={session} userRole={userRole} sidebarMode={sidebarMode} />
                 </div>
               </div>
             </div>
@@ -207,7 +222,7 @@ function App() {
         </CompanyProvider>
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30">
-          <AppContent session={session} userRole={userRole} sidebarOpen={sidebarOpen} />
+          <AppContent session={session} userRole={userRole} sidebarMode={sidebarMode} />
         </div>
       )}
     </Router>
@@ -215,8 +230,9 @@ function App() {
 }
 
 // Separate component to handle dynamic content based on routes
-function AppContent({ session, userRole, sidebarOpen }) {
+function AppContent({ session, userRole, sidebarMode }) {
   const location = useLocation();
+  const sidebarOpen = sidebarMode === 'expanded';
 
   return (
     <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30" : "min-h-screen"}>
@@ -235,10 +251,11 @@ function AppContent({ session, userRole, sidebarOpen }) {
             ) : (
               // Authenticated routes
               <>
-                {/* CompanyProvider needs to be handled differently */}\n                <Route path="/dashboard" element={
+                {/* CompanyProvider needs to be handled differently */}
+                <Route path="/dashboard" element={
                   <PageTransition>
                     <div className="w-full py-6">
-                      <Dashboard sidebarOpen={sidebarOpen} />
+                      <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                     </div>
                   </PageTransition>
                 } />
@@ -303,7 +320,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/leave-calendar" element={
                   <PageTransition>
                     <div className="w-full py-6">
-                      <LeaveCalendar sidebarOpen={sidebarOpen} />
+                      <LeaveCalendar sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                     </div>
                   </PageTransition>
                 } />
@@ -324,14 +341,14 @@ function AppContent({ session, userRole, sidebarOpen }) {
                 <Route path="/tasks" element={
                   <PageTransition>
                     <div className="w-full py-6">
-                      <TasksPage sidebarOpen={sidebarOpen} />
+                      <TasksPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                     </div>
                   </PageTransition>
                 } />
                 <Route path="/notifications" element={
                   <PageTransition>
                     <div className="w-full h-full">
-                      <NotificationCenterV2 sidebarOpen={sidebarOpen} />
+                      <NotificationCenterV2 sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                     </div>
                   </PageTransition>
                 } />
@@ -354,17 +371,17 @@ function AppContent({ session, userRole, sidebarOpen }) {
                     </div>
                   </PageTransition>
                 } />
-                
+
                 {/* Chat Route */}
                 <Route path="/chat" element={<ChatPage />} />
-                
+
                 {/* Notes Route */}
                 <Route path="/notes" element={
                   <PageTransition>
-                    <NotesPage sidebarOpen={sidebarOpen} />
+                    <NotesPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                   </PageTransition>
                 } />
-                
+
                 {/* Profile Routes */}
                 <Route path="/profile" element={
                   <PageTransition>
@@ -394,7 +411,7 @@ function AppContent({ session, userRole, sidebarOpen }) {
 // Page transition wrapper component
 function PageTransition({ children }) {
   const location = useLocation();
-  
+
   return (
     <motion.div
       key={location.pathname}

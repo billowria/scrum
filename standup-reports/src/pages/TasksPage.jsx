@@ -30,9 +30,11 @@ import {
   FiTarget,
   FiBarChart2,
   FiLayers,
-  FiX
+  FiX,
+  FiPlay
 } from 'react-icons/fi';
 import { createTaskNotification } from '../utils/notificationHelper';
+import { getSprintStatus } from '../utils/sprintUtils';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
 import CreateTaskModalNew from '../components/tasks/CreateTaskModalNew';
@@ -199,7 +201,7 @@ const FilterTag = ({ label, color, onRemove }) => (
   </motion.div>
 );
 
-export default function TasksPage({ sidebarOpen }) {
+export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const { currentCompany } = useCompany();
   // State management
   const [view, setView] = useState('tasks'); // 'tasks' or 'sprint'
@@ -972,9 +974,23 @@ export default function TasksPage({ sidebarOpen }) {
     </motion.div>
   );
 
+  // Calculate header styles based on sidebar mode
+  const getHeaderStyles = () => {
+    if (sidebarMode === 'hidden') {
+      return { left: '0px', width: '100%' };
+    }
+    if (sidebarMode === 'collapsed') {
+      return { left: '100px', width: 'calc(100% - 100px)' };
+    }
+    // Default to expanded
+    return { left: '272px', width: 'calc(100% - 272px)' };
+  };
+
+  const headerStyles = getHeaderStyles();
+
   return (
     <motion.div
-      className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-green-50"
+      className="h-full flex flex-col relative"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -982,20 +998,20 @@ export default function TasksPage({ sidebarOpen }) {
       {/* Creative Modern Tasks Header */}
       {showHeader && (
         <motion.div
-          className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-[35] transition-all duration-200`}
+          className="fixed top-16 right-0 z-[35]"
           id="tasks-header"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -30, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 25 }}
           style={{
-            width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
-            transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
+            left: headerStyles.left,
+            width: headerStyles.width,
+            transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
           {/* Light Glassmorphism Header with Glowing Effects */}
           <div className="relative bg-white/40 backdrop-blur-2xl border-b border-white/30 shadow-2xl overflow-hidden">
-            {/* Animated glowing background */}
             <div className="absolute inset-0">
               {/* Gradient glow layers */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-100/30 via-purple-100/30 to-pink-100/30"></div>
@@ -1064,7 +1080,7 @@ export default function TasksPage({ sidebarOpen }) {
             {/* Content */}
             <div className="relative px-4 sm:px-6 lg:px-8 pt-4 pb-4">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                {/* Left Section - Brand & Title */}
+                {/* Left Section - Brand & Title - Dynamic based on view */}
                 <div className="flex items-center gap-3 sm:gap-4">
                   {/* Glowing animated logo/icon */}
                   <motion.div
@@ -1073,16 +1089,32 @@ export default function TasksPage({ sidebarOpen }) {
                     transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
                     {/* Multi-layer glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-2xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                    <div className="relative bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-2.5 rounded-2xl shadow-xl backdrop-blur-sm border border-white/20">
-                      <FiGrid className="w-5 h-5 text-white" />
+                    <div className={`absolute inset-0 rounded-2xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity ${view === 'sprint'
+                      ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400'
+                      : 'bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400'
+                      }`}></div>
+                    <div className={`absolute inset-0 rounded-2xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity ${view === 'sprint'
+                      ? 'bg-gradient-to-r from-purple-300 to-pink-400'
+                      : 'bg-gradient-to-r from-cyan-300 to-blue-400'
+                      }`}></div>
+                    <div className={`relative p-2.5 rounded-2xl shadow-xl backdrop-blur-sm border border-white/20 ${view === 'sprint'
+                      ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500'
+                      : 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500'
+                      }`}>
+                      {view === 'sprint' ? (
+                        <FiTarget className="w-5 h-5 text-white" />
+                      ) : (
+                        <FiGrid className="w-5 h-5 text-white" />
+                      )}
                     </div>
                     {/* Glowing orbiting dots */}
                     {[...Array(3)].map((_, i) => (
                       <motion.div
                         key={i}
-                        className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-teal-400 rounded-full"
+                        className={`absolute w-2 h-2 rounded-full ${view === 'sprint'
+                          ? 'bg-gradient-to-r from-purple-400 to-pink-400'
+                          : 'bg-gradient-to-r from-blue-400 to-teal-400'
+                          }`}
                         animate={{
                           rotate: [0, 360],
                           opacity: [0.5, 1, 0.5],
@@ -1100,14 +1132,19 @@ export default function TasksPage({ sidebarOpen }) {
                           filter: 'blur(0.5px)',
                         }}
                       >
-                        <div className="w-full h-full bg-white rounded-full shadow-lg shadow-blue-400/50" />
+                        <div className={`w-full h-full rounded-full shadow-lg ${view === 'sprint'
+                          ? 'bg-white shadow-purple-400/50'
+                          : 'bg-white shadow-blue-400/50'
+                          }`} />
                       </motion.div>
                     ))}
                   </motion.div>
 
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Tasks</h1>
+                      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+                        {view === 'sprint' ? 'Sprint Management' : 'Tasks'}
+                      </h1>
                       <motion.div
                         className="px-2 py-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white text-xs font-bold rounded-full shadow-lg"
                         animate={{ scale: [1, 1.05, 1] }}
@@ -1116,7 +1153,9 @@ export default function TasksPage({ sidebarOpen }) {
                         PRO
                       </motion.div>
                     </div>
-                    <p className="text-sm text-gray-600 hidden sm:block">Manage your workflow with style</p>
+                    <p className="text-sm text-gray-600 hidden sm:block">
+                      {view === 'sprint' ? 'Plan, track, and deliver with precision' : 'Manage your workflow with style'}
+                    </p>
                   </div>
                 </div>
 
@@ -1249,35 +1288,101 @@ export default function TasksPage({ sidebarOpen }) {
 
                 {/* Right Section - Glowing Stats & Actions */}
                 <div className="flex items-center gap-2 sm:gap-3">
-                  {/* Glowing Stats Pills */}
+                  {/* Glowing Stats Pills - Dynamic based on view with hover-expandable labels */}
                   <div className="hidden md:flex items-center gap-2">
-                    {[
-                      { value: taskStats.total, label: 'Total', colors: ['from-blue-400', 'to-cyan-400'], icon: FiGrid },
-                      { value: taskStats.inProgress, label: 'In Progress', colors: ['from-amber-400', 'to-orange-400'], icon: FiClock },
-                      { value: taskStats.completed, label: 'Done', colors: ['from-emerald-400', 'to-green-400'], icon: FiCheckCircle }
-                    ].map((stat, index) => (
-                      <motion.div
-                        key={stat.label}
-                        className={`relative bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg overflow-hidden backdrop-blur-sm`}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.1 + index * 0.1 }}
-                        whileHover={{ y: -2, scale: 1.05 }}
-                      >
-                        {/* Glowing effect */}
-                        <div className={`absolute inset-0 bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} rounded-full opacity-50 blur-md`}></div>
-                        {/* Shimmer effect */}
+                    {view === 'sprint' ? (
+                      // Sprint view stats: Active Sprint, Total Projects, Completed Sprint
+                      [
+                        { value: sprints.filter(s => getSprintStatus(s) === 'Active').length, label: 'Active Sprints', colors: ['from-emerald-400', 'to-green-400'], icon: FiPlay },
+                        { value: projects.length, label: 'Total Projects', colors: ['from-purple-400', 'to-pink-400'], icon: FiFolder },
+                        { value: sprints.filter(s => getSprintStatus(s) === 'Completed').length, label: 'Completed Sprints', colors: ['from-blue-400', 'to-cyan-400'], icon: FiCheckCircle }
+                      ].map((stat, index) => (
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                          animate={{ x: ['-100%', '100%'] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
-                        />
-                        <div className="relative flex items-center gap-1">
-                          <stat.icon className="w-3 h-3" />
-                          <span>{stat.value}</span>
-                        </div>
-                      </motion.div>
-                    ))}
+                          key={stat.label}
+                          className={`relative bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default`}
+                          variants={{
+                            hidden: { opacity: 0, x: 20 },
+                            visible: { opacity: 1, x: 0 },
+                            hover: { y: -2 }
+                          }}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover="hover"
+                          transition={{ delay: 0.1 + index * 0.1 }}
+                        >
+                          {/* Glowing effect */}
+                          <div className={`absolute inset-0 bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} rounded-full opacity-50 blur-md`}></div>
+                          {/* Shimmer effect */}
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                          />
+                          <div className="relative flex items-center gap-1.5">
+                            <stat.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="text-xs font-bold">{stat.value}</span>
+                            {/* Expandable label on hover */}
+                            <motion.span
+                              className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                              variants={{
+                                hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                                visible: { width: 0, opacity: 0, marginLeft: 0 },
+                                hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                              }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            >
+                              {stat.label}
+                            </motion.span>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      // Task view stats: In Progress, Completed, Due Date (Overdue)
+                      [
+                        { value: taskStats.inProgress, label: 'In Progress', colors: ['from-blue-400', 'to-indigo-400'], icon: FiTrendingUp },
+                        { value: taskStats.completed, label: 'Completed', colors: ['from-emerald-400', 'to-green-400'], icon: FiCheckCircle },
+                        { value: taskStats.overdue, label: 'Overdue Tasks', colors: ['from-amber-400', 'to-orange-400'], icon: FiCalendar }
+                      ].map((stat, index) => (
+                        <motion.div
+                          key={stat.label}
+                          className={`relative bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default`}
+                          variants={{
+                            hidden: { opacity: 0, x: 20 },
+                            visible: { opacity: 1, x: 0 },
+                            hover: { y: -2 }
+                          }}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover="hover"
+                          transition={{ delay: 0.1 + index * 0.1 }}
+                        >
+                          {/* Glowing effect */}
+                          <div className={`absolute inset-0 bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} rounded-full opacity-50 blur-md`}></div>
+                          {/* Shimmer effect */}
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                          />
+                          <div className="relative flex items-center gap-1.5">
+                            <stat.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="text-xs font-bold">{stat.value}</span>
+                            {/* Expandable label on hover */}
+                            <motion.span
+                              className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                              variants={{
+                                hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                                visible: { width: 0, opacity: 0, marginLeft: 0 },
+                                hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                              }}
+                              transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            >
+                              {stat.label}
+                            </motion.span>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
 
                   {/* Glowing Action Buttons */}
@@ -1285,42 +1390,42 @@ export default function TasksPage({ sidebarOpen }) {
                     {/* Refresh button with glow */}
                     <motion.button
                       className="relative p-2.5 bg-white/40 backdrop-blur-xl border border-white/50 text-gray-700 rounded-xl hover:bg-white/60 transition-all group"
-                      onClick={fetchTasks}
+                      onClick={view === 'sprint' ? fetchSprints : fetchTasks}
                       whileHover={{ scale: 1.05, rotate: 180 }}
                       whileTap={{ scale: 0.95 }}
-                      title="Refresh Tasks"
+                      title={view === 'sprint' ? 'Refresh Sprints' : 'Refresh Tasks'}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       <FiRefreshCw className="w-4 h-4 relative z-10" />
                     </motion.button>
 
-                    {/* Glowing Create Task Button */}
+                    {/* Glowing Create Button - Dynamic based on view */}
                     {userRole === 'manager' && (
                       <motion.button
-                        className="relative px-4 py-2.5 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-xl font-medium text-sm shadow-lg overflow-hidden group backdrop-blur-sm"
-                        onClick={() => {
-                          setShowCreateModal(true);
-                          setEditingTask(null);
-                        }}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.98 }}
+                        className={`relative px-4 py-2.5 text-white rounded-xl font-medium text-sm shadow-lg overflow-hidden group backdrop-blur-sm ${view === 'sprint'
+                          ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500'
+                          : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'
+                          }`}
+                        onClick={() => view === 'sprint' ? setShowSprintModal(true) : setShowCreateModal(true)}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        {/* Multi-layer glow */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-xl blur-md opacity-60"></div>
-                        {/* Background shimmer on hover */}
+                        {/* Outer glow */}
+                        <div className={`absolute inset-0 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity ${view === 'sprint'
+                          ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400'
+                          : 'bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400'
+                          }`}></div>
+                        {/* Shimmer effect */}
                         <motion.div
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
                           animate={{ x: ['-100%', '100%'] }}
-                          transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 1 }}
+                          transition={{ duration: 2, repeat: Infinity }}
                         />
                         <div className="relative flex items-center gap-2">
-                          <motion.div
-                            animate={{ rotate: [0, 10, -10, 0] }}
-                            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-                          >
-                            <FiPlus className="w-4 h-4" />
-                          </motion.div>
-                          <span className="hidden sm:inline">Create</span>
+                          <FiPlus className="w-4 h-4" />
+                          <span className="hidden sm:inline">
+                            {view === 'sprint' ? 'Create Sprint' : 'Create Task'}
+                          </span>
                         </div>
                       </motion.button>
                     )}

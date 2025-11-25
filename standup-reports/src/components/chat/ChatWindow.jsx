@@ -557,6 +557,28 @@ const ChatWindow = ({
         )}
       </AnimatePresence>
 
+      {/* Scroll to bottom button */}
+      <AnimatePresence>
+        {showScrollToBottom && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="px-4 py-2 flex justify-center"
+          >
+            <motion.button
+              onClick={scrollToBottom}
+              className="p-2 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors z-10 flex items-center justify-center w-10 h-10"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Scroll to latest messages"
+            >
+              <FiArrowDown className="w-5 h-5" />
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Message Input */}
       <MessageInput
         value={messageInput}
@@ -570,21 +592,6 @@ const ChatWindow = ({
         disabled={sending}
         showTypingIndicator={typingUsers.length > 0}
       />
-
-      {/* Scroll to bottom button */}
-      <AnimatePresence>
-        {showScrollToBottom && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={scrollToBottom}
-            className="self-center mb-4 p-3 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors z-10"
-          >
-            <FiArrowDown className="w-5 h-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
 
       {/* Conversation Info Modal */}
       <AnimatePresence>
