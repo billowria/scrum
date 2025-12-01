@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FiAward, FiStar, FiTarget, FiThumbsUp, 
+import {
+  FiAward, FiStar, FiTarget, FiThumbsUp,
   FiClipboard, FiUserCheck, FiCheck, FiGift, FiGithub,
   FiX, FiDownload, FiShare2, FiCalendar, FiBriefcase, FiLinkedin,
   FiFileText, FiInfo, FiEdit
@@ -157,33 +157,33 @@ const awardThemes = {
 // Animation variants
 const overlayVariants = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
     transition: { duration: 0.2 }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     transition: { duration: 0.2 }
   }
 };
 
 const modalVariants = {
-  hidden: { 
+  hidden: {
     opacity: 0,
     y: 50,
     scale: 0.9
   },
-  visible: { 
+  visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { 
+    transition: {
       type: 'spring',
       damping: 25,
       stiffness: 300
     }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     y: 30,
     scale: 0.95,
@@ -192,7 +192,7 @@ const modalVariants = {
 };
 
 const buttonVariants = {
-  hover: { 
+  hover: {
     scale: 1.05,
     transition: { duration: 0.2 }
   },
@@ -201,8 +201,8 @@ const buttonVariants = {
 
 const tabVariants = {
   inactive: { opacity: 0.7, y: 5 },
-  active: { 
-    opacity: 1, 
+  active: {
+    opacity: 1,
     y: 0,
     transition: { type: 'spring', stiffness: 500, damping: 30 }
   }
@@ -210,9 +210,8 @@ const tabVariants = {
 
 const TabButton = ({ active, onClick, icon, children, color }) => (
   <motion.button
-    className={`flex items-center justify-center py-3 px-4 text-sm font-medium relative rounded-t-lg ${
-      active ? `bg-white text-${color}-700` : 'text-gray-600 hover:bg-white/20'
-    }`}
+    className={`flex items-center justify-center py-3 px-4 text-sm font-medium relative rounded-t-lg ${active ? `bg-white text-${color}-700` : 'text-gray-600 hover:bg-white/20'
+      }`}
     variants={tabVariants}
     animate={active ? 'active' : 'inactive'}
     onClick={onClick}
@@ -248,57 +247,57 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
 
   if (!achievement) return null;
 
-  const { 
-    title, 
-    description, 
-    award_type, 
-    awarded_at, 
+  const {
+    title,
+    description,
+    award_type,
+    awarded_at,
     users,
     creator,
-    image_url 
+    image_url
   } = achievement;
 
   // Get theme data for this award type
   const theme = awardThemes[award_type] || awardThemes.other;
-  
+
   // Color name for dynamic classes (e.g., 'primary', 'blue', etc.)
   const colorName = theme.color || 'primary';
 
   // Get user data from the nested users object
   const userData = users || {};
   const creatorData = creator || {};
-  
+
   // Format the date
-  const formattedDate = awarded_at 
-    ? format(new Date(awarded_at), 'MMMM d, yyyy') 
+  const formattedDate = awarded_at
+    ? format(new Date(awarded_at), 'MMMM d, yyyy')
     : format(new Date(), 'MMMM d, yyyy');
 
   const handleDownloadPDF = async () => {
     if (!certificateRef.current) return;
-    
+
     try {
       setDownloading(true);
-      
+
       const element = certificateRef.current;
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
-      
+
       const imgWidth = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`${award_type}-${userData.name}-${formattedDate}.pdf`);
-      
+
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
@@ -325,49 +324,49 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
           variants={overlayVariants}
           onClick={onClose}
         >
-          <motion.div 
+          <motion.div
             className="bg-white rounded-xl overflow-hidden shadow-xl w-full max-w-3xl h-[85vh] max-h-[850px] flex flex-col"
             variants={modalVariants}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Certificate view - for PDF export - hidden from view */}
             <div className="hidden">
-              <div 
-                id="achievement-certificate" 
+              <div
+                id="achievement-certificate"
                 ref={certificateRef}
                 className="bg-white p-10 w-[1024px] h-[768px] flex flex-col items-center justify-center border-8 border-double border-gray-200"
               >
                 <div className={`w-20 h-20 ${theme.iconBg} rounded-full flex items-center justify-center mb-6`}>
                   <span className={`${theme.iconColor} text-4xl`}>{theme.icon}</span>
                 </div>
-                
+
                 <h1 className="text-4xl font-bold text-gray-800 mb-6">Certificate of {award_type}</h1>
-                
+
                 <p className="text-xl mb-8">This certifies that</p>
                 <h2 className="text-3xl font-bold text-gray-900 italic mb-8">{userData.name}</h2>
                 <p className="text-xl mb-10">has been recognized for</p>
                 <h3 className="text-2xl font-bold text-gray-800 mb-12 text-center max-w-2xl">{title}</h3>
-                
+
                 <p className="italic text-gray-600 mb-8 text-center max-w-2xl">{description}</p>
-                
+
                 <div className="flex items-center justify-between w-full mt-auto">
                   <div className="text-left">
                     <p className="text-gray-600">Awarded on</p>
                     <p className="font-bold">{formattedDate}</p>
                   </div>
-                  
+
                   <div className="text-right">
                     <p className="text-gray-600">Awarded by</p>
-                    <p className="font-bold">{creatorData.name || 'WorkOS'}</p>
+                    <p className="font-bold">{creatorData.name || 'Sync'}</p>
                   </div>
                 </div>
-                
+
                 <div className="absolute bottom-5 left-5 text-sm text-gray-400">
-                  Generated by WorkOS
+                  Generated by Sync
                 </div>
               </div>
             </div>
-            
+
             {/* Modal header */}
             <div className={`flex-shrink-0 border-b ${theme.border} bg-gradient-to-r ${theme.gradient}`}>
               <div className="p-5 flex justify-between items-start">
@@ -382,7 +381,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                     <h2 className="text-xl font-bold text-gray-800 pr-6">{title}</h2>
                   </div>
                 </div>
-                
+
                 <motion.button
                   className="p-2 rounded-full hover:bg-white/50 text-gray-600"
                   onClick={onClose}
@@ -394,28 +393,28 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                   <FiX size={20} />
                 </motion.button>
               </div>
-              
+
               {/* Tabs */}
               <div className="flex border-t border-gray-200/50">
-                <TabButton 
-                  active={activeTab === 'details'} 
-                  onClick={() => setActiveTab('details')} 
+                <TabButton
+                  active={activeTab === 'details'}
+                  onClick={() => setActiveTab('details')}
                   icon={<FiInfo />}
                   color={colorName}
                 >
                   Details
                 </TabButton>
-                <TabButton 
-                  active={activeTab === 'certificate'} 
-                  onClick={() => setActiveTab('certificate')} 
+                <TabButton
+                  active={activeTab === 'certificate'}
+                  onClick={() => setActiveTab('certificate')}
                   icon={<FiAward />}
                   color={colorName}
                 >
                   Certificate
                 </TabButton>
-                <TabButton 
-                  active={activeTab === 'sharing'} 
-                  onClick={() => setActiveTab('sharing')} 
+                <TabButton
+                  active={activeTab === 'sharing'}
+                  onClick={() => setActiveTab('sharing')}
                   icon={<FiShare2 />}
                   color={colorName}
                 >
@@ -423,12 +422,12 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                 </TabButton>
               </div>
             </div>
-            
+
             {/* Modal content - scrollable area */}
             <div className="overflow-y-auto flex-grow">
               <AnimatePresence mode="wait">
                 {activeTab === 'details' && (
-                  <motion.div 
+                  <motion.div
                     className="p-5 space-y-6"
                     key="details"
                     initial={{ opacity: 0, y: 20 }}
@@ -440,10 +439,10 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                     <div className="flex items-start">
                       {image_url ? (
                         <div className="w-16 h-16 rounded-full overflow-hidden mr-4 border-2 border-white shadow-md flex-shrink-0">
-                          <img 
-                            src={image_url} 
-                            alt={userData?.name} 
-                            className="w-full h-full object-cover" 
+                          <img
+                            src={image_url}
+                            alt={userData?.name}
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       ) : (
@@ -453,17 +452,17 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                           </span>
                         </div>
                       )}
-                      
+
                       <div>
                         <h3 className="font-semibold text-gray-800 text-lg">
                           {userData?.name || 'Team Member'}
                         </h3>
-                        
+
                         <div className="flex items-center text-gray-600 mt-1">
                           <FiCalendar className="mr-2 text-sm flex-shrink-0" />
                           <span className="text-sm">Awarded on {formattedDate}</span>
                         </div>
-                        
+
                         {creatorData?.name && (
                           <div className="flex items-center text-gray-600 mt-1">
                             <FiBriefcase className="mr-2 text-sm flex-shrink-0" />
@@ -472,7 +471,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Achievement description */}
                     <div className="mt-6">
                       <h4 className="font-medium text-gray-700 mb-2 flex items-center">
@@ -485,7 +484,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Award information */}
                     <div className="mt-6">
                       <h4 className="font-medium text-gray-700 mb-2 flex items-center">
@@ -513,9 +512,9 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                     </div>
                   </motion.div>
                 )}
-                
+
                 {activeTab === 'certificate' && (
-                  <motion.div 
+                  <motion.div
                     className="p-5 space-y-6"
                     key="certificate"
                     initial={{ opacity: 0, y: 20 }}
@@ -526,7 +525,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                     {/* Certificate preview */}
                     <div className="border border-gray-200 rounded-lg overflow-hidden">
                       <h4 className="font-medium text-gray-700 p-4 border-b">Certificate Preview</h4>
-                      
+
                       {loadingCertificate ? (
                         <div className="aspect-[4/3] flex justify-center items-center bg-gray-50 p-8">
                           <div className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
@@ -536,36 +535,36 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                           <div className={`w-16 h-16 ${theme.iconBg} rounded-full flex items-center justify-center mb-4 shadow-md`}>
                             <span className={`${theme.iconColor} text-2xl`}>{theme.icon}</span>
                           </div>
-                          
+
                           <h3 className="text-2xl font-bold text-gray-800 mb-3 capitalize">Certificate of {award_type}</h3>
                           <p className="text-sm mb-2">This certifies that</p>
                           <p className="text-xl font-bold text-gray-900 mb-2">{userData.name}</p>
                           <p className="text-sm mb-3">has been recognized for</p>
                           <p className="text-lg font-bold text-gray-800 mb-4 max-w-md">{title}</p>
-                          
+
                           {description && (
                             <p className="text-xs text-gray-600 italic mb-4 max-w-md line-clamp-3">{description}</p>
                           )}
-                          
+
                           <div className="mt-auto flex justify-between w-full px-4">
                             <div className="text-left">
                               <p className="text-xs text-gray-600">Awarded on</p>
                               <p className="text-sm font-semibold">{formattedDate}</p>
                             </div>
-                            
+
                             <div className="text-right">
                               <p className="text-xs text-gray-600">Awarded by</p>
-                              <p className="text-sm font-semibold">{creatorData.name || 'WorkOS'}</p>
+                              <p className="text-sm font-semibold">{creatorData.name || 'Sync'}</p>
                             </div>
                           </div>
-                          
+
                           <div className="absolute bottom-16 left-12 text-xs text-gray-400">
-                            Generated by WorkOS
+                            Generated by Sync
                           </div>
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Download button */}
                     <motion.button
                       className={`flex items-center justify-center w-full py-3 px-4 rounded-lg ${theme.buttonBg} ${theme.buttonHover} text-white text-sm font-medium shadow-sm`}
@@ -580,9 +579,9 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                     </motion.button>
                   </motion.div>
                 )}
-                
+
                 {activeTab === 'sharing' && (
-                  <motion.div 
+                  <motion.div
                     className="p-5 space-y-6"
                     key="sharing"
                     initial={{ opacity: 0, y: 20 }}
@@ -592,7 +591,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                   >
                     <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
                       <h4 className="font-medium text-gray-700 mb-4">Share Your Achievement</h4>
-                      
+
                       <div className="space-y-4">
                         <motion.button
                           className="flex items-center justify-center w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium shadow-sm"
@@ -604,7 +603,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                           <FiLinkedin className="mr-2" />
                           Share to LinkedIn
                         </motion.button>
-                        
+
                         <div className="text-sm text-gray-600 p-4 bg-white rounded-lg border border-gray-200">
                           <p className="mb-2 font-medium text-gray-700">Why share your achievements?</p>
                           <ul className="list-disc pl-5 space-y-1">
@@ -614,7 +613,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                             <li>Celebrate your success with your network</li>
                           </ul>
                         </div>
-                        
+
                         <div className="border-t border-gray-200 pt-4 mt-4">
                           <h5 className="text-sm font-medium text-gray-700 mb-2">Share text preview:</h5>
                           <div className="p-3 bg-white rounded border border-gray-200 text-sm text-gray-600">
@@ -627,7 +626,7 @@ const AchievementDetailModal = ({ isOpen, achievement, onClose, defaultTab = 'de
                 )}
               </AnimatePresence>
             </div>
-            
+
             {/* Modal footer */}
             <div className="flex-shrink-0 p-4 border-t border-gray-100 bg-gray-50 text-center text-sm text-gray-500 flex justify-between items-center">
               <span>This achievement is permanently recorded in your profile</span>

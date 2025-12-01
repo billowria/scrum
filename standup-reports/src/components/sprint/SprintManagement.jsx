@@ -131,12 +131,6 @@ const SprintManagement = ({
           >
             {/* Section Header with View Toggle */}
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
-                  Your Projects
-                </h2>
-                <p className="text-gray-600 mt-1">Select a project to manage its sprints</p>
-              </div>
 
               {/* View Mode Toggle */}
               <div className="flex items-center gap-2 bg-white/60 backdrop-blur-xl rounded-xl p-1.5 border border-gray-200 shadow-md">

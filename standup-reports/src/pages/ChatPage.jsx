@@ -314,9 +314,8 @@ const ChatPage = () => {
           className={`
             ${isMobile
               ? (showSidebar ? 'absolute inset-y-0 left-0 z-20 w-full' : 'hidden')
-              : `relative flex-shrink-0 border-r border-gray-200 transition-all duration-300 ${
-                  sidebarCollapsed ? 'w-16' : 'w-80'
-                }`
+              : `relative flex-shrink-0 border-r border-gray-200 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-80'
+              }`
             }
             bg-white backdrop-blur-md transition-all duration-300
           `}
@@ -344,21 +343,18 @@ const ChatPage = () => {
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`absolute top-1/2 z-10 p-3 bg-white/80 backdrop-blur-md border border-gray-200
                       rounded-full shadow-lg hover:bg-white/90 transition-all duration-200
-                      transform -translate-y-1/2 ${
-                        sidebarCollapsed ? 'left-16' : 'left-80'
-                      }`}
+                      transform -translate-y-1/2 ${sidebarCollapsed ? 'left-16' : 'left-80'
+              }`}
           >
-            <FiChevronLeft className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
-              sidebarCollapsed ? '' : 'rotate-180'
-            }`} />
+            <FiChevronLeft className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'
+              }`} />
           </motion.button>
         )}
 
         {/* Main Chat Area - Enhanced Design */}
         <div
-          className={`flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-white to-gray-50 ${
-            isMobile && showSidebar ? 'hidden' : ''
-          }`}
+          className={`flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-white to-gray-50 ${isMobile && showSidebar ? 'hidden' : ''
+            }`}
         >
           {activeConversation ? (
             <>
@@ -395,7 +391,7 @@ const ChatPage = () => {
                 <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
                   <FiMessageSquare className="w-16 h-16 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to WorkOS Chat</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Sync Chat</h2>
                 <p className="text-gray-600 mb-8 leading-relaxed">
                   Connect with your team in real-time. Select a conversation from the sidebar to start chatting.
                 </p>

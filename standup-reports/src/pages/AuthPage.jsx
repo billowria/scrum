@@ -425,7 +425,7 @@ export default function AuthPage({ mode = "login" }) {
                 {a.name}
               </motion.div>
             ))}
-            <div className="text-xs text-neutral-400 ml-2">4 people already using WorkOS</div>
+            <div className="text-xs text-neutral-400 ml-2">4 people already using Sync</div>
           </div>
         </div>
 

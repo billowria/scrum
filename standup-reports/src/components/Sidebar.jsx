@@ -34,6 +34,22 @@ const createNavLinks = (counts, user) => {
       }
     },
     {
+      to: '/standup-reports',
+      icon: <FiFileText />,
+      label: 'Standups',
+      description: 'Daily Updates',
+      badge: null,
+      colors: {
+        gradient: 'from-indigo-400 to-indigo-600',
+        hoverBg: 'hover:bg-indigo-50',
+        activeBg: 'bg-indigo-100',
+        activeText: 'text-indigo-700',
+        activeBorder: 'border-indigo-500',
+        iconBg: 'bg-indigo-500',
+        iconText: 'text-white'
+      }
+    },
+    {
       to: '/tasks',
       icon: <FiList />,
       label: 'Tasks',

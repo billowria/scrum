@@ -82,8 +82,10 @@ const FloatingParticle = ({ delay, duration, size, color }) => {
 };
 
 export default function TeamManagement() {
-    const [filterOpen, setFilterOpen] = useState(false);
-      const [hoveredTab, setHoveredTab] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [hoveredTab, setHoveredTab] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('user-management');
   const containerRef = useRef(null);
@@ -104,7 +106,7 @@ export default function TeamManagement() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  
+
   const tabs = [
     {
       id: 'user-management',
@@ -163,7 +165,7 @@ export default function TeamManagement() {
         animate="visible"
         ref={containerRef}
       >
-        
+
         {/* Modern Tab Navigation */}
         <motion.div
           className="mb-8"
@@ -182,18 +184,16 @@ export default function TeamManagement() {
                     onClick={() => handleTabChange(tab.id)}
                     onMouseEnter={() => setHoveredTab(tab.id)}
                     onMouseLeave={() => setHoveredTab(null)}
-                    className={`flex-1 flex flex-col items-center gap-2 py-4 px-4 rounded-xl transition-all cursor-pointer ${
-                      isActive
+                    className={`flex-1 flex flex-col items-center gap-2 py-4 px-4 rounded-xl transition-all cursor-pointer ${isActive
                         ? 'text-white bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
+                      }`}
                     style={{ zIndex: 40 }}
                   >
                     {/* Icon with animation */}
                     <motion.div
-                      className={`p-2 rounded-lg ${
-                        isActive ? 'bg-white/20' : isHovered ? 'bg-gray-100' : ''
-                      }`}
+                      className={`p-2 rounded-lg ${isActive ? 'bg-white/20' : isHovered ? 'bg-gray-100' : ''
+                        }`}
                       animate={{
                         rotate: isActive ? [0, 5, -5, 0] : 0,
                         scale: isActive ? [1, 1.1, 1] : isHovered ? 1.05 : 1
@@ -218,11 +218,10 @@ export default function TeamManagement() {
                     {/* Stats Badge */}
                     {tab.stats && (
                       <motion.div
-                        className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          isActive
+                        className={`px-2 py-1 rounded-full text-xs font-bold ${isActive
                             ? 'bg-white/20 text-white'
                             : 'bg-gray-100 text-gray-600'
-                        }`}
+                          }`}
                         animate={{
                           scale: [1, 1.1, 1],
                         }}
@@ -293,7 +292,7 @@ export default function TeamManagement() {
 
                       {/* Create User Button */}
                       <motion.button
-                        onClick={() => window.location.href = '/create-user'}
+                        onClick={() => navigate('/create-user', { state: { background: location } })}
                         className="group relative px-6 py-3 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}
@@ -377,7 +376,7 @@ export default function TeamManagement() {
 
                       {/* Create User Button */}
                       <motion.button
-                        onClick={() => window.location.href = '/create-user'}
+                        onClick={() => navigate('/create-user', { state: { background: location } })}
                         className="group relative px-6 py-3 bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.98 }}

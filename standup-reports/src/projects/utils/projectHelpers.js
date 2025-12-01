@@ -280,7 +280,7 @@ export const exportProjectData = (project, sections) => {
       })) || []
     })) || [],
     exported_at: new Date().toISOString(),
-    exported_by: 'WorkOS Project Management System'
+    exported_by: 'Sync Project Management System'
   };
 
   return exportData;
@@ -294,7 +294,7 @@ export const searchInProject = (searchTerm, project, sections) => {
 
   // Search in project name and description
   if (project.name?.toLowerCase().includes(term) ||
-      project.description?.toLowerCase().includes(term)) {
+    project.description?.toLowerCase().includes(term)) {
     results.push({
       type: 'project',
       title: project.name,
@@ -306,7 +306,7 @@ export const searchInProject = (searchTerm, project, sections) => {
   // Search in sections
   sections?.forEach(section => {
     if (section.name?.toLowerCase().includes(term) ||
-        section.description?.toLowerCase().includes(term)) {
+      section.description?.toLowerCase().includes(term)) {
       results.push({
         type: 'section',
         title: section.name,
@@ -319,7 +319,7 @@ export const searchInProject = (searchTerm, project, sections) => {
     // Search in topics
     section.project_topics?.forEach(topic => {
       if (topic.name?.toLowerCase().includes(term) ||
-          topic.description?.toLowerCase().includes(term)) {
+        topic.description?.toLowerCase().includes(term)) {
         results.push({
           type: 'topic',
           title: topic.name,
@@ -332,7 +332,7 @@ export const searchInProject = (searchTerm, project, sections) => {
       // Search in content
       topic.project_topic_content?.forEach(content => {
         if (content.title?.toLowerCase().includes(term) ||
-            content.content?.toLowerCase().includes(term)) {
+          content.content?.toLowerCase().includes(term)) {
           results.push({
             type: 'content',
             title: content.title,

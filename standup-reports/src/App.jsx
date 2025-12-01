@@ -17,6 +17,7 @@ import ManagerUserProfile from './components/ManagerUserProfile';
 // Pages
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
+import StandupReports from './pages/StandupReports';
 import ReportEntry from './pages/ReportEntryNew';
 import History from './pages/History';
 import LeaveCalendar from './pages/LeaveCalendar';
@@ -69,7 +70,7 @@ function AppLoader() {
             <div className="absolute inset-6 grid place-items-center rounded-full bg-white shadow-inner">
               <img
                 src={brandLogo}
-                alt="WorkOS"
+                alt="Sync"
                 className="h-10 w-10 object-contain"
                 decoding="async"
               />
@@ -77,7 +78,7 @@ function AppLoader() {
           </div>
 
           <div className="text-center">
-            <div className="font-display text-lg font-semibold text-gray-800">Loading WorkOS</div>
+            <div className="font-display text-lg font-semibold text-gray-800">Loading Sync</div>
             <motion.div
               className="mt-1 text-sm text-gray-500"
               initial={{ opacity: 0.4 }}
@@ -232,6 +233,7 @@ function App() {
 // Separate component to handle dynamic content based on routes
 function AppContent({ session, userRole, sidebarMode }) {
   const location = useLocation();
+  const background = location.state && location.state.background;
   const sidebarOpen = sidebarMode === 'expanded';
 
   return (
@@ -240,7 +242,7 @@ function AppContent({ session, userRole, sidebarMode }) {
       {/* <NavbarPro session={session} /> */}
       <div>
         <AnimatePresence mode="sync" initial={false}>
-          <Routes>
+          <Routes location={background || location}>
             {!session ? (
               // Unauthenticated routes
               <>
@@ -256,6 +258,13 @@ function AppContent({ session, userRole, sidebarMode }) {
                   <PageTransition>
                     <div className="w-full py-6">
                       <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
+                    </div>
+                  </PageTransition>
+                } />
+                <Route path="/standup-reports" element={
+                  <PageTransition>
+                    <div className="w-full py-6">
+                      <StandupReports />
                     </div>
                   </PageTransition>
                 } />
@@ -288,7 +297,7 @@ function AppContent({ session, userRole, sidebarMode }) {
                         </div>
                       </PageTransition>
                     } />
-                    {/* Create User Route */}
+                    {/* Create User Route - accessible as standalone or modal */}
                     <Route path="/create-user" element={
                       <PageTransition>
                         <CreateUser />
@@ -402,6 +411,15 @@ function AppContent({ session, userRole, sidebarMode }) {
               </>
             )}
           </Routes>
+        </AnimatePresence>
+
+        {/* Modal Routes */}
+        <AnimatePresence>
+          {background && (
+            <Routes>
+              <Route path="/create-user" element={<CreateUser />} />
+            </Routes>
+          )}
         </AnimatePresence>
       </div>
     </div>

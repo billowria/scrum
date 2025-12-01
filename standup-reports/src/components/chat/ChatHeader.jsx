@@ -68,9 +68,8 @@ const ChatHeader = ({
                 return Icon && <Icon className="w-4 h-4" />;
               })()}
               <span>{getCurrentFilter().label}</span>
-              <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${
-                showFilterDropdown ? 'rotate-180' : ''
-              }`} />
+              <FiChevronDown className={`w-3.5 h-3.5 transition-transform ${showFilterDropdown ? 'rotate-180' : ''
+                }`} />
             </button>
 
             <AnimatePresence>
@@ -89,9 +88,8 @@ const ChatHeader = ({
                         onFilterChange(option.value);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                        conversationFilter === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                      }`}
+                      className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${conversationFilter === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
                     >
                       {option.icon && <option.icon className="w-4 h-4" />}
                       <span className="text-sm">{option.label}</span>
@@ -105,7 +103,7 @@ const ChatHeader = ({
 
         {/* Center - App Title (Desktop) */}
         <div className="hidden md:flex items-center">
-          <h1 className="text-lg font-semibold text-gray-900">WorkOS Chat</h1>
+          <h1 className="text-lg font-semibold text-gray-900">Sync Chat</h1>
         </div>
 
         {/* Right Side - Actions */}
@@ -123,11 +121,10 @@ const ChatHeader = ({
           <div className="relative">
             <button
               onClick={onToggleNotifications}
-              className={`p-2 rounded-lg transition-colors relative ${
-                showNotifications
+              className={`p-2 rounded-lg transition-colors relative ${showNotifications
                   ? 'text-blue-600 bg-blue-50'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <FiBell className="w-5 h-5" />
               {unreadCount > 0 && (

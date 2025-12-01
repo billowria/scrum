@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, parseISO, getYear, getMonth } from 'date-fns';
-import { 
-  FiAward, FiChevronLeft, FiFilter, FiCalendar, 
+import {
+  FiAward, FiChevronLeft, FiFilter, FiCalendar,
   FiDownload, FiSearch, FiUser, FiInfo, FiClock,
   FiActivity, FiStar, FiTarget, FiThumbsUp, FiCheck,
   FiTrendingUp, FiRocket, FiFileText, FiClipboard,
@@ -137,7 +137,7 @@ const UserAchievements = () => {
   const fetchUserAchievements = async () => {
     try {
       setLoading(true);
-      
+
       const targetId = userId || currentUserId;
       if (!targetId) {
         setLoading(false);
@@ -168,15 +168,15 @@ const UserAchievements = () => {
         const userIds = [...new Set(data.map(item => item.user_id).filter(Boolean))];
         const creatorIds = [...new Set(data.map(item => item.created_by).filter(Boolean))];
         const allIds = [...new Set([...userIds, ...creatorIds])];
-        
+
         // Fetch all users in one query
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id, name, email, image_url')
           .in('id', allIds);
-        
+
         if (userError) throw userError;
-        
+
         // Create a map of user data for quick lookup
         const userMap = {};
         if (userData) {
@@ -184,16 +184,16 @@ const UserAchievements = () => {
             userMap[user.id] = user;
           });
         }
-        
+
         // Attach user data to achievements
         const enhancedData = data.map(achievement => ({
           ...achievement,
           users: userMap[achievement.user_id] || null,
           creator: userMap[achievement.created_by] || null
         }));
-        
+
         setAchievements(enhancedData);
-        
+
         // Calculate statistics
         const typeStats = {};
         data.forEach(achievement => {
@@ -202,7 +202,7 @@ const UserAchievements = () => {
           }
           typeStats[achievement.award_type]++;
         });
-        
+
         setStats({
           total: data.length,
           byType: typeStats
@@ -222,12 +222,12 @@ const UserAchievements = () => {
   const filteredAchievements = achievements.filter(achievement => {
     // Apply award type filter
     const typeMatch = filter === 'all' || achievement.award_type === filter;
-    
+
     // Apply search term
-    const searchMatch = !searchTerm || 
+    const searchMatch = !searchTerm ||
       achievement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (achievement.description && achievement.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     return typeMatch && searchMatch;
   });
 
@@ -244,19 +244,19 @@ const UserAchievements = () => {
   // Group achievements by year and month for timeline view
   const groupedAchievements = sortedAchievements.reduce((acc, achievement) => {
     if (!achievement.awarded_at) return acc;
-    
+
     const date = new Date(achievement.awarded_at);
     const year = getYear(date);
     const month = getMonth(date);
-    
+
     if (!acc[year]) {
       acc[year] = {};
     }
-    
+
     if (!acc[year][month]) {
       acc[year][month] = [];
     }
-    
+
     acc[year][month].push(achievement);
     return acc;
   }, {});
@@ -310,15 +310,15 @@ const UserAchievements = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <motion.div 
+      <motion.div
         className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div>
-          <Link 
-            to="/achievements" 
+          <Link
+            to="/achievements"
             className="inline-flex items-center text-gray-600 hover:text-primary-600 transition-colors mb-2"
           >
             <FiChevronLeft className="mr-1" />
@@ -334,7 +334,7 @@ const UserAchievements = () => {
             </p>
           )}
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3 items-center">
           {stats.total > 0 && (
             <div className="bg-primary-50 px-4 py-3 rounded-lg border border-primary-100 flex flex-col items-center shadow-sm">
@@ -342,7 +342,7 @@ const UserAchievements = () => {
               <span className="text-sm text-gray-600">Total Achievements</span>
             </div>
           )}
-          
+
           {stats.total > 0 && (
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -356,9 +356,9 @@ const UserAchievements = () => {
           )}
         </div>
       </motion.div>
-      
+
       {/* Stats and filtering */}
-      <motion.div 
+      <motion.div
         className="bg-white rounded-xl shadow-sm overflow-hidden mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -371,28 +371,26 @@ const UserAchievements = () => {
               <div className="inline-flex rounded-md shadow-sm">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`px-3 py-2 text-sm font-medium rounded-l-md ${
-                    viewMode === 'grid'
+                  className={`px-3 py-2 text-sm font-medium rounded-l-md ${viewMode === 'grid'
                       ? 'bg-primary-50 text-primary-700 border-primary-200'
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  } border`}
+                    } border`}
                 >
                   <FiLayout className="inline-block mr-1" />
                   Grid
                 </button>
                 <button
                   onClick={() => setViewMode('timeline')}
-                  className={`px-3 py-2 text-sm font-medium rounded-r-md ${
-                    viewMode === 'timeline'
+                  className={`px-3 py-2 text-sm font-medium rounded-r-md ${viewMode === 'timeline'
                       ? 'bg-primary-50 text-primary-700 border-primary-200'
                       : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                  } border border-l-0`}
+                    } border border-l-0`}
                 >
                   <FiActivity className="inline-block mr-1" />
                   Timeline
                 </button>
               </div>
-              
+
               {/* Search bar */}
               <div className="relative">
                 <input
@@ -405,7 +403,7 @@ const UserAchievements = () => {
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {/* Filter dropdown */}
               <div className="relative">
@@ -422,7 +420,7 @@ const UserAchievements = () => {
                 </select>
                 <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-              
+
               {/* Sort dropdown */}
               <div className="relative">
                 <select
@@ -435,20 +433,20 @@ const UserAchievements = () => {
                 </select>
                 <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
-              
+
               {/* Share to LinkedIn button */}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 transition-colors"
-                onClick={() => window.open(`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=WorkOS Achievements&organizationName=WorkOS`, '_blank')}
+                onClick={() => window.open(`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=Sync Achievements&organizationName=Sync`, '_blank')}
               >
                 <FiLinkedin className="mr-2" />
                 Add to LinkedIn
               </motion.button>
             </div>
           </div>
-          
+
           {/* Type stats */}
           {stats.total > 0 && (
             <div className="px-4 pb-4 flex flex-wrap gap-2">
@@ -458,9 +456,8 @@ const UserAchievements = () => {
                   <div
                     key={type}
                     onClick={() => setFilter(type === filter ? 'all' : type)}
-                    className={`inline-flex items-center px-3 py-1 rounded-full ${colorClass.bg} ${colorClass.text} ${colorClass.border} border cursor-pointer transition-all ${
-                      filter === type ? 'ring-2 ring-offset-1 ring-primary-400' : ''
-                    }`}
+                    className={`inline-flex items-center px-3 py-1 rounded-full ${colorClass.bg} ${colorClass.text} ${colorClass.border} border cursor-pointer transition-all ${filter === type ? 'ring-2 ring-offset-1 ring-primary-400' : ''
+                      }`}
                   >
                     <span className={`mr-1 ${colorClass.icon}`}>
                       {awardIcons[type] || <FiAward />}
@@ -473,7 +470,7 @@ const UserAchievements = () => {
             </div>
           )}
         </div>
-        
+
         <div className="p-4">
           {loading ? (
             <div className="flex justify-center py-8">
@@ -485,8 +482,8 @@ const UserAchievements = () => {
                 <FiInfo className="text-gray-400 h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-700 mb-2">No achievements found</h3>
                 <p className="text-gray-500 mb-4">
-                  {searchTerm || filter !== 'all' ? 
-                    'Try adjusting your search or filter settings.' : 
+                  {searchTerm || filter !== 'all' ?
+                    'Try adjusting your search or filter settings.' :
                     'No achievements have been recorded yet for this user.'}
                 </p>
               </div>
@@ -495,26 +492,26 @@ const UserAchievements = () => {
             <>
               {/* Grid View */}
               {viewMode === 'grid' && (
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible"
                 >
                   {sortedAchievements.map(achievement => (
-                    <motion.div 
+                    <motion.div
                       key={achievement.id}
                       variants={itemVariants}
                     >
-                      <AchievementCard 
-                        achievement={achievement} 
+                      <AchievementCard
+                        achievement={achievement}
                         onViewDetails={handleViewAchievement}
                       />
                     </motion.div>
                   ))}
                 </motion.div>
               )}
-              
+
               {/* Timeline View */}
               {viewMode === 'timeline' && (
                 <motion.div
@@ -525,12 +522,12 @@ const UserAchievements = () => {
                 >
                   {/* Vertical line */}
                   <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                  
+
                   {Object.entries(groupedAchievements)
                     .sort(([yearA], [yearB]) => sortBy === 'newest' ? yearB - yearA : yearA - yearB)
                     .map(([year, months]) => (
                       <div key={year} className="mb-8">
-                        <motion.h3 
+                        <motion.h3
                           className="text-xl font-bold text-gray-700 mb-4 -ml-8"
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -538,12 +535,12 @@ const UserAchievements = () => {
                         >
                           {year}
                         </motion.h3>
-                        
+
                         {Object.entries(months)
                           .sort(([monthA], [monthB]) => sortBy === 'newest' ? monthB - monthA : monthA - monthB)
                           .map(([month, monthAchievements]) => (
                             <div key={`${year}-${month}`} className="mb-6">
-                              <motion.h4 
+                              <motion.h4
                                 className="text-md font-medium text-gray-600 mb-3 flex items-center"
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -552,7 +549,7 @@ const UserAchievements = () => {
                                 <FiCalendar className="mr-2 text-primary-500" />
                                 {getMonthName(month)} {year}
                               </motion.h4>
-                              
+
                               {monthAchievements.map(achievement => {
                                 const colorClass = getColorClass(achievement.award_type);
                                 return (
@@ -567,9 +564,9 @@ const UserAchievements = () => {
                                         {awardIcons[achievement.award_type] || <FiAward />}
                                       </div>
                                     </div>
-                                    
+
                                     {/* Card */}
-                                    <div 
+                                    <div
                                       className={`p-4 rounded-lg border ${colorClass.border} ${colorClass.bg} bg-opacity-50 cursor-pointer hover:shadow-md transition-shadow`}
                                       onClick={() => handleViewAchievement(achievement)}
                                     >
@@ -579,13 +576,13 @@ const UserAchievements = () => {
                                           {format(new Date(achievement.awarded_at), 'MMM d, yyyy')}
                                         </span>
                                       </div>
-                                      
+
                                       {achievement.description && (
                                         <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                                           {achievement.description}
                                         </p>
                                       )}
-                                      
+
                                       <div className="flex justify-between items-center">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass.text} bg-white`}>
                                           {achievement.award_type}
@@ -612,9 +609,9 @@ const UserAchievements = () => {
           )}
         </div>
       </motion.div>
-      
+
       {/* Achievement Detail Modal */}
-      <AchievementDetailModal 
+      <AchievementDetailModal
         isOpen={showDetailModal}
         achievement={selectedAchievement}
         defaultTab={defaultModalTab}

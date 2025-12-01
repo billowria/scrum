@@ -47,7 +47,7 @@ const NotesEditor = ({
             <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center">
               <FiFileText className="w-12 h-12 text-blue-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to WorkOS Notes</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Welcome to Sync Notes</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
               Create beautiful notes with our professional editor. Organize your thoughts, collaborate with your team, and never lose an idea again.
             </p>
@@ -74,11 +74,10 @@ const NotesEditor = ({
             {openTabs.map((tab) => (
               <div
                 key={tab.id}
-                className={`group flex items-center px-4 py-2 border-r border-gray-200 cursor-pointer transition-colors relative ${
-                  activeTabId === tab.id
+                className={`group flex items-center px-4 py-2 border-r border-gray-200 cursor-pointer transition-colors relative ${activeTabId === tab.id
                     ? 'bg-white text-gray-900 border-t-2 border-t-blue-500'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
                 onClick={() => onTabSwitch(tab)}
                 style={{
                   backgroundColor: activeTabId === tab.id ? (tab.background_color || '#ffffff') : undefined
@@ -103,9 +102,8 @@ const NotesEditor = ({
                     e.stopPropagation();
                     onTabClose(tab.id);
                   }}
-                  className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-100 ${
-                    activeTabId === tab.id ? 'opacity-100' : ''
-                  }`}
+                  className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-100 ${activeTabId === tab.id ? 'opacity-100' : ''
+                    }`}
                 >
                   <FiX className="w-3 h-3 text-gray-500 hover:text-red-600" />
                 </button>
@@ -163,11 +161,10 @@ const NotesEditor = ({
               <button
                 onClick={onSaveNote}
                 disabled={!isDirty}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                  isDirty
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors ${isDirty
                     ? 'bg-blue-500 text-white hover:bg-blue-600'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                }`}
+                  }`}
                 title={isDirty ? 'Save note (Ctrl+S)' : 'No changes to save'}
               >
                 <FiSave className="w-3.5 h-3.5" />
@@ -208,11 +205,10 @@ const NotesEditor = ({
             {/* Action Buttons */}
             <button
               onClick={() => selectedNote && onShareNote(selectedNote)}
-              className={`p-1.5 rounded transition-colors ${
-                selectedNote?.is_shared
+              className={`p-1.5 rounded transition-colors ${selectedNote?.is_shared
                   ? 'text-purple-500 bg-purple-50'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
               title={selectedNote?.is_shared ? 'Manage sharing' : 'Share note'}
             >
               <FiShare2 className="w-4 h-4" />
@@ -220,11 +216,10 @@ const NotesEditor = ({
 
             <button
               onClick={() => selectedNote && onToggleFavorite(selectedNote.id)}
-              className={`p-1.5 rounded transition-colors ${
-                selectedNote?.is_favorite
+              className={`p-1.5 rounded transition-colors ${selectedNote?.is_favorite
                   ? 'text-red-500 bg-red-50'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
               title={selectedNote?.is_favorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <FiHeart className={`w-4 h-4 ${selectedNote?.is_favorite ? 'fill-current' : ''}`} />
@@ -232,11 +227,10 @@ const NotesEditor = ({
 
             <button
               onClick={() => selectedNote && onTogglePin(selectedNote.id)}
-              className={`p-1.5 rounded transition-colors ${
-                selectedNote?.is_pinned
+              className={`p-1.5 rounded transition-colors ${selectedNote?.is_pinned
                   ? 'text-yellow-500 bg-yellow-50'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
               title={selectedNote?.is_pinned ? 'Unpin note' : 'Pin note'}
             >
               <FiStar className={`w-4 h-4 ${selectedNote?.is_pinned ? 'fill-current' : ''}`} />

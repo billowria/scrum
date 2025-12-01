@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
@@ -26,6 +27,8 @@ const itemVariants = {
 };
 
 export default function UserManagement({ searchQuery = '', setSearchQuery, searchValue = '' }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentCompany } = useCompany();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +37,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
   // Toast functionality
   const [toast, setToast] = useState({ isVisible: false, type: 'success', message: '', description: '' });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
+
   // Helper function to show toast notifications
   const showToast = (type, message, description = '') => {
     setToast({
@@ -56,7 +59,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ role: '', team_id: '', manager_id: '' });
-  
+
   // Update managers list when users change
   useEffect(() => {
     if (users && users.length > 0) {
@@ -64,31 +67,31 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
       setManagers(filteredManagers);
     }
   }, [users]);
-  
+
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) {
       showToast('error', 'Validation Error', 'Team name is required');
       return;
     }
-    
+
     if (!currentCompany?.id) {
       showToast('error', 'Company Error', 'Company information not available');
       return;
     }
-    
+
     setCreatingTeam(true);
-    
+
     try {
       const { data, error } = await supabase
         .from('teams')
-        .insert([{ 
+        .insert([{
           name: newTeamName.trim(),
           company_id: currentCompany.id
         }])
         .select();
-      
+
       if (error) throw error;
-      
+
       // Refresh teams list
       fetchTeams();
       setNewTeamName('');
@@ -101,7 +104,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
       setCreatingTeam(false);
     }
   };
-  
+
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
@@ -147,14 +150,14 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
   const fetchCurrentUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (user) {
         const { data, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .single();
-        
+
         if (error) throw error;
         setCurrentUser(data);
       }
@@ -162,7 +165,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
       console.error('Error fetching current user:', error.message);
     }
   };
-  
+
   const fetchUsers = async () => {
     try {
       if (!currentCompany?.id) return;
@@ -186,16 +189,16 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
       setLoading(false);
     }
   };
-  
+
   const handleRefresh = () => {
     setLoading(true);
     setRefreshTrigger(prev => prev + 1);
   };
 
   const toggleUserSelection = (userId) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId) 
+    setSelectedUsers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
   };
@@ -217,32 +220,32 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
 
     try {
       let successMessage = '';
-      
-      switch(action) {
+
+      switch (action) {
         case 'activate':
           // Since there's no status field, activate functionality is not implemented
           showToast('error', 'Feature not available', 'Activate functionality requires a status field in the database');
           return;
-          
+
         case 'deactivate':
           // Since there's no status field, deactivate functionality is not implemented
           showToast('error', 'Feature not available', 'Deactivate functionality requires a status field in the database');
           return;
-          
+
         case 'delete':
           const { error: deleteError } = await supabase
             .from('users')
             .delete()
             .in('id', ids);
-          
+
           if (deleteError) throw deleteError;
           successMessage = `User${ids.length > 1 ? 's' : ''} deleted successfully`;
           break;
-          
+
         default:
           throw new Error('Invalid action');
       }
-      
+
       showToast('success', 'Action completed', successMessage);
       setSelectedUsers([]);
       handleRefresh();
@@ -339,7 +342,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'active': return 'bg-emerald-100 text-emerald-700';
       case 'inactive': return 'bg-amber-100 text-amber-700';
       case 'pending': return 'bg-blue-100 text-blue-700';
@@ -348,7 +351,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
   };
 
   const getStatusText = (status) => {
-    switch(status) {
+    switch (status) {
       case 'active': return 'Active';
       case 'inactive': return 'Inactive';
       case 'pending': return 'Pending';
@@ -358,14 +361,14 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
 
   const filteredUsers = (() => {
     let filtered = [...users];
-    
+
     // Apply role filter
     if (roleFilter !== 'all') {
       filtered = filtered.filter(user => user.role === roleFilter);
     }
-    
+
     // No status filter since status field doesn't exist in the database
-    
+
     // Apply search filter
     if (searchQuery.trim()) {
       const searchLower = searchQuery.toLowerCase().trim();
@@ -380,7 +383,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
 
     return filtered;
   })();
-  
+
   if (!currentUser || currentUser.role !== 'manager') {
     return (
       <motion.div
@@ -419,7 +422,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
       </motion.div>
     );
   }
-  
+
   return (
     <motion.div
       className="relative"
@@ -436,7 +439,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
         onClose={() => setToast({ ...toast, isVisible: false })}
         duration={4000}
       />
-      
+
       {/* Move Create Team modal button to the top section */}
       {/* Create Team Button */}
       <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-slate-100">
@@ -470,7 +473,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
             <div className="flex gap-2">
               {/* Create User Button - positioned alongside other action buttons */}
               <motion.button
-                onClick={() => window.location.href = '/create-user'}
+                onClick={() => navigate('/create-user', { state: { background: location } })}
                 className="px-4 py-2 bg-gradient-to-r from-slate-700 to-slate-900 text-white rounded-md shadow flex items-center gap-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -542,7 +545,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
           </div>
         </div>
       </div>
-      
+
       <div className="p-4">
         {loading ? (
           <div className="flex justify-center py-16">
@@ -555,7 +558,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
             </motion.div>
           </div>
         ) : filteredUsers.length === 0 ? (
-          <motion.div 
+          <motion.div
             className="text-center py-16"
             variants={itemVariants}
           >
@@ -856,7 +859,7 @@ export default function UserManagement({ searchQuery = '', setSearchQuery, searc
                 </motion.div>
               )}
             </AnimatePresence>
-            
+
             {/* Bulk Action Confirmation Modal */}
             <AnimatePresence>
               {showActionsModal && selectedAction && (

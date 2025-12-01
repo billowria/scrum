@@ -73,8 +73,8 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
               <motion.button
                 onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
                 className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
                   }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -206,7 +206,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
               }}
             >
-              WorkOS
+              Sync
             </motion.h1>
 
             {/* Subtle underline animation */}
