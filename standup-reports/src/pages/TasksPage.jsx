@@ -1303,7 +1303,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                           variants={{
                             hidden: { opacity: 0, x: 20 },
                             visible: { opacity: 1, x: 0 },
-                            hover: { y: -2 }
+                            hover: {}
                           }}
                           initial="hidden"
                           animate="visible"
@@ -1349,7 +1349,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                           variants={{
                             hidden: { opacity: 0, x: 20 },
                             visible: { opacity: 1, x: 0 },
-                            hover: { y: -2 }
+                            hover: {}
                           }}
                           initial="hidden"
                           animate="visible"
