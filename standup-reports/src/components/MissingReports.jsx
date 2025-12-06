@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiAlertCircle, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 
-const MissingReports = ({ date, teamId, companyId }) => {
+const MissingReports = ({ date, teamId, companyId, onAvatarClick }) => {
   const [missingReports, setMissingReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(false);
@@ -116,13 +116,15 @@ const MissingReports = ({ date, teamId, companyId }) => {
         {visibleMembers.map(member => (
           <motion.div
             key={member.id}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-              hoveredUserId === member.id
-                ? 'bg-white shadow-md border border-orange-200 scale-105'
-                : 'bg-white border border-orange-100'
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${hoveredUserId === member.id
+              ? 'bg-white shadow-md border border-orange-200 scale-105'
+              : 'bg-white border border-orange-100'
+              }`}
             onMouseEnter={() => setHoveredUserId(member.id)}
             onMouseLeave={() => setHoveredUserId(null)}
+            onClick={() => {
+              onAvatarClick?.(member.id);
+            }}
             whileHover={{ y: -2 }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

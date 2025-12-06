@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useConversations } from '../hooks/useConversations';
@@ -11,11 +13,13 @@ import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatWindow from '../components/chat/ChatWindow';
 import UserPresence from '../components/chat/UserPresence';
 import NewChatModal from '../components/chat/NewChatModal';
+import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import '../components/chat/chat-design-tokens.css';
 
 import { FiChevronLeft, FiSettings, FiX, FiMessageSquare, FiMenu, FiUsers } from 'react-icons/fi';
 
 const ChatPage = () => {
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(null);
   const [activeConversation, setActiveConversation] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -25,6 +29,8 @@ const ChatPage = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showUserPresence, setShowUserPresence] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   // Chat hooks
   const { conversations, loading, startDirectConversation, createGroupConversation, fetchConversations, silentRefresh } = useConversations();
@@ -94,9 +100,42 @@ const ChatPage = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Handle start chat from navigation state
+  useEffect(() => {
+    const handleStartChatFromState = async () => {
+      if (location.state?.startChatWithUserId && !loading && conversations.length >= 0) {
+        const targetUserId = location.state.startChatWithUserId;
+
+        // Clear state to prevent re-triggering
+        window.history.replaceState({}, document.title);
+
+        // Check if conversation already exists
+        const existingConv = conversations.find(c =>
+          c.type === 'direct' && c.otherUser?.id === targetUserId
+        );
+
+        if (existingConv) {
+          setActiveConversation(existingConv);
+        } else {
+          // Create new conversation
+          try {
+            const newConv = await startDirectConversation(targetUserId);
+            if (newConv) setActiveConversation(newConv);
+          } catch (error) {
+            console.error('Error starting chat from state:', error);
+          }
+        }
+
+        if (isMobile) setShowSidebar(false);
+      }
+    };
+
+    handleStartChatFromState();
+  }, [location.state, loading, conversations, startDirectConversation, isMobile]);
+
   // Auto-select first conversation when conversations are loaded and no active conversation
   useEffect(() => {
-    if (conversations.length > 0 && !activeConversation && !loading) {
+    if (conversations.length > 0 && !activeConversation && !loading && !location.state?.startChatWithUserId) {
       // Select the first conversation (most recent by default)
       const firstConversation = conversations[0];
       setActiveConversation(firstConversation);
@@ -106,7 +145,7 @@ const ChatPage = () => {
         setShowSidebar(true);
       }
     }
-  }, [conversations, activeConversation, loading, isMobile]);
+  }, [conversations, activeConversation, loading, isMobile, location.state]);
 
   // Manual refresh handler
   const handleRefresh = async () => {
@@ -159,7 +198,7 @@ const ChatPage = () => {
           console.log('Creating group chat:', chatData);
           const groupConversation = await createGroupConversation({
             name: chatData.name,
-            description: `Group chat created by ${currentUser?.name || 'User'}`,
+            description: `Group chat created by ${currentUser?.name || 'User'} `,
             privacy: chatData.privacy || 'private',
             members: chatData.members
           });
@@ -186,7 +225,7 @@ const ChatPage = () => {
       setShowNewChatModal(false);
     } catch (error) {
       console.error('Error creating new chat:', error);
-      alert(`Failed to create ${chatData.type} chat. Please try again.\nError: ${error.message}`);
+      alert(`Failed to create ${chatData.type} chat.Please try again.\nError: ${error.message} `);
     }
   };
 
@@ -332,6 +371,10 @@ const ChatPage = () => {
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             onShowNewChatModal={() => setShowNewChatModal(true)}
+            onAvatarClick={(userId) => {
+              setSelectedUserId(userId);
+              setShowProfileModal(true);
+            }}
           />
         </div>
 
@@ -342,8 +385,8 @@ const ChatPage = () => {
             whileTap={{ scale: 0.9 }}
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`absolute top-1/2 z-10 p-3 bg-white/80 backdrop-blur-md border border-gray-200
-                      rounded-full shadow-lg hover:bg-white/90 transition-all duration-200
-                      transform -translate-y-1/2 ${sidebarCollapsed ? 'left-16' : 'left-80'
+              rounded-full shadow-lg hover:bg-white/90 transition-all duration-200
+              transform -translate-y-1/2 ${sidebarCollapsed ? 'left-16' : 'left-80'
               }`}
           >
             <FiChevronLeft className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'
@@ -377,6 +420,10 @@ const ChatPage = () => {
                 onlineUsers={onlineUsers}
                 typingUsers={typingUsers}
                 onBack={isMobile ? handleBackToConversations : undefined}
+                onAvatarClick={(userId) => {
+                  setSelectedUserId(userId);
+                  setShowProfileModal(true);
+                }}
               />
             </>
           ) : (
@@ -562,6 +609,17 @@ const ChatPage = () => {
         currentUser={currentUser}
         onlineUsers={onlineUsers}
         onCreateChat={handleCreateNewChat}
+      />
+
+      {/* User Profile Modal */}
+      <UserProfileInfoModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId}
+        onStartChat={handleStartDirectMessage}
       />
     </div>
   );

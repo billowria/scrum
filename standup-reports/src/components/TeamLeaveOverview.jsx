@@ -45,13 +45,13 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [userLeaveMap, setUserLeaveMap] = useState({});
-  
+
   // Process leave data by user
   useEffect(() => {
     if (!leaveData || !users) return;
-    
+
     const leaveByUser = {};
-    
+
     // Initialize all users
     users.forEach(user => {
       leaveByUser[user.id] = {
@@ -59,46 +59,46 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
         leaves: []
       };
     });
-    
+
     // Add leave data
-    leaveData.forEach(leave => {
+    (leaveData || []).forEach(leave => {
       if (!leave.users || !leave.users.id) return;
-      
+
       const userId = leave.users.id;
-      
+
       if (leaveByUser[userId]) {
         leaveByUser[userId].leaves.push(leave);
       }
     });
-    
+
     setUserLeaveMap(leaveByUser);
   }, [leaveData, users]);
-  
+
   // Filter users based on search and status
   const filteredUsers = Object.values(userLeaveMap).filter(userLeave => {
     // Filter by search term
     const nameMatch = userLeave.userData.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Filter by status
     if (statusFilter !== 'all') {
       return nameMatch && userLeave.leaves.some(leave => leave.status === statusFilter);
     }
-    
+
     return nameMatch;
   });
-  
+
   // Check if a leave is in the current month
   const isLeaveInCurrentMonth = (leave) => {
     const startDate = parseISO(leave.start_date);
     const endDate = parseISO(leave.end_date);
-    
+
     return (
-      isSameMonth(startDate, currentMonth) || 
+      isSameMonth(startDate, currentMonth) ||
       isSameMonth(endDate, currentMonth) ||
       (startDate < currentMonth && endDate > currentMonth)
     );
   };
-  
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       <div className="p-4 border-b border-gray-200 bg-gray-50">
@@ -107,7 +107,7 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
           Team Leave Overview
         </h2>
       </div>
-      
+
       {/* Filters */}
       <div className="p-4 border-b border-gray-100 bg-white">
         <div className="flex flex-wrap gap-3">
@@ -122,7 +122,7 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
             />
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
-          
+
           {/* Status filter */}
           <div className="relative">
             <select
@@ -139,9 +139,9 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Team list */}
-      <motion.div 
+      <motion.div
         className="p-4"
         variants={containerVariants}
         initial="hidden"
@@ -150,7 +150,7 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
         {filteredUsers.length > 0 ? (
           <div className="space-y-4">
             {filteredUsers.map(userLeave => (
-              <motion.div 
+              <motion.div
                 key={userLeave.userData.id}
                 className="border border-gray-200 rounded-lg overflow-hidden"
                 variants={itemVariants}
@@ -168,19 +168,18 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="text-sm">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full ${
-                      userLeave.leaves.some(leave => leave.status === 'approved' && isLeaveInCurrentMonth(leave)) 
-                        ? 'bg-green-100 text-green-800' 
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full ${userLeave.leaves.some(leave => leave.status === 'approved' && isLeaveInCurrentMonth(leave))
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-600'
-                    }`}>
+                      }`}>
                       <FiCalendar className="mr-1" />
                       {userLeave.leaves.filter(leave => leave.status === 'approved' && isLeaveInCurrentMonth(leave)).length} approved
                     </span>
                   </div>
                 </div>
-                
+
                 {/* Leave list */}
                 <div className="p-4">
                   {userLeave.leaves.filter(isLeaveInCurrentMonth).length > 0 ? (
@@ -189,8 +188,8 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
                         .filter(isLeaveInCurrentMonth)
                         .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
                         .map(leave => (
-                          <div 
-                            key={leave.id} 
+                          <div
+                            key={leave.id}
                             className={`px-4 py-3 rounded-lg ${statusColors[leave.status]?.bg || 'bg-gray-100'}`}
                           >
                             <div className="flex items-center justify-between mb-1">
@@ -202,7 +201,7 @@ const TeamLeaveOverview = ({ users, leaveData, currentMonth }) => {
                                 {differenceInDays(parseISO(leave.end_date), parseISO(leave.start_date)) + 1} days
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="text-sm text-gray-600">
                                 {format(parseISO(leave.start_date), 'MMM d')} - {format(parseISO(leave.end_date), 'MMM d, yyyy')}

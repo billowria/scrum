@@ -37,6 +37,7 @@ const ChatSidebar = ({
   isCollapsed = false,
   onToggleCollapse,
   onShowNewChatModal,
+  onAvatarClick,
   className = ""
 }) => {
   const [showUserList, setShowUserList] = useState(false);
@@ -195,9 +196,8 @@ const ChatSidebar = ({
     return (
       <motion.button
         onClick={() => handleSectionClick(section)}
-        className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${
-          isCollapsed ? 'justify-center' : ''
-        }`}
+        className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors ${isCollapsed ? 'justify-center' : ''
+          }`}
         whileHover={{ scale: isCollapsed ? 1.05 : 1 }}
         whileTap={{ scale: isCollapsed ? 0.95 : 1 }}
       >
@@ -359,14 +359,14 @@ const ChatSidebar = ({
             const count = filter.value === 'unread'
               ? getUnreadCount(categorizedConversations.all)
               : filter.value === 'pinned'
-              ? pinnedConversations.size
-              : filter.value === 'archived'
-              ? categorizedConversations.archived.length
-              : filter.value === 'direct'
-              ? categorizedConversations.direct.length
-              : filter.value === 'team'
-              ? categorizedConversations.team.length
-              : 0;
+                ? pinnedConversations.size
+                : filter.value === 'archived'
+                  ? categorizedConversations.archived.length
+                  : filter.value === 'direct'
+                    ? categorizedConversations.direct.length
+                    : filter.value === 'team'
+                      ? categorizedConversations.team.length
+                      : 0;
 
             return (
               <motion.button
@@ -374,18 +374,16 @@ const ChatSidebar = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedFilter(filter.value)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                  isSelected
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${isSelected
                     ? `bg-${filter.color}-100 text-${filter.color}-700 border-2 border-${filter.color}-300`
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 <Icon className="w-3 h-3" />
                 <span>{filter.label}</span>
                 {count > 0 && (
-                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${
-                    isSelected ? 'bg-white' : 'bg-gray-300'
-                  }`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${isSelected ? 'bg-white' : 'bg-gray-300'
+                    }`}>
                     {count}
                   </span>
                 )}
@@ -487,6 +485,7 @@ const ChatSidebar = ({
                               onPin={() => togglePin(conversation.id)}
                               onMute={() => toggleMute(conversation.id)}
                               onlineUsers={onlineUsers}
+                              onAvatarClick={onAvatarClick}
                             />
                           </motion.div>
                         ))}
@@ -527,6 +526,7 @@ const ChatSidebar = ({
                               onPin={() => togglePin(conversation.id)}
                               onMute={() => toggleMute(conversation.id)}
                               onlineUsers={onlineUsers}
+                              onAvatarClick={onAvatarClick}
                             />
                           </motion.div>
                         ))}

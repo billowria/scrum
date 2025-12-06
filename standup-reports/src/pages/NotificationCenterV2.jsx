@@ -1,430 +1,390 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import notificationService from '../services/notificationService';
+import { format, isToday, isYesterday, subDays, isAfter } from 'date-fns';
 
-// Import components
+// Components
+import NotificationCard from '../components/notifications/NotificationCard';
+import NotificationSidebar from '../components/notifications/NotificationSidebar';
+import NotificationStats from '../components/notifications/NotificationStats';
 import NotificationCreator from '../components/notifications/NotificationCreator';
-import NotificationStream from '../components/notifications/NotificationStream';
-import SmartFilters from '../components/notifications/SmartFilters';
-import NotificationHeader from '../components/notifications/NotificationHeader';
+import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal';
 
+// Icons
+import { FiCheck, FiRefreshCw, FiBell, FiPlus, FiSearch } from 'react-icons/fi';
 
 export default function NotificationCenterV2() {
-  // State management
+  // State
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
   const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
-  const [showCreator, setShowCreator] = useState(false);
-  const [filters, setFilters] = useState({
-    category: 'all',
-    priority: 'all',
-    status: 'all',
-    search: ''
-  });
-  const [isFiltersVisible, setIsFiltersVisible] = useState(true);
-  const [stats, setStats] = useState({});
+  const [stats, setStats] = useState({ unread: 0, total: 0 });
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showCreator, setShowCreator] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Toggle filters visibility
-  const toggleFilters = () => {
-    setIsFiltersVisible(!isFiltersVisible);
-  };
-
-  // Fetch current user
+  // Fetch User
   useEffect(() => {
     const fetchUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('No authenticated user');
-        
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         const { data: userData } = await supabase
           .from('users')
-          .select('id, name, role, team_id, company_id, avatar_url')
+          .select('id, role, team_id, company_id')
           .eq('id', user.id)
           .single();
-        
         setCurrentUser(userData);
-        setUserRole(userData.role);
-      } catch (err) {
-        console.error('Error fetching user:', err);
-        setError('Failed to load user information');
       }
     };
-    
     fetchUser();
   }, []);
 
-  // Fetch notifications and stats
+  // Fetch Notifications
   const fetchNotifications = useCallback(async () => {
     if (!currentUser) return;
 
-    setLoading(true);
     try {
-      const companyOrTeamId = currentUser.company_id || currentUser.team_id;
-
-      console.log('NotificationCenter: Fetching notifications for user:', {
-        userId: currentUser.id,
-        role: userRole,
-        teamId: companyOrTeamId,
-        filters
-      });
-
       const result = await notificationService.getNotifications({
         userId: currentUser.id,
-        role: userRole,
-        teamId: companyOrTeamId,
-        limit: 100,
-        ...filters
-      });
-
-      console.log('NotificationCenter: Fetched notifications:', {
-        total: result.total,
-        notifications: result.notifications.length,
-        categories: result.notifications.map(n => ({
-          title: n.title,
-          type: n.type,
-          category: n.category
-        }))
+        role: currentUser.role,
+        teamId: currentUser.company_id || currentUser.team_id,
+        limit: 100 // Fetch more for client-side filtering feeling smooth
       });
 
       setNotifications(result.notifications);
 
-      // Get advanced stats
-      const notificationStats = await notificationService.getNotificationStats(
-        currentUser.id,
-        userRole,
-        currentUser.company_id || currentUser.team_id
-      );
+      // Calculate stats
+      const unreadCount = result.notifications.filter(n => !n.read).length;
+      setStats({
+        total: result.total,
+        unread: unreadCount,
+        // Calculate counts for filters
+        task: result.notifications.filter(n => n.category === 'task').length,
+        project: result.notifications.filter(n => n.category === 'project').length,
+        mention: result.notifications.filter(n => n.type === 'mention').length,
+        system: result.notifications.filter(n => n.category === 'system').length,
+        achievement: result.notifications.filter(n => n.category === 'achievement').length,
+      });
 
-      console.log('NotificationCenter: Notification stats:', notificationStats);
-      setStats(notificationStats);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-      setError('Failed to load notifications');
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
-  }, [currentUser, userRole, filters]);
+  }, [currentUser]);
 
-  // Initial fetch
+  // Initial Fetch & Real-time Subscription
   useEffect(() => {
-    if (currentUser && userRole) {
+    if (currentUser) {
       fetchNotifications();
+
+      // Subscribe to real-time updates
+      const subscriptionKey = notificationService.subscribeToNotifications(
+        currentUser.id,
+        currentUser.role,
+        currentUser.team_id,
+        () => {
+          // Debounce or just refetch
+          fetchNotifications();
+        }
+      );
+
+      return () => {
+        notificationService.unsubscribeFromNotifications(subscriptionKey);
+      };
     }
-  }, [currentUser, userRole, fetchNotifications]);
-
-  // Real-time subscriptions
-  useEffect(() => {
-    if (!currentUser) return;
-
-    console.log('NotificationCenter: Setting up real-time subscriptions for user:', currentUser.id);
-
-    // Subscribe to announcements (existing)
-    const announcementsChannel = supabase
-      .channel('announcements_nc')
-      .on('postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'announcements'
-        },
-        (payload) => {
-          console.log('NotificationCenter: New announcement received:', payload);
-          fetchNotifications();
-        }
-      );
-
-    // Subscribe to tasks table changes
-    const tasksChannel = supabase
-      .channel('tasks_nc')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        (payload) => {
-          console.log('NotificationCenter: Task table changed:', payload);
-          fetchNotifications();
-        }
-      );
-
-    // Subscribe to projects table changes (if exists)
-    const projectsChannel = supabase
-      .channel('projects_nc')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'projects'
-        },
-        (payload) => {
-          console.log('NotificationCenter: Project table changed:', payload);
-          fetchNotifications();
-        }
-      );
-
-    // Subscribe to leave requests
-    const leaveRequestsChannel = supabase
-      .channel('leave_requests_nc')
-      .on('postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'leave_plans'
-        },
-        (payload) => {
-          console.log('NotificationCenter: New leave request:', payload);
-          fetchNotifications();
-        }
-      );
-
-    // Subscribe to timesheet submissions
-    const timesheetChannel = supabase
-      .channel('timesheets_nc')
-      .on('postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'timesheet_submissions'
-        },
-        (payload) => {
-          console.log('NotificationCenter: New timesheet submission:', payload);
-          fetchNotifications();
-        }
-      );
-
-    // Subscribe to all channels
-    announcementsChannel.subscribe();
-    tasksChannel.subscribe();
-    projectsChannel.subscribe();
-    leaveRequestsChannel.subscribe();
-    timesheetChannel.subscribe();
-
-    return () => {
-      console.log('NotificationCenter: Cleaning up subscriptions');
-      supabase.removeChannel(announcementsChannel);
-      supabase.removeChannel(tasksChannel);
-      supabase.removeChannel(projectsChannel);
-      supabase.removeChannel(leaveRequestsChannel);
-      supabase.removeChannel(timesheetChannel);
-    };
   }, [currentUser, fetchNotifications]);
 
-  // Memoized values
+  // Filter Logic
   const filteredNotifications = useMemo(() => {
-    const filtered = notifications.filter(notification => {
-      // Derive category from type if not present to ensure consistent categorization
-      const derivedCategory = notification.category || notificationService.getNotificationCategory(notification.type);
+    return notifications.filter(n => {
+      // 1. Text Search (Title, Message, Sender Name)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const senderName = n.created_by_user?.name?.toLowerCase() || '';
+        const matchesSearch =
+          n.title?.toLowerCase().includes(query) ||
+          n.message?.toLowerCase().includes(query) ||
+          senderName.includes(query);
 
-      // Debug filtering logic
-      if (filters.category !== 'all') {
-        console.log('Filtering by category:', {
-          notificationTitle: notification.title,
-          notificationType: notification.type,
-          originalCategory: notification.category,
-          derivedCategory,
-          filterCategory: filters.category,
-          matches: derivedCategory === filters.category
-        });
+        if (!matchesSearch) return false;
       }
 
-      if (filters.category !== 'all' && derivedCategory !== filters.category) return false;
-      if (filters.priority !== 'all' && notification.priority !== filters.priority) return false;
-      if (filters.status === 'unread' && notification.read) return false;
-      if (filters.status === 'read' && !notification.read) return false;
-      if (filters.search) {
-        const search = filters.search.toLowerCase();
-        return (notification.title || '').toLowerCase().includes(search) ||
-               (notification.message || '').toLowerCase().includes(search);
+      // 2. Category Filter
+      if (activeFilter === 'all') return true;
+      if (activeFilter === 'unread') return !n.read;
+      if (activeFilter === 'mention') return n.type === 'mention';
+      return n.category === activeFilter; // task, project, system, achievement
+    });
+  }, [notifications, activeFilter, searchQuery]);
+
+  // Group Notifications by Date
+  const groupedNotifications = useMemo(() => {
+    const groups = {
+      today: [],
+      yesterday: [],
+      week: [],
+      older: []
+    };
+
+    const oneWeekAgo = subDays(new Date(), 7);
+
+    filteredNotifications.forEach(n => {
+      const date = new Date(n.created_at);
+      if (isToday(date)) {
+        groups.today.push(n);
+      } else if (isYesterday(date)) {
+        groups.yesterday.push(n);
+      } else if (isAfter(date, oneWeekAgo)) {
+        groups.week.push(n);
+      } else {
+        groups.older.push(n);
       }
-      return true;
     });
 
-    console.log('NotificationCenter: Filtered notifications:', {
-      total: notifications.length,
-      filtered: filtered.length,
-      filters,
-      breakdown: filtered.reduce((acc, n) => {
-        const category = n.category || notificationService.getNotificationCategory(n.type);
-        acc[category] = (acc[category] || 0) + 1;
-        return acc;
-      }, {})
-    });
+    return groups;
+  }, [filteredNotifications]);
 
-    return filtered;
-  }, [notifications, filters]);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  // Event handlers
-  const handleCreateNotification = () => {
-    setShowCreator(true);
-  };
-
-  const handleNotificationCreated = (notification) => {
-    // Refresh notifications to get the latest data
+  // Actions
+  const handleMarkRead = async (id) => {
+    setNotifications(prev => prev.map(n =>
+      n.id === id ? { ...n, read: true } : n
+    ));
+    await notificationService.markAsRead(id, currentUser.id);
     fetchNotifications();
-    setShowCreator(false);
   };
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+  const handleMarkAllRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    await Promise.all(unreadIds.map(id => notificationService.markAsRead(id, currentUser.id)));
+    fetchNotifications();
+  };
+
+  const handleDelete = async (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchNotifications();
-    setIsRefreshing(false);
   };
 
-  const handleSearch = (query) => {
-    setFilters(prev => ({ ...prev, search: query }));
+  const handleAction = async (notification, action) => {
+    try {
+      if (notification.type === 'leave_request') {
+        const leaveId = notification.id.replace('leave-', '');
+        await notificationService.handleLeaveAction(leaveId, action);
+        fetchNotifications();
+      } else {
+        console.log('Action not implemented for this type', notification.type);
+      }
+    } catch (error) {
+      console.error('Action failed', error);
+    }
   };
 
-  const handleToggleFilters = () => {
-    setIsFiltersVisible(!isFiltersVisible);
-  };
-
-  if (loading && !currentUser) {
+  if (loading && !notifications.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <p className="mt-4 text-gray-600 font-medium">Loading Notification Center...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-2xl shadow-lg max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FiBell className="w-8 h-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={handleRefresh}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const GroupHeader = ({ label, count }) => (
+    <div className="flex items-center gap-3 mt-8 mb-4">
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{label}</h3>
+      <div className="h-px bg-gray-200 flex-1" />
+      <span className="text-xs text-gray-400 font-medium">{count}</span>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Compact Header */}
-      <NotificationHeader
-        unreadCount={unreadCount}
-        totalNotifications={stats.total || 0}
-        responseTime={stats.responseTime}
-        onCreateNotification={handleCreateNotification}
-        onRefresh={handleRefresh}
-        onToggleFilters={handleToggleFilters}
-        showFilters={isFiltersVisible}
-        onSearch={handleSearch}
-        searchQuery={filters.search}
-        isRefreshing={isRefreshing}
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Notification Center</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              You have {stats.unread} unread notifications
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* Search Bar */}
+            <div className="relative group">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Search by text or sender..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all"
+              />
+            </div>
+
+            <button
+              onClick={() => setShowCreator(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 flex items-center gap-2"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Notification</span>
+            </button>
+
+            <button
+              onClick={handleMarkAllRead}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="Mark all as read"
+            >
+              <FiCheck className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-8 relative">
+          {/* Sidebar Navigation */}
+          <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'} shrink-0`}>
+            <NotificationSidebar
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              counts={stats}
+              onOpenSettings={() => setShowSettings(true)}
+              isOpen={isSidebarOpen}
+              onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+            />
+          </div>
+
+          {/* Main Feed */}
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="popLayout">
+              {filteredNotifications.length > 0 ? (
+                <div className="space-y-1 pb-20">
+                  {/* Today */}
+                  {groupedNotifications.today.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <GroupHeader label="Today" count={groupedNotifications.today.length} />
+                      {groupedNotifications.today.map(n => (
+                        <NotificationCard
+                          key={n.id}
+                          notification={n}
+                          onMarkRead={handleMarkRead}
+                          onDelete={handleDelete}
+                          onClick={() => { }}
+                          onAction={handleAction}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+
+                  {/* Yesterday */}
+                  {groupedNotifications.yesterday.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <GroupHeader label="Yesterday" count={groupedNotifications.yesterday.length} />
+                      {groupedNotifications.yesterday.map(n => (
+                        <NotificationCard
+                          key={n.id}
+                          notification={n}
+                          onMarkRead={handleMarkRead}
+                          onDelete={handleDelete}
+                          onClick={() => { }}
+                          onAction={handleAction}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+
+                  {/* This Week */}
+                  {groupedNotifications.week.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <GroupHeader label="Earlier This Week" count={groupedNotifications.week.length} />
+                      {groupedNotifications.week.map(n => (
+                        <NotificationCard
+                          key={n.id}
+                          notification={n}
+                          onMarkRead={handleMarkRead}
+                          onDelete={handleDelete}
+                          onClick={() => { }}
+                          onAction={handleAction}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+
+                  {/* Older */}
+                  {groupedNotifications.older.length > 0 && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <GroupHeader label="Older" count={groupedNotifications.older.length} />
+                      {groupedNotifications.older.map(n => (
+                        <NotificationCard
+                          key={n.id}
+                          notification={n}
+                          onMarkRead={handleMarkRead}
+                          onDelete={handleDelete}
+                          onClick={() => { }}
+                          onAction={handleAction}
+                        />
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-dashed border-gray-200"
+                >
+                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                    <FiBell className="w-8 h-8 text-blue-300" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                    No notifications found
+                  </h3>
+                  <p className="text-gray-500 max-w-sm">
+                    {searchQuery
+                      ? `No matches found for "${searchQuery}"`
+                      : activeFilter === 'all'
+                        ? "You're all caught up! Check back later."
+                        : `No notifications in ${activeFilter}.`}
+                  </p>
+                  {(activeFilter !== 'all' || searchQuery) && (
+                    <button
+                      onClick={() => { setActiveFilter('all'); setSearchQuery(''); }}
+                      className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Settings Modal */}
+      <NotificationSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        userId={currentUser?.id}
       />
 
-      {/* Debug Panel - Notification Categories */}
-      <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            <span className="font-medium text-yellow-800">Debug: Notification Categories</span>
-            <div className="flex gap-3">
-              <span className="text-gray-600">
-                Total: <span className="font-bold text-gray-800">{notifications.length}</span>
-              </span>
-              <span className="text-gray-600">
-                Tasks: <span className="font-bold text-indigo-600">
-                  {notifications.filter(n => {
-                    const category = n.category || notificationService.getNotificationCategory(n.type);
-                    return category === 'task';
-                  }).length}
-                </span>
-              </span>
-              <span className="text-gray-600">
-                Projects: <span className="font-bold text-emerald-600">
-                  {notifications.filter(n => {
-                    const category = n.category || notificationService.getNotificationCategory(n.type);
-                    return category === 'project';
-                  }).length}
-                </span>
-              </span>
-              <span className="text-gray-600">
-                Other: <span className="font-bold text-gray-600">
-                  {notifications.filter(n => {
-                    const category = n.category || notificationService.getNotificationCategory(n.type);
-                    return category !== 'task' && category !== 'project';
-                  }).length}
-                </span>
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={fetchNotifications}
-            className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-300 transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex gap-6">
-          {/* Sidebar - Smart Filters */}
-        <div className="hidden lg:block w-80 flex-shrink-0">
-          <SmartFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            stats={stats}
-          />
-        </div>
-
-          {/* Main Content - Notification Stream */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <NotificationStream
-                filters={filters}
-                onNotificationAction={fetchNotifications}
-                realTimeEnabled={true}
-                notifications={notifications}
-                loading={loading}
-              />
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Notification Creator Modal */}
-      <AnimatePresence>
-        {showCreator && (
-          <NotificationCreator
-            isOpen={showCreator}
-            onClose={() => setShowCreator(false)}
-            onSuccess={handleNotificationCreated}
-            currentUser={currentUser}
-          />
-        )}
-      </AnimatePresence>
+      {/* Creator Modal */}
+      <NotificationCreator
+        isOpen={showCreator}
+        onClose={() => setShowCreator(false)}
+        onSuccess={() => {
+          fetchNotifications();
+        }}
+        currentUser={currentUser}
+      />
     </div>
   );
 }

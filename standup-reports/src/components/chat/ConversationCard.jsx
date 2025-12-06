@@ -27,6 +27,7 @@ const ConversationCard = ({
   onMute,
   onlineUsers = [],
   currentUser,
+  onAvatarClick,
   className = ""
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -169,41 +170,48 @@ const ConversationCard = ({
 
   return (
     <motion.div
-      className={`relative group cursor-pointer transition-all duration-200 ${
-        isActive
-          ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500'
-          : 'hover:bg-gray-50 border-l-4 border-transparent'
-      } ${className}`}
+      className={`relative group cursor-pointer transition-all duration-200 ${isActive
+        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500'
+        : 'hover:bg-gray-50 border-l-4 border-transparent'
+        } ${className}`}
       onClick={onClick}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       layout
     >
       <div className="flex items-center gap-3 p-3">
-        {/* Avatar */}
-        <div className="relative flex-shrink-0">
-          <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm">
+        {/* Avatar - Clickable for direct messages */}
+        <motion.div
+          className="relative flex-shrink-0"
+          whileHover={{ scale: conversation.type === 'direct' ? 1.05 : 1 }}
+          whileTap={{ scale: conversation.type === 'direct' ? 0.95 : 1 }}
+          onClick={(e) => {
+            if (conversation.type === 'direct' && conversation.otherUser?.id) {
+              e.stopPropagation();
+              onAvatarClick?.(conversation.otherUser.id);
+            }
+          }}
+        >
+          <div className={`w-12 h-12 rounded-full overflow-hidden shadow-sm ${conversation.type === 'direct' ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all' : ''}`}>
             {getConversationAvatar()}
           </div>
 
           {/* Online status indicator for direct messages */}
           {conversation.type === 'direct' && (
-            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${
-              isUserOnline()
-                ? 'bg-green-500'
-                : 'bg-gray-300'
-            }`} />
+            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${isUserOnline()
+              ? 'bg-green-500'
+              : 'bg-gray-300'
+              }`} />
           )}
-        </div>
+        </motion.div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h3 className={`font-semibold truncate flex items-center gap-2 ${
-              isActive
-                ? 'text-blue-600'
-                : 'text-gray-900'
-            }`}>
+            <h3 className={`font-semibold truncate flex items-center gap-2 ${isActive
+              ? 'text-blue-600'
+              : 'text-gray-900'
+              }`}>
               {getConversationName()}
 
               {/* Status indicators */}
@@ -231,24 +239,22 @@ const ConversationCard = ({
             </h3>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className={`text-xs ${
-                isActive
-                  ? 'text-blue-500 font-medium'
-                  : 'text-gray-500'
-              }`}>
+              <span className={`text-xs ${isActive
+                ? 'text-blue-500 font-medium'
+                : 'text-gray-500'
+                }`}>
                 {formatTime(conversation.last_message_at)}
               </span>
             </div>
           </div>
 
           <div className="flex items-center justify-between">
-            <p className={`text-sm truncate ${
-              isActive
-                ? 'text-blue-600'
-                : isMuted
+            <p className={`text-sm truncate ${isActive
+              ? 'text-blue-600'
+              : isMuted
                 ? 'text-gray-400'
                 : 'text-gray-600'
-            }`}>
+              }`}>
               {getLastMessagePreview()}
             </p>
 

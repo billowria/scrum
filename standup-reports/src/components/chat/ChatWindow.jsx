@@ -29,6 +29,7 @@ const ChatWindow = ({
   onlineUsers = [],
   typingUsers = [],
   onBack = null,
+  onAvatarClick,
   className = ""
 }) => {
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -129,8 +130,8 @@ const ChatWindow = ({
   // Search messages
   const searchResults = searchQuery
     ? messages.filter(msg =>
-        msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : [];
 
   // Render date separator
@@ -239,8 +240,17 @@ const ChatWindow = ({
               </motion.button>
             )}
 
-            {/* Conversation Avatar */}
-            <div className="relative flex-shrink-0">
+            {/* Conversation Avatar - Clickable */}
+            <motion.div
+              className="relative flex-shrink-0 cursor-pointer"
+              whileHover={{ scale: conversation.type === 'direct' ? 1.05 : 1 }}
+              whileTap={{ scale: conversation.type === 'direct' ? 0.95 : 1 }}
+              onClick={() => {
+                if (conversation.type === 'direct' && conversation.otherUser?.id) {
+                  onAvatarClick?.(conversation.otherUser.id);
+                }
+              }}
+            >
               {conversation.type === 'direct' ? (
                 conversation.otherUser?.avatar_url ? (
                   <img
@@ -260,12 +270,11 @@ const ChatWindow = ({
               )}
 
               {/* Online Status Indicator */}
-              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${
-                conversation.type === 'direct'
-                  ? isOnline ? 'bg-green-500' : 'bg-gray-400'
-                  : 'bg-blue-500'
-              }`} />
-            </div>
+              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${conversation.type === 'direct'
+                ? isOnline ? 'bg-green-500' : 'bg-gray-400'
+                : 'bg-blue-500'
+                }`} />
+            </motion.div>
 
             {/* Conversation Title and Status */}
             <div className="flex-1 min-w-0">
@@ -278,9 +287,8 @@ const ChatWindow = ({
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 {conversation.type === 'direct' ? (
                   <>
-                    <span className={`text-xs font-medium ${
-                      isOnline ? 'text-green-600' : 'text-gray-500'
-                    }`}>
+                    <span className={`text-xs font-medium ${isOnline ? 'text-green-600' : 'text-gray-500'
+                      }`}>
                       {isOnline ? 'Active now' : 'Offline'}
                     </span>
                   </>
@@ -340,11 +348,10 @@ const ChatWindow = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowSearch(!showSearch)}
-              className={`p-2 rounded-lg transition-colors ${
-                showSearch
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className={`p-2 rounded-lg transition-colors ${showSearch
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               title="Search messages"
             >
               <FiSearch className="w-4 h-4" />
@@ -376,11 +383,10 @@ const ChatWindow = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className={`p-2 rounded-lg transition-colors ${
-                  showMoreOptions
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+                className={`p-2 rounded-lg transition-colors ${showMoreOptions
+                  ? 'bg-gray-100 text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                 title="More options"
               >
                 <FiMoreVertical className="w-4 h-4" />
@@ -649,7 +655,7 @@ const ChatWindow = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 };
 

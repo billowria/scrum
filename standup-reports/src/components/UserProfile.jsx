@@ -1,1580 +1,483 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line
-} from 'recharts';
 import {
-  FiUser, FiMail, FiBriefcase, FiCalendar, FiPhone, FiLinkedin,
-  FiEdit2, FiSave, FiX, FiAlertCircle, FiChevronRight, FiUsers,
-  FiClock, FiCheck, FiArrowLeft, FiTwitter, FiGithub, FiSlack,
-  FiStar, FiAward, FiTrendingUp, FiActivity, FiSettings,
-  FiCamera, FiSearch, FiDownload, FiUpload, FiBook, FiTarget,
-  FiZap, FiHeart, FiShield, FiBarChart2, FiFolder, FiTag,
-  FiBell, FiHome, FiMessageSquare, FiFileText, FiGrid,
-  FiShare2, FiCopy, FiEdit, FiMenu, FiRefreshCw, FiPlus,
-  FiMinus, FiMaximize2, FiMinimize2, FiCommand,
-  FiMoon, FiSun
+  FiMail, FiPhone, FiLinkedin, FiSlack, FiCalendar,
+  FiEdit2, FiSave, FiX, FiCamera, FiBriefcase, FiUser,
+  FiCheckCircle, FiTarget, FiAward, FiTrendingUp, FiMapPin, FiGlobe,
+  FiGithub, FiTwitter, FiLayers, FiUsers, FiStar, FiZap, FiCpu, FiGift
 } from 'react-icons/fi';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { supabase } from '../supabaseClient';
 
-// Command palette commands
-const COMMANDS = [
-  { id: 'edit', label: 'Toggle Edit Mode', icon: FiEdit2, action: 'toggleEdit' },
-  { id: 'share', label: 'Share Profile', icon: FiShare2, action: 'share' },
-  { id: 'export', label: 'Export Data', icon: FiDownload, action: 'export' },
-  { id: 'overview', label: 'Go to Overview', icon: FiUser, action: 'navigate', target: 'overview' },
-  { id: 'team', label: 'Go to Team', icon: FiUsers, action: 'navigate', target: 'team' },
-  { id: 'projects', label: 'Go to Projects', icon: FiBriefcase, action: 'navigate', target: 'projects' },
-  { id: 'activity', label: 'Go to Activity', icon: FiActivity, action: 'navigate', target: 'activity' },
-  { id: 'achievements', label: 'Go to Achievements', icon: FiAward, action: 'navigate', target: 'achievements' },
-  { id: 'timesheets', label: 'Go to Timesheets', icon: FiClock, action: 'navigate', target: 'timesheets' },
-  { id: 'skills', label: 'Go to Skills', icon: FiZap, action: 'navigate', target: 'skills' }
-];
+// --- Animation Variants ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  }
+};
 
 const UserProfile = () => {
   const { userId } = useParams();
-  const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-  const commandPaletteRef = useRef(null);
-  
-  // Core state
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [canEditProfile, setCanEditProfile] = useState(false);
-  
-  // UI state
-  const [activeTab, setActiveTab] = useState('overview');
+  const { profile, loading, saving, error, isOwnProfile, updateProfile } = useUserProfile(userId);
+
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [commandSearch, setCommandSearch] = useState('');
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
-  
-  // Form data
   const [formData, setFormData] = useState({});
-  
-  // Data state
-  const [teamMembers, setTeamMembers] = useState([]);
-  const [achievements, setAchievements] = useState([]);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Stats & Data
+  const [stats, setStats] = useState({
+    tasksCompleted: 0,
+    activeProjects: 0,
+    reportsSubmitted: 0,
+    streak: 0
+  });
   const [projects, setProjects] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [timesheets, setTimesheets] = useState([]);
-  const [leavePlans, setLeavePlans] = useState([]);
-  const [skills, setSkills] = useState([]);
+  const [team, setTeam] = useState(null);
+  const [achievements, setAchievements] = useState([]);
+  const [loadingExtras, setLoadingExtras] = useState(true);
 
-  // Command palette handlers
-  const executeCommand = useCallback((command) => {
-    setShowCommandPalette(false);
-    setCommandSearch('');
-    
-    switch (command.action) {
-      case 'toggleEdit':
-        if (canEditProfile) setIsEditing(!isEditing);
-        break;
-      case 'share':
-        setShowShareModal(true);
-        break;
-      case 'export':
-        handleExport();
-        break;
-      case 'navigate':
-        setActiveTab(command.target);
-        break;
+  useEffect(() => {
+    if (profile) {
+      setFormData(profile);
+      fetchAdditionalData();
     }
-  }, [canEditProfile, isEditing]);
-  
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setShowCommandPalette(true);
-      }
-      if (e.key === 'Escape') {
-        setShowCommandPalette(false);
-        setShowShareModal(false);
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-  
-  useEffect(() => {
-    fetchCurrentUser();
-  }, []);
+  }, [profile]);
 
-  useEffect(() => {
-    if (currentUser) {
-      setIsOwnProfile(!userId || userId === currentUser.id);
-      setCanEditProfile(currentUser.role === 'manager' || !userId || userId === currentUser.id);
-      const id = userId || currentUser.id;
-      fetchProfile(id);
-      fetchTeamMembers(id);
-      fetchAchievements(id);
-      fetchProjects(id);
-      fetchTasks(id);
-      fetchTimesheets(id);
-      fetchLeavePlans(id);
-      fetchSkills(id);
-    }
-  }, [userId, currentUser]);
-
-  const fetchCurrentUser = async () => {
+  const fetchAdditionalData = async () => {
+    if (!profile?.id) return;
+    setLoadingExtras(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, name, email, role, team_id')
-          .eq('id', user.id)
-          .single();
-          
-        if (error) throw error;
-        setCurrentUser(data);
-      }
-    } catch (error) {
-      console.error('Error fetching current user:', error);
-      setError('Failed to fetch current user data');
-    }
-  };
+      const [statsData, projectsData, teamData, achievementsData] = await Promise.all([
+        fetchStats(profile.id),
+        fetchProjects(profile.id),
+        fetchTeam(profile.team_id),
+        fetchAchievements(profile.id)
+      ]);
 
-  const fetchProfile = async (id) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, name, role, avatar_url, team_id, teams(name)')
-        .eq('id', id)
-        .single();
-        
-      if (userError) throw userError;
-      
-      const { data: profileData, error: profileError } = await supabase
-        .rpc('get_user_profile', { p_user_id: id });
-        
-      if (profileError) throw profileError;
-      
-      if (profileData && profileData.length > 0) {
-        const mergedProfile = {
-          ...profileData[0],
-          avatar_url: userData.avatar_url,
-          name: userData.name,
-          role: userData.role,
-          team_id: userData.team_id,
-          team_name: userData.teams?.name
-        };
-        
-        setProfile(mergedProfile);
-        setFormData(mergedProfile);
-      } else {
-        setError('Profile not found');
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError(error.message || 'Failed to fetch profile');
+      setStats(statsData);
+      setProjects(projectsData);
+      setTeam(teamData);
+      setAchievements(achievementsData);
+    } catch (err) {
+      console.error('Error fetching profile data:', err);
     } finally {
-      setLoading(false);
+      setLoadingExtras(false);
     }
   };
 
-  const fetchTeamMembers = async (id) => {
-    try {
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('team_id')
-        .eq('id', id)
-        .single();
-        
-      if (userError) throw userError;
-      
-      if (userData.team_id) {
-        const { data: membersData, error: membersError } = await supabase
-          .from('user_info')
-          .select('*')
-          .eq('team_id', userData.team_id);
-          
-        if (membersError) throw membersError;
-        setTeamMembers(membersData || []);
-      }
-    } catch (error) {
-      console.error('Error fetching team members:', error);
+  const fetchStats = async (uid) => {
+    // 1. Tasks Completed
+    const { count: tasksCompleted } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('assignee_id', uid)
+      .eq('status', 'Completed');
+
+    // 2. Active Projects (from assignments)
+    const { count: activeProjects } = await supabase
+      .from('project_assignments')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', uid);
+
+    // 3. Reports Submitted
+    const { count: reportsSubmitted } = await supabase
+      .from('daily_reports')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', uid);
+
+    return {
+      tasksCompleted: tasksCompleted || 0,
+      activeProjects: activeProjects || 0,
+      reportsSubmitted: reportsSubmitted || 0,
+      streak: Math.floor(Math.random() * 10) + 1 // Mock streak for now
+    };
+  };
+
+  const fetchProjects = async (uid) => {
+    const { data } = await supabase
+      .from('project_assignments')
+      .select('role_in_project, projects(id, name, status, description)')
+      .eq('user_id', uid)
+      .limit(5);
+    return data?.map(item => ({ ...item.projects, role: item.role_in_project })) || [];
+  };
+
+  const fetchTeam = async (tid) => {
+    if (!tid) return null;
+    const { data } = await supabase
+      .from('teams')
+      .select('id, name, description')
+      .eq('id', tid)
+      .single();
+    return data;
+  };
+
+  const fetchAchievements = async (uid) => {
+    const { data } = await supabase
+      .from('achievements')
+      .select('*')
+      .eq('user_id', uid)
+      .order('awarded_at', { ascending: false });
+    return data || [];
+  };
+
+  const getAchievementStyle = (type) => {
+    switch (type) {
+      case 'promotion': return { icon: FiTrendingUp, color: 'text-purple-600', bg: 'bg-purple-100' };
+      case 'certificate': return { icon: FiAward, color: 'text-blue-600', bg: 'bg-blue-100' };
+      case 'recognition': return { icon: FiStar, color: 'text-yellow-600', bg: 'bg-yellow-100' };
+      case 'performance': return { icon: FiZap, color: 'text-amber-600', bg: 'bg-amber-100' };
+      case 'milestone': return { icon: FiTarget, color: 'text-red-600', bg: 'bg-red-100' };
+      case 'teamwork': return { icon: FiUsers, color: 'text-indigo-600', bg: 'bg-indigo-100' };
+      case 'technical': return { icon: FiCpu, color: 'text-slate-600', bg: 'bg-slate-100' };
+      default: return { icon: FiGift, color: 'text-emerald-600', bg: 'bg-emerald-100' };
     }
   };
 
-  const fetchAchievements = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('user_id', id)
-        .order('awarded_at', { ascending: false });
-        
-      if (error) throw error;
-      setAchievements(data || []);
-    } catch (error) {
-      console.error('Error fetching achievements:', error);
-    }
-  };
-
-  const fetchProjects = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('project_assignments')
-        .select(`
-          id,
-          role_in_project,
-          projects (
-            id,
-            name,
-            description,
-            start_date,
-            end_date,
-            status
-          )
-        `)
-        .eq('user_id', id);
-        
-      if (error) throw error;
-      
-      const projectData = data.map(item => ({
-        id: item.projects.id,
-        name: item.projects.name,
-        description: item.projects.description,
-        role: item.role_in_project,
-        start_date: item.projects.start_date,
-        end_date: item.projects.end_date,
-        status: item.projects.status
-      }));
-      
-      setProjects(projectData || []);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    }
-  };
-
-  const fetchTasks = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('assignee_id', id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (error) throw error;
-      setTasks(data || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
-  };
-
-  const fetchTimesheets = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('timesheets')
-        .select('*')
-        .eq('user_id', id)
-        .order('date', { ascending: false })
-        .limit(30);
-        
-      if (error) throw error;
-      setTimesheets(data || []);
-    } catch (error) {
-      console.error('Error fetching timesheets:', error);
-    }
-  };
-
-  const fetchLeavePlans = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('leave_plans')
-        .select('*')
-        .eq('user_id', id)
-        .order('start_date', { ascending: false });
-        
-      if (error) throw error;
-      setLeavePlans(data || []);
-    } catch (error) {
-      console.error('Error fetching leave plans:', error);
-    }
-  };
-  
-  const fetchSkills = async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_skills')
-        .select('*')
-        .eq('user_id', id)
-        .order('skill_name', { ascending: true });
-        
-      if (error) throw error;
-      setSkills(data || []);
-    } catch (error) {
-      console.error('Error fetching skills:', error);
-    }
-  };
-
-  // Form validation
-  const validateForm = () => {
-    const errors = {};
-    
-    if (!formData.name?.trim()) {
-      errors.name = 'Name is required';
-    }
-    
-    if (!formData.email?.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-    
-    if (formData.phone && !/^[\+]?[0-9\s\-\(\)]+$/.test(formData.phone)) {
-      errors.phone = 'Please enter a valid phone number';
-    }
-    
-    if (formData.linkedin_url && !formData.linkedin_url.includes('linkedin.com')) {
-      errors.linkedin_url = 'Please enter a valid LinkedIn URL';
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  
+  // --- Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear validation error when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
+  const handleSave = async () => {
+    const success = await updateProfile(formData);
+    if (success) setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setFormData(profile);
+    setIsEditing(false);
+  };
+
   const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];
     if (!file || !profile) return;
-    
     setUploadingAvatar(true);
-    
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}-${Math.random()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-      
-      const publicUrl = data.publicUrl;
-      
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ avatar_url: publicUrl })
-        .eq('id', profile.id);
-      
-      if (updateError) throw updateError;
-      
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
-      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      setError('Failed to upload avatar');
-    } finally {
-      setUploadingAvatar(false);
-    }
+      await supabase.storage.from('avatars').upload(filePath, file);
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      setFormData(prev => ({ ...prev, avatar_url: data.publicUrl }));
+    } catch (error) { console.error('Error uploading avatar:', error); }
+    finally { setUploadingAvatar(false); }
   };
 
-  const handleSave = async () => {
-    if (!validateForm()) return;
-    
-    setSaving(true);
-    setError(null);
-    
-    try {
-      const { error: userError } = await supabase
-        .from('users')
-        .update({
-          name: formData.name,
-          email: formData.email
-        })
-        .eq('id', profile.id);
-        
-      if (userError) throw userError;
-      
-      const { error: profileError } = await supabase
-        .rpc('upsert_user_profile', {
-          p_user_id: profile.id,
-          p_avatar_url: formData.avatar_url,
-          p_job_title: formData.job_title,
-          p_bio: formData.bio,
-          p_start_date: formData.start_date,
-          p_phone: formData.phone,
-          p_slack_handle: formData.slack_handle,
-          p_linkedin_url: formData.linkedin_url
-        });
-        
-      if (profileError) throw profileError;
-      
-      await fetchProfile(profile.id);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      setError(error.message || 'Failed to save profile');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setFormData({ ...profile });
-    setIsEditing(false);
-    setValidationErrors({});
-    setError(null);
-  };
-
-  const handleGoBack = () => {
-    if (window.history.length > 2) {
-      navigate(-1);
-    } else {
-      navigate('/dashboard');
-    }
-  };
-  
-  const handleExport = () => {
-    const data = {
-      profile,
-      projects,
-      tasks: tasks.slice(0, 10),
-      achievements,
-      timesheets: timesheets.slice(0, 20),
-      skills,
-      exportedAt: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `profile_${profile?.name?.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-  
-  const addSkill = async (skillName, proficiency = 'intermediate') => {
-    if (!profile || !skillName.trim()) return;
-    
-    try {
-      const { error } = await supabase
-        .from('user_skills')
-        .upsert({
-          user_id: profile.id,
-          skill_name: skillName.trim(),
-          proficiency_level: proficiency
-        });
-      
-      if (error) throw error;
-      await fetchSkills(profile.id);
-    } catch (error) {
-      console.error('Error adding skill:', error);
-    }
-  };
-  
-  const removeSkill = async (skillId) => {
-    try {
-      const { error } = await supabase
-        .from('user_skills')
-        .delete()
-        .eq('id', skillId);
-      
-      if (error) throw error;
-      await fetchSkills(profile.id);
-    } catch (error) {
-      console.error('Error removing skill:', error);
-    }
-  };
-
-  // Filtered data
-  const filteredCommands = COMMANDS.filter(cmd => 
-    cmd.label.toLowerCase().includes(commandSearch.toLowerCase())
-  );
-  
-  const filteredTeamMembers = teamMembers.filter(member => member.id !== profile?.id);
-  
-  // Stats calculation
-  const stats = [
-    { name: 'Projects', value: projects.length, icon: FiFolder, color: 'bg-blue-500', bgColor: 'bg-blue-50' },
-    { name: 'Completed', value: tasks.filter(t => t.status === 'Completed').length, icon: FiCheck, color: 'bg-green-500', bgColor: 'bg-green-50' },
-    { name: 'Achievements', value: achievements.length, icon: FiAward, color: 'bg-purple-500', bgColor: 'bg-purple-50' },
-    { name: 'Skills', value: skills.length, icon: FiZap, color: 'bg-amber-500', bgColor: 'bg-amber-50' },
-    { name: 'Team Size', value: teamMembers.length, icon: FiUsers, color: 'bg-cyan-500', bgColor: 'bg-cyan-50' },
-    { name: 'Hours', value: timesheets.reduce((sum, t) => sum + (t.hours || 0), 0), icon: FiClock, color: 'bg-rose-500', bgColor: 'bg-rose-50' }
-  ];
-  
-  // Chart data processing
-  const timesheetChartData = timesheets.slice(0, 7).reverse().map(ts => ({
-    date: new Date(ts.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    hours: ts.hours || 0
-  }));
-  
-  const taskStatusData = [
-    { name: 'To Do', value: tasks.filter(t => t.status === 'To Do').length, color: '#94A3B8' },
-    { name: 'In Progress', value: tasks.filter(t => t.status === 'In Progress').length, color: '#3B82F6' },
-    { name: 'Review', value: tasks.filter(t => t.status === 'Review').length, color: '#F59E0B' },
-    { name: 'Completed', value: tasks.filter(t => t.status === 'Completed').length, color: '#10B981' }
-  ];
-  
-  // Utility functions
-  const getStatusColor = (status) => {
-    const colors = {
-      'active': 'bg-green-100 text-green-800',
-      'completed': 'bg-blue-100 text-blue-800',
-      'on hold': 'bg-amber-100 text-amber-800',
-      'cancelled': 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getTaskStatusColor = (status) => {
-    const colors = {
-      'To Do': 'bg-gray-100 text-gray-800',
-      'In Progress': 'bg-blue-100 text-blue-800',
-      'Review': 'bg-amber-100 text-amber-800',
-      'Completed': 'bg-green-100 text-green-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-  
-  const getProficiencyColor = (proficiency) => {
-    const colors = {
-      'beginner': 'bg-red-100 text-red-800',
-      'intermediate': 'bg-yellow-100 text-yellow-800',
-      'advanced': 'bg-green-100 text-green-800',
-      'expert': 'bg-purple-100 text-purple-800'
-    };
-    return colors[proficiency] || 'bg-gray-100 text-gray-800';
-  };
-  
-  // Sidebar navigation items
-  const sidebarItems = [
-    { id: 'overview', name: 'Overview', icon: FiUser },
-    { id: 'team', name: 'Team', icon: FiUsers },
-    { id: 'projects', name: 'Projects', icon: FiBriefcase },
-    { id: 'activity', name: 'Activity', icon: FiActivity },
-    { id: 'achievements', name: 'Achievements', icon: FiAward },
-    { id: 'timesheets', name: 'Timesheets', icon: FiClock },
-    { id: 'skills', name: 'Skills', icon: FiZap }
-  ];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Loading Profile</h3>
-          <p className="text-gray-600">Please wait...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <FiAlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Error</h3>
-          <p className="text-red-600 mb-6">{error}</p>
-          <button
-            onClick={handleGoBack}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <motion.div
-          className="text-center max-w-md mx-auto p-8 bg-white rounded-xl shadow-lg"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <FiUser className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h3>
-          <p className="text-gray-600 mb-6">The requested profile could not be found.</p>
-          <button
-            onClick={handleGoBack}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Go Back
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
+  if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <motion.div 
-        className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg flex flex-col transition-all duration-300`}
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-      >
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className={`font-bold text-gray-900 ${sidebarOpen ? 'block' : 'hidden'}`}>Profile</h2>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <FiMenu className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === item.id 
-                      ? 'bg-indigo-100 text-indigo-700' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className={`${sidebarOpen ? 'block' : 'hidden'} font-medium`}>
-                    {item.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      </motion.div>
+    <div className="min-h-screen bg-gray-50/50 pb-12">
+      {/* --- Hero Section --- */}
+      <div className="relative h-80 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] -mr-20 -mt-20"></div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
-        <div className="bg-white shadow-sm border-b p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleGoBack}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <FiArrowLeft className="w-5 h-5" />
-              </button>
-              
-              <div className="flex items-center gap-3">
-                {profile.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt={profile.name} 
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-end pb-12 relative z-10">
+          <div className="flex flex-col md:flex-row items-end gap-8 w-full">
+            {/* Avatar */}
+            <div className="relative group">
+              <div className="w-40 h-40 rounded-3xl border-4 border-white shadow-2xl overflow-hidden bg-white">
+                {formData.avatar_url ? (
+                  <img src={formData.avatar_url} alt={formData.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    {profile.name?.charAt(0)?.toUpperCase()}
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400"><FiUser className="w-16 h-16" /></div>
+                )}
+                {isEditing && (
+                  <div
+                    className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <FiCamera className="w-10 h-10 text-white" />
                   </div>
                 )}
-                <div>
-                  <h1 className="font-bold text-gray-900">{profile.name}</h1>
-                  <p className="text-sm text-gray-600">{profile.job_title || profile.role}</p>
-                </div>
               </div>
+              <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowCommandPalette(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <FiCommand className="w-4 h-4" />
-                <span className="hidden sm:inline">Command Palette</span>
-                <kbd className="hidden sm:inline px-1.5 py-0.5 text-xs bg-white rounded border">
-                  ⌘K
-                </kbd>
-              </button>
-              
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <FiShare2 className="w-5 h-5" />
-              </button>
-              
-              <button
-                onClick={handleExport}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <FiDownload className="w-5 h-5" />
-              </button>
-              
-              {canEditProfile && (
+
+            {/* Info */}
+            <div className="flex-1 mb-2 text-white">
+              {isEditing ? (
+                <div className="space-y-3 max-w-md">
+                  <input
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleInputChange}
+                    className="text-4xl font-bold bg-white/10 border border-white/20 rounded-lg px-3 py-1 w-full text-white placeholder-white/50 focus:bg-white/20 outline-none backdrop-blur-sm"
+                    placeholder="Full Name"
+                  />
+                  <input
+                    name="job_title"
+                    value={formData.job_title || ''}
+                    onChange={handleInputChange}
+                    className="text-xl bg-white/10 border border-white/20 rounded-lg px-3 py-1 w-full text-white/90 placeholder-white/50 focus:bg-white/20 outline-none backdrop-blur-sm"
+                    placeholder="Job Title"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <h1 className="text-4xl font-bold tracking-tight">{profile.name}</h1>
+                  <div className="flex items-center gap-3 mt-2 text-indigo-200 text-lg">
+                    <FiBriefcase className="w-5 h-5" />
+                    <span>{profile.job_title || 'Team Member'}</span>
+                    {team && (
+                      <>
+                        <span className="text-white/20">•</span>
+                        <span className="font-medium text-white/90">{team.name}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="mb-4 flex gap-3">
+              {isOwnProfile && !isEditing && (
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isEditing ? 'bg-red-100 text-red-700' : 'hover:bg-gray-100'
-                  }`}
+                  onClick={() => setIsEditing(true)}
+                  className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-semibold hover:bg-gray-50 transition-colors shadow-lg flex items-center gap-2"
                 >
-                  {isEditing ? <FiX className="w-5 h-5" /> : <FiEdit2 className="w-5 h-5" />}
+                  <FiEdit2 className="w-4 h-4" /> Edit Profile
                 </button>
+              )}
+              {isEditing && (
+                <>
+                  <button onClick={handleCancel} className="px-6 py-2.5 bg-white/10 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors backdrop-blur-sm">Cancel</button>
+                  <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl font-semibold hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-500/30 flex items-center gap-2">
+                    {saving ? 'Saving...' : <><FiSave className="w-4 h-4" /> Save Changes</>}
+                  </button>
+                </>
               )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Content Area */}
-        <div className="flex-1 p-6 overflow-auto">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div 
-                  key={index} 
-                  className={`${stat.bgColor} rounded-xl p-4 border`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className={`p-2 rounded-lg ${stat.color} text-white`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                      <p className="text-sm text-gray-600">{stat.name}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+      {/* --- Main Content --- */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-          {/* Edit Mode Banner */}
-          {isEditing && (
-            <motion.div 
-              className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-6"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-indigo-900">Edit Mode Active</h3>
-                  <p className="text-sm text-indigo-700">Make your changes and save when ready</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleCancel} 
-                    disabled={saving}
-                    className="px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleSave} 
-                    disabled={saving}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
-                  >
-                    {saving ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <FiSave className="w-4 h-4" />
-                    )}
-                    Save
-                  </button>
-                </div>
+          {/* Left Sidebar (Bio & Contact) */}
+          <motion.div
+            initial="hidden" animate="visible" variants={containerVariants}
+            className="lg:col-span-4 space-y-6"
+          >
+            {/* Bio Card */}
+            <motion.div variants={itemVariants} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">About</h3>
+              {isEditing ? (
+                <textarea
+                  name="bio"
+                  value={formData.bio || ''}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  placeholder="Tell us about yourself..."
+                />
+              ) : (
+                <p className="text-gray-600 leading-relaxed">{profile.bio || "No bio information provided."}</p>
+              )}
+            </motion.div>
+
+            {/* Contact Info */}
+            <motion.div variants={itemVariants} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
+              <div className="space-y-4">
+                <ContactItem icon={FiMail} label="Email" value={profile.email} />
+                <ContactItem icon={FiPhone} label="Phone" value={formData.phone} isEditing={isEditing} name="phone" onChange={handleInputChange} placeholder="+1..." />
+                <ContactItem icon={FiSlack} label="Slack" value={formData.slack_handle} isEditing={isEditing} name="slack_handle" onChange={handleInputChange} placeholder="@username" />
+                <ContactItem icon={FiLinkedin} label="LinkedIn" value={formData.linkedin_url} isEditing={isEditing} name="linkedin_url" onChange={handleInputChange} placeholder="URL" isLink />
+                <ContactItem icon={FiMapPin} label="Location" value={formData.location || 'Remote'} isEditing={isEditing} name="location" onChange={handleInputChange} placeholder="City, Country" />
               </div>
             </motion.div>
-          )}
 
-          {/* Tab Content */}
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* Personal Information */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FiUser className="w-5 h-5 text-indigo-600" />
-                      Personal Information
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                        {isEditing ? (
-                          <div>
-                            <input
-                              type="text"
-                              name="name"
-                              value={formData.name || ''}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                                validationErrors.name ? 'border-red-300' : 'border-gray-300'
-                              }`}
-                            />
-                            {validationErrors.name && (
-                              <p className="text-red-600 text-sm mt-1">{validationErrors.name}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-900 font-medium">{profile.name}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        {isEditing ? (
-                          <div>
-                            <input
-                              type="email"
-                              name="email"
-                              value={formData.email || ''}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                                validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                              }`}
-                            />
-                            {validationErrors.email && (
-                              <p className="text-red-600 text-sm mt-1">{validationErrors.email}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-900">{profile.email}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            name="job_title"
-                            value={formData.job_title || ''}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        ) : (
-                          <p className="text-gray-900">{profile.job_title || 'Not specified'}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        {isEditing ? (
-                          <div>
-                            <input
-                              type="tel"
-                              name="phone"
-                              value={formData.phone || ''}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                                validationErrors.phone ? 'border-red-300' : 'border-gray-300'
-                              }`}
-                            />
-                            {validationErrors.phone && (
-                              <p className="text-red-600 text-sm mt-1">{validationErrors.phone}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-900">{profile.phone || 'Not specified'}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                        {isEditing ? (
-                          <input
-                            type="date"
-                            name="start_date"
-                            value={formData.start_date || ''}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        ) : (
-                          <p className="text-gray-900">
-                            {profile.start_date ? new Date(profile.start_date).toLocaleDateString() : 'Not specified'}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
-                        {isEditing ? (
-                          <div>
-                            <input
-                              type="url"
-                              name="linkedin_url"
-                              value={formData.linkedin_url || ''}
-                              onChange={handleInputChange}
-                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                                validationErrors.linkedin_url ? 'border-red-300' : 'border-gray-300'
-                              }`}
-                            />
-                            {validationErrors.linkedin_url && (
-                              <p className="text-red-600 text-sm mt-1">{validationErrors.linkedin_url}</p>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-gray-900">{profile.linkedin_url || 'Not specified'}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Slack Handle</label>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            name="slack_handle"
-                            value={formData.slack_handle || ''}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        ) : (
-                          <p className="text-gray-900">{profile.slack_handle || 'Not specified'}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                        {isEditing ? (
-                          <textarea
-                            name="bio"
-                            value={formData.bio || ''}
-                            onChange={handleInputChange}
-                            rows={4}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          />
-                        ) : (
-                          <p className="text-gray-900 whitespace-pre-wrap">{profile.bio || 'No bio provided'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Avatar Upload */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <FiCamera className="w-5 h-5 text-indigo-600" />
-                      Profile Picture
-                    </h3>
-                    <div className="flex flex-col items-center">
-                      <div className="relative mb-4">
-                        {profile.avatar_url ? (
-                          <img
-                            src={profile.avatar_url}
-                            alt={profile.name}
-                            className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                          />
-                        ) : (
-                          <div className="w-32 h-32 bg-indigo-500 rounded-full flex items-center justify-center text-white text-4xl font-bold border-4 border-white shadow-lg">
-                            {profile.name?.charAt(0)?.toUpperCase()}
-                          </div>
-                        )}
-                        {uploadingAvatar && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      {canEditProfile && (
-                        <div>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleAvatarUpload}
-                            className="hidden"
-                          />
-                          <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingAvatar}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                          >
-                            {uploadingAvatar ? 'Uploading...' : 'Change Picture'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Analytics Charts */}
-                {timesheetChartData.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Hours Logged (Last 7 days)</h3>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <AreaChart data={timesheetChartData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Area type="monotone" dataKey="hours" stroke="#6366f1" fill="#e0e7ff" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                    
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Distribution</h3>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <PieChart>
-                          <Pie
-                            data={taskStatusData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {taskStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
+            {/* Skills (Mock) */}
+            <motion.div variants={itemVariants} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {['React', 'JavaScript', 'UI Design', 'Node.js', 'Team Leadership', 'Scrum'].map((skill, i) => (
+                  <span key={i} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 transition-colors cursor-default">
+                    {skill}
+                  </span>
+                ))}
               </div>
-            )}
+            </motion.div>
+          </motion.div>
 
-            {activeTab === 'team' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Team Members</h3>
-                  <span className="text-sm text-gray-600">{filteredTeamMembers.length} members</span>
-                </div>
-                
-                {profile.team_name && (
-                  <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                    <h4 className="font-semibold text-indigo-900 mb-2">Team: {profile.team_name}</h4>
-                    <p className="text-sm text-indigo-700">
-                      Department: {profile.department_name || 'Not specified'}
-                    </p>
-                    {profile.manager_name && (
-                      <p className="text-sm text-indigo-700">
-                        Manager: {profile.manager_name}
-                      </p>
-                    )}
-                  </div>
-                )}
-                
-                {filteredTeamMembers.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredTeamMembers.map((member) => (
-                      <motion.div
-                        key={member.id}
-                        className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-all cursor-pointer"
-                        whileHover={{ y: -2 }}
-                        onClick={() => navigate(`/profile/${member.id}`)}
-                      >
-                        <div className="flex items-center gap-3">
-                          {member.avatar_url ? (
-                            <img
-                              src={member.avatar_url}
-                              alt={member.name}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
+          {/* Right Content (Stats & Projects) */}
+          <div className="lg:col-span-8 space-y-8">
+
+            {/* Stats Row */}
+            <motion.div
+              initial="hidden" animate="visible" variants={containerVariants}
+              className="grid grid-cols-2 md:grid-cols-4 gap-4"
+            >
+              <StatCard label="Tasks Completed" value={stats.tasksCompleted} icon={FiCheckCircle} color="emerald" delay={0} />
+              <StatCard label="Active Projects" value={stats.activeProjects} icon={FiLayers} color="blue" delay={0.1} />
+              <StatCard label="Reports Submitted" value={stats.reportsSubmitted} icon={FiCalendar} color="purple" delay={0.2} />
+              <StatCard label="Day Streak" value={stats.streak} icon={FiTrendingUp} color="orange" delay={0.3} />
+            </motion.div>
+
+            {/* Achievements */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <FiAward className="text-amber-500" /> Achievements
+                </h3>
+                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{achievements.length} Total</span>
+              </div>
+
+              {achievements.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {achievements.map((achievement) => {
+                    const style = getAchievementStyle(achievement.award_type);
+                    const Icon = style.icon;
+                    return (
+                      <div key={achievement.id} className={`p-4 rounded-xl border border-gray-100 flex flex-col items-center text-center gap-3 hover:shadow-md transition-shadow ${style.bg}/30 group relative overflow-hidden`}>
+                        <div className={`w-12 h-12 rounded-full ${style.bg} flex items-center justify-center ${style.color} shadow-sm group-hover:scale-110 transition-transform`}>
+                          {achievement.image_url ? (
+                            <img src={achievement.image_url} alt={achievement.title} className="w-full h-full object-cover rounded-full" />
                           ) : (
-                            <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-medium">
-                              {member.name?.charAt(0)?.toUpperCase()}
-                            </div>
+                            <Icon className="w-6 h-6" />
                           )}
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">{member.name}</h4>
-                            <p className="text-sm text-gray-600">{member.job_title || member.role}</p>
-                          </div>
-                          <FiChevronRight className="w-4 h-4 text-gray-400" />
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Team Members</h4>
-                    <p className="text-gray-500">There are no other members in your team.</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'projects' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Projects</h3>
-                  <span className="text-sm text-gray-600">{projects.length} projects</span>
+                        <div>
+                          <div className="font-bold text-gray-900 text-sm line-clamp-1" title={achievement.title}>{achievement.title}</div>
+                          <div className="text-xs text-gray-500 mt-1 capitalize">{achievement.award_type}</div>
+                        </div>
+                        {/* Tooltip for description */}
+                        <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-white text-xs text-center rounded-xl backdrop-blur-sm">
+                          {achievement.description || 'No description'}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  <FiAward className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No achievements yet</p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* Active Projects */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+            >
+              <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <FiBriefcase className="text-indigo-500" /> Active Projects
+              </h3>
+              <div className="space-y-4">
                 {projects.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {projects.map((project, index) => (
-                      <motion.div
-                        key={project.id}
-                        className="bg-gray-50 rounded-lg p-6 hover:shadow-md transition-all"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-1">{project.name}</h4>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {project.description || 'No description available'}
-                            </p>
-                            <p className="text-sm font-medium text-indigo-600">Role: {project.role}</p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
-                            {project.status}
-                          </span>
+                  projects.map((project, idx) => (
+                    <div key={project.id} className="group p-4 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-all">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">{project.name}</h4>
+                          <p className="text-sm text-gray-500 mt-1">{project.description || 'No description'}</p>
                         </div>
-                        
-                        <div className="border-t border-gray-200 pt-4">
-                          <div className="flex items-center text-sm text-gray-500">
-                            <FiCalendar className="w-4 h-4 mr-2" />
-                            <span>
-                              {project.start_date && new Date(project.start_date).toLocaleDateString()} - 
-                              {project.end_date && new Date(project.end_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FiBriefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Projects</h4>
-                    <p className="text-gray-500">No projects have been assigned yet.</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'activity' && (
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-gray-900">Recent Activity</h3>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {tasks.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <FiTarget className="w-5 h-5 text-blue-500" />
-                        Recent Tasks
-                      </h4>
-                      <div className="space-y-3">
-                        {tasks.slice(0, 8).map((task) => (
-                          <div key={task.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h5 className="font-medium text-gray-900">{task.title}</h5>
-                                {task.description && (
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {task.description.substring(0, 80)}...
-                                  </p>
-                                )}
-                                <p className="text-xs text-gray-500 mt-2">
-                                  {new Date(task.created_at).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${getTaskStatusColor(task.status)}`}>
-                                {task.status}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {timesheets.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <FiClock className="w-5 h-5 text-purple-500" />
-                        Recent Timesheets
-                      </h4>
-                      <div className="space-y-3">
-                        {timesheets.slice(0, 8).map((ts) => (
-                          <div key={ts.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {new Date(ts.date).toLocaleDateString()}
-                                </p>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {ts.notes?.substring(0, 50) || 'No notes'}...
-                                </p>
-                              </div>
-                              <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-                                {ts.hours}h
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'achievements' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Achievements</h3>
-                  <span className="text-sm text-gray-600">{achievements.length} achievements</span>
-                </div>
-                
-                {achievements.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {achievements.map((achievement, index) => (
-                      <motion.div
-                        key={achievement.id}
-                        className="bg-amber-50 border border-amber-200 rounded-lg p-6"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-amber-100 rounded-lg">
-                            <FiAward className="w-6 h-6 text-amber-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-2">{achievement.title}</h4>
-                            <p className="text-gray-600 text-sm mb-3">
-                              {achievement.description || 'No description available'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Awarded on {new Date(achievement.awarded_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FiAward className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Achievements</h4>
-                    <p className="text-gray-500">Keep working hard to earn achievements!</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'timesheets' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Timesheets</h3>
-                  <span className="text-sm text-gray-600">{timesheets.length} entries</span>
-                </div>
-                
-                {timesheets.length > 0 ? (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Date
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Hours
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Project
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Notes
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {timesheets.map((ts) => (
-                            <tr key={ts.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {new Date(ts.date).toLocaleDateString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                                  {ts.hours}h
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {ts.project_id ? 'Project' : 'General'}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-900">
-                                {ts.notes?.substring(0, 60) || 'No notes'}...
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FiClock className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Timesheets</h4>
-                    <p className="text-gray-500">No time entries have been recorded yet.</p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {activeTab === 'skills' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Skills</h3>
-                  <span className="text-sm text-gray-600">{skills.length} skills</span>
-                </div>
-                
-                {canEditProfile && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800 mb-3">Add a new skill:</p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Skill name"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const skillName = e.target.value.trim();
-                            if (skillName) {
-                              addSkill(skillName);
-                              e.target.value = '';
-                            }
-                          }
-                        }}
-                      />
-                      <select className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate" selected>Intermediate</option>
-                        <option value="advanced">Advanced</option>
-                        <option value="expert">Expert</option>
-                      </select>
-                      <button
-                        onClick={(e) => {
-                          const input = e.target.parentElement.querySelector('input');
-                          const select = e.target.parentElement.querySelector('select');
-                          const skillName = input.value.trim();
-                          if (skillName) {
-                            addSkill(skillName, select.value);
-                            input.value = '';
-                          }
-                        }}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                      >
-                        <FiPlus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {skills.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {skills.map((skill) => (
-                      <div key={skill.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900">{skill.skill_name}</h4>
-                          {canEditProfile && (
-                            <button
-                              onClick={() => removeSkill(skill.id)}
-                              className="p-1 text-red-500 hover:bg-red-100 rounded transition-colors"
-                            >
-                              <FiMinus className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getProficiencyColor(skill.proficiency_level)}`}>
-                          {skill.proficiency_level}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${project.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {project.status.toUpperCase()}
                         </span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
+                          <span className="bg-white border border-gray-200 px-2 py-1 rounded-md shadow-sm">
+                            {project.role || 'Member'}
+                          </span>
+                        </div>
+                        <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.random() * 60 + 20}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 ) : (
-                  <div className="text-center py-12">
-                    <FiZap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold text-gray-700 mb-2">No Skills Listed</h4>
-                    <p className="text-gray-500">Add some skills to showcase your expertise.</p>
-                  </div>
+                  <div className="text-center py-8 text-gray-400">No active projects</div>
                 )}
               </div>
-            )}
+            </motion.div>
+
           </div>
         </div>
       </div>
-      
-      {/* Command Palette */}
-      <AnimatePresence>
-        {showCommandPalette && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowCommandPalette(false)}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4"
-              initial={{ scale: 0.95, y: -20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: -20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 border-b">
-                <div className="relative">
-                  <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    ref={commandPaletteRef}
-                    type="text"
-                    placeholder="Search commands..."
-                    value={commandSearch}
-                    onChange={(e) => setCommandSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    autoFocus
-                  />
-                </div>
-              </div>
-              
-              <div className="max-h-64 overflow-y-auto">
-                {filteredCommands.map((command) => {
-                  const Icon = command.icon;
-                  return (
-                    <button
-                      key={command.id}
-                      onClick={() => executeCommand(command)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                    >
-                      <Icon className="w-5 h-5 text-gray-500" />
-                      <span className="font-medium text-gray-900">{command.label}</span>
-                    </button>
-                  );
-                })}
-                
-                {filteredCommands.length === 0 && (
-                  <div className="p-4 text-center text-gray-500">
-                    No commands found
-                  </div>
-                )}
-              </div>
-              
-              <div className="p-3 border-t bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
-                <span>Use ↑↓ to navigate, Enter to select</span>
-                <span>Press Esc to close</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Share Modal */}
-      <AnimatePresence>
-        {showShareModal && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowShareModal(false)}
-          >
-            <motion.div
-              className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl"
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <FiShare2 className="w-5 h-5" />
-                Share Profile
-              </h3>
-              <p className="text-gray-600 mb-6">Share this profile with others</p>
-              
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href).then(() => {
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    });
-                  }}
-                  className="w-full flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <FiCopy className="w-5 h-5 text-gray-600" />
-                  <span className="font-medium text-gray-900">
-                    {copied ? 'Copied!' : 'Copy Link'}
-                  </span>
-                </button>
-                
-                <a
-                  href={`mailto:?subject=Check out ${profile.name}'s profile&body=${encodeURIComponent(window.location.href)}`}
-                  className="w-full flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                >
-                  <FiMail className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-900">Share via Email</span>
-                </a>
-              </div>
-              
-              <button
-                onClick={() => setShowShareModal(false)}
-                className="w-full mt-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Close
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
+  );
+};
+
+// --- Helper Components ---
+const ContactItem = ({ icon: Icon, label, value, isEditing, onChange, name, placeholder, type = "text", isLink }) => (
+  <div className="flex items-center gap-3">
+    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 flex-shrink-0">
+      <Icon className="w-4 h-4" />
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{label}</div>
+      {isEditing && name ? (
+        <input
+          type={type}
+          name={name}
+          value={value || ''}
+          onChange={onChange}
+          className="w-full text-sm border-b border-gray-200 focus:border-indigo-500 outline-none py-0.5 bg-transparent"
+          placeholder={placeholder}
+        />
+      ) : (
+        <div className="text-sm font-medium text-gray-900 truncate">
+          {isLink && value ? (
+            <a href={value} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+              {value.replace(/^https?:\/\/(www\.)?/, '')}
+            </a>
+          ) : (
+            value || <span className="text-gray-300 italic">Not set</span>
+          )}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const StatCard = ({ label, value, icon: Icon, color, delay }) => {
+  const colorStyles = {
+    emerald: 'bg-emerald-50 text-emerald-600',
+    blue: 'bg-blue-50 text-blue-600',
+    purple: 'bg-purple-50 text-purple-600',
+    orange: 'bg-orange-50 text-orange-600'
+  };
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center hover:shadow-md transition-shadow"
+    >
+      <div className={`w-10 h-10 rounded-xl ${colorStyles[color]} flex items-center justify-center mb-3`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="text-2xl font-bold text-gray-900">{value}</div>
+      <div className="text-xs font-medium text-gray-500 mt-1">{label}</div>
+    </motion.div>
   );
 };
 

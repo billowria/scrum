@@ -110,22 +110,48 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    // Check for active session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchUserRole(session.user.id);
-        fetchUserProfile(session.user.id);
-      } else {
+    // Check for active session on load with robust validation
+    const initializeAuth = async () => {
+      try {
+        // 1. Get the session first (fast)
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+        if (initialSession) {
+          // 2. Validate with getUser (secure, checks database/token validity)
+          const { data: { user }, error } = await supabase.auth.getUser();
+
+          if (error || !user) {
+            console.warn('Session found but user validation failed, signing out.');
+            await supabase.auth.signOut();
+            setSession(null);
+            setLoading(false);
+          } else {
+            // Valid session and user
+            setSession(initialSession);
+            fetchUserRole(user.id);
+            fetchUserProfile(user.id);
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setSession(null);
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         if (session) {
+          // Verify user exists on session start/change to be safe, 
+          // or trust the event. GetUser is safest but adds latency.
+          // For auth state change events, we can generally trust the session provided
+          // as it comes from the Supabase client's internal state management.
           fetchUserRole(session.user.id);
           fetchUserProfile(session.user.id);
         } else {
@@ -246,6 +272,7 @@ function AppContent({ session, userRole, sidebarMode }) {
             {!session ? (
               // Unauthenticated routes
               <>
+                <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/signup" element={<AuthPage mode="signup" />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
@@ -407,6 +434,7 @@ function AppContent({ session, userRole, sidebarMode }) {
                   </PageTransition>
                 } />
 
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </>
             )}
