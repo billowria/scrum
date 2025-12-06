@@ -543,20 +543,126 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
                   >
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-purple-600 transition-colors">{member.name}</h4>
-                      {/* Missing Report Indicator */}
+                      {/* Missing Report Indicator - Expandable on hover */}
                       {hasMissingReport && (
-                        <div className="flex items-center gap-1 opacity-100" title="Report Missing">
-                          <FiAlertCircle className="w-3.5 h-3.5 text-red-500" />
-                        </div>
+                        <motion.div
+                          className="relative px-1 py-0.5 rounded-full cursor-default overflow-hidden"
+                          variants={{
+                            idle: { backgroundColor: 'transparent' },
+                            hover: { backgroundColor: 'transparent' }
+                          }}
+                          initial="idle"
+                          animate="idle"
+                          whileHover="hover"
+                          title="Report Missing"
+                        >
+                          {/* Background that appears on hover */}
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-red-400 to-rose-400 rounded-full"
+                            variants={{
+                              idle: { opacity: 0, scale: 0.8 },
+                              hover: { opacity: 1, scale: 1 }
+                            }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                          />
+                          {/* Shimmer effect - only on hover */}
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
+                            variants={{
+                              idle: { opacity: 0 },
+                              hover: { opacity: 1, x: ['-100%', '100%'] }
+                            }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                          <div className="relative flex items-center gap-0.5">
+                            <motion.div
+                              variants={{
+                                idle: { color: '#ef4444' },
+                                hover: { color: '#ffffff' }
+                              }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <FiAlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                            </motion.div>
+                            {/* Expandable label on hover */}
+                            <motion.span
+                              className="overflow-hidden whitespace-nowrap text-[9px] font-semibold text-white inline-block align-middle"
+                              variants={{
+                                idle: { width: 0, opacity: 0, marginLeft: 0 },
+                                hover: { width: 'auto', opacity: 1, marginLeft: 2, marginRight: 2 }
+                              }}
+                              transition={{ duration: 0.25, ease: 'easeOut' }}
+                            >
+                              Missing
+                            </motion.span>
+                          </div>
+                        </motion.div>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${roleColors[member.role || 'member']}`}>
                         {member.role || 'member'}
                       </span>
-                      <span className={`text-xs font-medium ${isOnLeave ? 'text-orange-600' : 'text-green-600'}`}>
-                        {isOnLeave ? 'On Leave' : 'Available'}
-                      </span>
+                      {/* Status Indicator - Expandable on hover */}
+                      <motion.div
+                        className="relative px-1 py-0.5 rounded-full cursor-default overflow-hidden"
+                        variants={{
+                          idle: { backgroundColor: 'transparent' },
+                          hover: { backgroundColor: 'transparent' }
+                        }}
+                        initial="idle"
+                        animate="idle"
+                        whileHover="hover"
+                        title={isOnLeave ? 'On Leave' : 'Available'}
+                      >
+                        {/* Background that appears on hover */}
+                        <motion.div
+                          className={`absolute inset-0 rounded-full ${isOnLeave
+                            ? 'bg-gradient-to-r from-amber-400 to-orange-400'
+                            : 'bg-gradient-to-r from-emerald-400 to-green-400'
+                            }`}
+                          variants={{
+                            idle: { opacity: 0, scale: 0.8 },
+                            hover: { opacity: 1, scale: 1 }
+                          }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                        />
+                        {/* Shimmer effect - only on hover */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
+                          variants={{
+                            idle: { opacity: 0 },
+                            hover: { opacity: 1, x: ['-100%', '100%'] }
+                          }}
+                          transition={{ duration: 2, repeat: Infinity, delay: 0.1 }}
+                        />
+                        <div className="relative flex items-center gap-0.5">
+                          <motion.div
+                            variants={{
+                              idle: { color: isOnLeave ? '#f59e0b' : '#10b981' },
+                              hover: { color: '#ffffff' }
+                            }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            {isOnLeave ? (
+                              <FiCalendar className="w-3.5 h-3.5 flex-shrink-0" />
+                            ) : (
+                              <FiCheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                            )}
+                          </motion.div>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[9px] font-semibold text-white inline-block align-middle"
+                            variants={{
+                              idle: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 2, marginRight: 2 }
+                            }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                          >
+                            {isOnLeave ? 'Leave' : 'Available'}
+                          </motion.span>
+                        </div>
+                      </motion.div>
                     </div>
                   </div>
 

@@ -12,16 +12,198 @@ import {
   FiEyeOff,
   FiGithub,
   FiCheckCircle,
+  FiGrid,
+  FiFileText,
+  FiUsers,
+  FiCheckSquare,
+  FiCalendar,
+  FiFolder,
+  FiMessageCircle,
+  FiBarChart2,
+  FiZap,
+  FiShield,
+  FiGlobe,
 } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 
 /**
- * Premium Auth Page - Light Theme with Glassmorphism
- * - Animated gradient background with floating orbs
- * - Glassmorphic form cards with micro-interactions
- * - Rich hover effects and smooth transitions
- * - Animated particles and decorative elements
+ * Premium Auth Page - Split-Screen Design
+ * Left: Dark gradient with animated product feature showcase
+ * Right: Light glassmorphic login/signup form
  */
+
+// Product features to showcase
+const FEATURES = [
+  {
+    id: 1,
+    icon: FiGrid,
+    title: "Smart Dashboard",
+    description: "Real-time team insights, daily quotes, and task overview at a glance",
+    gradient: "from-blue-500 to-indigo-600",
+    delay: 0,
+  },
+  {
+    id: 2,
+    icon: FiFileText,
+    title: "Standup Reports",
+    description: "Streamline daily standups with rich text editor and team visibility",
+    gradient: "from-purple-500 to-pink-600",
+    delay: 0.1,
+  },
+  {
+    id: 3,
+    icon: FiUsers,
+    title: "Team Management",
+    description: "Organize teams, assign roles, and manage permissions effortlessly",
+    gradient: "from-emerald-500 to-teal-600",
+    delay: 0.2,
+  },
+  {
+    id: 4,
+    icon: FiCheckSquare,
+    title: "Task Board",
+    description: "Kanban-style task management with drag-and-drop simplicity",
+    gradient: "from-orange-500 to-red-600",
+    delay: 0.3,
+  },
+  {
+    id: 5,
+    icon: FiCalendar,
+    title: "Leave Calendar",
+    description: "Plan and track team availability with visual calendar views",
+    gradient: "from-cyan-500 to-blue-600",
+    delay: 0.4,
+  },
+  {
+    id: 6,
+    icon: FiFolder,
+    title: "Projects & Sprints",
+    description: "Agile project management with sprint planning and tracking",
+    gradient: "from-violet-500 to-purple-600",
+    delay: 0.5,
+  },
+  {
+    id: 7,
+    icon: FiMessageCircle,
+    title: "Team Chat",
+    description: "Real-time messaging with direct and group conversations",
+    gradient: "from-rose-500 to-pink-600",
+    delay: 0.6,
+  },
+  {
+    id: 8,
+    icon: FiBarChart2,
+    title: "Analytics",
+    description: "Performance insights and productivity metrics at your fingertips",
+    gradient: "from-amber-500 to-orange-600",
+    delay: 0.7,
+  },
+];
+
+// Animated Feature Card Component
+const FeatureCard = ({ feature, index, activeIndex }) => {
+  const isActive = index === activeIndex;
+  const Icon = feature.icon;
+
+  return (
+    <motion.div
+      className={`feature-card ${isActive ? 'active' : ''}`}
+      initial={{ opacity: 0, x: -50, scale: 0.9 }}
+      animate={{
+        opacity: 1,
+        x: 0,
+        scale: isActive ? 1.02 : 1,
+        y: isActive ? -5 : 0
+      }}
+      transition={{
+        delay: feature.delay,
+        duration: 0.5,
+        type: "spring",
+        stiffness: 200,
+        damping: 20
+      }}
+      whileHover={{
+        scale: 1.05,
+        x: 10,
+        transition: { duration: 0.2 }
+      }}
+    >
+      {/* Glow effect for active card */}
+      {isActive && (
+        <motion.div
+          className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} rounded-2xl opacity-20 blur-xl`}
+          layoutId="activeGlow"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+
+      {/* Card content */}
+      <div className="feature-card-inner">
+        <motion.div
+          className={`feature-icon bg-gradient-to-br ${feature.gradient}`}
+          animate={isActive ? {
+            rotate: [0, -10, 10, 0],
+            scale: [1, 1.1, 1]
+          } : {}}
+          transition={{
+            duration: 0.6,
+            repeat: isActive ? Infinity : 0,
+            repeatDelay: 2
+          }}
+        >
+          <Icon className="w-5 h-5 text-white" />
+        </motion.div>
+
+        <div className="feature-text">
+          <h3 className="feature-title">{feature.title}</h3>
+          <p className="feature-description">{feature.description}</p>
+        </div>
+
+        {/* Animated arrow on hover */}
+        <motion.div
+          className="feature-arrow"
+          initial={{ opacity: 0, x: -10 }}
+          whileHover={{ opacity: 1, x: 0 }}
+        >
+          <FiArrowRight className="w-4 h-4" />
+        </motion.div>
+      </div>
+
+      {/* Shimmer effect on active */}
+      {isActive && (
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-2xl"
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+        />
+      )}
+    </motion.div>
+  );
+};
+
+// Floating Orb Component
+const FloatingOrb = ({ size, color, position, delay }) => (
+  <motion.div
+    className="floating-orb"
+    style={{
+      width: size,
+      height: size,
+      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      ...position
+    }}
+    animate={{
+      x: [0, 30, -20, 0],
+      y: [0, -40, 20, 0],
+      scale: [1, 1.1, 0.9, 1],
+    }}
+    transition={{
+      duration: 20 + delay * 5,
+      repeat: Infinity,
+      ease: "easeInOut",
+      delay: delay
+    }}
+  />
+);
 
 export default function AuthPage({ mode = "login" }) {
   const navigate = useNavigate();
@@ -31,86 +213,27 @@ export default function AuthPage({ mode = "login" }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [role, setRole] = useState("manager");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  // Focus states for input animations
+  // Feature carousel state
+  const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+
+  // Auto-rotate features
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeatureIndex(prev => (prev + 1) % FEATURES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Focus states
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [nameFocused, setNameFocused] = useState(false);
   const [companyFocused, setCompanyFocused] = useState(false);
-
-  // Mouse position for interactive gradient
-  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
-  useEffect(() => {
-    function onMove(e) {
-      setMousePos({
-        x: e.clientX / window.innerWidth,
-        y: e.clientY / window.innerHeight
-      });
-    }
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-
-  // Typewriter effect
-  const quotes = [
-    "Seamless collaboration starts here ✨",
-    "Build better teams, ship faster 🚀",
-    "One platform. Infinite possibilities 💫",
-    "Transform how your team works together 🎯",
-  ];
-  const [quoteIndex, setQuoteIndex] = useState(0);
-  const [typed, setTyped] = useState("");
-
-  useEffect(() => {
-    let mounted = true;
-    const full = quotes[quoteIndex];
-    let i = 0;
-    let deleting = false;
-    const speed = 35;
-    const hold = 2500;
-
-    function tick() {
-      if (!mounted) return;
-      if (!deleting) {
-        if (i <= full.length) {
-          setTyped(full.slice(0, i));
-          i++;
-          setTimeout(tick, speed);
-        } else {
-          setTimeout(() => {
-            deleting = true;
-            i = full.length;
-            tick();
-          }, hold);
-        }
-      } else {
-        if (i >= 0) {
-          setTyped(full.slice(0, i));
-          i--;
-          setTimeout(tick, speed / 1.8);
-        } else {
-          setQuoteIndex((q) => (q + 1) % quotes.length);
-        }
-      }
-    }
-    tick();
-    return () => {
-      mounted = false;
-    };
-  }, [quoteIndex]);
-
-  // Floating avatars
-  const avatars = [
-    { name: "AK", color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
-    { name: "JS", color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
-    { name: "ML", color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
-    { name: "SR", color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" },
-  ];
 
   // Predefined avatar URLs
   const AVATAR_URLS = [
@@ -118,8 +241,6 @@ export default function AuthPage({ mode = "login" }) {
     'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/B94AFE2E-5D15-46F6-9EEB-7571975A8F14_1_105_c.jpeg',
     'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/C40EFEF2-6233-4834-B85C-64CCC37009BB_1_105_c.jpeg',
     'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/DA17C16A-2DF0-4F20-A3FB-A2EF13E4C98B_1_105_c.jpeg',
-    'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/DDC03DE1-2A2A-4906-838F-D422C1D0B0CC_1_105_c.jpeg',
-    'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/EDCED201-8799-4A1F-9B91-ACF8D65F0DE0_1_105_c.jpeg'
   ];
 
   // Confetti animation
@@ -258,502 +379,421 @@ export default function AuthPage({ mode = "login" }) {
   };
 
   return (
-    <div className="auth-page-container">
+    <div className="auth-page">
       {/* Confetti canvas */}
       <canvas ref={confettiCanvasRef} className="confetti-canvas" />
 
-      {/* Animated background with floating orbs */}
-      <div className="animated-background">
-        <div className="gradient-orb orb-1" />
-        <div className="gradient-orb orb-2" />
-        <div className="gradient-orb orb-3" />
-        <div className="gradient-orb orb-4" />
-        <div className="gradient-orb orb-5" />
+      {/* Split Screen Container */}
+      <div className="auth-container">
 
-        {/* Floating particles */}
-        <div className="particles-container">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="particle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 15}s`,
-                animationDuration: `${12 + Math.random() * 8}s`,
-              }}
-            />
-          ))}
+        {/* Animated Background - Full Page */}
+        <div className="full-bg">
+          <FloatingOrb
+            size="500px"
+            color="rgba(99, 102, 241, 0.3)"
+            position={{ top: '-10%', left: '-5%' }}
+            delay={0}
+          />
+          <FloatingOrb
+            size="400px"
+            color="rgba(168, 85, 247, 0.25)"
+            position={{ bottom: '5%', left: '30%' }}
+            delay={2}
+          />
+          <FloatingOrb
+            size="350px"
+            color="rgba(236, 72, 153, 0.2)"
+            position={{ top: '30%', left: '45%' }}
+            delay={4}
+          />
+          <FloatingOrb
+            size="400px"
+            color="rgba(99, 102, 241, 0.25)"
+            position={{ top: '-5%', right: '10%' }}
+            delay={1}
+          />
+          <FloatingOrb
+            size="300px"
+            color="rgba(168, 85, 247, 0.3)"
+            position={{ bottom: '20%', right: '-5%' }}
+            delay={3}
+          />
+
+          {/* Grid pattern overlay */}
+          <div className="grid-pattern" />
         </div>
 
-        {/* Interactive gradient overlay */}
-        <div
-          className="interactive-gradient"
-          style={{
-            background: `radial-gradient(circle at ${mousePos.x * 100}% ${mousePos.y * 100}%, rgba(102,126,234,0.15), transparent 50%)`,
-          }}
-        />
-      </div>
-
-      <div className="auth-content">
-        {/* Left Panel */}
+        {/* LEFT PANEL - Product Showcase */}
         <motion.div
           className="left-panel"
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          initial={{ opacity: 0, x: -100 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <div className="left-content">
-            {/* Logo with animation */}
-            <div className="logo-section">
-              <motion.div
-                className="logo-container"
-                animate={{
-                  rotate: [0, 360],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 25,
-                  ease: "linear",
-                }}
-              >
-                <svg viewBox="0 0 120 120" className="logo-svg">
-                  <defs>
-                    <linearGradient id="logo-gradient" x1="0" x2="1" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#667eea" />
-                      <stop offset="50%" stopColor="#764ba2" />
-                      <stop offset="100%" stopColor="#f093fb" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="60" cy="60" r="46" stroke="url(#logo-gradient)" strokeWidth="3" fill="rgba(255,255,255,0.1)" />
 
-                  <g transform="translate(60,60)">
-                    <motion.path
-                      d="M -36 0 A 36 36 0 0 1 20 -28"
-                      fill="none"
-                      stroke="#667eea"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray="120"
-                      animate={{ strokeDashoffset: [120, 0] }}
-                      transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
-                    />
-                    <motion.path
-                      d="M 36 0 A 36 36 0 0 0 -20 28"
-                      fill="none"
-                      stroke="#f093fb"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray="120"
-                      animate={{ strokeDashoffset: [120, 0] }}
-                      transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
-                    />
-                    <motion.polygon
-                      points="22,-28 28,-26 26,-20"
-                      fill="#f093fb"
-                      animate={{ y: [0, -5, 0], opacity: [1, 0.7, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
-                    />
-                    <motion.polygon
-                      points="-22,28 -28,26 -26,20"
-                      fill="#667eea"
-                      animate={{ y: [0, 5, 0], opacity: [1, 0.7, 1] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                    />
-                  </g>
-                </svg>
-                <div className="logo-glow" />
-              </motion.div>
+          {/* Content */}
+          <div className="left-content">
+            {/* Logo & Brand */}
+            <motion.div
+              className="brand-section"
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <div className="logo-mark">
+                <motion.div
+                  className="logo-inner"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="logo-ring" />
+                  <div className="logo-ring ring-2" />
+                  <div className="logo-center">
+                    <FiZap className="w-6 h-6 text-white" />
+                  </div>
+                </motion.div>
+              </div>
 
               <div className="brand-text">
-                <div className="brand-name">
-                  {["S", "Y", "N", "C"].map((letter, idx) => (
+                <h1 className="brand-name">
+                  {['S', 'Y', 'N', 'C'].map((letter, i) => (
                     <motion.span
                       key={letter}
-                      initial={{ y: 30, opacity: 0, scale: 0.8 }}
-                      animate={{ y: 0, opacity: 1, scale: 1 }}
-                      transition={{
-                        delay: 0.3 + idx * 0.1,
-                        type: "spring",
-                        stiffness: 200,
-                        damping: 15
-                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
                       className="brand-letter"
                     >
                       {letter}
                     </motion.span>
                   ))}
-                </div>
-
-                <motion.div
+                </h1>
+                <motion.p
                   className="brand-tagline"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                >
-                  Your team's command center
-                </motion.div>
-
-                <motion.div
-                  className="typewriter-text"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
+                  transition={{ delay: 0.9 }}
                 >
-                  {typed}<span className="cursor-blink">|</span>
-                </motion.div>
+                  Your team's command center
+                </motion.p>
               </div>
-            </div>
-
-            {/* CTA Buttons */}
-            <motion.div
-              className="cta-buttons"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.2 }}
-            >
-              <button
-                onClick={() => {
-                  const el = document.querySelector("#auth-form-card");
-                  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
-                className="cta-primary"
-              >
-                <span>Get Started</span>
-                <FiArrowRight />
-              </button>
-              <button className="cta-secondary">
-                Learn More
-              </button>
             </motion.div>
 
-            {/* Floating Avatars */}
+            {/* Value Proposition */}
             <motion.div
-              className="floating-avatars"
+              className="value-prop"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.4 }}
+              transition={{ delay: 1.1 }}
             >
-              {avatars.map((avatar, i) => (
-                <motion.div
-                  key={i}
-                  className="avatar"
-                  style={{ background: avatar.color }}
-                  animate={{
-                    y: [0, -8, 0],
-                    x: [0, i % 2 === 0 ? -5 : 5, 0],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 4 + i * 0.4,
-                    ease: "easeInOut",
-                    delay: i * 0.2,
-                  }}
-                >
-                  {avatar.name}
-                </motion.div>
+              <h2 className="value-title">
+                Everything your team needs,
+                <br />
+                <span className="gradient-text">in one place.</span>
+              </h2>
+              <p className="value-description">
+                Streamline standups, manage tasks, track leave, and collaborate seamlessly.
+              </p>
+            </motion.div>
+
+            {/* Feature Cards */}
+            <motion.div
+              className="features-grid"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.3 }}
+            >
+              {FEATURES.slice(0, 4).map((feature, index) => (
+                <FeatureCard
+                  key={feature.id}
+                  feature={feature}
+                  index={index}
+                  activeIndex={activeFeatureIndex % 4}
+                />
               ))}
-              <div className="avatar-text">Join 1,000+ teams already syncing</div>
+            </motion.div>
+
+            {/* Trust Badges */}
+            <motion.div
+              className="trust-section"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.5 }}
+            >
+              <div className="trust-badges">
+                <div className="trust-badge">
+                  <FiShield className="w-4 h-4" />
+                  <span>Enterprise Security</span>
+                </div>
+                <div className="trust-badge">
+                  <FiGlobe className="w-4 h-4" />
+                  <span>99.9% Uptime</span>
+                </div>
+                <div className="trust-badge">
+                  <FiUsers className="w-4 h-4" />
+                  <span>10,000+ Teams</span>
+                </div>
+              </div>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Right Panel - Form */}
+        {/* RIGHT PANEL - Auth Form */}
         <motion.div
           className="right-panel"
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <AnimatePresence mode="wait">
-            <motion.div
-              id="auth-form-card"
-              className="form-card-glass"
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              {/* Header */}
-              <div className="form-header">
-                <div>
-                  <motion.h1
+          <div className="form-container">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                className="form-card"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                transition={{ duration: 0.4 }}
+              >
+                {/* Form Header */}
+                <div className="form-header">
+                  <motion.h2
                     className="form-title"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
                   >
                     {mode === "login" ? "Welcome back" : "Create account"}
-                  </motion.h1>
+                  </motion.h2>
                   <motion.p
                     className="form-subtitle"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
                   >
                     {mode === "login"
                       ? "Sign in to continue to your workspace"
-                      : "Start your journey with us today"}
+                      : "Start your 14-day free trial"}
                   </motion.p>
                 </div>
-                <Link to="/support" className="help-link">
-                  Need help?
-                </Link>
-              </div>
 
-              {/* Social Buttons */}
-              <motion.div
-                className="social-buttons"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <button className="social-btn social-google">
-                  <FcGoogle size={20} />
-                  <span>Continue with Google</span>
-                </button>
-                <button className="social-btn social-github">
-                  <FiGithub size={18} />
-                </button>
-              </motion.div>
-
-              {/* Divider */}
-              <motion.div
-                className="divider"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-              >
-                <span>or</span>
-              </motion.div>
-
-              {/* Success State */}
-              {success ? (
+                {/* Social Buttons */}
                 <motion.div
-                  className="success-card"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
+                  className="social-buttons"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1, rotate: 360 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  >
-                    <FiCheckCircle size={48} />
-                  </motion.div>
-                  <h3>Welcome aboard!</h3>
-                  <p>Your account is ready. Redirecting to dashboard...</p>
+                  <button className="social-btn google">
+                    <FcGoogle className="w-5 h-5" />
+                    <span>Continue with Google</span>
+                  </button>
+                  <button className="social-btn github">
+                    <FiGithub className="w-5 h-5" />
+                  </button>
                 </motion.div>
-              ) : (
-                <motion.form
-                  onSubmit={handleSubmit}
-                  className="auth-form"
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.8 }}
+
+                {/* Divider */}
+                <motion.div
+                  className="divider"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
                 >
-                  {mode === "signup" && (
-                    <>
-                      {/* Company Name */}
-                      <div className="input-group">
-                        <label className="input-label">Company Name</label>
-                        <div className={`input-wrapper ${companyFocused ? 'focused' : ''}`}>
-                          <motion.div
-                            className="input-icon"
-                            animate={{ scale: companyFocused ? 1.1 : 1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <FiUser />
-                          </motion.div>
-                          <input
-                            type="text"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            onFocus={() => setCompanyFocused(true)}
-                            onBlur={() => setCompanyFocused(false)}
-                            placeholder="Acme Corporation"
-                            required
-                            className="glass-input"
-                          />
-                        </div>
-                      </div>
+                  <span>or continue with email</span>
+                </motion.div>
 
-                      {/* Full Name */}
-                      <div className="input-group">
-                        <label className="input-label">Full Name</label>
-                        <div className={`input-wrapper ${nameFocused ? 'focused' : ''}`}>
-                          <motion.div
-                            className="input-icon"
-                            animate={{ scale: nameFocused ? 1.1 : 1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <FiUser />
-                          </motion.div>
-                          <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            onFocus={() => setNameFocused(true)}
-                            onBlur={() => setNameFocused(false)}
-                            placeholder="John Doe"
-                            required
-                            className="glass-input"
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Email */}
-                  <div className="input-group">
-                    <label className="input-label">Email Address</label>
-                    <div className={`input-wrapper ${emailFocused ? 'focused' : ''}`}>
-                      <motion.div
-                        className="input-icon"
-                        animate={{ scale: emailFocused ? 1.1 : 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <FiMail />
-                      </motion.div>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                        placeholder="you@example.com"
-                        required
-                        className="glass-input"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div className="input-group">
-                    <label className="input-label">Password</label>
-                    <div className={`input-wrapper ${passwordFocused ? 'focused' : ''}`}>
-                      <motion.div
-                        className="input-icon"
-                        animate={{ scale: passwordFocused ? 1.1 : 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <FiLock />
-                      </motion.div>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        placeholder="••••••••"
-                        required
-                        className="glass-input"
-                      />
-                      <motion.button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="password-toggle"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {showPassword ? <FiEyeOff /> : <FiEye />}
-                      </motion.button>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <motion.div
-                      className="error-message"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      {error}
-                    </motion.div>
-                  )}
-
-                  {/* Remember & Forgot */}
-                  <div className="form-options">
-                    <label className="checkbox-label">
-                      <input type="checkbox" />
-                      <span>Remember me</span>
-                    </label>
-                    <Link to="/forgot" className="forgot-link">
-                      Forgot password?
-                    </Link>
-                  </div>
-
-                  {/* Submit Button */}
-                  <motion.button
-                    type="submit"
-                    className="submit-btn"
-                    disabled={loading}
-                    whileHover={{ scale: loading ? 1 : 1.02 }}
-                    whileTap={{ scale: loading ? 1 : 0.98 }}
+                {/* Success State */}
+                {success ? (
+                  <motion.div
+                    className="success-state"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                   >
-                    {loading ? (
-                      <motion.div
-                        className="loading-spinner"
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
-                          <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                        </svg>
-                      </motion.div>
-                    ) : (
+                    <motion.div
+                      className="success-icon"
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    >
+                      <FiCheckCircle className="w-12 h-12 text-emerald-500" />
+                    </motion.div>
+                    <h3>Welcome aboard!</h3>
+                    <p>Redirecting to your dashboard...</p>
+                  </motion.div>
+                ) : (
+                  <motion.form
+                    onSubmit={handleSubmit}
+                    className="auth-form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    {mode === "signup" && (
                       <>
-                        <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
-                        <motion.div
-                          animate={{ x: [0, 4, 0] }}
-                          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                        >
-                          <FiArrowRight />
-                        </motion.div>
+                        {/* Company Name */}
+                        <div className="input-group">
+                          <label>Company Name</label>
+                          <div className={`input-wrapper ${companyFocused ? 'focused' : ''}`}>
+                            <FiUser className="input-icon" />
+                            <input
+                              type="text"
+                              value={companyName}
+                              onChange={(e) => setCompanyName(e.target.value)}
+                              onFocus={() => setCompanyFocused(true)}
+                              onBlur={() => setCompanyFocused(false)}
+                              placeholder="Acme Inc."
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Full Name */}
+                        <div className="input-group">
+                          <label>Full Name</label>
+                          <div className={`input-wrapper ${nameFocused ? 'focused' : ''}`}>
+                            <FiUser className="input-icon" />
+                            <input
+                              type="text"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              onFocus={() => setNameFocused(true)}
+                              onBlur={() => setNameFocused(false)}
+                              placeholder="John Doe"
+                              required
+                            />
+                          </div>
+                        </div>
                       </>
                     )}
-                  </motion.button>
-                </motion.form>
-              )}
 
-              {/* Footer */}
-              <motion.div
-                className="form-footer"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1 }}
-              >
-                {mode === "login" ? (
-                  <>
-                    New to SYNC?{" "}
-                    <Link to="/signup" className="switch-link">
-                      Create an account
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    Already have an account?{" "}
-                    <Link to="/login" className="switch-link">
-                      Sign in
-                    </Link>
-                  </>
+                    {/* Email */}
+                    <div className="input-group">
+                      <label>Email Address</label>
+                      <div className={`input-wrapper ${emailFocused ? 'focused' : ''}`}>
+                        <FiMail className="input-icon" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          onFocus={() => setEmailFocused(true)}
+                          onBlur={() => setEmailFocused(false)}
+                          placeholder="you@company.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password */}
+                    <div className="input-group">
+                      <label>Password</label>
+                      <div className={`input-wrapper ${passwordFocused ? 'focused' : ''}`}>
+                        <FiLock className="input-icon" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          onFocus={() => setPasswordFocused(true)}
+                          onBlur={() => setPasswordFocused(false)}
+                          placeholder="••••••••"
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="password-toggle"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <FiEyeOff /> : <FiEye />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Error Message */}
+                    {error && (
+                      <motion.div
+                        className="error-message"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        {error}
+                      </motion.div>
+                    )}
+
+                    {/* Form Options */}
+                    {mode === "login" && (
+                      <div className="form-options">
+                        <label className="checkbox-label">
+                          <input type="checkbox" />
+                          <span>Remember me</span>
+                        </label>
+                        <Link to="/forgot" className="forgot-link">
+                          Forgot password?
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <motion.button
+                      type="submit"
+                      className="submit-btn"
+                      disabled={loading}
+                      whileHover={{ scale: loading ? 1 : 1.02 }}
+                      whileTap={{ scale: loading ? 1 : 0.98 }}
+                    >
+                      {loading ? (
+                        <motion.div
+                          className="spinner"
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
+                            <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                          </svg>
+                        </motion.div>
+                      ) : (
+                        <>
+                          <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
+                          <FiArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.form>
                 )}
+
+                {/* Form Footer */}
+                <motion.div
+                  className="form-footer"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  {mode === "login" ? (
+                    <>
+                      Don't have an account?{" "}
+                      <Link to="/signup" className="switch-link">Sign up free</Link>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{" "}
+                      <Link to="/login" className="switch-link">Sign in</Link>
+                    </>
+                  )}
+                </motion.div>
               </motion.div>
-            </motion.div>
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
         </motion.div>
       </div>
 
       <style>{`
-        /* Container */
-        .auth-page-container {
+        /* Base */
+        .auth-page {
           min-height: 100vh;
-          position: relative;
-          overflow: hidden;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          overflow: hidden;
         }
 
-        /* Confetti Canvas */
         .confetti-canvas {
           position: fixed;
           inset: 0;
@@ -761,367 +801,295 @@ export default function AuthPage({ mode = "login" }) {
           z-index: 100;
         }
 
-        /* Animated Background */
-        .animated-background {
-          position: fixed;
-          inset: 0;
-          background: linear-gradient(135deg, 
-            #e0c3fc 0%, 
-            #8ec5fc 25%, 
-            #fbc2eb 50%, 
-            #a6c1ee 75%, 
-            #ffecd2 100%
-          );
-          z-index: 0;
-        }
-
-        /* Floating Orbs */
-        .gradient-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(60px);
-          opacity: 0.6;
-          animation: float 30s ease-in-out infinite;
-        }
-
-        .orb-1 {
-          width: 500px;
-          height: 500px;
-          background: radial-gradient(circle, rgba(102, 126, 234, 0.4), transparent);
-          top: -10%;
-          left: -10%;
-          animation-duration: 25s;
-        }
-
-        .orb-2 {
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(240, 147, 251, 0.4), transparent);
-          top: 20%;
-          right: -5%;
-          animation-duration: 30s;
-          animation-delay: -5s;
-        }
-
-        .orb-3 {
-          width: 600px;
-          height: 600px;
-          background: radial-gradient(circle, rgba(79, 172, 254, 0.3), transparent);
-          bottom: -15%;
-          left: 10%;
-          animation-duration: 35s;
-          animation-delay: -10s;
-        }
-
-        .orb-4 {
-          width: 350px;
-          height: 350px;
-          background: radial-gradient(circle, rgba(118, 75, 162, 0.3), transparent);
-          bottom: 10%;
-          right: 20%;
-          animation-duration: 28s;
-          animation-delay: -15s;
-        }
-
-        .orb-5 {
-          width: 450px;
-          height: 450px;
-          background: radial-gradient(circle, rgba(67, 233, 123, 0.25), transparent);
-          top: 40%;
-          left: 50%;
-          animation-duration: 32s;
-          animation-delay: -8s;
-        }
-
-        @keyframes float {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(50px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-30px, 30px) scale(0.9);
-          }
-        }
-
-        /* Floating Particles */
-        .particles-container {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-        }
-
-        .particle {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.6);
-          border-radius: 50%;
-          animation: particle-float linear infinite;
-          box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        @keyframes particle-float {
-          0% {
-            transform: translateY(100vh) translateX(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-100px) translateX(50px);
-            opacity: 0;
-          }
-        }
-
-        /* Interactive Gradient */
-        .interactive-gradient {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          transition: background 0.3s ease;
-        }
-
-        /* Content Layout */
-        .auth-content {
-          position: relative;
-          z-index: 1;
+        /* Split Container */
+        .auth-container {
           display: flex;
           min-height: 100vh;
+          background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+          position: relative;
         }
 
-        @media (max-width: 768px) {
-          .auth-content {
-            flex-direction: column;
-          }
-        }
-
-        /* Left Panel */
+        /* LEFT PANEL */
         .left-panel {
-          flex: 1;
+          flex: 0 0 55%;
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4rem 2rem;
-          position: relative;
+          overflow: visible;
+        }
+
+        /* Full page animated background */
+        .full-bg {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+          pointer-events: none;
+        }
+
+        .floating-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+        }
+
+        .grid-pattern {
+          position: absolute;
+          inset: 0;
+          background-image: 
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size: 50px 50px;
         }
 
         .left-content {
-          max-width: 500px;
+          position: relative;
+          z-index: 10;
+          padding: 3rem;
+          max-width: 600px;
           width: 100%;
         }
 
-        /* Logo Section */
-        .logo-section {
+        /* Brand Section */
+        .brand-section {
           display: flex;
           align-items: center;
-          gap: 2rem;
+          gap: 1.5rem;
           margin-bottom: 3rem;
         }
 
-        .logo-container {
+        .logo-mark {
           position: relative;
-          width: 140px;
-          height: 140px;
+          width: 72px;
+          height: 72px;
         }
 
-        .logo-svg {
+        .logo-inner {
+          position: relative;
           width: 100%;
           height: 100%;
-          filter: drop-shadow(0 8px 24px rgba(102, 126, 234, 0.3));
         }
 
-        .logo-glow {
+        .logo-ring {
           position: absolute;
-          inset: -20px;
-          background: radial-gradient(circle, rgba(102, 126, 234, 0.2), transparent 70%);
+          inset: 0;
+          border: 2px solid rgba(99, 102, 241, 0.5);
           border-radius: 50%;
-          filter: blur(30px);
-          animation: pulse-glow 3s ease-in-out infinite;
         }
 
-        @keyframes pulse-glow {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.1); }
+        .logo-ring.ring-2 {
+          inset: 8px;
+          border-color: rgba(168, 85, 247, 0.4);
+          animation: pulse-ring 2s ease-in-out infinite;
         }
 
-        /* Brand Text */
+        @keyframes pulse-ring {
+          0%, 100% { transform: scale(1); opacity: 0.4; }
+          50% { transform: scale(1.1); opacity: 0.6; }
+        }
+
+        .logo-center {
+          position: absolute;
+          inset: 16px;
+          background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+        }
+
         .brand-text {
           flex: 1;
         }
 
         .brand-name {
           display: flex;
-          gap: 4px;
-          font-size: 4rem;
+          font-size: 3rem;
           font-weight: 800;
-          line-height: 1;
-          margin-bottom: 0.5rem;
+          margin: 0 0 0.25rem 0;
         }
 
         .brand-letter {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+          background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          text-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
         }
 
         .brand-tagline {
-          font-size: 1rem;
-          color: #4a5568;
-          font-weight: 600;
-          margin-bottom: 1rem;
-        }
-
-        .typewriter-text {
-          font-size: 0.9rem;
-          color: #718096;
-          min-height: 24px;
-          font-style: italic;
-        }
-
-        .cursor-blink {
-          animation: blink 1s steps(2) infinite;
-        }
-
-        @keyframes blink {
-          50% { opacity: 0; }
-        }
-
-        /* CTA Buttons */
-        .cta-buttons {
-          display: flex;
-          gap: 1rem;
-          margin-bottom: 3rem;
-        }
-
-        .cta-primary {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.875rem 1.75rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          border-radius: 12px;
-          font-weight: 600;
           font-size: 0.95rem;
-          cursor: pointer;
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
-          transition: all 0.3s ease;
-        }
-
-        .cta-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(102, 126, 234, 0.45);
-        }
-
-        .cta-secondary {
-          padding: 0.875rem 1.75rem;
-          background: rgba(255, 255, 255, 0.6);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.8);
-          border-radius: 12px;
-          color: #4a5568;
-          font-weight: 600;
-          font-size: 0.95rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .cta-secondary:hover {
-          background: rgba(255, 255, 255, 0.8);
-          transform: translateY(-2px);
-        }
-
-        /* Floating Avatars */
-        .floating-avatars {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .avatar {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 0.875rem;
-          color: white;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-          border: 3px solid rgba(255, 255, 255, 0.8);
-        }
-
-        .avatar-text {
-          font-size: 0.875rem;
-          color: #718096;
+          color: rgba(255, 255, 255, 0.6);
+          margin: 0;
           font-weight: 500;
         }
 
-        /* Right Panel */
-        .right-panel {
+        /* Value Proposition */
+        .value-prop {
+          margin-bottom: 2.5rem;
+        }
+
+        .value-title {
+          font-size: 2.25rem;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.3;
+          margin: 0 0 1rem 0;
+        }
+
+        .gradient-text {
+          background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+
+        .value-description {
+          font-size: 1.05rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin: 0;
+          line-height: 1.6;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-bottom: 2.5rem;
+        }
+
+        .feature-card {
+          position: relative;
+          padding: 1rem 1.25rem;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+
+        .feature-card:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-card.active {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .feature-card-inner {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          z-index: 1;
+        }
+
+        .feature-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .feature-text {
           flex: 1;
+          min-width: 0;
+        }
+
+        .feature-title {
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #fff;
+          margin: 0 0 0.25rem 0;
+        }
+
+        .feature-description {
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        .feature-arrow {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Trust Section */
+        .trust-section {
+          padding-top: 1.5rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .trust-badges {
+          display: flex;
+          gap: 1.5rem;
+        }
+
+        .trust-badge {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.8rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .trust-badge svg {
+          color: rgba(99, 102, 241, 0.8);
+        }
+
+        /* RIGHT PANEL */
+        .right-panel {
+          flex: 0 0 45%;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 2rem;
+          position: relative;
         }
 
-        /* Glassmorphic Form Card */
-        .form-card-glass {
+        .form-container {
           width: 100%;
-          max-width: 480px;
-          background: rgba(255, 255, 255, 0.75);
+          max-width: 420px;
+          position: relative;
+          z-index: 10;
+        }
+
+        .form-card {
+          background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.5);
           border-radius: 24px;
           padding: 2.5rem;
+          border: 1px solid rgba(255, 255, 255, 0.2);
           box-shadow: 
-            0 8px 32px 0 rgba(31, 38, 135, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        /* Form Header */
         .form-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 2rem;
+          text-align: center;
+          margin-bottom: 1.75rem;
         }
 
         .form-title {
-          font-size: 2rem;
-          font-weight: 800;
-          color: #2d3748;
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: #fff;
           margin: 0 0 0.5rem 0;
         }
 
         .form-subtitle {
           font-size: 0.95rem;
-          color: #718096;
+          color: rgba(255, 255, 255, 0.6);
           margin: 0;
-        }
-
-        .help-link {
-          font-size: 0.875rem;
-          color: #667eea;
-          font-weight: 600;
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-
-        .help-link:hover {
-          color: #764ba2;
         }
 
         /* Social Buttons */
@@ -1136,30 +1104,26 @@ export default function AuthPage({ mode = "login" }) {
           align-items: center;
           justify-content: center;
           gap: 0.75rem;
-          padding: 0.875rem 1.25rem;
-          background: rgba(255, 255, 255, 0.8);
+          padding: 0.75rem 1rem;
+          background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 12px;
-          font-weight: 600;
           font-size: 0.9rem;
-          color: #2d3748;
+          font-weight: 500;
+          color: #fff;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
         }
 
-        .social-google {
+        .social-btn.google {
           flex: 1;
         }
 
-        .social-github {
-          padding: 0.875rem 1.25rem;
-        }
-
         .social-btn:hover {
-          background: rgba(255, 255, 255, 0.95);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
         }
 
         /* Divider */
@@ -1167,9 +1131,8 @@ export default function AuthPage({ mode = "login" }) {
           display: flex;
           align-items: center;
           margin: 1.5rem 0;
-          color: #a0aec0;
-          font-size: 0.875rem;
-          font-weight: 600;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 0.8rem;
         }
 
         .divider::before,
@@ -1177,75 +1140,75 @@ export default function AuthPage({ mode = "login" }) {
           content: '';
           flex: 1;
           height: 1px;
-          background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+          background: rgba(255, 255, 255, 0.15);
         }
 
         .divider span {
           padding: 0 1rem;
         }
 
-        /* Auth Form */
+        /* Form */
         .auth-form {
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
         }
 
-        /* Input Groups */
         .input-group {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
         }
 
-        .input-label {
-          font-size: 0.875rem;
+        .input-group label {
+          font-size: 0.85rem;
           font-weight: 600;
-          color: #4a5568;
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .input-wrapper {
           position: relative;
           display: flex;
           align-items: center;
-          background: rgba(255, 255, 255, 0.5);
-          border: 2px solid rgba(0, 0, 0, 0.08);
-          border-radius: 12px;
-          transition: all 0.3s ease;
         }
 
-        .input-wrapper.focused {
-          background: rgba(255, 255, 255, 0.7);
-          border-color: #667eea;
-          box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(102, 126, 234, 0.15);
+        .input-wrapper input {
+          width: 100%;
+          padding: 0.875rem 1rem 0.875rem 2.75rem;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 12px;
+          font-size: 0.95rem;
+          color: #fff;
+          transition: all 0.2s ease;
+        }
+
+        .input-wrapper input:focus {
+          outline: none;
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(99, 102, 241, 0.6);
+          box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .input-wrapper input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .input-wrapper.focused input {
+          background: rgba(255, 255, 255, 0.12);
+          border-color: rgba(99, 102, 241, 0.6);
+          box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
         }
 
         .input-icon {
           position: absolute;
           left: 1rem;
-          color: #a0aec0;
-          display: flex;
-          align-items: center;
+          color: rgba(255, 255, 255, 0.5);
           transition: color 0.2s ease;
         }
 
         .input-wrapper.focused .input-icon {
-          color: #667eea;
-        }
-
-        .glass-input {
-          flex: 1;
-          padding: 0.875rem 1rem 0.875rem 3rem;
-          background: transparent;
-          border: none;
-          outline: none;
-          font-size: 0.95rem;
-          color: #2d3748;
-          font-weight: 500;
-        }
-
-        .glass-input::placeholder {
-          color: #a0aec0;
+          color: #a5b4fc;
         }
 
         .password-toggle {
@@ -1253,25 +1216,26 @@ export default function AuthPage({ mode = "login" }) {
           right: 1rem;
           background: none;
           border: none;
-          color: #a0aec0;
+          color: rgba(255, 255, 255, 0.5);
           cursor: pointer;
-          padding: 0.5rem;
+          padding: 0.25rem;
           display: flex;
           align-items: center;
+          justify-content: center;
           transition: color 0.2s ease;
         }
 
         .password-toggle:hover {
-          color: #667eea;
+          color: #a5b4fc;
         }
 
         /* Error Message */
         .error-message {
-          padding: 0.875rem 1rem;
-          background: rgba(245, 101, 101, 0.1);
-          border: 1px solid rgba(245, 101, 101, 0.3);
-          border-radius: 12px;
-          color: #c53030;
+          padding: 0.75rem 1rem;
+          background: rgba(220, 38, 38, 0.15);
+          border: 1px solid rgba(220, 38, 38, 0.3);
+          border-radius: 10px;
+          color: #fca5a5;
           font-size: 0.875rem;
           font-weight: 500;
         }
@@ -1288,27 +1252,25 @@ export default function AuthPage({ mode = "login" }) {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: #4a5568;
-          font-weight: 500;
+          color: rgba(255, 255, 255, 0.7);
           cursor: pointer;
         }
 
-        .checkbox-label input[type="checkbox"] {
-          width: 18px;
-          height: 18px;
-          accent-color: #667eea;
-          cursor: pointer;
+        .checkbox-label input {
+          width: 16px;
+          height: 16px;
+          accent-color: #6366f1;
         }
 
         .forgot-link {
-          color: #667eea;
+          color: #a5b4fc;
           font-weight: 600;
           text-decoration: none;
           transition: color 0.2s ease;
         }
 
         .forgot-link:hover {
-          color: #764ba2;
+          color: #c7d2fe;
         }
 
         /* Submit Button */
@@ -1316,21 +1278,22 @@ export default function AuthPage({ mode = "login" }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.75rem;
-          padding: 1rem 1.5rem;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          gap: 0.5rem;
+          padding: 0.875rem 1.5rem;
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
           border: none;
           border-radius: 12px;
-          color: white;
-          font-weight: 700;
-          font-size: 1rem;
+          color: #fff;
+          font-size: 0.95rem;
+          font-weight: 600;
           cursor: pointer;
-          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
-          transition: all 0.3s ease;
+          box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+          transition: all 0.2s ease;
         }
 
         .submit-btn:hover:not(:disabled) {
-          box-shadow: 0 12px 32px rgba(102, 126, 234, 0.45);
+          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+          transform: translateY(-1px);
         }
 
         .submit-btn:disabled {
@@ -1338,80 +1301,123 @@ export default function AuthPage({ mode = "login" }) {
           cursor: not-allowed;
         }
 
-        .loading-spinner {
+        .spinner {
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        /* Success Card */
-        .success-card {
+        /* Success State */
+        .success-state {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 1rem;
-          padding: 3rem 2rem;
+          padding: 2rem;
           text-align: center;
-          color: #2d3748;
         }
 
-        .success-card svg {
-          color: #48bb78;
+        .success-icon {
+          margin-bottom: 1rem;
         }
 
-        .success-card h3 {
+        .success-state h3 {
           font-size: 1.5rem;
           font-weight: 700;
-          margin: 0;
+          color: #fff;
+          margin: 0 0 0.5rem 0;
         }
 
-        .success-card p {
+        .success-state p {
           font-size: 0.95rem;
-          color: #718096;
+          color: rgba(255, 255, 255, 0.6);
           margin: 0;
         }
 
         /* Form Footer */
         .form-footer {
           text-align: center;
-          margin-top: 1.5rem;
+          margin-top: 1.75rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
           font-size: 0.9rem;
-          color: #718096;
+          color: rgba(255, 255, 255, 0.6);
         }
 
         .switch-link {
-          color: #667eea;
-          font-weight: 700;
+          color: #a5b4fc;
+          font-weight: 600;
           text-decoration: none;
           transition: color 0.2s ease;
         }
 
         .switch-link:hover {
-          color: #764ba2;
+          color: #c7d2fe;
         }
 
         /* Responsive */
+        @media (max-width: 1024px) {
+          .left-panel {
+            flex: 0 0 50%;
+          }
+          .right-panel {
+            flex: 0 0 50%;
+          }
+          .value-title {
+            font-size: 1.75rem;
+          }
+        }
+
         @media (max-width: 768px) {
-          .brand-name {
-            font-size: 2.5rem;
-          }
-
-          .logo-section {
+          .auth-container {
             flex-direction: column;
-            text-align: center;
-            gap: 1rem;
           }
-
-          .form-card-glass {
+          
+          .left-panel {
+            flex: none;
+            padding: 3rem 1.5rem;
+          }
+          
+          .right-panel {
+            flex: none;
             padding: 2rem 1.5rem;
           }
 
-          .form-title {
+          .left-content {
+            padding: 0;
+            max-width: 100%;
+          }
+
+          .brand-section {
+            justify-content: center;
+            text-align: center;
+          }
+
+          .value-prop {
+            text-align: center;
+          }
+
+          .value-title {
             font-size: 1.5rem;
           }
 
-          .help-link {
+          .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+          }
+
+          .feature-description {
             display: none;
+          }
+
+          .trust-badges {
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+          }
+
+          .form-card {
+            padding: 2rem 1.5rem;
           }
         }
       `}</style>
