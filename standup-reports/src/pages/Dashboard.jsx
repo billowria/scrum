@@ -1076,6 +1076,109 @@ const QuickActionsHero = ({ navigate, userRole }) => {
   );
 };
 
+// --- Additional Quick Actions Sections ---
+const DashboardActions = ({ navigate, userRole }) => {
+  const actions = [
+    {
+      label: 'Project Board',
+      icon: FiBriefcase,
+      gradient: 'from-indigo-500 to-purple-600',
+      theme: 'violet',
+      onClick: () => navigate('/projects'),
+      desc: 'Track project progress'
+    },
+    {
+      label: 'Task Dashboard',
+      icon: FiTarget,
+      gradient: 'from-blue-500 to-indigo-600',
+      theme: 'blue',
+      onClick: () => navigate('/tasks'),
+      desc: 'Manage your tasks'
+    },
+    {
+      label: 'Team Directory',
+      icon: FiUsers,
+      gradient: 'from-emerald-400 to-teal-500',
+      theme: 'emerald',
+      onClick: () => navigate('/team-management'),
+      desc: 'View team members'
+    },
+    {
+      label: 'Reports Center',
+      icon: FiFileText,
+      gradient: 'from-amber-400 to-orange-500',
+      theme: 'amber',
+      onClick: () => navigate('/reports'),
+      desc: 'Daily & weekly reports'
+    }
+  ];
+
+  return (
+    <div className="mb-10">
+      <div className="flex items-center gap-3 mb-6 px-2">
+        <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+        <h2 className="text-xl font-bold text-gray-900">Dashboard Actions</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {actions.map((action, index) => (
+          <HeroActionTile key={index} action={action} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const SyncViewActions = ({ navigate, userRole }) => {
+  const actions = [
+    {
+      label: 'Real-time Sync',
+      icon: FiActivity,
+      gradient: 'from-cyan-400 to-blue-500',
+      theme: 'cyan',
+      onClick: () => navigate('/sync'),
+      desc: 'Live data synchronization'
+    },
+    {
+      label: 'Calendar View',
+      icon: FiCalendar,
+      gradient: 'from-violet-500 to-purple-600',
+      theme: 'violet',
+      onClick: () => navigate('/calendar'),
+      desc: 'Schedule & events'
+    },
+    {
+      label: 'Notifications',
+      icon: FiBell,
+      gradient: 'from-red-500 to-orange-600',
+      theme: 'red',
+      onClick: () => navigate('/notifications'),
+      desc: 'Alerts & updates'
+    },
+    {
+      label: 'Performance',
+      icon: FiBarChart2,
+      gradient: 'from-green-500 to-emerald-600',
+      theme: 'emerald',
+      onClick: () => navigate('/analytics'),
+      desc: 'Track metrics'
+    }
+  ];
+
+  return (
+    <div className="mb-10">
+      <div className="flex items-center gap-3 mb-6 px-2">
+        <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+        <h2 className="text-xl font-bold text-gray-900">Sync View</h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {actions.map((action, index) => (
+          <HeroActionTile key={index} action={action} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // --- Main Dashboard Component ---
 
 export default function Dashboard({ sidebarOpen, sidebarMode }) {
@@ -1360,6 +1463,10 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
       {/* Hero Quick Actions */}
       <QuickActionsHero navigate={navigate} userRole={userRole} />
+
+      {/* Additional Quick Actions Sections */}
+      <DashboardActions navigate={navigate} userRole={userRole} />
+      <SyncViewActions navigate={navigate} userRole={userRole} />
 
       {/* Main Content Grid - 4 Equal Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
