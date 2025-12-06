@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend, FiTarget, FiCheckSquare } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend, FiTarget, FiCheckSquare, FiBriefcase, FiLayers, FiFileText, FiEyeOff, FiStar } from 'react-icons/fi';
 import { useCompany } from '../contexts/CompanyContext';
 
 // Import components
@@ -10,7 +10,8 @@ import LeaveRequestForm from '../components/LeaveRequestForm';
 import FloatingNav from '../components/FloatingNav';
 import AnnouncementModal from '../components/AnnouncementModal';
 import UserListModal from '../components/UserListModal';
-
+import TimesheetModal from '../components/TimesheetModal';
+import HolidayModal from '../components/HolidayModal';
 
 // Professional color palette
 const colors = {
@@ -77,291 +78,40 @@ const calendarVariants = {
     scale: 1,
     transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1.0] }
   },
-  exit: { 
-    opacity: 0, 
-    scale: 0.95, 
-    transition: { duration: 0.3 } 
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    transition: { duration: 0.3 }
   }
 };
-
-const monthTransitionVariants = {
-  enter: (direction) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    opacity: 0
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    transition: {
-      x: { type: 'spring', stiffness: 300, damping: 30 },
-      opacity: { duration: 0.3 }
-    }
-  },
-  exit: (direction) => ({
-    x: direction > 0 ? '-100%' : '100%',
-    opacity: 0,
-    transition: {
-      x: { type: 'spring', stiffness: 300, damping: 30 },
-      opacity: { duration: 0.3 }
-    }
-  })
-};
-
-const overlayButtonVariants = {
-  rest: { scale: 1 },
-  hover: { scale: 1.05 },
-  tap: { scale: 0.95 }
-};
-
-// Glassmorphic Ocean Dreams Leave Calendar Header
-const CompactTabHeader = ({
-  title,
-  subtitle,
-  icon: Icon,
-  color = "ocean",
-  quickStats = [],
-  quickActions = [],
-  badge,
-  sidebarOpen = false
-}) => {
-  return (
-    <motion.div
-      className={`fixed top-16 ${sidebarOpen ? 'left-64' : 'left-20'} right-0 z-40 transition-all duration-200`}
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, type: "spring", stiffness: 300, damping: 25 }}
-      style={{
-        width: `calc(100% - ${sidebarOpen ? '16rem' : '5rem'})`,
-        transition: 'width 200ms cubic-bezier(0.4, 0, 0.2, 1), left 200ms cubic-bezier(0.4, 0, 0.2, 1)'
-      }}
-    >
-      {/* Ocean Dreams Glassmorphic Background */}
-      <div className="relative bg-white/40 backdrop-blur-2xl border-b border-white/30 shadow-2xl overflow-hidden">
-        {/* Animated Ocean-Themed Background */}
-        <div className="absolute inset-0">
-          {/* Ocean gradient layers */}
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-100/30 via-teal-100/30 to-blue-100/30"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-indigo-100/20 to-purple-100/20"></div>
-
-          {/* Animated ocean glowing orbs */}
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full blur-3xl"
-              style={{
-                width: `${150 + Math.random() * 200}px`,
-                height: `${150 + Math.random() * 200}px`,
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                x: [0, Math.random() * 50 - 25],
-                y: [0, Math.random() * 50 - 25],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: Math.random() * 4 + 3,
-                repeat: Infinity,
-                repeatType: "reverse",
-                delay: Math.random() * 2,
-              }}
-            >
-              <div className={`w-full h-full rounded-full bg-gradient-to-r ${
-                i % 3 === 0 ? 'from-cyan-200/40 to-teal-200/40' :
-                i % 3 === 1 ? 'from-blue-200/40 to-indigo-200/40' :
-                'from-purple-200/40 to-pink-200/40'
-              }`} />
-            </motion.div>
-          ))}
-
-          {/* Ocean floating sparkles */}
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={`sparkle-${i}`}
-              className="absolute w-1 h-1 bg-white rounded-full"
-              animate={{
-                x: [0, Math.random() * 60 - 30],
-                y: [0, Math.random() * 60 - 30],
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
-              }}
-              transition={{
-                duration: Math.random() * 2 + 1,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                filter: 'blur(0.5px)',
-              }}
-            >
-              <div className="w-full h-full bg-cyan-300/80 rounded-full shadow-lg shadow-cyan-400/50" />
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Ocean glass reflection overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-cyan-50/20 via-transparent to-blue-50/10"></div>
-
-        {/* Content */}
-        <div className="relative px-3 sm:px-4 lg:px-6 py-3">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left Section - Ocean Title with Icon */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-              <motion.div
-                className="relative group"
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                {/* Ocean glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-teal-400 to-blue-400 rounded-xl blur-lg opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                <div className="relative bg-gradient-to-br from-cyan-500 via-teal-500 to-blue-500 p-2 rounded-xl shadow-xl backdrop-blur-sm border border-white/20">
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                </div>
-                {/* Ocean orbiting dots */}
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-1.5 h-1.5 bg-gradient-to-r from-cyan-300 to-blue-300 rounded-full"
-                    animate={{
-                      rotate: [0, 360],
-                      opacity: [0.5, 1, 0.5],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "linear",
-                      delay: i * 0.3,
-                    }}
-                    style={{
-                      top: '50%',
-                      left: '50%',
-                      transformOrigin: `0 ${15 + i * 6}px`,
-                      filter: 'blur(0.5px)',
-                    }}
-                  >
-                    <div className="w-full h-full bg-white rounded-full shadow-lg shadow-cyan-400/50" />
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <h2 className="text-base sm:text-lg lg:text-xl font-bold text-gray-800 truncate cursor-pointer hover:text-cyan-700 transition-colors" onClick={() => window.location.href = '/'}>
-                    {title}
-                  </h2>
-                  {badge && (
-                    <motion.span
-                      className="px-2 py-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full shadow-lg"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      {badge}
-                    </motion.span>
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block truncate">
-                  {subtitle}
-                </p>
-              </div>
-            </div>
-
-            {/* Center Section - Ocean-Themed Quick Stats */}
-            {quickStats.length > 0 && (
-              <div className="hidden md:flex items-center gap-2 lg:gap-3">
-                {quickStats.map((stat, index) => (
-                  <motion.div
-                    key={index}
-                    onClick={stat.onClick}
-                    className="relative px-2 lg:px-3 py-1.5 lg:py-2 rounded-xl bg-white/30 backdrop-blur-sm border border-cyan-200/30 shadow-lg cursor-pointer hover:bg-white/50 transition-all overflow-hidden"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.08, type: "spring", stiffness: 400 }}
-                    whileHover={{ y: -2, scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {/* Ocean shimmer effect */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent"
-                      animate={{ x: ['-100%', '100%'] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
-                    />
-                    <div className="relative flex items-center gap-1 lg:gap-2">
-                      {stat.icon && <span className="text-cyan-700">{stat.icon}</span>}
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-gray-600 hidden lg:block">{stat.label}:</span>
-                        <span className="text-sm font-bold text-gray-800">{stat.value}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {/* Right Section - Ocean-Themed Actions */}
-            {quickActions.length > 0 && (
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-                {quickActions.map((action, index) => (
-                  <motion.button
-                    key={index}
-                    className="relative px-3 py-2 rounded-xl bg-gradient-to-b from-white/50 via-white/30 to-white/20 backdrop-blur-xl border border-white/50 shadow-lg text-gray-700 hover:text-cyan-600 transition-all group hover:shadow-xl hover:shadow-cyan-500/20"
-                    onClick={action.onClick}
-                    whileHover={{ scale: 1.05, y: -1 }}
-                    whileTap={{ scale: 0.95 }}
-                    title={action.tooltip}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 + index * 0.08, type: "spring", stiffness: 500 }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-blue-500/10 to-indigo-500/10 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-xl opacity-100"></div>
-                    <div className="flex items-center gap-1.5 relative z-10">
-                      <span className="w-4 h-4 flex items-center justify-center">
-                        {action.icon}
-                      </span>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Ocean Stats Row */}
-          {quickStats.length > 0 && (
-            <div className="flex md:hidden items-center gap-2 mt-3 pt-3 border-t border-cyan-100/20">
-              {quickStats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  onClick={stat.onClick}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-50/60 backdrop-blur-sm border border-cyan-200/30 cursor-pointer hover:bg-cyan-100/60 transition-all"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.06 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  {stat.icon && <span className="text-cyan-600 text-xs">{stat.icon}</span>}
-                  <span className="text-xs font-bold text-gray-800">{stat.value}</span>
-                  <span className="text-xs text-gray-600 hidden sm:inline">{stat.label}</span>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 
 export default function LeaveCalendar({ sidebarOpen = false }) {
   const { currentCompany } = useCompany();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDates, setSelectedDates] = useState({ start: null, end: null });
+
+  // View Mode: 'leaves', 'timesheets', or 'holidays'
+  const [viewMode, setViewMode] = useState('leaves');
+
+  // Selection States
+  const [selectedLeaveDates, setSelectedLeaveDates] = useState([]); // Array of strings 'YYYY-MM-DD'
+  const [selectedTimesheetDates, setSelectedTimesheetDates] = useState([]); // Array of date strings 'YYYY-MM-DD'
+
   const [leaveData, setLeaveData] = useState([]);
+  const [timesheetData, setTimesheetData] = useState([]);
+  const [holidayData, setHolidayData] = useState([]);
   const [users, setUsers] = useState([]);
+
+  // Holiday Modal State
+  const [showHolidayModal, setShowHolidayModal] = useState(false);
+  const [selectedHolidayDate, setSelectedHolidayDate] = useState(null);
+  const [editingHoliday, setEditingHoliday] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Modals
   const [showLeaveForm, setShowLeaveForm] = useState(false);
+  const [showTimesheetModal, setShowTimesheetModal] = useState(false);
+  const [editingTimesheetEntry, setEditingTimesheetEntry] = useState(null);
+
   const [message, setMessage] = useState(null);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [showOnLeaveModal, setShowOnLeaveModal] = useState(false);
@@ -374,15 +124,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   const [monthDirection, setMonthDirection] = useState(0);
   const [teamAvailability, setTeamAvailability] = useState({});
   const [usersOnLeaveToday, setUsersOnLeaveToday] = useState([]);
-
-  // New state for premium button hover
-  const [isButtonHovered, setButtonHovered] = useState(false);
-
-
+  const [showHeader, setShowHeader] = useState(true);
 
   // Animation controls
   const controls = useAnimation();
-  
+
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -391,92 +137,80 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     if (currentUser && currentCompany?.id) {
       fetchUsers();
       fetchLeaveData();
+      if (viewMode === 'timesheets') {
+        fetchTimesheets();
+      }
       fetchAnnouncements();
     }
-    
-    // Animate the calendar on initial load
-    controls.start('visible');
   }, [currentUser, currentCompany?.id]);
-  
+
   useEffect(() => {
     if (currentUser && currentCompany?.id) {
-      fetchLeaveData();
+      if (viewMode === 'leaves') {
+        fetchLeaveData();
+      } else if (viewMode === 'timesheets') {
+        fetchTimesheets();
+      } else if (viewMode === 'holidays') {
+        fetchHolidays();
+      }
     }
-  }, [currentMonth, currentUser, currentCompany?.id]);
+  }, [currentMonth, viewMode]);
 
+  // Derived Stats
+  const [stats, setStats] = useState({
+    onLeaveToday: 0,
+    pendingRequests: 0,
+    totalHoursMonth: 0,
+    missingDays: 0
+  });
 
-  
-  // Calculate team availability and stats whenever data changes
   useEffect(() => {
-    // Always calculate team availability, even with no users (shows 100% or setup prompt)
+    calculateStats();
     calculateTeamAvailability();
+  }, [leaveData, timesheetData, users, currentMonth, viewMode]);
 
-    if (users.length > 0) {
-      calculateStats();
-    }
-  }, [leaveData, users, currentMonth]); // Added currentMonth dependency
-  
-  const calculateStats = async () => {
-    if (!currentUser || !currentCompany?.id) return;
-    
-    try {
-      const today = new Date();
-      const todayString = format(today, 'yyyy-MM-dd');
-      
-      const { data: onLeaveTodayData, error: onLeaveError } = await supabase
-        .from('leave_plans')
-        .select(`
-          users:user_id (id, name, avatar_url, role, company_id)
-        `)
-        .eq('company_id', currentCompany?.id) // Filter leave plans by company
-        .eq('users.company_id', currentCompany?.id) // Also filter users by company
-        .eq('status', 'approved')
-        .lte('start_date', todayString)
-        .gte('end_date', todayString);
+  const calculateStats = () => {
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
 
-      if (onLeaveError) throw onLeaveError;
+    // Leave Stats
+    const onLeaveToday = leaveData.filter(l => {
+      return l.status === 'approved' && todayStr >= l.start_date && todayStr <= l.end_date;
+    }).length;
 
-      const usersOnLeave = onLeaveTodayData
-      .map(leave => leave.users)
-      .filter(user => user && user.id && user.name) // Filter out null/undefined users
-      .filter((user, index, arr) => arr.findIndex(u => u.id === user.id) === index); // Remove duplicates
+    const pendingRequests = leaveData.filter(l => l.status === 'pending').length;
 
-    const onLeaveIds = usersOnLeave.map(user => user.id);
-      
-      const { data: allUsers, error: usersError } = await supabase
-        .from('users')
-        .select('id, name, avatar_url, role, company_id')
-        .eq('company_id', currentCompany?.id); // Filter by company
+    // Timesheet Stats (Current User)
+    const userTimesheets = timesheetData.filter(t => t.user_id === currentUser?.id);
+    const totalHours = userTimesheets.reduce((acc, curr) => acc + (curr.hours || 0), 0);
 
-      if (usersError) throw usersError;
+    // Missing Days (Weekdays in current month up to today)
+    const daysInMonth = eachDayOfInterval({
+      start: startOfMonth(currentMonth),
+      end: isSameMonth(currentMonth, today) ? today : endOfMonth(currentMonth)
+    });
 
-      const availableUsers = allUsers.filter(user => !onLeaveIds.includes(user.id));
+    // Exclude weekends
+    const workDays = daysInMonth.filter(d => !isWeekend(d));
+    const loggedDates = new Set(userTimesheets.map(t => t.date));
+    const missingDays = workDays.filter(d => !loggedDates.has(format(d, 'yyyy-MM-dd'))).length;
 
-      setUsersOnLeaveToday(usersOnLeave);
-
-      return {
-        totalTeamMembers: allUsers.length,
-        membersOnLeave: usersOnLeave.length,
-        membersAvailable: availableUsers.length
-      };
-    } catch (error) {
-      console.error('Error calculating stats:', error);
-      return {
-        totalTeamMembers: 0,
-        membersOnLeave: 0,
-        membersAvailable: 0
-      };
-    }
+    setStats({
+      onLeaveToday,
+      pendingRequests,
+      totalHoursMonth: totalHours.toFixed(1),
+      missingDays
+    });
   };
-  
+
   const calculateTeamAvailability = () => {
     const daysInMonth = eachDayOfInterval({
       start: startOfMonth(currentMonth),
       end: endOfMonth(currentMonth)
     });
-    
+
     const availability = {};
-    
+
     daysInMonth.forEach(day => {
       const dateStr = format(day, 'yyyy-MM-dd');
       const totalUsers = users.length;
@@ -486,7 +220,6 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         return day >= start && day <= end && leave.status !== 'rejected';
       }).length;
 
-      // Handle case when there are no users yet
       let availablePercentage = 100;
       if (totalUsers > 0) {
         availablePercentage = Math.round(((totalUsers - onLeave) / totalUsers) * 100);
@@ -503,10 +236,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         totalUsers
       };
     });
-    
+
     setTeamAvailability(availability);
   };
-  
+
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -515,46 +248,41 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
       setCurrentUser(data);
     }
   };
-  
+
   const fetchUsers = async () => {
     if (!currentUser || !currentCompany?.id) return;
-    
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('users')
-        .select('id, name, team_id, company_id')
-        .eq('company_id', currentCompany?.id); // Filter by company
-      
-      if (error) throw error;
+        .select('id, name, team_id, company_id, avatar_url')
+        .eq('company_id', currentCompany?.id);
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error.message);
     }
   };
-  
+
   const fetchLeaveData = async () => {
     if (!currentUser || !currentCompany?.id) return;
-    
-    setLoading(true);
     try {
       const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
-      
+
       const { data, error } = await supabase
         .from('leave_plans')
         .select(`
           id, start_date, end_date, reason, status, company_id,
           users:user_id (id, name, team_id, avatar_url, company_id)
         `)
-        .eq('company_id', currentCompany?.id) // Filter leave plans by company
-        .eq('users.company_id', currentCompany?.id) // Also filter users by company
+        .eq('company_id', currentCompany?.id)
+        .eq('users.company_id', currentCompany?.id)
         .gte('start_date', start)
         .lte('end_date', end);
-      
+
       if (error) throw error;
       setLeaveData(data || []);
     } catch (error) {
@@ -564,186 +292,214 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     }
   };
 
-
-  
-  // Fetch announcements from the database
-  const fetchAnnouncements = async () => {
+  const fetchTimesheets = async () => {
     if (!currentUser || !currentCompany?.id) return;
-    
+    try {
+      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+      const { data, error } = await supabase
+        .from('timesheets')
+        .select(`
+          *,
+          project:project_id (name)
+        `)
+        .eq('user_id', currentUser.id)
+        .gte('date', start)
+        .lte('date', end);
+
+      if (error) throw error;
+      setTimesheetData(data || []);
+    } catch (error) {
+      console.error('Error fetching timesheets:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    // ... existing
+    if (!currentUser || !currentCompany?.id) return;
     try {
       const today = new Date().toISOString();
-      
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('announcements')
-        .select(`
-          id, title, content, created_at, expiry_date, company_id,
-          manager:created_by (id, name)
-        `)
-        .eq('company_id', currentCompany?.id) // Filter by company
+        .select('id, title, content, created_at, expiry_date')
+        .eq('company_id', currentCompany?.id)
         .gte('expiry_date', today)
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
+
       if (data && data.length > 0) {
-        setCalendarAnnouncement(data[0]); // Use the most recent announcement
+        setCalendarAnnouncement(data[0]);
         setHasUnreadAnnouncements(true);
       }
     } catch (error) {
       console.error('Error fetching announcements:', error.message);
     }
   };
-  
-  // Navigate to previous month
+
+  const fetchHolidays = async () => {
+    if (!currentUser || !currentCompany?.id) return;
+    try {
+      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+      const { data, error } = await supabase
+        .from('holidays')
+        .select('*')
+        .eq('company_id', currentCompany.id)
+        .gte('date', start)
+        .lte('date', end)
+        .order('date');
+
+      if (error) throw error;
+      setHolidayData(data || []);
+    } catch (error) {
+      console.error('Error fetching holidays:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Month Navigation
   const goToPreviousMonth = () => {
     setMonthDirection(-1);
     setCurrentMonth(prevMonth => subMonths(prevMonth, 1));
   };
-  
-  // Navigate to next month
+
   const goToNextMonth = () => {
     setMonthDirection(1);
     setCurrentMonth(prevMonth => addMonths(prevMonth, 1));
   };
-  
-  // Handle day click for date selection
+
+  // Interactions
   const handleDayClick = (day, event) => {
-    // If shift key is pressed, show user info for that day
-    if (event.shiftKey) {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      const usersOnLeave = leaveData.filter(leave => {
-        const start = parseISO(leave.start_date);
-        const end = parseISO(leave.end_date);
-        return day >= start && day <= end && leave.status !== 'rejected';
-      }).map(leave => leave.users);
-      
-      setHoverInfo({
-        date: day,
-        position: { x: event.clientX, y: event.clientY },
-        usersOnLeave
-      });
-      return;
-    }
-    
-    // Clear hover info if it was showing
-    if (hoverInfo) {
-      setHoverInfo(null);
-    }
-    
-    // If no start date is selected, set it
-    if (!selectedDates.start) {
-      setSelectedDates({ start: day, end: null });
-      return;
-    }
-    
-    // If start date is selected but no end date, set end date
-    if (selectedDates.start && !selectedDates.end) {
-      // Ensure end date is not before start date
-      if (day < selectedDates.start) {
-        setSelectedDates({ start: day, end: selectedDates.start });
+    const dateStr = format(day, 'yyyy-MM-dd');
+
+    if (viewMode === 'timesheets') {
+      // Toggle date selection
+      if (selectedTimesheetDates.includes(dateStr)) {
+        setSelectedTimesheetDates(prev => prev.filter(d => d !== dateStr));
       } else {
-        setSelectedDates({ ...selectedDates, end: day });
+        setSelectedTimesheetDates(prev => [...prev, dateStr]);
       }
+    } else if (viewMode === 'holidays') {
+      // Holidays Mode - Single selection for managers
+      if (currentUser?.role === 'manager') {
+        // Toggle: if already selected, deselect. Otherwise, select this date.
+        if (selectedHolidayDate === dateStr) {
+          setSelectedHolidayDate(null);
+        } else {
+          setSelectedHolidayDate(dateStr);
+          setEditingHoliday(holidayData.find(h => h.date === dateStr) || null);
+        }
+      }
+    } else {
+      // Leaves Mode - same toggle logic
+      if (selectedLeaveDates.includes(dateStr)) {
+        setSelectedLeaveDates(prev => prev.filter(d => d !== dateStr));
+      } else {
+        setSelectedLeaveDates(prev => [...prev, dateStr]);
+      }
+    }
+  };
+
+  const handleRequestLeave = () => {
+    if (selectedLeaveDates.length === 0) {
+      setMessage({ type: 'warning', text: 'Select dates first' });
       return;
     }
-    
-    // If both dates are selected, start over
-    setSelectedDates({ start: day, end: null });
+
+    // Sort dates to find range
+    const sorted = [...selectedLeaveDates].sort();
+    const start = new Date(sorted[0]);
+    const end = new Date(sorted[sorted.length - 1]);
+
+    // Check for gaps if strict range is needed, but for now just pass min/max
+    // The LeaveRequestForm likely takes { start, end }
+    // We'll set the range state that the form uses, constructed on the fly
+    // Note: LeaveRequestForm logic might need a range object passed to it.
+    // We can just use the state setter expected by the form or pass props?
+    // Looking at previous code, `selectedDates` prop was passed `selectedLeaveRange`.
+    // We will construct a temporary object to pass.
+
+    // Actually, `selectedDates` prop on Form is controlled? 
+    // Previous: `selectedDates={selectedLeaveRange}` -> {start, end}
+    // So we need to emulate that.
+    setShowLeaveForm(true);
   };
-  
-  // Reset date selection
-  const resetDateSelection = () => {
-    setSelectedDates({ start: null, end: null });
+
+  const handleBatchLogTime = () => {
+    // If only 1 date selected, check if it has entry => Edit Mode
+    if (selectedTimesheetDates.length === 1) {
+      const entry = timesheetData.find(t => t.date === selectedTimesheetDates[0]);
+      setEditingTimesheetEntry(entry || null);
+    } else {
+      setEditingTimesheetEntry(null);
+    }
+    setShowTimesheetModal(true);
   };
-  
-  // Handle leave request submission success
-  const handleLeaveRequestSuccess = () => {
-    fetchLeaveData();
-    setMessage({ type: 'success', text: 'Leave request submitted successfully!' });
-    
-    // Clear message after 5 seconds
-    setTimeout(() => {
-      setMessage(null);
-    }, 5000);
+
+  const handleTimesheetSave = () => {
+    fetchTimesheets();
+    setMessage({ type: 'success', text: 'Time logged successfully!' });
+    setSelectedTimesheetDates([]); // Clear selection after save
+    setTimeout(() => setMessage(null), 3000);
   };
-  
-  // Get color for day based on availability
-  const getDayColor = (day) => {
+
+  const handleTimesheetDelete = (id) => {
+    fetchTimesheets();
+    setMessage({ type: 'success', text: 'Entry deleted' });
+    setSelectedTimesheetDates([]);
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  // Rendering Helpers
+  const getDayContent = (day) => {
     const dateStr = format(day, 'yyyy-MM-dd');
-    const availability = teamAvailability[dateStr];
-    
-    if (!availability) return colors.neutral.lighter;
-    
-    if (availability.status === 'high') return colors.success.light;
-    if (availability.status === 'medium') return colors.warning.light;
-    if (availability.status === 'low') return colors.danger.light;
-    
-    return colors.neutral.lighter;
-  };
-  
-  // Get styling for selected dates in range - ultra-light animated water color
-  const getSelectedDateStyling = (day) => {
-    const { start, end } = selectedDates;
+    const isWeekendDay = isWeekend(day);
 
-    if (!start) return '';
-
-    const isStart = isSameDay(day, start);
-    const isEnd = end && isSameDay(day, end);
-    const isInRange = start && end && day > start && day < end;
-
-    if (isStart && isEnd) {
-      // Single day selection
-      return 'bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 text-gray-700 shadow-2xl ring-4 ring-sky-300/60 relative overflow-hidden';
-    } else if (isStart || isEnd || isInRange) {
-      // All selected dates have same ultra-light sky blue water color
-      return 'bg-gradient-to-br from-sky-100 via-sky-200 to-sky-300 text-gray-700 shadow-xl ring-4 ring-sky-200/60 relative overflow-hidden';
+    if (viewMode === 'timesheets') {
+      const entry = timesheetData.find(t => t.date === dateStr);
+      if (entry) {
+        return (
+          <div className={`mt-1 p-1.5 rounded-lg text-xs font-medium ${entry.hours >= 8 ? 'bg-green-100/80 text-green-800' : 'bg-amber-100/80 text-amber-800'}`}>
+            <span className="font-bold block">{entry.hours}h</span>
+            {entry.project?.name && (
+              <div className="truncate text-[10px] opacity-75 hidden 2xl:block">{entry.project.name}</div>
+            )}
+          </div>
+        );
+      }
+      return null;
     }
 
-    return '';
-  };
+    if (viewMode === 'holidays') {
+      const holiday = holidayData.find(h => h.date === dateStr);
+      if (holiday) {
+        return (
+          <div
+            className="mt-1 p-1.5 rounded-lg text-xs font-medium bg-amber-100/80 text-amber-800 cursor-pointer hover:bg-amber-200/80 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedHolidayDate(dateStr);
+              setEditingHoliday(holiday);
+              setShowHolidayModal(true);
+            }}
+          >
+            <FiStar className="w-3 h-3 inline-block mr-1 text-amber-600" />
+            <span className="font-bold">{holiday.name}</span>
+          </div>
+        );
+      }
+      return null;
+    }
 
-  // Calculate water flow from start to end date
-  const getWaterFlowInfo = () => {
-    if (!selectedDates.start || !selectedDates.end) return null;
-
-    const startIdx = daysInMonth.findIndex(day => isSameDay(day, selectedDates.start));
-    const endIdx = daysInMonth.findIndex(day => isSameDay(day, selectedDates.end));
-
-    if (startIdx === -1 || endIdx === -1) return null;
-
-    return {
-      startIndex: startIdx,
-      endIndex: endIdx,
-      totalDays: endIdx - startIdx + 1,
-      isInRange: (idx) => idx >= startIdx && idx <= endIdx
-    };
-  };
-  
-  // Calendar days for current month
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth)
-  });
-  
-  // Handle user icon click
-  const handleUsersIconClick = async (day, usersOnLeave, event) => {
-    event.stopPropagation();
-    setSelectedDate(day);
-    setSelectedUsers(usersOnLeave);
-    setShowOnLeaveModal(true);
-  };
-
-
-
-  // Function to render the calendar day
-  const renderCalendarDay = (day) => {
-    const isWeekendDay = isWeekend(day);
-    const dateStr = format(day, 'yyyy-MM-dd');
+    // Leave View Content
     const isSameMonthDay = isSameMonth(day, currentMonth);
-    const availability = teamAvailability[dateStr];
-    const isToday = isSameDay(new Date(), day);
-    
-    // Check if this day has leave data
+    if (!isSameMonthDay) return null;
+
+    // Users on leave
     const usersOnLeave = leaveData
       .filter(leave => {
         const start = parseISO(leave.start_date);
@@ -751,910 +507,478 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         return day >= start && day <= end && leave.status === 'approved';
       })
       .map(leave => leave.users)
-      .filter(user => user && user.id && user.name) // Filter out null/undefined users and ensure they have required fields
-      .filter((user, index, arr) => arr.findIndex(u => u.id === user.id) === index); // Remove duplicates
+      .filter((user, index, arr) => arr.findIndex(u => u.id === user.id) === index);
 
-    const hasLeave = usersOnLeave.length > 0;
-    
-    // Check if current user has leave on this day
-    const userHasLeave = leaveData.some(leave => {
-      const start = parseISO(leave.start_date);
-      const end = parseISO(leave.end_date);
-      return day >= start && day <= end && 
-             leave.status === 'approved' && 
-             leave.users && currentUser && 
-             leave.users.id === currentUser.id;
-    });
-    
-    // Check if there are pending leave requests for this day
-    const hasPendingRequests = leaveData.some(leave => {
-      const start = parseISO(leave.start_date);
-      const end = parseISO(leave.end_date);
-      return day >= start && day <= end && leave.status === 'pending';
-    });
-  
-    const waterFlowInfo = getWaterFlowInfo();
-    const dayIndex = daysInMonth.findIndex(d => isSameDay(d, day));
-    const isInWaterFlow = waterFlowInfo && waterFlowInfo.isInRange(dayIndex);
+    if (usersOnLeave.length > 0) {
+      return (
+        <div
+          className="mt-2 flex -space-x-2 overflow-hidden px-1 cursor-pointer hover:scale-105 transition-transform"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedDate(day);
+            setSelectedUsers(usersOnLeave);
+            setShowOnLeaveModal(true);
+          }}
+        >
+          {usersOnLeave.slice(0, 3).map((u, i) => (
+            <div key={i} className="relative inline-block h-6 w-6 rounded-full ring-1 ring-white">
+              <img
+                src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=random`}
+                alt={u.name}
+                className="h-full w-full rounded-full object-cover"
+              />
+            </div>
+          ))}
+          {usersOnLeave.length > 3 && (
+            <div className="relative inline-block h-6 w-6 rounded-full ring-1 ring-white bg-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-600">
+              +{usersOnLeave.length - 3}
+            </div>
+          )}
+        </div>
+      );
+    }
 
-    return (
-      <motion.div
-        key={dateStr}
-        whileHover={{ y: -5, boxShadow: "0 12px 24px -4px rgba(0,0,0,0.15)" }}
-        whileTap={{ scale: 0.98 }}
-        className={`
-          relative cursor-pointer rounded-2xl p-4 min-h-[120px]
-          flex flex-col justify-between
-          ${isSameMonthDay ? 'opacity-100' : 'opacity-60'}
-          ${isToday ? 'ring-4 ring-blue-500 ring-offset-2 transform' : ''}
-          ${getSelectedDateStyling(day) || (isWeekendDay ? 'bg-gradient-to-b from-gray-50 to-gray-100' : availability ? getDayColor(day) : 'bg-gradient-to-b from-white to-gray-50')}
-          ${userHasLeave && !getSelectedDateStyling(day) ? 'border-4 border-accent-500' : !getSelectedDateStyling(day) ? 'border border-gray-200' : ''}
-          shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out
-        `}
-        onClick={(e) => handleDayClick(day, e)}
-      >
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col items-center">
-            <span className={`text-xs uppercase font-semibold ${isToday ? 'text-blue-600' : 'text-gray-500'}`}>
-              {format(day, 'EEE')}
-            </span>
-            <span className={`
-              ${isToday 
-                ? 'bg-blue-500 text-white w-8 h-8 flex items-center justify-center rounded-full mt-1 shadow-md' 
-                : isWeekendDay ? 'text-gray-600' : 'text-gray-800'
-              } text-base font-bold`}
-            >
-              {format(day, 'd')}
-            </span>
+    return null;
+  };
+
+  const daysInMonth = eachDayOfInterval({
+    start: startOfMonth(currentMonth),
+    end: endOfMonth(currentMonth)
+  });
+
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 bg-gray-50/50"
+    >
+      {/* ================= HEADER SECTION ================= */}
+      <AnimatePresence>
+        {showHeader && (
+          <div className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-lg p-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
+              {/* Left Section - Title */}
+              <div className="flex items-center gap-3">
+                <div className={`p-2 bg-gradient-to-r ${viewMode === 'leaves' ? 'from-cyan-500 to-blue-500 shadow-cyan-200/50' : viewMode === 'timesheets' ? 'from-indigo-500 to-purple-500 shadow-indigo-200/50' : 'from-amber-500 to-orange-500 shadow-amber-200/50'} rounded-xl text-white shadow-lg transition-all duration-300`}>
+                  {viewMode === 'leaves' ? <FiCalendar className="w-5 h-5" /> : viewMode === 'timesheets' ? <FiClock className="w-5 h-5" /> : <FiStar className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    {viewMode === 'leaves' ? 'Team Calendar' : viewMode === 'timesheets' ? 'Timesheets' : 'Holidays'}
+                  </h1>
+                </div>
+              </div>
+
+              {/* Center Section - Toggle Switch (Absolutely Centered) */}
+              <div className="hidden md:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                <div className="relative group">
+                  <div className="relative bg-white/40 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/50 shadow-inner flex items-center gap-1">
+                    {[
+                      { id: 'leaves', icon: FiCalendar, label: 'Leaves', gradient: 'from-cyan-500 via-blue-500 to-indigo-500' },
+                      { id: 'timesheets', icon: FiClock, label: 'Timesheet', gradient: 'from-purple-500 via-pink-500 to-rose-500' },
+                      { id: 'holidays', icon: FiStar, label: 'Holidays', gradient: 'from-amber-500 via-orange-500 to-red-500' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        className={`relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${viewMode === tab.id
+                          ? 'text-white shadow-lg'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                          }`}
+                        onClick={() => {
+                          setViewMode(tab.id);
+                          setSelectedLeaveDates([]);
+                          setSelectedTimesheetDates([]);
+                        }}
+                      >
+                        {viewMode === tab.id && (
+                          <motion.div
+                            className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tab.gradient}`}
+                            layoutId="activeTab"
+                          />
+                        )}
+                        <span className="relative z-10 flex items-center gap-2">
+                          <tab.icon className="w-4 h-4" />
+                          {tab.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section - Stats & Actions */}
+              <div className="flex items-center gap-3 md:gap-6">
+                {/* Stats with Info Icons */}
+                <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
+                  {viewMode === 'leaves' ? (
+                    <>
+                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.onLeaveToday} team members are away today`}>
+                        <div className="p-2 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-100 transition-colors">
+                          <FiUser className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.onLeaveToday}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Away</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.pendingRequests} leave requests pending approval`}>
+                        <div className="p-2 bg-red-50 text-red-600 rounded-full group-hover:bg-red-100 transition-colors">
+                          <FiAlertCircle className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.pendingRequests}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Pending</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : viewMode === 'timesheets' ? (
+                    <>
+                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.totalHoursMonth} hours logged this month`}>
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
+                          <FiClock className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.totalHoursMonth}h</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Total</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.missingDays} work days with no time logged`}>
+                        <div className="p-2 bg-amber-50 text-amber-600 rounded-full group-hover:bg-amber-100 transition-colors">
+                          <FiAlertCircle className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.missingDays}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Missing</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    // Holidays mode stats
+                    <div className="flex items-center gap-2 group cursor-help relative" title={`${holidayData.length} holidays this month`}>
+                      <div className="p-2 bg-amber-50 text-amber-600 rounded-full group-hover:bg-amber-100 transition-colors">
+                        <FiStar className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800 leading-none">{holidayData.length}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Holidays</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  {/* Primary Header Action */}
+                  {viewMode === 'leaves' ? (
+                    <motion.button
+                      onClick={handleRequestLeave}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 font-medium text-sm transition-all"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      Request Leave
+                    </motion.button>
+                  ) : viewMode === 'timesheets' ? (
+                    <motion.button
+                      onClick={() => {
+                        if (selectedTimesheetDates.length > 0) {
+                          handleBatchLogTime();
+                        } else {
+                          const todayStr = format(new Date(), 'yyyy-MM-dd');
+                          const entry = timesheetData.find(t => t.date === todayStr);
+                          setSelectedTimesheetDates([todayStr]);
+                          setEditingTimesheetEntry(entry || null);
+                          setShowTimesheetModal(true);
+                        }
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl shadow-lg hover:shadow-violet-500/30 font-medium text-sm transition-all"
+                    >
+                      <FiClock className="w-4 h-4" />
+                      {selectedTimesheetDates.length > 0 ? `Log (${selectedTimesheetDates.length})` : 'Log Today'}
+                    </motion.button>
+                  ) : (
+                    // Holidays mode - Manager only
+                    currentUser?.role === 'manager' && (
+                      <motion.button
+                        onClick={() => {
+                          if (!selectedHolidayDate) {
+                            setMessage({ type: 'warning', text: 'Select a date first' });
+                            setTimeout(() => setMessage(null), 3000);
+                            return;
+                          }
+                          // editingHoliday is already set by handleDayClick
+                          setShowHolidayModal(true);
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg hover:shadow-amber-500/30 font-medium text-sm transition-all ${!selectedHolidayDate ? 'opacity-60' : ''}`}
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        {selectedHolidayDate ? (editingHoliday ? 'Edit Holiday' : 'Add Holiday') : 'Select Date'}
+                      </motion.button>
+                    )
+                  )}
+
+                  <motion.button
+                    onClick={() => {
+                      if (viewMode === 'leaves') fetchLeaveData();
+                      else if (viewMode === 'timesheets') fetchTimesheets();
+                      else fetchHolidays();
+                    }}
+                    className="p-2.5 bg-white/50 hover:bg-white rounded-xl text-gray-600 transition-colors"
+                    title="Refresh Data"
+                  >
+                    <FiRefreshCw className={loading ? "animate-spin" : ""} />
+                  </motion.button>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex flex-col items-end gap-1">
-            {hasLeave && (
-              <motion.div
-                className="text-[0.65rem] px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-full inline-flex items-center cursor-pointer hover:from-blue-200 hover:to-blue-300 shadow-sm"
-                onClick={(e) => handleUsersIconClick(day, usersOnLeave, e)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {/* Show avatars for up to 2 users */}
-                {usersOnLeave.length === 1 && usersOnLeave[0]?.avatar_url ? (
-                  <img
-                    src={usersOnLeave[0].avatar_url}
-                    alt={usersOnLeave[0].name}
-                    className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1"
-                  />
-                ) : usersOnLeave.length >= 2 ? (
-                  <>
-                    {/* First user avatar */}
-                    {usersOnLeave[0]?.avatar_url ? (
-                      <img
-                        src={usersOnLeave[0].avatar_url}
-                        alt={usersOnLeave[0].name}
-                        className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1 z-10"
-                        style={{ marginLeft: '-2px' }}
-                      />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full bg-blue-300 text-blue-700 flex items-center justify-center font-medium text-xs mr-1 z-10" style={{ marginLeft: '-2px' }}>
-                        {usersOnLeave[0]?.name?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                    )}
+        )}
+      </AnimatePresence>
 
-                    {/* Second user avatar */}
-                    {usersOnLeave[1]?.avatar_url ? (
-                      <img
-                        src={usersOnLeave[1].avatar_url}
-                        alt={usersOnLeave[1].name}
-                        className="w-4 h-4 rounded-full object-cover border border-blue-300 mr-1 z-20"
-                      />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full bg-blue-300 text-blue-700 flex items-center justify-center font-medium text-xs mr-1 z-20">
-                        {usersOnLeave[1]?.name?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <FiUsers size={9} className="mr-1" />
-                )}
-
-                {/* Show count */}
-                <span className="ml-1">
-                  {usersOnLeave.length}
-                </span>
-              </motion.div>
-            )}
-            
-            {hasPendingRequests && (
-              <span className="text-[0.65rem] px-2 py-1 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 rounded-full inline-flex items-center shadow-sm">
-                <FiClock size={9} className="mr-1" />
-                Pending
+      {/* ================= CONTROL BAR (FIXED) ================= */}
+      <div className="px-4 md:px-8 py-4 w-full max-w-[1600px] mx-auto z-30">
+        <div className="flex items-center justify-between bg-white/60 p-2 rounded-2xl border border-white/60 shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 hover:bg-white rounded-xl transition-all text-gray-600 hover:text-gray-900 shadow-sm hover:shadow"
+            >
+              <FiChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="px-4 py-1">
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                {format(currentMonth, 'MMMM yyyy')}
               </span>
+            </div>
+            <button
+              onClick={goToNextMonth}
+              className="p-2 hover:bg-white rounded-xl transition-all text-gray-600 hover:text-gray-900 shadow-sm hover:shadow"
+            >
+              <FiChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Legend or Stats */}
+          <div className="hidden md:flex items-center gap-4 text-xs font-medium text-gray-600 px-4">
+            {viewMode === 'leaves' && (
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400"></div> High Availability</div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-400"></div> Medium</div>
+                <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-rose-400"></div> Low</div>
+              </div>
+            )}
+            {viewMode === 'timesheets' && (
+              <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Select dates to log time</span>
             )}
           </div>
         </div>
-        
-        {/* Availability indicator - always show when we have user data */}
-        {availability && (
-          <div className="flex flex-col gap-1 mt-auto">
-            <div 
-              className={`h-2 w-full rounded-full overflow-hidden bg-gray-200 shadow-inner`}
-              style={{ opacity: isSameMonthDay ? 1 : 0.3 }}
-            >
-              <div 
-                className={`h-full transition-all duration-500 ease-out ${
-                  availability.status === 'high' ? 'bg-gradient-to-r from-green-500 to-green-400' : 
-                  availability.status === 'medium' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' : 
-                  'bg-gradient-to-r from-red-500 to-red-400'
-                }`}
-                style={{ width: `${availability.availablePercentage}%` }}
-              ></div>
+      </div>
+
+      {/* ================= GRID SCROLLABLE AREA ================= */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-6 w-full max-w-[1600px] mx-auto">
+
+
+        {/* --- Calendar Grid --- */}
+        <div className="grid grid-cols-7 gap-4 mb-4">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center font-bold text-gray-400 uppercase text-xs tracking-wider">
+              {day}
             </div>
-            
-            <div className="flex justify-between items-center text-[0.65rem]">
-              <span className="font-medium text-gray-600">
-                {availability.totalUsers === 0 ? 'Setup:' : 'Avail:'}
-              </span>
-              <span className={`font-bold ${
-                availability.status === 'high' ? 'text-green-700' :
-                availability.status === 'medium' ? 'text-amber-700' :
-                'text-red-700'
-              }`}>
-                {availability.totalUsers === 0 ? 'Add users' : `${availability.availablePercentage}%`}
-              </span>
-            </div>
-          </div>
-        )}
-        
-        {/* Status markers */}
-        {userHasLeave && (
-          <div className="absolute -top-2 -right-2 w-5 h-5 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full border-2 border-white shadow-lg"></div>
-        )}
+          ))}
+        </div>
 
-        {/* Enhanced Light Animated Water Flow */}
-        {isInWaterFlow && waterFlowInfo && (
-          <>
-            {/* Multiple water waves with different speeds */}
-            <motion.div
-              className="absolute top-0 bottom-0 w-24 bg-gradient-to-r from-sky-400 via-sky-300 to-transparent"
-              style={{
-                left: '-100px',
-                filter: 'blur(12px)',
-              }}
-              animate={{
-                left: ['-100px', '200px'],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "linear",
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25
-              }}
-            />
-
-            <motion.div
-              className="absolute top-1 bottom-1 w-20 bg-gradient-to-r from-sky-300 via-sky-200 to-transparent"
-              style={{
-                left: '-80px',
-                filter: 'blur(10px)',
-              }}
-              animate={{
-                left: ['-80px', '200px'],
-              }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                ease: "linear",
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25 + 0.5
-              }}
-            />
-
-            <motion.div
-              className="absolute top-2 bottom-2 w-16 bg-gradient-to-r from-sky-200 via-sky-100 to-transparent"
-              style={{
-                left: '-60px',
-                filter: 'blur(8px)',
-              }}
-              animate={{
-                left: ['-60px', '200px'],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear",
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.25 + 1
-              }}
-            />
-
-            {/* Animated water droplets - more of them with varied patterns */}
-            <motion.div
-              className="absolute top-1 left-2 w-3 h-3 bg-sky-400 rounded-full"
-              animate={{
-                y: [0, 15, 30, 45, 60, 75],
-                x: [0, 3, 6, 3, 0, -2],
-                opacity: [1, 0.9, 0.8, 0.6, 0.4, 0.2],
-                scale: [0.8, 1, 1.1, 0.9, 0.7, 0.5],
-              }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.div
-              className="absolute top-3 right-3 w-2.5 h-2.5 bg-sky-300 rounded-full"
-              animate={{
-                y: [0, 12, 24, 36, 48, 60],
-                x: [0, -2, -4, -2, 0, 2],
-                opacity: [1, 0.9, 0.7, 0.5, 0.3, 0.1],
-                scale: [0.9, 1, 0.8, 0.6, 0.4, 0.3],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: Math.random() * 2 + 0.7,
-                ease: "easeInOut"
-              }}
-            />
-            <motion.div
-              className="absolute top-2 left-1/2 w-2 h-2 bg-sky-500 rounded-full"
-              animate={{
-                y: [0, 18, 36, 54, 72],
-                x: [0, 4, 8, 4, 0, -4],
-                opacity: [0.8, 1, 0.8, 0.5, 0.3, 0],
-                scale: [0.7, 0.9, 1, 0.8, 0.6, 0.4],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                delay: Math.random() * 2 + 1.2,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Animated bottom water level */}
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-sky-400/50 via-sky-300/40 to-transparent"
-              animate={{
-                height: ['0px', '16px', '10px', '16px', '10px'],
-                opacity: [0, 0.9, 0.7, 0.9, 0.7],
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.2,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Top shimmer effect */}
-            <motion.div
-              className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-r from-transparent via-sky-100/60 to-transparent"
-              animate={{
-                x: ['-100%', '100%'],
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "linear",
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.4
-              }}
-            />
-
-            {/* Multiple shimmer layers */}
-            <motion.div
-              className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-sky-200/30 to-transparent"
-              animate={{
-                x: ['-100%', '100%'],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear",
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.6
-              }}
-            />
-
-            {/* Pulsing water particles */}
-            <motion.div
-              className="absolute top-1/2 left-1/4 w-2 h-2 bg-sky-300 rounded-full"
-              animate={{
-                scale: [0, 1, 0.5, 1, 0.5, 0],
-                opacity: [0, 0.8, 0.4, 0.8, 0.4, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: (dayIndex - waterFlowInfo.startIndex) * 0.3,
-                ease: "easeInOut"
-              }}
-            />
-          </>
-        )}
-        
-        {/* Selected day indicators with water theme */}
-        {!getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && (
-          <motion.div
-            className="absolute -top-2 -left-2 w-5 h-5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full border-2 border-white shadow-lg"
-            animate={{
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        )}
-
-        {!getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && (
-          <motion.div
-            className="absolute -bottom-2 -right-2 w-5 h-5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full border-2 border-white shadow-lg"
-            animate={{
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        )}
-
-        {/* Special indicators for start/end of range when fully styled */}
-        {getSelectedDateStyling(day) && selectedDates.start && isSameDay(selectedDates.start, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
-          <motion.div
-            className="absolute -top-1 -left-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            <motion.div
-              className="w-2 h-2 bg-cyan-500 rounded-full"
-              animate={{
-                scale: [1, 0.8, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.div>
-        )}
-
-        {getSelectedDateStyling(day) && selectedDates.end && isSameDay(selectedDates.end, day) && !isSameDay(selectedDates.start, selectedDates.end) && (
-          <motion.div
-            className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-inner"
-            animate={{
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            <motion.div
-              className="w-2 h-2 bg-indigo-500 rounded-full"
-              animate={{
-                scale: [1, 0.8, 1],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.div>
-        )}
-      </motion.div>
-    );
-  };
-  
-  return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Header */}
-      <CompactTabHeader
-        title="Leave Calendar"
-        subtitle="View and request leave with interactive calendar"
-        icon={FiCalendar}
-        color="blue"
-        badge="Active"
-        sidebarOpen={sidebarOpen}
-        quickStats={[
-          {
-            label: "Manage Leaves",
-            value: "",
-            onClick: () => window.location.href = '/leave-management',
-            icon: <FiTarget className="w-3 h-3" />
-          },
-          {
-            label: "On Leave Today",
-            value: usersOnLeaveToday.length,
-            onClick: () => {
-              setSelectedDate(new Date());
-              setSelectedUsers(usersOnLeaveToday);
-              setShowOnLeaveModal(true);
-            },
-            icon: <FiUser className="w-3 h-3" />
-          }
-        ]}
-        quickActions={[
-          {
-            icon: (
-              <motion.div
-                animate={{
-                  rotate: [0, 0, 360],
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  repeatDelay: 2
-                }}
-              >
-                <FiPlus className="w-4 h-4" />
-              </motion.div>
-            ),
-            onClick: () => setShowLeaveForm(true),
-            tooltip: "Request Leave"
-          },
-          {
-            icon: <FiRefreshCw className="w-4 h-4" />,
-            onClick: () => window.location.reload(),
-            tooltip: "Refresh"
-          }
-        ]}
-      />
-      
-      {/* Calendar Content - Add top padding for fixed header */}
-      <div className="px-4 sm:px-6 md:px-8 pt-16 sm:pt-16 md:pt-16 pb-4 sm:pb-6 md:pb-8">
         <motion.div
-          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 relative"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          layout
+          className="grid grid-cols-7 gap-3 pb-24" // Added padding bottom for floating buttons
         >
-          {/* Calendar Header with Controls */}
-          <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-100">
-          <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
-              <div className="flex items-center space-x-4">
-                <motion.button
-                  className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
-                  onClick={goToPreviousMonth}
-                  variants={overlayButtonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  <FiChevronLeft size={20} />
-                </motion.button>
-                
-                <div 
-                  className="text-2xl font-bold text-gray-800 bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent p-2 rounded-lg"
-                >
-                  {format(currentMonth, 'MMMM yyyy')}
+          {daysInMonth.map((day) => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const isToday = isSameDay(new Date(), day);
+            const availability = teamAvailability[dateStr];
+
+            // Selection Logic
+            let isSelected = false;
+
+            if (viewMode === 'leaves') {
+              isSelected = selectedLeaveDates.includes(dateStr);
+            } else if (viewMode === 'timesheets') {
+              isSelected = selectedTimesheetDates.includes(dateStr);
+            } else if (viewMode === 'holidays') {
+              isSelected = selectedHolidayDate === dateStr;
+            }
+
+            // On Leave Info for Tooltip/Modal
+            const onLeaveCount = availability ? availability.onLeave : 0;
+            const availPercent = availability ? availability.availablePercentage : 100;
+
+            return (
+              <motion.div
+                key={dateStr}
+                onClick={(e) => handleDayClick(day, e)}
+                whileHover={{ y: -4, boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }}
+                whileTap={{ scale: 0.98 }}
+                className={`
+                        relative min-h-[140px] p-3 rounded-2xl border bg-white flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
+                        ${isSelected ? 'ring-2 ring-blue-500 shadow-md bg-blue-50/30' : 'border-gray-200 shadow-sm hover:shadow-md'}
+                        ${!isSameMonth(day, currentMonth) ? 'opacity-40 bg-gray-50' : ''}
+                     `}
+              >
+                {/* Top Row: Date & Status */}
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <span className={`text-xs uppercase font-bold tracking-wide ${isToday ? 'text-blue-600' : 'text-gray-400'}`}>
+                      {format(day, 'EEE')}
+                    </span>
+                    <span className={`text-lg font-bold leading-tight ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                      {format(day, 'd')}
+                    </span>
+                  </div>
+
+                  {/* Selection Checkmark for Both Modes */}
+                  {isSelected && (
+                    <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm">
+                      <FiCheck className="w-3 h-3" />
+                    </div>
+                  )}
                 </div>
-                
-                <motion.button
-                  className="p-2.5 rounded-full bg-white text-primary-600 hover:bg-primary-50 transition-all shadow-sm border border-gray-200 hover:border-primary-300"
-                  onClick={goToNextMonth}
-                  variants={overlayButtonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  <FiChevronRight size={20} />
-                </motion.button>
-                
-                <motion.button 
-                  className="ml-2 px-4 py-2 text-sm bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 flex items-center transition-all shadow-sm border border-primary-200"
-                  onClick={() => setCurrentMonth(new Date())}
-                  variants={overlayButtonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  <FiCalendar className="mr-1.5" /> Today
-                </motion.button>
-              </div>
-              
-              <div className="flex items-center gap-2">
-               
-                
-               
-                {/* Smooth Animated Request Leave Button */}
-                <motion.button
-                  className="relative flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg shadow-lg overflow-hidden"
-                  onClick={() => setShowLeaveForm(true)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onHoverStart={() => setButtonHovered(true)}
-                  onHoverEnd={() => setButtonHovered(false)}
-                  layout
-                  style={{
-                    height: '48px',
-                    minWidth: isButtonHovered ? '180px' : '48px'
-                  }}
-                >
-                  {/* Background shimmer effect */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                    animate={{
-                      x: isButtonHovered ? ['-100%', '100%'] : ['-100%', '-100%'],
-                    }}
-                    transition={{
-                      x: {
-                        duration: 0.6,
-                        ease: 'easeOut',
-                        repeat: isButtonHovered ? Infinity : 0,
-                        repeatDelay: 1
+
+                {/* Middle: Content */}
+                <div className="flex-1 py-1">
+                  {getDayContent(day)}
+                </div>
+
+                {/* Bottom: Team Availability Bar - Only in Leaves Mode */}
+                {viewMode === 'leaves' && (
+                  <div
+                    className="mt-2 group/bar relative cursor-pointer"
+                    title={`${availPercent}% Team Available • ${onLeaveCount} On Leave`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onLeaveCount > 0) {
+                        const usersOnLeave = leaveData.filter(leave => {
+                          const s = parseISO(leave.start_date);
+                          const e = parseISO(leave.end_date);
+                          return day >= s && day <= e && leave.status === 'approved';
+                        }).map(l => l.users)
+                          .flat()
+                          .filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
+                        setSelectedDate(day);
+                        setSelectedUsers(usersOnLeave);
+                        setShowOnLeaveModal(true);
                       }
                     }}
-                  />
-
-                  {/* Content container */}
-                  <div className="relative z-10 flex items-center justify-center w-full h-full px-4">
-                    {/* Icon container */}
-                    <motion.div
-                      className="flex items-center justify-center"
-                      animate={{
-                        marginRight: isButtonHovered ? 8 : 0,
-                        rotate: isButtonHovered ? 0 : [0, 360],
-                      }}
-                      transition={{
-                        marginRight: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-                        rotate: {
-                          duration: isButtonHovered ? 0.4 : 8,
-                          ease: isButtonHovered ? 'easeOut' : 'linear',
-                          repeat: isButtonHovered ? 0 : Infinity
-                        }
-                      }}
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="flex-shrink-0"
-                      >
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                    </motion.div>
-
-                    {/* Text container with smooth reveal */}
-                    <motion.div
-                      className="overflow-hidden"
-                      animate={{
-                        width: isButtonHovered ? 'auto' : 0,
-                        opacity: isButtonHovered ? 1 : 0,
-                      }}
-                      transition={{
-                        width: { duration: 0.35, ease: [0.23, 1, 0.32, 1] },
-                        opacity: { duration: 0.25, delay: isButtonHovered ? 0.05 : 0 }
-                      }}
-                    >
-                      <motion.span
-                        className="whitespace-nowrap block"
-                        animate={{
-                          x: isButtonHovered ? 0 : -10,
-                        }}
-                        transition={{
-                          x: { duration: 0.3, delay: isButtonHovered ? 0.1 : 0, ease: 'easeOut' }
-                        }}
-                      >
-                        Request Leave
-                      </motion.span>
-                    </motion.div>
+                  >
+                    <div className="flex justify-between text-[9px] text-gray-500 mb-0.5">
+                      <span>Availability</span>
+                      <span>{availPercent}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${availPercent > 70 ? 'bg-emerald-400' :
+                          availPercent > 40 ? 'bg-amber-400' : 'bg-rose-400'
+                          }`}
+                        style={{ width: `${availPercent}%` }}
+                      />
+                    </div>
                   </div>
+                )}
 
-                  {/* Subtle glow effect on hover */}
-                  <motion.div
-                    className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400/20 to-indigo-400/20"
-                    animate={{
-                      opacity: isButtonHovered ? 1 : 0,
-                    }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.button>
-              </div>
-            </div>
-            
-            {/* Legend */}
-            <div className="flex flex-wrap gap-6">
-              <div className="flex items-center text-sm">
-                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                  <div className="h-full w-16 bg-green-500"></div>
-                </div>
-                <span className="text-gray-700 font-medium">High Availability</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                  <div className="h-full w-10 bg-yellow-500"></div>
-                </div>
-                <span className="text-gray-700 font-medium">Medium Availability</span>
-              </div>
-              <div className="flex items-center text-sm">
-                <div className="flex h-3 w-20 mr-2 rounded-full bg-gray-200 overflow-hidden shadow-sm">
-                  <div className="h-full w-5 bg-red-500"></div>
-                </div>
-                <span className="text-gray-700 font-medium">Low Availability</span>
-              </div>
-            </div>
-          </div>
-          
-          
-          {/* Calendar Header with days of week */}
-          <div className="bg-gradient-to-r from-gray-50 to-white p-4 border-b border-gray-100">
-            <div className="grid grid-cols-7 gap-2">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                <div key={day} className="text-center p-2 font-semibold text-gray-500">
-                  {day}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Calendar body with days */}
-          <div className="p-4">
-            <AnimatePresence initial={false} custom={monthDirection}>
-              <motion.div
-                key={format(currentMonth, 'yyyy-MM')}
-                custom={monthDirection}
-                variants={monthTransitionVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-              >
-                <div className="grid grid-cols-7 gap-2">
-                  {daysInMonth.map(day => renderCalendarDay(day))}
-                </div>
               </motion.div>
-            </AnimatePresence>
-          </div>
+            );
+          })}
         </motion.div>
       </div>
-      
-      {/* Selected date range indicator */}
-      {selectedDates.start && (
-        <motion.div 
-          className="mb-6 p-5 bg-gradient-to-r from-primary-50 to-white rounded-xl shadow-sm border border-primary-200"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center">
-                <FiCalendar className="text-primary-500 mr-2" />
-                Leave Date Selection
-              </h3>
-              
-              <div className="flex items-center gap-4 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 uppercase mb-1">Start Date</div>
-                  <div className="font-bold text-primary-700">
-                    {format(selectedDates.start, 'MMM dd, yyyy')}
-                  </div>
-                </div>
-                
-                {selectedDates.end && (
-                  <>
-                    <div className="flex-grow h-0.5 bg-primary-100 relative">
-                      <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <FiArrowRight className="text-primary-400" />
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500 uppercase mb-1">End Date</div>
-                      <div className="font-bold text-primary-700">
-                        {format(selectedDates.end, 'MMM dd, yyyy')}
-                      </div>
-                    </div>
-                    
-                    <div className="text-center ml-2 pl-3 border-l border-gray-200">
-                      <div className="text-xs text-gray-500 uppercase mb-1">Duration</div>
-                      <div className="font-bold text-accent-600">
-                        {differenceInDays(selectedDates.end, selectedDates.start) + 1} days
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              {!selectedDates.end && (
-                <div className="mt-2 text-sm text-gray-500 flex items-center">
-                  <FiInfo className="mr-1 text-primary-500" />
-                  Click on another date to select the end date
-                </div>
-              )}
-            </div>
-            
-            <div className="flex space-x-2">
-              <motion.button
-                className="px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
-                onClick={resetDateSelection}
-                variants={overlayButtonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <FiX className="mr-1" /> Clear Selection
-              </motion.button>
-              
-              {selectedDates.end && (
-                <motion.button
-                  className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center shadow-sm"
-                  onClick={() => setShowLeaveForm(true)}
-                  variants={overlayButtonVariants}
-                  whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)" }}
-                  whileTap="tap"
-                >
-                  <FiPlus className="mr-1" /> Request for these dates
-                </motion.button>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
-      
-      {/* Users on leave hover info */}
-      <AnimatePresence>
-        {hoverInfo && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            style={{
-              position: 'fixed',
-              top: hoverInfo.position.y + 10,
-              left: hoverInfo.position.x + 10,
-              zIndex: 100
-            }}
-            className="bg-white p-5 rounded-xl shadow-xl max-w-xs border border-gray-200"
-          >
-            <h4 className="font-bold text-gray-800 mb-3 flex items-center">
-              <FiCalendar className="mr-2 text-primary-500" />
-              {format(hoverInfo.date, 'MMMM d, yyyy')}
-            </h4>
-            
-            {hoverInfo.usersOnLeave.length > 0 ? (
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium text-gray-600">Team members on leave:</p>
-                  <span className="bg-primary-100 text-primary-800 text-xs font-bold px-2 py-1 rounded-full">
-                    {hoverInfo.usersOnLeave.length}
-                  </span>
-                </div>
-                <ul className="space-y-2.5 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                  {hoverInfo.usersOnLeave.map((user, index) => (
-                    <motion.li 
-                      key={index} 
-                      className="flex items-center text-sm p-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <div className="w-7 h-7 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-medium mr-3 text-xs">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-medium text-gray-800">{user.name}</span>
-                    </motion.li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <div className="flex items-center justify-center bg-gray-50 rounded-lg p-4">
-                <FiCheckCircle className="text-green-500 mr-2" />
-                <p className="text-sm text-gray-600">No team members on leave this day.</p>
-              </div>
-            )}
-            
-            <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-center text-gray-500">
-              Click anywhere to dismiss
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Success message */}
-      <AnimatePresence>
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -50, scale: 0.9 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className={`fixed bottom-5 right-5 p-4 rounded-xl shadow-lg flex items-center ${
-              message.type === 'success' 
-                ? 'bg-gradient-to-r from-green-600 to-green-500 text-white' 
-                : 'bg-gradient-to-r from-red-600 to-red-500 text-white'
-            }`}
-          >
-            <div className={`p-2 rounded-full ${
-              message.type === 'success' ? 'bg-green-400/20' : 'bg-red-400/20'
-            } mr-3`}>
-              {message.type === 'success' ? <FiCheck className="w-5 h-5" /> : <FiInfo className="w-5 h-5" />}
-            </div>
-            <div>
-              <p className="font-medium">{message.text}</p>
-            </div>
-            <button 
-              className="ml-4 p-1 rounded-full hover:bg-white/20 transition-colors"
-              onClick={() => setMessage(null)}
-            >
-              <FiX className="w-4 h-4" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Leave request form */}
-      {showLeaveForm && (
-        <LeaveRequestForm 
-          isOpen={showLeaveForm}
-          selectedDates={selectedDates}
-          setSelectedDates={setSelectedDates}
-          onSuccess={() => {
-            setShowLeaveForm(false);
-            handleLeaveRequestSuccess();
-          }}
-          onClose={() => setShowLeaveForm(false)}
-        />
-      )}
 
+      {/* MODALS */}
+      <LeaveRequestForm
+        isOpen={showLeaveForm}
+        onClose={() => {
+          setShowLeaveForm(false);
+          setSelectedLeaveDates([]);
+        }}
+        selectedDates={(() => {
+          if (selectedLeaveDates.length === 0) return { start: null, end: null };
+          const sorted = [...selectedLeaveDates].sort();
+          return {
+            start: new Date(sorted[0]),
+            end: new Date(sorted[sorted.length - 1])
+          };
+        })()}
+        onSuccess={() => {
+          fetchLeaveData();
+          setShowLeaveForm(false);
+          setSelectedLeaveDates([]);
+          setMessage({ type: 'success', text: 'Leave request submitted!' });
+          setTimeout(() => setMessage(null), 3000);
+        }}
+      />
 
+      <TimesheetModal
+        isOpen={showTimesheetModal}
+        onClose={() => {
+          setShowTimesheetModal(false);
+          setEditingTimesheetEntry(null);
+        }}
+        // Pass array of dates
+        dates={selectedTimesheetDates.length > 0 ? selectedTimesheetDates : (selectedTimesheetDates.length === 0 && editingTimesheetEntry ? [editingTimesheetEntry.date] : [])}
+        currentUser={currentUser}
+        initialData={editingTimesheetEntry}
+        onSave={handleTimesheetSave}
+        onDelete={handleTimesheetDelete}
+      />
 
-      {/* Users on leave modal */}
       <UserListModal
         isOpen={showOnLeaveModal}
         onClose={() => setShowOnLeaveModal(false)}
-        title="Team Members on Leave"
-        subtitle={selectedDate ? format(selectedDate, 'MMMM d, yyyy') : format(new Date(), 'MMMM d, yyyy')}
         users={selectedUsers}
-        type="onLeave"
+        title={`On Leave - ${selectedDate ? format(selectedDate, 'MMM d, yyyy') : ''}`}
       />
-      
-      {/* Announcement modal */}
-      <AnnouncementModal
-        isOpen={showAnnouncement}
+
+      <HolidayModal
+        isOpen={showHolidayModal}
         onClose={() => {
-          setShowAnnouncement(false);
-          setHasUnreadAnnouncements(false);
+          setShowHolidayModal(false);
+          setEditingHoliday(null);
+          setSelectedHolidayDate(null);
         }}
-        announcement={calendarAnnouncement}
-        userId={currentUser?.id}
-        onDismiss={() => setHasUnreadAnnouncements(false)}
+        date={selectedHolidayDate}
+        currentUser={currentUser}
+        initialData={editingHoliday}
+        onSave={() => {
+          fetchHolidays();
+          setMessage({ type: 'success', text: editingHoliday ? 'Holiday updated!' : 'Holiday added!' });
+          setTimeout(() => setMessage(null), 3000);
+        }}
+        onDelete={() => {
+          fetchHolidays();
+          setMessage({ type: 'success', text: 'Holiday deleted' });
+          setTimeout(() => setMessage(null), 3000);
+        }}
       />
-      
-     
-      {/* Custom scrollbar styles */}
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #c5c5c5;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #a5a5a5;
-        }
-      `}</style>
-    </div>
+
+      {calendarAnnouncement && (
+        <AnnouncementModal
+          isOpen={hasUnreadAnnouncements && showAnnouncement}
+          onClose={() => setShowAnnouncement(false)}
+          announcement={calendarAnnouncement}
+        />
+      )}
+
+      {message && (
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl z-[100] text-white font-medium flex items-center gap-2 ${message.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+          {message.type === 'success' ? <FiCheckCircle /> : <FiAlertCircle />}
+          {message.text}
+        </div>
+      )}
+
+    </motion.div>
   );
 }

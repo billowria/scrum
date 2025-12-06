@@ -256,8 +256,8 @@ const FloatingOrb = ({ size, color, position, delay }) => (
   />
 );
 
-// --- Fluid Particle Stardust System ---
-const PropParticles = () => {
+// --- Quantum Grid Effect (High Performance) ---
+const QuantumGrid = () => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -267,115 +267,115 @@ const PropParticles = () => {
     let width = window.innerWidth;
     let height = window.innerHeight;
 
-    let stars = [];
-    let particles = [];
-    let mouse = { x: -100, y: -100 };
-    let lastMouse = { x: -100, y: -100 };
+    // Configuration
+    const SPACING = 40; // Space between dots
+    const MOUSE_RADIUS = 200; // Interaction radius
+    const REPEL_FORCE = 5; // How hard particles flee from mouse
+    const RETURN_SPEED = 0.05; // Spring stiffness
+    const DAMPING = 0.90; // Friction
 
-    // resize
-    const handleResize = () => {
+    let points = [];
+    let mouse = { x: -1000, y: -1000 };
+
+    // Initialize Grid
+    const initGrid = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
-      initStars();
-    };
+      points = [];
 
-    const initStars = () => {
-      stars = [];
-      for (let i = 0; i < 150; i++) {
-        stars.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          size: Math.random() * 1.5,
-          opacity: Math.random() * 0.7,
-          speed: Math.random() * 0.05 + 0.01,
-          baseAlpha: Math.random() * 0.7
-        });
+      const cols = Math.ceil(width / SPACING);
+      const rows = Math.ceil(height / SPACING);
+
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const x = i * SPACING + SPACING / 2;
+          const y = j * SPACING + SPACING / 2;
+          points.push({
+            x: x, // Current position
+            y: y,
+            ox: x, // Origin position
+            oy: y,
+            vx: 0, // Velocity
+            vy: 0,
+            baseAlpha: Math.random() * 0.3 + 0.1, // Base opacity
+            size: 1.5
+          });
+        }
       }
     };
 
+    // Handle Resize
+    const handleResize = () => {
+      initGrid();
+    };
     window.addEventListener('resize', handleResize);
-    handleResize();
+    initGrid();
 
-    // mouse move
+    // Handle Mouse
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
-
-      const dist = Math.hypot(mouse.x - lastMouse.x, mouse.y - lastMouse.y);
-
-      // Spawn particles on move - more if faster
-      // Use softer colors: Cyan/Blue/Purple
-      const count = Math.min(5, Math.ceil(dist / 2));
-
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 1.5;
-        particles.push({
-          x: mouse.x + (Math.random() - 0.5) * 10,
-          y: mouse.y + (Math.random() - 0.5) * 10,
-          vx: Math.cos(angle) * speed + (mouse.x - lastMouse.x) * 0.1, // inherit little momentum
-          vy: Math.sin(angle) * speed + (mouse.y - lastMouse.y) * 0.1,
-          size: Math.random() * 4 + 2,
-          color: `hsla(${Math.random() * 60 + 190}, 100%, 70%, 1)`, // Cyan to Purple
-          life: 1.0,
-          decay: Math.random() * 0.02 + 0.01
-        });
-      }
-      lastMouse.x = mouse.x;
-      lastMouse.y = mouse.y;
     };
     window.addEventListener('mousemove', handleMouseMove);
 
+    // Animation Loop
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Draw background stars
-      stars.forEach(star => {
-        star.opacity += Math.sin(Date.now() * 0.002 + star.x) * 0.005;
-        star.y -= star.speed;
-        if (star.y < 0) star.y = height;
+      // Use lighter composition for glow effect without expensive shadowBlur
+      // ctx.globalCompositeOperation = 'lighten'; 
 
-        // Parallax
-        const px = (mouse.x - width / 2) * 0.02 * star.size;
-        const py = (mouse.y - height / 2) * 0.02 * star.size;
+      points.forEach(p => {
+        // Physics: Dist to mouse
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, Math.min(1, star.baseAlpha + star.opacity))})`;
+        // Mouse Repulsion
+        if (dist < MOUSE_RADIUS) {
+          const force = (1 - dist / MOUSE_RADIUS) * REPEL_FORCE;
+          const angle = Math.atan2(dy, dx);
+          p.vx -= Math.cos(angle) * force;
+          p.vy -= Math.sin(angle) * force;
+        }
+
+        // Spring Return to Origin
+        const ox = p.ox - p.x;
+        const oy = p.oy - p.y;
+        p.vx += ox * RETURN_SPEED;
+        p.vy += oy * RETURN_SPEED;
+
+        // Friction
+        p.vx *= DAMPING;
+        p.vy *= DAMPING;
+
+        // Update Position
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Visuals
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        const active = dist < MOUSE_RADIUS;
+
+        // Color blending based on activity/speed
+        // Idle: White/Slate
+        // Active: Cyan/Purple
         ctx.beginPath();
-        ctx.arc(star.x + px, star.y + py, star.size, 0, Math.PI * 2);
+
+        if (active || speed > 0.5) {
+          const alpha = Math.min(1, p.baseAlpha + speed * 0.2);
+          ctx.fillStyle = `rgba(100, 200, 255, ${alpha})`; // Cyan glow
+          ctx.arc(p.x, p.y, p.size + Math.min(2, speed), 0, Math.PI * 2);
+        } else {
+          ctx.fillStyle = `rgba(255, 255, 255, ${p.baseAlpha})`;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        }
         ctx.fill();
       });
 
-      // Draw fluid particles
-      ctx.globalCompositeOperation = 'screen'; // additive blending for glow
-      for (let i = 0; i < particles.length; i++) {
-        let p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.95; // friction
-        p.vy *= 0.95;
-        p.life -= p.decay;
-
-        if (p.life > 0) {
-          const alpha = p.life * 0.6; // slightly transparent
-          ctx.shadowBlur = p.size * 2;
-          ctx.shadowColor = p.color;
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = alpha;
-
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); // shrink as it dies
-          ctx.fill();
-        } else {
-          particles.splice(i, 1);
-          i--;
-        }
-      }
-      ctx.shadowBlur = 0;
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = 1;
-
       requestAnimationFrame(animate);
     };
+
     const raf = requestAnimationFrame(animate);
 
     return () => {
@@ -416,7 +416,7 @@ export default function AuthPage({ mode = "login" }) {
       const currentIndex = APP_MODULES.findIndex(m => m.id === activeTab);
       const nextIndex = (currentIndex + 1) % APP_MODULES.length;
       setActiveTab(APP_MODULES[nextIndex].id);
-    }, 5000);
+    }, 1000);
     return () => clearInterval(timer);
   }, [activeTab]);
 
@@ -501,7 +501,7 @@ export default function AuthPage({ mode = "login" }) {
 
       {/* Full page animated background with Advanced Stars */}
       <div className="full-bg">
-        <PropParticles />
+        <QuantumGrid />
         <FloatingOrb
           size="500px"
           color="rgba(99, 102, 241, 0.3)"
