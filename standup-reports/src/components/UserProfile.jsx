@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fi';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../supabaseClient';
+import LoadingSpinner from './shared/LoadingSpinner';
 
 // --- Animation Variants ---
 const containerVariants = {
@@ -178,7 +179,7 @@ const UserProfile = () => {
     finally { setUploadingAvatar(false); }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>;
   if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error}</div>;
   if (!profile) return null;
 

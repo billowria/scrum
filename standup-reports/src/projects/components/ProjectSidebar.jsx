@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fi';
 import { Menu } from '@headlessui/react';
 import { supabase } from '../../supabaseClient';
+import LoadingSpinner from '../../components/shared/LoadingSpinner';
 
 const SidebarItem = ({
     icon: Icon,
@@ -62,11 +63,10 @@ const SidebarItem = ({
     return (
         <motion.div
             layout
-            className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 relative ${
-                active
+            className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 relative ${active
                     ? `${colorConfig.bg ? colorConfig.bg + ' ' : ''}${colorConfig.text} font-medium shadow-sm ${colorConfig.hoverBg || 'hover:bg-gray-100'}`
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-            }`}
+                }`}
             style={{ paddingLeft: `${depth * 12 + 12}px` }}
             onClick={hasChildren ? onToggle : onClick}
             whileHover={{ x: 2 }}
@@ -340,8 +340,8 @@ const ProjectSidebar = ({
                                                                 className="overflow-hidden"
                                                             >
                                                                 {loadingContent[topic.id] ? (
-                                                                    <div className="px-3 py-2 text-xs text-gray-400" style={{ paddingLeft: '48px' }}>
-                                                                        Loading...
+                                                                    <div className="flex justify-center py-4">
+                                                                        <LoadingSpinner scale={0.3} />
                                                                     </div>
                                                                 ) : (
                                                                     contentByTopic[topic.id]?.map(content => (
@@ -397,12 +397,11 @@ const ProjectSidebar = ({
                         {sections.map(section => (
                             <React.Fragment key={section.id}>
                                 <button
-                                    className={`p-2 rounded-lg w-8 h-8 flex items-center justify-center transition-colors ${
-                                        section.project_topics?.some(topic =>
-                                            selectedTopic?.id === topic.id ||
-                                            (selectedContent && selectedContent.topic_id === topic.id)
-                                        ) ? 'bg-rose-100 text-rose-700' : 'text-gray-500 hover:bg-gray-200'
-                                    }`}
+                                    className={`p-2 rounded-lg w-8 h-8 flex items-center justify-center transition-colors ${section.project_topics?.some(topic =>
+                                        selectedTopic?.id === topic.id ||
+                                        (selectedContent && selectedContent.topic_id === topic.id)
+                                    ) ? 'bg-rose-100 text-rose-700' : 'text-gray-500 hover:bg-gray-200'
+                                        }`}
                                     title={section.name}
                                     onClick={() => {
                                         // Expand section and go to first topic
@@ -427,11 +426,10 @@ const ProjectSidebar = ({
                                                 <React.Fragment key={topic.id}>
                                                     <div className="flex items-center justify-center gap-1">
                                                         <button
-                                                            className={`p-2 rounded-lg w-8 h-8 flex items-center justify-center transition-colors mx-auto ${
-                                                                selectedTopic?.id === topic.id || (selectedContent && selectedContent.topic_id === topic.id)
+                                                            className={`p-2 rounded-lg w-8 h-8 flex items-center justify-center transition-colors mx-auto ${selectedTopic?.id === topic.id || (selectedContent && selectedContent.topic_id === topic.id)
                                                                     ? 'bg-green-100 text-green-700'
                                                                     : 'text-gray-500 hover:bg-gray-200'
-                                                            }`}
+                                                                }`}
                                                             title={topic.name}
                                                             onClick={() => onSelectTopic(topic)}
                                                         >

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import LoadingSpinner from './shared/LoadingSpinner';
 import { supabase } from '../supabaseClient';
 
 export default function ProtectedRoute({ children, requiredRole }) {
@@ -17,7 +18,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
             .select('role')
             .eq('id', session.user.id)
             .single();
-          
+
           if (error) throw error;
           setUser({ ...session.user, role: data.role });
         } else {
@@ -34,7 +35,11 @@ export default function ProtectedRoute({ children, requiredRole }) {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>; // Or a spinner component
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (!user) {

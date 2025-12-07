@@ -143,11 +143,15 @@ const TaskDetailView = ({
   const [activities, setActivities] = useState([]);
   const [dependencies, setDependencies] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [sprints, setSprints] = useState([]);
 
   // UI State
   const [activeTab, setActiveTab] = useState('comments');
   const [statusOpen, setStatusOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const [sprintOpen, setSprintOpen] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
 
   // Inputs
   const [newSubtask, setNewSubtask] = useState('');
@@ -155,6 +159,20 @@ const TaskDetailView = ({
   const [depSearch, setDepSearch] = useState('');
   const [isAddingDep, setIsAddingDep] = useState(false);
   const [availableTasks, setAvailableTasks] = useState([]);
+
+  // Status/Priority Design Configs
+  const STATUS_CONFIG = {
+    'To Do': { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200', icon: '📋', gradient: 'from-slate-400 to-slate-600' },
+    'In Progress': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: '🚀', gradient: 'from-blue-400 to-blue-600' },
+    'Review': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: '👀', gradient: 'from-amber-400 to-amber-600' },
+    'Completed': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: '✅', gradient: 'from-emerald-400 to-emerald-600' }
+  };
+  const PRIORITY_CONFIG = {
+    'Low': { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', icon: '⬇️', gradient: 'from-green-400 to-green-600' },
+    'Medium': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: '➡️', gradient: 'from-amber-400 to-amber-600' },
+    'High': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', icon: '⬆️', gradient: 'from-orange-400 to-orange-600' },
+    'Critical': { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', icon: '🔥', gradient: 'from-red-400 to-red-600' }
+  };
 
   // Refs
   const modalRef = useRef(null);
@@ -208,7 +226,8 @@ const TaskDetailView = ({
         fetchComments(t.id),
         fetchActivities(t.id),
         fetchDependencies(t.id),
-        fetchProjects()
+        fetchProjects(),
+        fetchSprints(t.project_id)
       ]);
     } catch (e) {
       console.error(e);
@@ -237,6 +256,11 @@ const TaskDetailView = ({
     const { data } = await supabase.from('projects').select('id, name');
     setProjects(data || []);
   };
+  const fetchSprints = async (projectId) => {
+    if (!projectId) { setSprints([]); return; }
+    const { data } = await supabase.from('sprints').select('id, name, status').eq('project_id', projectId).order('created_at', { ascending: false });
+    setSprints(data || []);
+  };
 
   // --- Auto-Save Actions ---
 
@@ -259,12 +283,12 @@ const TaskDetailView = ({
       project_id: task.project_id,
       team_id: task.team_id,
       status: 'To Do',
-      created_by: currentUser.id
+      reporter_id: currentUser.id,
+      type: 'Task'
     });
     if (!error) {
       setNewSubtask('');
       fetchSubtasks(taskId);
-      // log activity
     }
   };
 
@@ -370,43 +394,80 @@ const TaskDetailView = ({
                   </div>
 
                   <div className="flex gap-3">
-                    {/* Status Pill */}
+                    {/* Status Pill - Enhanced */}
                     <div className="relative">
-                      <button
+                      <motion.button
                         onClick={() => setStatusOpen(!statusOpen)}
-                        className={`h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 border transition-all ${task.status === 'Completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                            task.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                              'bg-gray-50 text-gray-600 border-gray-100'
-                          }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 border transition-all shadow-sm ${STATUS_CONFIG[task.status]?.bg} ${STATUS_CONFIG[task.status]?.text} ${STATUS_CONFIG[task.status]?.border}`}
                       >
-                        {task.status} <FiChevronDown />
-                      </button>
-                      {statusOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-1 z-50">
-                          {['To Do', 'In Progress', 'Review', 'Completed'].map(s => (
-                            <button key={s} onClick={() => { updateTask({ status: s }); setStatusOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium">{s}</button>
-                          ))}
-                        </div>
-                      )}
+                        <span className="text-gray-500 font-medium">Status:</span>
+                        {task.status}
+                        <motion.span animate={{ rotate: statusOpen ? 180 : 0 }}><FiChevronDown /></motion.span>
+                      </motion.button>
+                      <AnimatePresence>
+                        {statusOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden"
+                          >
+                            {Object.entries(STATUS_CONFIG).map(([s, cfg]) => (
+                              <motion.button
+                                key={s}
+                                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.02)' }}
+                                onClick={() => { updateTask({ status: s }); setStatusOpen(false); }}
+                                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors ${task.status === s ? cfg.bg + ' ' + cfg.text : 'text-gray-700 hover:bg-gray-50'}`}
+                              >
+                                <span className="text-lg">{cfg.icon}</span>
+                                <span>{s}</span>
+                                {task.status === s && <FiCheck className="ml-auto text-emerald-500" />}
+                              </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
-                    {/* Priority Pill */}
+                    {/* Priority Pill - Enhanced */}
                     <div className="relative">
-                      <button
+                      <motion.button
                         onClick={() => setPriorityOpen(!priorityOpen)}
-                        className={`h-10 w-10 flex items-center justify-center rounded-xl border transition-all ${task.priority === 'High' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                            'bg-amber-50 text-amber-600 border-amber-100'
-                          }`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`h-10 px-4 flex items-center justify-center gap-2 rounded-xl border transition-all shadow-sm ${PRIORITY_CONFIG[task.priority]?.bg} ${PRIORITY_CONFIG[task.priority]?.text} ${PRIORITY_CONFIG[task.priority]?.border}`}
                       >
-                        <FiTrendingUp />
-                      </button>
-                      {priorityOpen && ( /* Priority Dropdown similar to status */
-                        <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-2xl border border-gray-100 p-1 z-50">
-                          {['Low', 'Medium', 'High', 'Critical'].map(p => (
-                            <button key={p} onClick={() => { updateTask({ priority: p }); setPriorityOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm font-medium">{p}</button>
-                          ))}
-                        </div>
-                      )}
+                        <span className="text-gray-500 font-medium">Priority:</span>
+                        <span className="font-bold text-sm">{task.priority}</span>
+                        <motion.span animate={{ rotate: priorityOpen ? 180 : 0 }}><FiChevronDown className="w-3 h-3" /></motion.span>
+                      </motion.button>
+                      <AnimatePresence>
+                        {priorityOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50"
+                          >
+                            {Object.entries(PRIORITY_CONFIG).map(([p, cfg]) => (
+                              <motion.button
+                                key={p}
+                                whileHover={{ x: 4 }}
+                                onClick={() => { updateTask({ priority: p }); setPriorityOpen(false); }}
+                                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors ${task.priority === p ? cfg.bg + ' ' + cfg.text : 'text-gray-700 hover:bg-gray-50'}`}
+                              >
+                                <span className="text-lg">{cfg.icon}</span>
+                                <span>{p}</span>
+                                {task.priority === p && <FiCheck className="ml-auto text-emerald-500" />}
+                              </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -415,24 +476,67 @@ const TaskDetailView = ({
               {/* --- MAIN GRID: "The Lab" Workspace --- */}
               <div className="flex-1 overflow-hidden flex flex-col md:flex-row bg-gray-50/30">
 
-                {/* COL 1: Content (Description, Tasks, Activity) */}
-                <div className="flex-1 overflow-y-auto px-8 py-8 md:pr-12 border-r border-gray-100 bg-white">
-                  <div className="max-w-3xl mx-auto space-y-12">
+                {/* COL 1: Content (Description, Tasks, Activity) - WIDER */}
+                <div className="w-full md:w-[80%] overflow-y-auto px-8 py-8 border-r border-gray-100 bg-white">
+                  <div className="space-y-12">
 
-                    {/* Description */}
+                    {/* Description - Expandable with button */}
                     <section className="group">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
                           <FiFileText className="text-gray-300" /> Description
                         </h3>
+                        <div className="flex items-center gap-3">
+                          {task.description && task.description.length > 100 && (
+                            <button
+                              onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+                            >
+                              {isDescriptionExpanded ? <><FiChevronUp className="w-3 h-3" /> Collapse</> : <><FiChevronDown className="w-3 h-3" /> Expand</>}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setIsEditingDescription(!isEditingDescription)}
+                            className={`text-xs font-bold flex items-center gap-1 transition-colors ${isEditingDescription ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
+                          >
+                            {isEditingDescription ? <><FiCheck className="w-3 h-3" /> Done</> : <><FiEdit2 className="w-3 h-3" /> Edit</>}
+                          </button>
+                        </div>
                       </div>
-                      <textarea
-                        className="w-full min-h-[150px] p-4 rounded-xl bg-gray-50 hover:bg-white border-2 border-transparent hover:border-blue-100 focus:border-blue-500 focus:bg-white transition-all text-gray-700 leading-relaxed resize-none focus:outline-none"
-                        placeholder="Add detailed description..."
-                        value={task.description || ''}
-                        onChange={(e) => setTask({ ...task, description: e.target.value })}
-                        onBlur={(e) => updateTask({ description: e.target.value })}
-                      />
+                      {isEditingDescription ? (
+                        <textarea
+                          autoFocus
+                          ref={(el) => {
+                            if (el && isDescriptionExpanded) {
+                              el.style.height = 'auto';
+                              el.style.height = Math.max(200, el.scrollHeight) + 'px';
+                            }
+                          }}
+                          className={`w-full p-4 rounded-xl bg-white border-2 border-blue-200 focus:border-blue-500 transition-all text-gray-700 leading-relaxed resize-none focus:outline-none ${isDescriptionExpanded ? '' : 'max-h-[200px] overflow-hidden'}`}
+                          style={{ minHeight: '200px' }}
+                          placeholder="Add detailed description..."
+                          value={task.description || ''}
+                          onChange={(e) => {
+                            setTask({ ...task, description: e.target.value });
+                            if (isDescriptionExpanded) {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = Math.max(200, e.target.scrollHeight) + 'px';
+                            }
+                          }}
+                          onBlur={(e) => updateTask({ description: e.target.value })}
+                        />
+                      ) : (
+                        <div
+                          className={`w-full p-4 rounded-xl bg-gray-50 border-2 border-transparent text-gray-700 leading-relaxed cursor-default ${isDescriptionExpanded ? '' : 'max-h-[200px] overflow-hidden'}`}
+                          style={{ minHeight: '200px' }}
+                        >
+                          {task.description ? (
+                            <div className="whitespace-pre-wrap">{task.description}</div>
+                          ) : (
+                            <span className="text-gray-400 italic">No description added. Click Edit to add one.</span>
+                          )}
+                        </div>
+                      )}
                     </section>
 
                     {/* Subtasks */}
@@ -539,9 +643,20 @@ const TaskDetailView = ({
                   </div>
                 </div>
 
-                {/* COL 2: Sidebar (Properties Panel) */}
-                <div className="w-full md:w-[360px] bg-gray-50 p-6 overflow-y-auto border-l border-gray-100">
+                {/* COL 2: Sidebar (Properties Panel) - NARROWER */}
+                <div className="w-full md:w-[20%] bg-gray-50 p-4 overflow-y-auto border-l border-gray-100">
                   <div className="space-y-8">
+
+                    {/* DETAILS GROUP */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Details</h4>
+                      <SmartField label="Project" icon={FiFolder} color={THEME.colors.project}>
+                        {task.project?.name || <span className="text-gray-400 italic">No Project</span>}
+                      </SmartField>
+                      <SmartField label="Team" icon={FiUsers} color="blue">
+                        {task.team?.name || <span className="text-gray-400 italic">No Team</span>}
+                      </SmartField>
+                    </div>
 
                     {/* PEOPLE GROUP */}
                     <div className="space-y-3">
@@ -568,9 +683,42 @@ const TaskDetailView = ({
                       <SmartField label="Due Date" icon={FiCalendar} color={THEME.colors.date} onEdit={() => {/* Date picker logic */ }}>
                         {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : <span className="text-gray-400 italic">No Date</span>}
                       </SmartField>
-                      <SmartField label="Sprint" icon={FiTarget} color={THEME.colors.sprint}>
-                        {task.sprint?.name || <span className="text-gray-400 italic">Backlog</span>}
-                      </SmartField>
+                      {/* Sprint Picker */}
+                      <div className="relative">
+                        <SmartField label="Sprint" icon={FiTarget} color={THEME.colors.sprint} onEdit={() => setSprintOpen(!sprintOpen)}>
+                          {task.sprint?.name || <span className="text-gray-400 italic">Backlog</span>}
+                        </SmartField>
+                        <AnimatePresence>
+                          {sprintOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -5 }}
+                              className="absolute top-full left-0 z-50 w-full mt-1 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                            >
+                              <button
+                                onClick={() => { updateTask({ sprint_id: null }); setSprintOpen(false); }}
+                                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm text-gray-500 italic border-b border-gray-100"
+                              >
+                                Backlog (No Sprint)
+                              </button>
+                              <div className="max-h-40 overflow-y-auto">
+                                {sprints.map(sp => (
+                                  <button
+                                    key={sp.id}
+                                    onClick={() => { updateTask({ sprint_id: sp.id }); setSprintOpen(false); fetchSprints(task.project_id); }}
+                                    className={`w-full text-left px-3 py-2 hover:bg-purple-50 text-sm font-medium flex items-center justify-between ${task.sprint_id === sp.id ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                                  >
+                                    <span>{sp.name}</span>
+                                    <span className="text-xs text-gray-400 capitalize">{sp.status}</span>
+                                  </button>
+                                ))}
+                                {sprints.length === 0 && <div className="text-xs text-gray-400 italic p-3 text-center">No sprints for this project</div>}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
 
                     {/* DATA GROUP */}
@@ -624,13 +772,20 @@ const TaskDetailView = ({
 
                       <div className="space-y-2">
                         {dependencies.map(d => (
-                          <div key={d.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-rose-200 transition-colors cursor-pointer">
+                          <motion.div
+                            key={d.id}
+                            whileHover={{ scale: 1.02, x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onNavigateToTask && onNavigateToTask(d.depends_on_task?.id)}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group"
+                          >
                             <FiGitBranch className="text-rose-400 w-4 h-4" />
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-gray-900 truncate">{d.depends_on_task?.title}</div>
+                              <div className="text-xs font-bold text-gray-900 truncate group-hover:text-rose-600 transition-colors">{d.depends_on_task?.title}</div>
                               <div className="text-[10px] text-gray-400">{d.depends_on_task?.status}</div>
                             </div>
-                          </div>
+                            <FiExternalLink className="w-3 h-3 text-gray-300 group-hover:text-rose-500 transition-colors" />
+                          </motion.div>
                         ))}
                         {dependencies.length === 0 && !isAddingDep && (
                           <div className="text-xs text-gray-400 italic text-center p-4 border border-dashed border-gray-200 rounded-xl">No dependencies linked</div>

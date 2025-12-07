@@ -17,6 +17,7 @@ import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import '../components/chat/chat-design-tokens.css';
 
 import { FiChevronLeft, FiSettings, FiX, FiMessageSquare, FiMenu, FiUsers } from 'react-icons/fi';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -314,15 +315,7 @@ const ChatPage = () => {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={animations.variants.scaleIn}
-          className="text-center"
-        >
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600 font-medium">Loading conversations...</p>
-        </motion.div>
+        <LoadingSpinner />
       </div>
     );
   }

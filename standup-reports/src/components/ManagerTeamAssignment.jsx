@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
+import LoadingSpinner from './shared/LoadingSpinner';
 import { FiUsers, FiBriefcase, FiLink, FiCheck, FiX, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 
 export default function ManagerTeamAssignment() {
@@ -24,7 +25,7 @@ export default function ManagerTeamAssignment() {
         .select('id, name, manager_teams(team_id)')
         .eq('role', 'manager');
       if (managersError) throw managersError;
-      
+
       const { data: teamsData, error: teamsError } = await supabase.from('teams').select('id, name');
       if (teamsError) throw teamsError;
 
@@ -58,7 +59,7 @@ export default function ManagerTeamAssignment() {
 
   const handleSaveAssignments = async () => {
     if (!selectedManager) return;
-    
+
     const originalTeams = new Set(selectedManager.manager_teams.map(t => t.team_id));
     const teamsToUnassign = [...originalTeams].filter(id => !assignedTeams.has(id));
     const teamsToAssign = [...assignedTeams].filter(id => !originalTeams.has(id));
@@ -87,7 +88,11 @@ export default function ManagerTeamAssignment() {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <LoadingSpinner />
+    </div>
+  );
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -113,11 +118,11 @@ export default function ManagerTeamAssignment() {
       <AnimatePresence>
         {showAssignModal && (
           <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <motion.div 
-                className="bg-white rounded-lg shadow-xl w-full max-w-lg"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+            <motion.div
+              className="bg-white rounded-lg shadow-xl w-full max-w-lg"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
             >
               <div className="p-5">
                 <h3 className="text-lg font-bold mb-4">Assign Teams to {selectedManager?.name}</h3>
@@ -126,9 +131,8 @@ export default function ManagerTeamAssignment() {
                     <div
                       key={team.id}
                       onClick={() => handleTeamToggle(team.id)}
-                      className={`p-3 rounded-md cursor-pointer border-2 transition-all ${
-                        assignedTeams.has(team.id) ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white'
-                      }`}
+                      className={`p-3 rounded-md cursor-pointer border-2 transition-all ${assignedTeams.has(team.id) ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white'
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{team.name}</span>

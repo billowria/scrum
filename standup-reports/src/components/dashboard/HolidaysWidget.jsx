@@ -61,7 +61,7 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
 
             {loading ? (
                 <div className="flex-1 flex items-center justify-center">
-                    <LoadingSpinner />
+                    <LoadingSpinner scale={0.6} />
                 </div>
             ) : (
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2">

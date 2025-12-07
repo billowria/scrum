@@ -45,6 +45,7 @@ import SprintBoard from '../components/SprintBoard';
 import SprintModal from '../components/SprintModal';
 import SprintManagement from '../components/sprint/SprintManagement';
 import SprintDetailView from '../components/sprint/SprintDetailView';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 import GlassmorphicToast from '../components/GlassmorphicToast';
 
 // Animation variants
@@ -1503,11 +1504,8 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
           className="bg-transparent overflow-hidden"
         >
           {loading ? (
-            <div className="p-12 text-center bg-white rounded-xl">
-              <div className="inline-flex items-center space-x-2">
-                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-gray-600">Loading tasks...</span>
-              </div>
+            <div className="flex justify-center items-center py-20">
+              <LoadingSpinner />
             </div>
           ) : error ? (
             <div className="p-12 text-center text-red-500 bg-white rounded-xl">

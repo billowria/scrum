@@ -15,6 +15,7 @@ import DateGroup from '../components/history/DateGroup';
 import StatusBadge from '../components/history/StatusBadge';
 import UserAvatar from '../components/history/UserAvatar';
 import '../components/history/design-tokens.css';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 // Animation variants
 const containerVariants = {
@@ -40,25 +41,7 @@ const itemVariants = {
   }
 };
 
-// Loading spinner component
-const LoadingSpinner = () => (
-  <motion.div
-    className="flex flex-col items-center justify-center h-64"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.3 }}
-  >
-    <div className="relative">
-      <div className="w-12 h-12 border-4 border-gray-200 rounded-full"></div>
-      <motion.div
-        className="absolute top-0 left-0 w-12 h-12 border-4 border-primary-500 rounded-full border-t-transparent border-r-transparent"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-      />
-    </div>
-    <p className="mt-4 text-gray-600 font-medium">Loading reports...</p>
-  </motion.div>
-);
+// Loading spinner component removed (using shared component)
 
 // Empty state component
 const EmptyState = ({ onClearFilters, hasFilters }) => (
@@ -411,11 +394,10 @@ export default function History() {
               <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
                 <motion.button
                   onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'list'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list'
                       ? 'bg-primary-500 text-white'
                       : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -424,11 +406,10 @@ export default function History() {
                 </motion.button>
                 <motion.button
                   onClick={() => setViewMode('grid')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'grid'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'grid'
                       ? 'bg-primary-500 text-white'
                       : 'text-gray-600 hover:text-gray-900'
-                  }`}
+                    }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

@@ -1,138 +1,105 @@
-/* -- Loading thingy --*/
+/* Custom DNA Loader */
+/* Indigo & White Theme */
 
-.loading-container {
-    width: 100%;
-    height: 100%;
-    min-height: 200px;
-    /* Ensure visibility */
+.loader {
     position: relative;
+    width: 100%;
+    height: 60px;
+    /* Reduced specific height for component containment */
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: transparent;
-    /* Or #3a3a3a if specifically requested for BG, but user code had it on "drawing" class */
 }
 
-/* 
-   User provided "drawing" class with #3a3a3a bg. 
-   Assuming they want the spinner itself. The background might need to be adapted to the widget cards (white usually).
-   The user CSS sets .drawing width/height to 100vw/100vh which is too big for a widget. 
-   I will adapt it to fit the parent container.
-*/
-
-.loading-dot {
-    border-radius: 100%;
+.loader .dot {
+    animation-name: movement;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
     height: 10px;
-    width: 10px;
-    /* Indigo color */
-    color: #6366f1;
-    background-color: currentColor;
     position: absolute;
-    left: 0;
-    right: 0;
-    margin: auto;
-    top: 0;
-    bottom: 0;
-    /* Stronger Glow effect */
-    filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor);
-    /* Scale 0.5 as requested previously */
-    transform: scale(0.5);
-    box-shadow:
-        0px 40px 0px 0px currentColor,
-        0px -40px 0px 0px currentColor,
-        40px 0px 0px 0px currentColor,
-        -40px 0px 0px 0px currentColor,
-        40px 40px 0px 0px currentColor,
-        -40px -40px 0px 0px currentColor,
-        40px -40px 0px 0px currentColor,
-        -40px 40px 0px 0px currentColor;
-    /* Smoother animation */
-    animation: load 2.5s infinite ease-in-out;
+    top: 50%;
+    /* Center vertically */
+    transform: translate3d(0, -25px, 0) scale(1);
+    width: 10px;
+    margin-top: -5px;
+    /* Half of height to center */
+    animation-delay: var(--delay);
 }
 
-/* If the user specifically wants the dark look: */
-.loading-container.dark-mode {
-    background-color: #3a3a3a;
+.loader .dot::before {
+    animation-name: size-opacity;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
+    background: #06b6d4;
+    /* Cyan-500 */
+    box-shadow: 0 0 6px rgba(6, 182, 212, 0.6);
+    /* Cyan Glow */
+    border-radius: 50%;
+    content: '';
+    display: block;
+    height: 100%;
+    width: 100%;
+    animation-delay: var(--delay);
 }
 
-.loading-container.dark-mode .loading-dot {
-    background-color: #ffffff;
-    box-shadow:
-        0px 40px 0px 0px #ffffff,
-        0px -40px 0px 0px #ffffff,
-        40px 0px 0px 0px #ffffff,
-        -40px 0px 0px 0px #ffffff,
-        40px 40px 0px 0px #ffffff,
-        -40px -40px 0px 0px #ffffff,
-        40px -40px 0px 0px #ffffff,
-        -40px 40px 0px 0px #ffffff;
+.loader .dot:nth-of-type(even)::before {
+    background-color: #8b5cf6;
+    /* Violet-500 */
+    box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+    /* Violet Glow */
 }
 
-@keyframes load {
+/* Optional: Dark mode adjustments if needed */
+.dark-mode .loader .dot::before {
+    background: #ffffff;
+}
+
+.dark-mode .loader .dot:nth-of-type(even)::before {
+    background-color: #818cf8;
+    /* Indigo-400 */
+    box-shadow: inset 0 0 4px #4f46e5;
+}
+
+@keyframes movement {
     0% {
-        transform: translate(0px, 0px) rotate(0deg) scale(0.5);
-        box-shadow: 0px 40px 0px 0px currentColor, 0px -40px 0px 0px currentColor, 40px 0px 0px 0px currentColor, -40px 0px 0px 0px currentColor,
-            40px 40px 0px 0px currentColor, -40px -40px 0px 0px currentColor, 40px -40px 0px 0px currentColor, -40px 40px 0px 0px currentColor;
-    }
-
-    25% {
-        box-shadow: 0px 40px 0px 0px currentColor, 0px -40px 0px 0px currentColor, 40px 0px 0px 0px currentColor, -40px 0px 0px 0px currentColor,
-            -40px -40px 0px 0px currentColor, 40px 40px 0px 0px currentColor, -40px 40px 0px 0px currentColor, 40px -40px 0px 0px currentColor;
+        transform: translate3d(0, -25px, 0);
+        z-index: 0;
     }
 
     50% {
-        box-shadow: 0px -40px 0px 0px currentColor, 0px 40px 0px 0px currentColor, -40px 0px 0px 0px currentColor, 40px 0px 0px 0px currentColor,
-            -40px -40px 0px 0px currentColor, 40px 40px 0px 0px currentColor, -40px 40px 0px 0px currentColor, 40px -40px 0px 0px currentColor;
-    }
-
-    70% {
-        box-shadow: 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor,
-            0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor;
-    }
-
-    75% {
-        box-shadow: 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor,
-            0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor;
-        height: 10px;
-        width: 10px;
-    }
-
-    80% {
-        transform: translate(0px, 0px) rotate(360deg) scale(0.5);
-        box-shadow: 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor,
-            0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor;
-        background-color: currentColor;
-        height: 40px;
-        width: 40px;
-    }
-
-    85% {
-        transform: translate(0px, 0px) rotate(360deg) scale(0.5);
-        box-shadow: 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor,
-            0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor;
-        background-color: currentColor;
-        height: 40px;
-        width: 40px;
-    }
-
-    90% {
-        transform: translate(0px, 0px) rotate(360deg) scale(0.5);
-        box-shadow: 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor,
-            0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor, 0px 0px 0px 0px currentColor;
-        background-color: currentColor;
-        height: 10px;
-        width: 10px;
-    }
-
-    95% {
-        box-shadow: 0px 40px 0px 0px currentColor, 0px -40px 0px 0px currentColor, 40px 0px 0px 0px currentColor, -40px 0px 0px 0px currentColor,
-            40px 40px 0px 0px currentColor, -40px -40px 0px 0px currentColor, 40px -40px 0px 0px currentColor, -40px 40px 0px 0px currentColor;
+        transform: translate3d(0, 25px, 0);
+        z-index: 10;
     }
 
     100% {
-        transform: rotate(360deg) scale(0.5);
-        box-shadow: 0px 40px 0px 0px currentColor, 0px -40px 0px 0px currentColor, 40px 0px 0px 0px currentColor, -40px 0px 0px 0px currentColor,
-            40px 40px 0px 0px currentColor, -40px -40px 0px 0px currentColor, 40px -40px 0px 0px currentColor, -40px 40px 0px 0px currentColor;
+        transform: translate3d(0, -25px, 0);
+        z-index: -5;
+    }
+}
+
+@keyframes size-opacity {
+    0% {
+        opacity: 1;
+        transform: scale(1);
     }
 
+    25% {
+        transform: scale(1.5);
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: .35;
+        transform: scale(.5);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }

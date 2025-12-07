@@ -10,6 +10,7 @@ import { supabase } from '../supabaseClient';
 import ContentLoader from '../components/ContentLoader';
 import Avatar, { AvatarGroup } from '../components/shared/Avatar';
 import LoadingSkeleton, { SkeletonCard } from '../components/shared/LoadingSkeleton';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 // Import design system
 import { colors, animations, shadows, breakpoints, typography } from '../config/designSystem';
@@ -97,11 +98,11 @@ const confluenceColors = {
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     y: 0,
-    transition: { 
-      duration: 0.5, 
+    transition: {
+      duration: 0.5,
       ease: [0.4, 0, 0.2, 1],
       staggerChildren: 0.1
     }
@@ -111,10 +112,10 @@ const pageVariants = {
 
 const sidebarVariants = {
   initial: { x: -300, opacity: 0 },
-  animate: { 
-    x: 0, 
+  animate: {
+    x: 0,
     opacity: 1,
-    transition: { 
+    transition: {
       type: 'spring',
       stiffness: 300,
       damping: 30
@@ -168,8 +169,8 @@ const ProjectHeader = ({ project, onRefresh, loading, teamMembers = [] }) => {
   const statusConfig = getStatusConfig(project?.status);
   const formatDate = (dateString) => {
     if (!dateString) return 'No date set';
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
@@ -216,7 +217,7 @@ const ProjectHeader = ({ project, onRefresh, loading, teamMembers = [] }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <motion.button
             onClick={onRefresh}
@@ -284,13 +285,12 @@ const ProjectSectionsSidebar = ({
           onClick={onClose}
         />
       )}
-      
+
       <motion.aside
-        className={`bg-white border-r border-gray-200 h-full overflow-hidden flex flex-col ${
-          isMobile
+        className={`bg-white border-r border-gray-200 h-full overflow-hidden flex flex-col ${isMobile
             ? `fixed left-0 top-0 z-50 w-80 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
             : 'w-80 relative'
-        }`}
+          }`}
         variants={isMobile ? {} : sidebarVariants}
         initial="initial"
         animate="animate"
@@ -353,8 +353,8 @@ const ProjectSectionsSidebar = ({
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                         {section.project_topics?.length || 0}
                       </span>
-                      <FiChevronDown 
-                        className={`w-4 h-4 transition-transform ${expandedSections[section.id] ? 'rotate-180' : ''}`} 
+                      <FiChevronDown
+                        className={`w-4 h-4 transition-transform ${expandedSections[section.id] ? 'rotate-180' : ''}`}
                       />
                     </div>
                   </div>
@@ -375,11 +375,10 @@ const ProjectSectionsSidebar = ({
                               <button
                                 key={topic.id}
                                 onClick={() => onSelectTopic(topic)}
-                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${
-                                  selectedTopic?.id === topic.id
+                                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedTopic?.id === topic.id
                                     ? 'bg-blue-50 border-blue-200 text-blue-800'
                                     : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700'
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-2">
                                   <FiFileText className="w-4 h-4" />
@@ -419,7 +418,7 @@ const ProjectSectionsSidebar = ({
 export default function ProjectDetailPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  
+
   const [project, setProject] = useState(null);
   const [sections, setSections] = useState([]);
   const [sectionsLoading, setSectionsLoading] = useState(false);
@@ -468,7 +467,7 @@ export default function ProjectDetailPage() {
 
       if (error) throw error;
       setProject(data);
-      
+
       // Fetch team members
       try {
         const { data: members, error: membersError } = await supabase
@@ -484,7 +483,7 @@ export default function ProjectDetailPage() {
             )
           `)
           .eq('project_id', projectId);
-        
+
         if (!membersError && members) {
           setTeamMembers(members.map(m => m.users).filter(Boolean));
         }
@@ -507,7 +506,7 @@ export default function ProjectDetailPage() {
     setExpandedSections({});
     setSelectedTopic(null);
     setTopicContent([]);
-    
+
     try {
       const { data, error } = await supabase
         .from('project_sections')
@@ -590,10 +589,7 @@ export default function ProjectDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading project...</p>
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -633,8 +629,8 @@ export default function ProjectDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col h-screen">
       {/* Project Header */}
-      <ProjectHeader 
-        project={project} 
+      <ProjectHeader
+        project={project}
         onRefresh={() => {
           fetchProject();
           fetchSections();

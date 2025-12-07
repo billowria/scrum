@@ -78,7 +78,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner />
+          <LoadingSpinner scale={0.6} />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -196,7 +196,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner />
+          <LoadingSpinner scale={0.6} />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -316,7 +316,7 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner />
+          <LoadingSpinner scale={0.6} />
         </div>
       ) : (
         <div className="flex-1 p-5 flex flex-col">
@@ -523,7 +523,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
 
       {loading || loadingLeave ? (
         <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner />
+          <LoadingSpinner scale={0.6} />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
