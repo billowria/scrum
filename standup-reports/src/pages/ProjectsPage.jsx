@@ -13,9 +13,10 @@ import ContentLoader from '../components/ContentLoader';
 import Avatar, { AvatarGroup } from '../components/shared/Avatar';
 import Badge from '../components/shared/Badge';
 import LoadingSkeleton, { SkeletonCard } from '../components/shared/LoadingSkeleton';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 import { notifyProjectUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../contexts/CompanyContext';
-import ProjectManagement from '../components/ProjectManagement';
+
 import ProjectDetailPage from '../projects/pages/ProjectDetailPage';
 
 // Import design system
@@ -2207,7 +2208,7 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
-  const [pageViewMode, setPageViewMode] = useState('projects'); // 'projects' or 'management'
+
   const [activeProjectId, setActiveProjectId] = useState(null); // ID of project to show in detail view
   const [favoriteProjects, setFavoriteProjects] = useState(new Set());
   const [recentProjects, setRecentProjects] = useState([]);
@@ -2771,10 +2772,7 @@ export default function ProjectsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading projects...</p>
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -2845,88 +2843,52 @@ export default function ProjectsPage() {
                     />
                   )}
 
-                  <div className={`p-2 bg-gradient-to-r ${pageViewMode === 'projects' ? 'from-blue-500 to-indigo-500 shadow-blue-200/50' : 'from-purple-500 to-pink-500 shadow-purple-200/50'} rounded-xl text-white shadow-lg transition-all duration-300`}>
-                    {pageViewMode === 'projects' ? <FiFolder className="w-5 h-5" /> : <FiSettings className="w-5 h-5" />}
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-200/50 rounded-xl text-white shadow-lg transition-all duration-300">
+                    <FiFolder className="w-5 h-5" />
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-gray-900">
-                      {pageViewMode === 'projects' ? 'Projects' : 'Project Management'}
+                      Projects
                     </h1>
-                  </div>
-                </div>
-
-                {/* Center Section - Toggle Switch (Absolutely Centered) */}
-                <div className="hidden md:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
-                  <div className="relative group">
-                    <div className="relative bg-white/40 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/50 shadow-inner flex items-center gap-1">
-                      {[
-                        { id: 'projects', icon: FiFolder, label: 'Projects', gradient: 'from-blue-500 via-indigo-500 to-purple-500' },
-                        { id: 'management', icon: FiSettings, label: 'Management', gradient: 'from-purple-500 via-pink-500 to-rose-500' }
-                      ].map((tab) => (
-                        <button
-                          key={tab.id}
-                          className={`relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${pageViewMode === tab.id
-                            ? 'text-white shadow-lg'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                            }`}
-                          onClick={() => setPageViewMode(tab.id)}
-                        >
-                          {pageViewMode === tab.id && (
-                            <motion.div
-                              className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tab.gradient}`}
-                              layoutId="activeProjectTab"
-                            />
-                          )}
-                          <span className="relative z-10 flex items-center gap-2">
-                            <tab.icon className="w-4 h-4" />
-                            {tab.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </div>
 
                 {/* Right Section - Stats & Actions */}
                 <div className="flex items-center gap-3 md:gap-6">
-                  {/* Stats with Info Icons - Only in Projects View */}
-                  {pageViewMode === 'projects' && (
-                    <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
-                      <div className="flex items-center gap-2 group cursor-help" title={`${stats.total} total projects`}>
-                        <div className="p-2 bg-slate-50 text-slate-600 rounded-full group-hover:bg-slate-100 transition-colors">
-                          <FiFolder className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.total}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Total</span>
-                        </div>
+                  {/* Stats with Info Icons */}
+                  <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
+                    <div className="flex items-center gap-2 group cursor-help" title={`${stats.total} total projects`}>
+                      <div className="p-2 bg-slate-50 text-slate-600 rounded-full group-hover:bg-slate-100 transition-colors">
+                        <FiFolder className="w-4 h-4" />
                       </div>
-
-                      <div className="flex items-center gap-2 group cursor-help" title={`${stats.active} active projects`}>
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
-                          <FiTrendingUp className="w-4 h-4" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.active}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Active</span>
-                        </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800 leading-none">{stats.total}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Total</span>
                       </div>
                     </div>
-                  )}
+
+                    <div className="flex items-center gap-2 group cursor-help" title={`${stats.active} active projects`}>
+                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
+                        <FiTrendingUp className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800 leading-none">{stats.active}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Active</span>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-2">
-                    {pageViewMode === 'projects' && (
-                      <motion.button
-                        onClick={handleCreateProject}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 font-medium text-sm transition-all"
-                      >
-                        <FiPlus className="w-4 h-4" />
-                        Create Project
-                      </motion.button>
-                    )}
+                    <motion.button
+                      onClick={handleCreateProject}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 font-medium text-sm transition-all"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      Create Project
+                    </motion.button>
 
                     <motion.button
                       onClick={fetchProjects}
@@ -2938,133 +2900,100 @@ export default function ProjectsPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Mobile Toggle */}
-              <div className="md:hidden mt-3 flex justify-center">
-                <div className="relative bg-white/40 backdrop-blur-2xl p-1 rounded-xl border border-white/50 shadow-inner flex items-center gap-1">
-                  {[
-                    { id: 'projects', icon: FiFolder, label: 'Projects' },
-                    { id: 'management', icon: FiSettings, label: 'Management' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${pageViewMode === tab.id
-                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
-                        : 'text-gray-600'
-                        }`}
-                      onClick={() => setPageViewMode(tab.id)}
-                    >
-                      <tab.icon className="w-3.5 h-3.5" />
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
           {/* Content Area - Conditional Based on Page View Mode */}
-          {pageViewMode === 'projects' ? (
-            /* Projects View (List/Grid OR Details) */
-            <motion.main
-              className="flex-1 overflow-y-auto"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              {activeProjectId ? (
-                /* Project Detail View */
-                <ProjectDetailPage
-                  projectId={activeProjectId}
-                  onBack={() => setActiveProjectId(null)}
-                />
-              ) : (
-                /* Projects Grid/List View */
-                <div className="p-6">
-                  {filteredProjects.length === 0 ? (
-                    <motion.div
-                      className="flex items-center justify-center h-full min-h-[50vh]"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <div className="text-center max-w-md mx-auto">
-                        <motion.div
-                          className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                          animate={{ scale: [1, 1.05, 1] }}
-                          transition={{ duration: 3, repeat: Infinity }}
+          {/* Projects View (List/Grid OR Details) */}
+          <motion.main
+            className="flex-1 overflow-y-auto"
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {activeProjectId ? (
+              /* Project Detail View */
+              <ProjectDetailPage
+                projectId={activeProjectId}
+                onBack={() => setActiveProjectId(null)}
+              />
+            ) : (
+              /* Projects Grid/List View */
+              <div className="p-6">
+                {filteredProjects.length === 0 ? (
+                  <motion.div
+                    className="flex items-center justify-center h-full min-h-[50vh]"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="text-center max-w-md mx-auto">
+                      <motion.div
+                        className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      >
+                        <FiFolder className="w-12 h-12 text-gray-400" />
+                      </motion.div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-3">No Projects Found</h3>
+                      <p className="text-gray-600 mb-6">
+                        {search ? 'Try adjusting your search terms' : 'You are not assigned to any projects yet.'}
+                      </p>
+                      {search && (
+                        <motion.button
+                          onClick={() => setSearch('')}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
-                          <FiFolder className="w-12 h-12 text-gray-400" />
-                        </motion.div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-3">No Projects Found</h3>
-                        <p className="text-gray-600 mb-6">
-                          {search ? 'Try adjusting your search terms' : 'You are not assigned to any projects yet.'}
-                        </p>
-                        {search && (
-                          <motion.button
-                            onClick={() => setSearch('')}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            Clear Search
-                          </motion.button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      className={viewMode === 'grid'
-                        ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'
-                        : 'flex flex-col gap-3'
-                      }
-                      variants={pageVariants}
-                    >
-                      {filteredProjects.map((project, index) => (
-                        <motion.div
-                          key={project.id}
-                          variants={cardVariants}
-                          custom={index}
-                        >
-                          <ProjectCard
-                            project={project}
-                            onToggleFavorite={toggleFavorite}
-                            isFavorite={isProjectFavorite(project.id)}
-                            viewMode={viewMode}
-                            teamMembers={teamMembers[project.id] || []}
-                            onEditProject={handleEditProject}
-                            onDeleteProject={handleDeleteProject}
-                            onAssignUsers={handleAssignUsers}
-                            onViewMembers={handleViewMembers}
-                            canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
-                            onProjectClick={(id) => setActiveProjectId(id)}
-                          />
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  )}
-                </div>
-              )}
-            </motion.main>
-          ) : (
-            /* Project Management View */
-            <motion.div
-              className="flex-1 overflow-y-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ProjectManagement onClose={() => setPageViewMode('projects')} />
-            </motion.div>
-          )}
+                          Clear Search
+                        </motion.button>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className={viewMode === 'grid'
+                      ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'
+                      : 'flex flex-col gap-3'
+                    }
+                    variants={pageVariants}
+                  >
+                    {filteredProjects.map((project, index) => (
+                      <motion.div
+                        key={project.id}
+                        variants={cardVariants}
+                        custom={index}
+                      >
+                        <ProjectCard
+                          project={project}
+                          onToggleFavorite={toggleFavorite}
+                          isFavorite={isProjectFavorite(project.id)}
+                          viewMode={viewMode}
+                          teamMembers={teamMembers[project.id] || []}
+                          onEditProject={handleEditProject}
+                          onDeleteProject={handleDeleteProject}
+                          onAssignUsers={handleAssignUsers}
+                          onViewMembers={handleViewMembers}
+                          canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
+                          onProjectClick={(id) => setActiveProjectId(id)}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </motion.main>
         </div>
-      </div>
+      </div >
 
       {/* Modals */}
-      <CreateEditProjectModal
+      < CreateEditProjectModal
         isOpen={showCreateEditModal}
-        onClose={() => setShowCreateEditModal(false)}
+        onClose={() => setShowCreateEditModal(false)
+        }
         project={selectedProject}
         onSave={handleSaveProject}
         loading={modalLoading}
@@ -3087,6 +3016,6 @@ export default function ProjectsPage() {
         onRemoveUser={handleRemoveUser}
         loading={modalLoading}
       />
-    </div>
+    </div >
   );
 }

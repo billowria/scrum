@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '../shared/LoadingSpinner';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiArrowRight, FiSun, FiUmbrella, FiGift } from 'react-icons/fi';
 import { format, parseISO, isSameDay } from 'date-fns';
@@ -59,8 +60,8 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
             </div>
 
             {loading ? (
-                <div className="flex-1 flex items-center justify-center p-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+                <div className="flex-1 flex items-center justify-center">
+                    <LoadingSpinner />
                 </div>
             ) : (
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
@@ -79,8 +80,8 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.1 }}
                                         className={`group relative p-3 rounded-xl border transition-all ${isToday
-                                                ? 'bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200 shadow-sm'
-                                                : 'bg-white border-gray-100 hover:border-pink-100 hover:shadow-sm'
+                                            ? 'bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200 shadow-sm'
+                                            : 'bg-white border-gray-100 hover:border-pink-100 hover:shadow-sm'
                                             } ${isPast ? 'opacity-60 grayscale-[0.5]' : ''}`}
                                     >
                                         <div className="flex items-center gap-3">

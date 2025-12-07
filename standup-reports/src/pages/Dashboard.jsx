@@ -7,7 +7,7 @@ import { useCompany } from '../contexts/CompanyContext';
 import notificationService from '../services/notificationService';
 import {
   FiBriefcase, FiActivity, FiUsers, FiPlus,
-  FiArrowRight, FiTarget, FiLayers,
+  FiArrowRight, FiTarget, FiLayers, FiExternalLink,
   FiUserPlus, FiClock,
   FiCalendar, FiFileText, FiAward, FiBarChart2, FiMessageSquare,
   FiCheckCircle, FiStar, FiAlertCircle, FiEdit3, FiBell
@@ -16,6 +16,7 @@ import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import UserListModal from '../components/UserListModal';
 import TaskDetailView from '../components/tasks/TaskDetailView';
 import HolidaysWidget from '../components/dashboard/HolidaysWidget';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 
 // Animation variants
@@ -77,7 +78,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+          <LoadingSpinner />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -153,10 +154,10 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'To Do': return { border: 'border-l-gray-500', bg: 'bg-gray-50/50', dot: 'bg-gray-500', text: 'text-gray-700' };
-      case 'In Progress': return { border: 'border-l-blue-500', bg: 'bg-blue-50/50', dot: 'bg-blue-500', text: 'text-blue-700' };
-      case 'Review': return { border: 'border-l-orange-500', bg: 'bg-orange-50/50', dot: 'bg-orange-500', text: 'text-orange-700' };
-      default: return { border: 'border-l-gray-500', bg: 'bg-gray-50/50', dot: 'bg-gray-500', text: 'text-gray-700' };
+      case 'To Do': return { border: 'border-l-gray-400', bg: 'bg-gray-50/30', dot: 'bg-gray-400', text: 'text-gray-600' };
+      case 'In Progress': return { border: 'border-l-blue-400', bg: 'bg-blue-50/30', dot: 'bg-blue-400', text: 'text-blue-600' };
+      case 'Review': return { border: 'border-l-amber-400', bg: 'bg-amber-50/30', dot: 'bg-amber-400', text: 'text-amber-600' };
+      default: return { border: 'border-l-gray-400', bg: 'bg-gray-50/30', dot: 'bg-gray-400', text: 'text-gray-600' };
     }
   };
 
@@ -165,7 +166,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
       case 'urgent': return { icon: '🔴', color: 'text-red-600' };
       case 'high': return { icon: '🟠', color: 'text-orange-600' };
       case 'medium': return { icon: '🟡', color: 'text-yellow-600' };
-      default: return { icon: '🟢', color: 'text-green-600' };
+      default: return { icon: null, color: 'text-gray-600' };
     }
   };
 
@@ -179,9 +180,9 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
               <FiTarget className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">My Tasks</h3>
+              <h3 className="text-base font-bold text-gray-900">Pending Tasks</h3>
               <p className="text-[10px] text-gray-500">
-                {incompleteTasks.length} pending
+                {incompleteTasks.length} tasks
               </p>
             </div>
           </div>
@@ -195,7 +196,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+          <LoadingSpinner />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -211,41 +212,61 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className={`group p-3 hover:bg-gradient-to-r hover:from-indigo-50/30 hover:to-transparent cursor-pointer transition-all relative border-l-2 ${statusStyle.border}`}
+                    className={`group p-4 hover:bg-gray-100/70 cursor-pointer transition-all relative border-l-2 rounded-r-lg mb-2 mx-2 ${statusStyle.border}`}
                     onClick={() => onTaskClick?.(task)}
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-start justify-between mb-2">
                           <h4 className="text-sm font-bold text-gray-900 line-clamp-2 pr-2">
                             {task.title}
                           </h4>
                           <span className="text-xs flex-shrink-0">{priorityInfo.icon}</span>
                         </div>
 
+                        {/* Project Name */}
+                        {task.project_name && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                              <FiBriefcase className="w-3 h-3 mr-1" />
+                              {task.project_name}
+                            </span>
+                          </div>
+                        )}
+
                         {task.description && (
-                          <p className="text-xs text-gray-600 line-clamp-1 mb-2">
+                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
                             {task.description}
                           </p>
                         )}
 
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className={`px-2 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text} font-semibold`}>
-                            {task.status}
-                          </span>
-                          {task.due_date && (
-                            <span className="text-gray-500 flex items-center gap-1">
-                              <FiClock className="w-3 h-3" />
-                              {formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}
+                        {/* Status, Comments, and Due Date */}
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                              {task.status}
                             </span>
+
+                            {/* Comments indicator */}
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <FiMessageSquare className="w-3 h-3" />
+                              <span>{task.comments_count}</span>
+                            </div>
+                          </div>
+
+                          {task.due_date && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <FiClock className="w-3 h-3" />
+                              <span>{formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}</span>
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Hover Indicator */}
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <FiArrowRight className="w-4 h-4 text-indigo-600" />
+                    {/* Professional icon on hover */}
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FiExternalLink className="w-4 h-4 text-gray-500" />
                     </div>
                   </motion.div>
                 );
@@ -295,7 +316,7 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+          <LoadingSpinner />
         </div>
       ) : (
         <div className="flex-1 p-5 flex flex-col">
@@ -502,7 +523,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
 
       {loading || loadingLeave ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+          <LoadingSpinner />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
@@ -1225,13 +1246,56 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           try {
             const { data: userTasks, error: tasksError } = await supabase
               .from('tasks')
-              .select('*')
+              .select(`
+                *,
+                project:projects(name)
+              `)
               .eq('assignee_id', user.id)
               .neq('status', 'Completed')
               .order('due_date', { ascending: true });
 
             if (tasksError) throw tasksError;
-            setAssignedTasks(userTasks || []);
+
+            // Process the data to include project name
+            let processedTasks = (userTasks || []).map(task => ({
+              ...task,
+              project_name: task.project?.name || 'No Project'
+            }));
+
+            // Get comments count for each task
+            if (processedTasks.length > 0) {
+              const taskIds = processedTasks.map(task => task.id);
+
+              // Query to count comments for each task
+              const { data: commentsCountData, error: commentsError } = await supabase
+                .from('comments')
+                .select('task_id')
+                .in('task_id', taskIds);
+
+              if (!commentsError && commentsCountData) {
+                // Count occurrences of each task_id in the comments
+                const commentsCountMap = {};
+                commentsCountData.forEach(comment => {
+                  commentsCountMap[comment.task_id] = (commentsCountMap[comment.task_id] || 0) + 1;
+                });
+
+                // Update tasks with comments count
+                processedTasks = processedTasks.map(task => ({
+                  ...task,
+                  comments_count: commentsCountMap[task.id] || 0
+                }));
+              } else {
+                // If there's an error with comments, set all to 0
+                processedTasks = processedTasks.map(task => ({
+                  ...task,
+                  comments_count: 0
+                }));
+              }
+            } else {
+              processedTasks = [];
+            }
+
+            setAssignedTasks(processedTasks);
           } catch (err) {
             console.error('Error fetching assigned tasks:', err);
             setAssignedTasks([]);
