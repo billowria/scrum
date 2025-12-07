@@ -610,62 +610,240 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               {/* Right Section - Stats & Actions */}
               <div className="flex items-center gap-3 md:gap-6">
                 {/* Stats with Info Icons */}
-                <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
+                <div className="hidden md:flex items-center gap-2 border-r border-gray-200 pr-4">
                   {viewMode === 'leaves' ? (
                     <>
-                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.onLeaveToday} team members are away today`}>
-                        <div className="p-2 bg-orange-50 text-orange-600 rounded-full group-hover:bg-orange-100 transition-colors">
-                          <FiUser className="w-4 h-4" />
+                      <motion.div
+                        className="relative bg-gradient-to-r from-emerald-400 to-green-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                        variants={{
+                          hidden: { opacity: 0, x: 20 },
+                          visible: { opacity: 1, x: 0 },
+                          hover: {}
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        transition={{ delay: 0.1 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full opacity-50 blur-md"></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${users.length - stats.onLeaveToday} team members available`}>
+                          <FiCheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="text-xs font-bold">{users.length - stats.onLeaveToday}</span>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                            variants={{
+                              hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                              visible: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          >
+                            Available
+                          </motion.span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.onLeaveToday}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Away</span>
-                        </div>
-                      </div>
+                      </motion.div>
 
-                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.pendingRequests} leave requests pending approval`}>
-                        <div className="p-2 bg-red-50 text-red-600 rounded-full group-hover:bg-red-100 transition-colors">
-                          <FiAlertCircle className="w-4 h-4" />
+                      <motion.div
+                        className="relative bg-gradient-to-r from-orange-400 to-amber-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                        variants={{
+                          hidden: { opacity: 0, x: 20 },
+                          visible: { opacity: 1, x: 0 },
+                          hover: {}
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        transition={{ delay: 0.1 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-amber-400 rounded-full opacity-50 blur-md"></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${stats.onLeaveToday} team members are away today`}>
+                          <FiUser className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="text-xs font-bold">{stats.onLeaveToday}</span>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                            variants={{
+                              hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                              visible: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          >
+                            Away
+                          </motion.span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.pendingRequests}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Pending</span>
+                      </motion.div>
+
+                      <motion.div
+                        className="relative bg-gradient-to-r from-red-400 to-rose-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                        variants={{
+                          hidden: { opacity: 0, x: 20 },
+                          visible: { opacity: 1, x: 0 },
+                          hover: {}
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        transition={{ delay: 0.2 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-rose-400 rounded-full opacity-50 blur-md"></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: 0.1 }}
+                        />
+                        <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${stats.pendingRequests} leave requests pending approval`}>
+                          <FiAlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="text-xs font-bold">{stats.pendingRequests}</span>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                            variants={{
+                              hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                              visible: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          >
+                            Pending
+                          </motion.span>
                         </div>
-                      </div>
+                      </motion.div>
                     </>
                   ) : viewMode === 'timesheets' ? (
                     <>
-                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.totalHoursMonth} hours logged this month`}>
-                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
-                          <FiClock className="w-4 h-4" />
+                      <motion.div
+                        className="relative bg-gradient-to-r from-emerald-400 to-green-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                        variants={{
+                          hidden: { opacity: 0, x: 20 },
+                          visible: { opacity: 1, x: 0 },
+                          hover: {}
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        transition={{ delay: 0.1 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full opacity-50 blur-md"></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
+                        <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${stats.totalHoursMonth} hours logged this month`}>
+                          <FiClock className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="text-xs font-bold">{stats.totalHoursMonth}h</span>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                            variants={{
+                              hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                              visible: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          >
+                            Total
+                          </motion.span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.totalHoursMonth}h</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Total</span>
-                        </div>
-                      </div>
+                      </motion.div>
 
-                      <div className="flex items-center gap-2 group cursor-help relative" title={`${stats.missingDays} work days with no time logged`}>
-                        <div className="p-2 bg-amber-50 text-amber-600 rounded-full group-hover:bg-amber-100 transition-colors">
-                          <FiAlertCircle className="w-4 h-4" />
+                      <motion.div
+                        className="relative bg-gradient-to-r from-amber-400 to-orange-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                        variants={{
+                          hidden: { opacity: 0, x: 20 },
+                          visible: { opacity: 1, x: 0 },
+                          hover: {}
+                        }}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover="hover"
+                        transition={{ delay: 0.2 }}
+                      >
+                        {/* Glowing effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full opacity-50 blur-md"></div>
+                        {/* Shimmer effect */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 2, repeat: Infinity, delay: 0.1 }}
+                        />
+                        <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${stats.missingDays} work days with no time logged`}>
+                          <FiAlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="text-xs font-bold">{stats.missingDays}</span>
+                          {/* Expandable label on hover */}
+                          <motion.span
+                            className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                            variants={{
+                              hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                              visible: { width: 0, opacity: 0, marginLeft: 0 },
+                              hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                            }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          >
+                            Missing
+                          </motion.span>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.missingDays}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Missing</span>
-                        </div>
-                      </div>
+                      </motion.div>
                     </>
                   ) : (
                     // Holidays mode stats
-                    <div className="flex items-center gap-2 group cursor-help relative" title={`${holidayData.length} holidays this month`}>
-                      <div className="p-2 bg-amber-50 text-amber-600 rounded-full group-hover:bg-amber-100 transition-colors">
-                        <FiStar className="w-4 h-4" />
+                    <motion.div
+                      className="relative bg-gradient-to-r from-yellow-400 to-amber-400 px-2.5 py-1 rounded-full text-white shadow-lg overflow-hidden backdrop-blur-sm cursor-default"
+                      variants={{
+                        hidden: { opacity: 0, x: 20 },
+                        visible: { opacity: 1, x: 0 },
+                        hover: {}
+                      }}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover="hover"
+                      transition={{ delay: 0.1 }}
+                    >
+                      {/* Glowing effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-full opacity-50 blur-md"></div>
+                      {/* Shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                        animate={{ x: ['-100%', '100%'] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
+                      <div className="relative flex items-center gap-1.5 proact-stat-item" title={`${holidayData.length} holidays this month`}>
+                        <FiStar className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="text-xs font-bold">{holidayData.length}</span>
+                        {/* Expandable label on hover */}
+                        <motion.span
+                          className="overflow-hidden whitespace-nowrap text-[10px] font-medium opacity-90 inline-block align-middle"
+                          variants={{
+                            hidden: { width: 0, opacity: 0, marginLeft: 0 },
+                            visible: { width: 0, opacity: 0, marginLeft: 0 },
+                            hover: { width: 'auto', opacity: 1, marginLeft: 4 }
+                          }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        >
+                          Holidays
+                        </motion.span>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-800 leading-none">{holidayData.length}</span>
-                        <span className="text-[10px] text-gray-500 font-medium">Holidays</span>
-                      </div>
-                    </div>
+                    </motion.div>
                   )}
                 </div>
 

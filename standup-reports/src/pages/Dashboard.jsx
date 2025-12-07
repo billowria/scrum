@@ -54,9 +54,28 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
   };
 
   return (
-    <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden">
+    <motion.div
+      variants={itemVariants}
+      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-indigo-300/60 h-full flex flex-col overflow-hidden"
+      initial={{ borderColor: 'rgba(165, 180, 252, 0)' }}
+      animate={{ borderColor: 'rgba(165, 180, 252, 0.6)' }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
       {/* Compact Header */}
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50/30 via-white to-purple-50/30">
+      <motion.div
+        className="p-4 border-b-2 border-indigo-400/60 bg-gradient-to-r from-indigo-50/30 via-white to-purple-50/30 relative overflow-hidden"
+        initial={{ borderColor: 'rgba(129, 140, 248, 0)' }}
+        animate={{ borderColor: 'rgba(129, 140, 248, 0.6)' }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        {/* Animated shimmer on border */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
+          initial={{ width: '0%', left: '-10%' }}
+          animate={{ left: '100%' }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+          style={{ width: '20%' }}
+        />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg">
@@ -74,7 +93,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
             View All <FiArrowRight className="w-3 h-3" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -171,12 +190,31 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
   };
 
   return (
-    <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden">
+    <motion.div
+      variants={itemVariants}
+      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-amber-300/60 h-full flex flex-col overflow-hidden"
+      initial={{ borderColor: 'rgba(252, 211, 77, 0)' }}
+      animate={{ borderColor: 'rgba(252, 211, 77, 0.6)' }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
       {/* Header */}
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50/30 via-white to-purple-50/30">
+      <motion.div
+        className="p-4 border-b-2 border-amber-400/60 bg-gradient-to-r from-amber-50/30 via-white to-orange-50/30 relative overflow-hidden"
+        initial={{ borderColor: 'rgba(251, 191, 36, 0)' }}
+        animate={{ borderColor: 'rgba(251, 191, 36, 0.6)' }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        {/* Animated shimmer on border */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+          initial={{ width: '0%', left: '-10%' }}
+          animate={{ left: '100%' }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+          style={{ width: '20%' }}
+        />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg">
+            <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg">
               <FiTarget className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -188,11 +226,11 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
           </div>
           <button
             onClick={() => window.location.href = '/tasks'}
-            className="text-xs text-indigo-600 font-bold hover:text-indigo-700 flex items-center gap-1">
+            className="text-xs text-amber-600 font-bold hover:text-amber-700 flex items-center gap-1">
             View All <FiArrowRight className="w-3 h-3" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -297,9 +335,28 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
   const todoPercent = Math.round((taskStats.todo / total) * 100);
 
   return (
-    <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden">
+    <motion.div
+      variants={itemVariants}
+      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-emerald-300/60 h-full flex flex-col overflow-hidden"
+      initial={{ borderColor: 'rgba(110, 231, 183, 0)' }}
+      animate={{ borderColor: 'rgba(110, 231, 183, 0.6)' }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
       {/* Header */}
-      <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-emerald-50/30 via-white to-teal-50/30">
+      <motion.div
+        className="p-5 border-b-2 border-emerald-400/60 bg-gradient-to-r from-emerald-50/30 via-white to-teal-50/30 relative overflow-hidden"
+        initial={{ borderColor: 'rgba(52, 211, 153, 0)' }}
+        animate={{ borderColor: 'rgba(52, 211, 153, 0.6)' }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        {/* Animated shimmer on border */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+          initial={{ width: '0%', left: '-10%' }}
+          animate={{ left: '100%' }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+          style={{ width: '20%' }}
+        />
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur opacity-20"></div>
@@ -312,7 +369,7 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
             <p className="text-xs text-gray-500">Monthly performance metrics</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
@@ -502,8 +559,27 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
   };
 
   return (
-    <motion.div variants={itemVariants} className="bg-white rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden">
-      <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white">
+    <motion.div
+      variants={itemVariants}
+      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-purple-300/60 h-full flex flex-col overflow-hidden"
+      initial={{ borderColor: 'rgba(216, 180, 254, 0)' }}
+      animate={{ borderColor: 'rgba(216, 180, 254, 0.6)' }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
+      <motion.div
+        className="p-5 border-b-2 border-purple-400/60 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white relative overflow-hidden"
+        initial={{ borderColor: 'rgba(192, 132, 252, 0)' }}
+        animate={{ borderColor: 'rgba(192, 132, 252, 0.6)' }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        {/* Animated shimmer on border */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent"
+          initial={{ width: '0%', left: '-10%' }}
+          animate={{ left: '100%' }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+          style={{ width: '20%' }}
+        />
         <div className="flex items-center gap-3">
           <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
             <FiUsers className="w-5 h-5" />
@@ -519,7 +595,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
         >
           View All <FiArrowRight className="w-3.5 h-3.5" />
         </button>
-      </div>
+      </motion.div>
 
       {loading || loadingLeave ? (
         <div className="flex-1 flex items-center justify-center">

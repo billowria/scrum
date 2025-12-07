@@ -38,10 +38,26 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
     return (
         <motion.div
             variants={itemVariants}
-            className="bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full"
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-pink-300/60 flex flex-col overflow-hidden h-full"
+            initial={{ borderColor: 'rgba(249, 168, 212, 0)' }}
+            animate={{ borderColor: 'rgba(249, 168, 212, 0.6)' }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
         >
             {/* Header */}
-            <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-pink-50/30 via-white to-rose-50/30">
+            <motion.div
+                className="p-4 border-b-2 border-pink-400/60 bg-gradient-to-r from-pink-50/30 via-white to-rose-50/30 relative overflow-hidden"
+                initial={{ borderColor: 'rgba(244, 114, 182, 0)' }}
+                animate={{ borderColor: 'rgba(244, 114, 182, 0.6)' }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+            >
+                {/* Animated shimmer on border */}
+                <motion.div
+                    className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-pink-400 to-transparent"
+                    initial={{ width: '0%', left: '-10%' }}
+                    animate={{ left: '100%' }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                    style={{ width: '20%' }}
+                />
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg shadow-sm">
@@ -57,7 +73,7 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
              View All <FiArrowRight className="w-3 h-3" />
           </button> */}
                 </div>
-            </div>
+            </motion.div>
 
             {loading ? (
                 <div className="flex-1 flex items-center justify-center">

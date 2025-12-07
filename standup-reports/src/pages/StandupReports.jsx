@@ -490,9 +490,9 @@ export default function StandupReports() {
         >
             {/* Header - Positioned in flow */}
             <div className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-lg p-4">
-                <motion.div className="flex items-center justify-between" variants={containerVariants}>
+                <div className="flex items-center justify-between">
                     {/* Left Section - Title */}
-                    <motion.div className="flex items-center gap-3" variants={itemVariants}>
+                    <div className="flex items-center gap-3">
                         <div className="p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white shadow-lg shadow-indigo-200/50">
                             <FiFileText className="w-5 h-5" />
                         </div>
@@ -504,10 +504,10 @@ export default function StandupReports() {
                                     : 'Review historical standup reports and analytics'}
                             </p>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Center Section - Enhanced Modern View Toggle */}
-                    <motion.div className="flex items-center justify-center" variants={itemVariants}>
+                    <div className="flex items-center justify-center">
                         <div className="relative group">
                             {/* Enhanced Background Glow */}
                             <div className="absolute inset-0 bg-gradient-to-r from-orange-400/20 via-amber-400/30 to-yellow-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -625,10 +625,10 @@ export default function StandupReports() {
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Right Section - Glowing Stats & Actions */}
-                    <motion.div className="flex items-center gap-2 sm:gap-3" variants={itemVariants}>
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {/* Glowing Stats Pills */}
                         <div className="hidden md:flex items-center gap-2">
                             {stats && (
@@ -797,8 +797,8 @@ export default function StandupReports() {
                                 {showHeader ? <FiEyeOff className="w-4 h-4 relative z-10" /> : <FiEye className="w-4 h-4 relative z-10" />}
                             </motion.button>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </div>
+                </div>
             </div>
 
             {/* Scrollable Content Area - Full Width */}
