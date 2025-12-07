@@ -15,6 +15,8 @@ import Badge from '../components/shared/Badge';
 import LoadingSkeleton, { SkeletonCard } from '../components/shared/LoadingSkeleton';
 import { notifyProjectUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../contexts/CompanyContext';
+import ProjectManagement from '../components/ProjectManagement';
+import ProjectDetailPage from '../projects/pages/ProjectDetailPage';
 
 // Import design system
 import { colors, animations, shadows, breakpoints, typography } from '../config/designSystem';
@@ -102,11 +104,11 @@ const modernColors = {
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     y: 0,
-    transition: { 
-      duration: 0.5, 
+    transition: {
+      duration: 0.5,
       ease: [0.4, 0, 0.2, 1],
       staggerChildren: 0.1
     }
@@ -116,18 +118,18 @@ const pageVariants = {
 
 const cardVariants = {
   initial: { opacity: 0, y: 20, scale: 0.95 },
-  animate: { 
-    opacity: 1, 
-    y: 0, 
+  animate: {
+    opacity: 1,
+    y: 0,
     scale: 1,
-    transition: { 
+    transition: {
       type: 'spring',
       stiffness: 400,
       damping: 25
     }
   },
-  hover: { 
-    y: -8, 
+  hover: {
+    y: -8,
     scale: 1.02,
     transition: { duration: 0.2 }
   }
@@ -135,10 +137,10 @@ const cardVariants = {
 
 const sidebarVariants = {
   initial: { x: -320, opacity: 0 },
-  animate: { 
-    x: 0, 
+  animate: {
+    x: 0,
     opacity: 1,
-    transition: { 
+    transition: {
       type: 'spring',
       stiffness: 400,
       damping: 25,
@@ -146,10 +148,10 @@ const sidebarVariants = {
       restDelta: 0.001
     }
   },
-  exit: { 
-    x: -320, 
+  exit: {
+    x: -320,
     opacity: 0,
-    transition: { 
+    transition: {
       duration: 0.3,
       ease: [0.4, 0, 0.2, 1]
     }
@@ -159,7 +161,7 @@ const sidebarVariants = {
 // Enhanced Hamburger Menu Component with animations
 const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) => {
   const buttonRef = useRef(null);
-  
+
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -173,11 +175,10 @@ const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) =>
       ref={buttonRef}
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={`relative z-50 p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1 ${
-        isMobile
-          ? 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
-          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-      } ${className}`}
+      className={`relative z-50 p-2 rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1 ${isMobile
+        ? 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+        } ${className}`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
@@ -209,7 +210,7 @@ const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) =>
             backgroundColor: { duration: 0.2 }
           }}
         />
-        
+
         {/* Middle line */}
         <motion.span
           className="absolute h-0.5 w-4 bg-current rounded-full"
@@ -229,7 +230,7 @@ const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) =>
             backgroundColor: { duration: 0.2 }
           }}
         />
-        
+
         {/* Bottom line */}
         <motion.span
           className="absolute h-0.5 w-4 bg-current rounded-full"
@@ -252,7 +253,7 @@ const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) =>
           }}
         />
       </motion.div>
-      
+
       {/* Subtle pulse effect when focused */}
       <motion.div
         className="absolute inset-0 rounded-lg bg-blue-500/10"
@@ -310,7 +311,7 @@ const ProjectsSidebar = ({
     }
   };
 
-  
+
   return (
     <>
       {/* Mobile Overlay with Enhanced Animation */}
@@ -320,16 +321,16 @@ const ProjectsSidebar = ({
             <motion.div
               className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
               initial={{ opacity: 0 }}
-              animate={{ 
+              animate={{
                 opacity: 1,
-                transition: { 
+                transition: {
                   duration: 0.3,
                   ease: [0.25, 0.46, 0.45, 0.94]
                 }
               }}
-              exit={{ 
+              exit={{
                 opacity: 0,
-                transition: { 
+                transition: {
                   duration: 0.2,
                   ease: [0.4, 0, 0.2, 1]
                 }
@@ -339,7 +340,7 @@ const ProjectsSidebar = ({
           )}
         </AnimatePresence>
       )}
-      
+
       {isMobile ? (
         <AnimatePresence>
           {isOpen && (
@@ -349,8 +350,8 @@ const ProjectsSidebar = ({
               initial="initial"
               animate="animate"
               exit="exit"
-              transition={{ 
-                duration: 0.4, 
+              transition={{
+                duration: 0.4,
                 ease: [0.25, 0.46, 0.45, 0.94],
                 bounce: 0.3
               }}
@@ -362,7 +363,7 @@ const ProjectsSidebar = ({
                     Project Spaces
                   </h2>
                 )}
-                
+
                 {/* Toggle Button */}
                 <motion.button
                   onClick={onClose}
@@ -405,7 +406,7 @@ const ProjectsSidebar = ({
                         </motion.div>
                       </div>
                     </motion.button>
-                    
+
                     <AnimatePresence>
                       {favoritesExpanded && (
                         <motion.div
@@ -416,16 +417,15 @@ const ProjectsSidebar = ({
                         >
                           {favoriteProjectsList.map((project) => {
                             const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-                            
+
                             return (
                               <motion.button
                                 key={project.id}
                                 onClick={() => onProjectSelect(project)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${
-                                  activeFilter === project.id
-                                    ? 'bg-amber-50 border border-amber-300'
-                                    : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
-                                }`}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
+                                  ? 'bg-amber-50 border border-amber-300'
+                                  : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
+                                  }`}
                                 whileHover={{ scale: 1.02, x: 4 }}
                                 whileTap={{ scale: 0.98 }}
                               >
@@ -483,7 +483,7 @@ const ProjectsSidebar = ({
                     </motion.div>
                   </div>
                 </motion.button>
-                
+
                 <AnimatePresence>
                   {expanded && (
                     <motion.div
@@ -494,16 +494,15 @@ const ProjectsSidebar = ({
                     >
                       {projects.map((project) => {
                         const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-                        
+
                         return (
                           <motion.button
                             key={project.id}
                             onClick={() => onProjectSelect(project)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${
-                              activeFilter === project.id
-                                ? 'bg-blue-50 border border-blue-300'
-                                : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
+                              ? 'bg-blue-50 border border-blue-300'
+                              : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
+                              }`}
                             whileHover={{ scale: 1.02, x: 4 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -546,17 +545,16 @@ const ProjectsSidebar = ({
         </AnimatePresence>
       ) : (
         <motion.aside
-          className={`bg-white text-gray-800 h-full overflow-hidden flex flex-col shadow-lg border-r border-gray-200 ${
-            sidebarCollapsed
-              ? 'w-16 relative'
-              : 'w-80 relative'
-          } ${className}`}
+          className={`bg-white text-gray-800 h-full overflow-hidden flex flex-col shadow-lg border-r border-gray-200 ${sidebarCollapsed
+            ? 'w-16 relative'
+            : 'w-80 relative'
+            } ${className}`}
           variants={sidebarVariants}
           initial="initial"
           animate="animate"
           exit="exit"
-          transition={{ 
-            duration: 0.4, 
+          transition={{
+            duration: 0.4,
             ease: [0.25, 0.46, 0.45, 0.94],
             bounce: 0.3
           }}
@@ -568,7 +566,7 @@ const ProjectsSidebar = ({
                 Project Spaces
               </h2>
             )}
-            
+
             {/* Enhanced Toggle Button */}
             <HamburgerMenu
               isOpen={!sidebarCollapsed}
@@ -592,7 +590,7 @@ const ProjectsSidebar = ({
                     <span className="text-xs text-gray-500">{favoriteProjectsList.length}</span>
                   </div>
                 )}
-                
+
                 {/* Projects Section - Collapsed */}
                 <div className="flex flex-col items-center">
                   <div className="p-2 rounded-lg bg-blue-500 mb-1">
@@ -631,7 +629,7 @@ const ProjectsSidebar = ({
                         </motion.div>
                       </div>
                     </motion.button>
-                    
+
                     <AnimatePresence>
                       {favoritesExpanded && (
                         <motion.div
@@ -642,16 +640,15 @@ const ProjectsSidebar = ({
                         >
                           {favoriteProjectsList.map((project) => {
                             const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-                            
+
                             return (
                               <motion.button
                                 key={project.id}
                                 onClick={() => onProjectSelect(project)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${
-                                  activeFilter === project.id
-                                    ? 'bg-amber-50 border border-amber-300'
-                                    : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
-                                }`}
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
+                                  ? 'bg-amber-50 border border-amber-300'
+                                  : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
+                                  }`}
                                 whileHover={{ scale: 1.02, x: 4 }}
                                 whileTap={{ scale: 0.98 }}
                               >
@@ -709,7 +706,7 @@ const ProjectsSidebar = ({
                     </motion.div>
                   </div>
                 </motion.button>
-                
+
                 <AnimatePresence>
                   {expanded && (
                     <motion.div
@@ -720,16 +717,15 @@ const ProjectsSidebar = ({
                     >
                       {projects.map((project) => {
                         const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-                        
+
                         return (
                           <motion.button
                             key={project.id}
                             onClick={() => onProjectSelect(project)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${
-                              activeFilter === project.id
-                                ? 'bg-blue-50 border border-blue-300'
-                                : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
+                              ? 'bg-blue-50 border border-blue-300'
+                              : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
+                              }`}
                             whileHover={{ scale: 1.02, x: 4 }}
                             whileTap={{ scale: 0.98 }}
                           >
@@ -816,7 +812,7 @@ const ProjectsHeader = ({
                 className="backdrop-blur-sm"
               />
             )}
-            
+
             {/* Title Section */}
             <div>
               <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
@@ -827,7 +823,7 @@ const ProjectsHeader = ({
               </p>
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
             {/* Stats Pills - Desktop Only */}
@@ -854,7 +850,7 @@ const ProjectsHeader = ({
                 </div>
               </div>
             )}
-            
+
             {/* Advanced Project Management Button */}
             <motion.button
               onClick={() => navigate('/project-management')}
@@ -866,7 +862,7 @@ const ProjectsHeader = ({
               <FiSettings size={16} />
               <span className="hidden sm:inline">Advanced</span>
             </motion.button>
-            
+
             {/* Create Project Button */}
             <motion.button
               onClick={onCreateProject}
@@ -930,7 +926,7 @@ const ProjectsHeader = ({
                 </motion.button>
               )}
             </div>
-            
+
             {/* Status Filters */}
             <div className="flex items-center gap-1 bg-white/60 rounded-lg p-1 border border-slate-200/50 backdrop-blur-sm">
               {[
@@ -942,20 +938,18 @@ const ProjectsHeader = ({
                 <motion.button
                   key={filter.key}
                   onClick={() => onFilterChange(filter.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-200 text-xs font-medium ${
-                    filterStatus === filter.key
-                      ? 'bg-white text-blue-600 shadow-sm border border-blue-200'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-200 text-xs font-medium ${filterStatus === filter.key
+                    ? 'bg-white text-blue-600 shadow-sm border border-blue-200'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <span>{filter.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    filterStatus === filter.key
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${filterStatus === filter.key
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-slate-100 text-slate-600'
+                    }`}>
                     {filter.count}
                   </span>
                 </motion.button>
@@ -969,11 +963,10 @@ const ProjectsHeader = ({
             <div className="flex bg-white/60 rounded-lg p-1 border border-slate-200/50 backdrop-blur-sm">
               <motion.button
                 onClick={() => onViewModeChange('grid')}
-                className={`p-1.5 rounded-md transition-all duration-200 ${
-                  viewMode === 'grid'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`p-1.5 rounded-md transition-all duration-200 ${viewMode === 'grid'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -981,11 +974,10 @@ const ProjectsHeader = ({
               </motion.button>
               <motion.button
                 onClick={() => onViewModeChange('list')}
-                className={`p-1.5 rounded-md transition-all duration-200 ${
-                  viewMode === 'list'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
+                className={`p-1.5 rounded-md transition-all duration-200 ${viewMode === 'list'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -1024,20 +1016,21 @@ const ProjectCard = ({
   onDeleteProject,
   onAssignUsers,
   onViewMembers,
-  canManageProject
+  canManageProject,
+  onProjectClick // New prop
 }) => {
   const navigate = useNavigate();
   const [showActions, setShowActions] = useState(false);
   const [hoveredIcon, setHoveredIcon] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  
+
   // Debug logging for button visibility
   console.log(`[DEBUG] ProjectCard for project ${project.id}:`, {
     projectName: project.name,
     canManageProject,
     viewMode
   });
-  
+
   const getStatusConfig = (status) => {
     switch (status) {
       case 'active':
@@ -1082,21 +1075,21 @@ const ProjectCard = ({
   const statusConfig = getStatusConfig(project.status);
   const formatDate = (dateString) => {
     if (!dateString) return 'No date set';
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
   };
 
-    
-    
+
+
   // Glassmorphic icon styles
   const getGlassmorphicIconStyle = (iconType, viewMode = 'grid') => {
     const baseTextColor = viewMode === 'list' ? 'text-gray-700' : 'text-white';
     const baseStyle = `p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 shadow-lg ${baseTextColor} hover:scale-110`;
-    
-    switch(iconType) {
+
+    switch (iconType) {
       case 'favorite':
         return `${baseStyle} hover:bg-gradient-to-r hover:from-amber-400/50 hover:to-yellow-400/50 hover:text-amber-700 hover:shadow-amber-500/25`;
       case 'edit':
@@ -1118,7 +1111,13 @@ const ProjectCard = ({
         className="bg-white border border-gray-200 rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden group"
         variants={cardVariants}
         whileHover="hover"
-        onClick={() => navigate(`/projects/${project.id}?editMode=${isEditMode}`)}
+        onClick={() => {
+          if (onProjectClick) {
+            onProjectClick(project.id);
+          } else {
+            navigate(`/projects/${project.id}?editMode=${isEditMode}`);
+          }
+        }}
       >
         <div className="p-4">
           <div className="flex items-center gap-4">
@@ -1138,14 +1137,14 @@ const ProjectCard = ({
                   {statusConfig.label}
                 </span>
               </div>
-              
+
               <div
                 className="text-gray-600 mb-2 line-clamp-2 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: project.description || 'No description available'
                 }}
               />
-              
+
               <div className="flex items-center gap-4 text-sm text-gray-500">
                 <span className="flex items-center gap-2">
                   <FiCalendar className="w-4 h-4" />
@@ -1164,7 +1163,7 @@ const ProjectCard = ({
               </div>
             </div>
 
-  
+
             {/* Team Avatars */}
             <div className="flex-shrink-0">
               <AvatarGroup users={teamMembers} max={4} size="sm" />
@@ -1179,11 +1178,10 @@ const ProjectCard = ({
                     e.stopPropagation();
                     setIsEditMode(!isEditMode);
                   }}
-                  className={`p-2 rounded-lg transition-all duration-200 ${
-                    isEditMode
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  }`}
+                  className={`p-2 rounded-lg transition-all duration-200 ${isEditMode
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    }`}
                   title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1204,7 +1202,7 @@ const ProjectCard = ({
               >
                 <FiEdit2 className="w-4 h-4" />
               </motion.button>
-              
+
               {canManageProject && (
                 <motion.button
                   onClick={(e) => {
@@ -1220,7 +1218,7 @@ const ProjectCard = ({
                   <FiUserPlus className="w-4 h-4" />
                 </motion.button>
               )}
-              
+
               <motion.button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1233,7 +1231,7 @@ const ProjectCard = ({
               >
                 <FiUsers className="w-4 h-4" />
               </motion.button>
-              
+
               {canManageProject && (
                 <motion.button
                   onClick={(e) => {
@@ -1248,7 +1246,7 @@ const ProjectCard = ({
                   <FiTrash2 className="w-4 h-4" />
                 </motion.button>
               )}
-              
+
               <motion.button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1273,7 +1271,13 @@ const ProjectCard = ({
       className="bg-white border border-gray-200 rounded-xl hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
       variants={cardVariants}
       whileHover="hover"
-      onClick={() => navigate(`/projects/${project.id}?editMode=${isEditMode}`)}
+      onClick={() => {
+        if (onProjectClick) {
+          onProjectClick(project.id);
+        } else {
+          navigate(`/projects/${project.id}?editMode=${isEditMode}`);
+        }
+      }}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -1297,7 +1301,7 @@ const ProjectCard = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.2 }}
             >
-    
+
               {canManageProject && (
                 <div className="relative">
                   <motion.button
@@ -1330,7 +1334,7 @@ const ProjectCard = ({
                   )}
                 </div>
               )}
-              
+
               {canManageProject && (
                 <div className="relative">
                   <motion.button
@@ -1349,7 +1353,7 @@ const ProjectCard = ({
                   >
                     <FiUserPlus className="w-4 h-4" />
                   </motion.button>
-                  
+
                   {/* Tooltip for Assign */}
                   {hoveredIcon === 'assign' && (
                     <motion.div
@@ -1363,7 +1367,7 @@ const ProjectCard = ({
                   )}
                 </div>
               )}
-              
+
               <div className="relative">
                 <motion.button
                   onClick={(e) => {
@@ -1381,7 +1385,7 @@ const ProjectCard = ({
                 >
                   <FiUsers className="w-4 h-4" />
                 </motion.button>
-                
+
                 {/* Tooltip for Members */}
                 {hoveredIcon === 'members' && (
                   <motion.div
@@ -1394,7 +1398,7 @@ const ProjectCard = ({
                   </motion.div>
                 )}
               </div>
-              
+
               {/* Favorite Button - Moved to action group */}
               <div className="relative">
                 <motion.button
@@ -1413,7 +1417,7 @@ const ProjectCard = ({
                 >
                   <FiStar className="w-4 h-4" fill={isFavorite ? 'currentColor' : 'none'} />
                 </motion.button>
-                
+
                 {/* Tooltip for Favorite */}
                 {hoveredIcon === 'favorite' && (
                   <motion.div
@@ -1426,7 +1430,7 @@ const ProjectCard = ({
                   </motion.div>
                 )}
               </div>
-              
+
               {canManageProject && (
                 <div className="relative">
                   <motion.button
@@ -1445,7 +1449,7 @@ const ProjectCard = ({
                   >
                     <FiTrash2 className="w-4 h-4" />
                   </motion.button>
-                  
+
                   {/* Tooltip for Delete */}
                   {hoveredIcon === 'delete' && (
                     <motion.div
@@ -1479,7 +1483,7 @@ const ProjectCard = ({
           }}
         />
 
-  
+
         {/* Date Range */}
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <FiCalendar className="w-3 h-3" />
@@ -1506,11 +1510,10 @@ const ProjectCard = ({
                 e.stopPropagation();
                 setIsEditMode(!isEditMode);
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                isEditMode
-                  ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
-              }`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${isEditMode
+                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
+                }`}
               title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -1740,16 +1743,14 @@ const CreateEditProjectModal = ({
                 transition={{ delay: 0.5 }}
                 className={`relative ${focusedField === 'name' ? 'z-10' : ''}`}
               >
-                <label className={`absolute left-4 transition-all duration-200 text-sm font-medium ${
-                  formData.name ? '-top-2.5 text-xs bg-white px-2 text-blue-600' : 'top-4 text-gray-500'
-                }`}>
+                <label className={`absolute left-4 transition-all duration-200 text-sm font-medium ${formData.name ? '-top-2.5 text-xs bg-white px-2 text-blue-600' : 'top-4 text-gray-500'
+                  }`}>
                   Project Name *
                 </label>
                 <motion.input
                   type="text"
-                  className={`w-full border-2 rounded-xl px-4 py-3 pt-6 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${
-                    focusedField === 'name' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
-                  }`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 pt-6 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'name' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                    }`}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   onFocus={() => setFocusedField('name')}
@@ -1785,9 +1786,8 @@ const CreateEditProjectModal = ({
                   )}
                 </label>
                 <motion.textarea
-                  className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none ${
-                    focusedField === 'description' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
-                  }`}
+                  className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none ${focusedField === 'description' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                    }`}
                   value={formData.description}
                   onChange={(e) => {
                     if (e.target.value.length <= 500) {
@@ -1828,9 +1828,8 @@ const CreateEditProjectModal = ({
                   </label>
                   <motion.input
                     type="date"
-                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${
-                      focusedField === 'start_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
-                    }`}
+                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'start_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                      }`}
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     onFocus={() => setFocusedField('start_date')}
@@ -1847,9 +1846,8 @@ const CreateEditProjectModal = ({
                   </label>
                   <motion.input
                     type="date"
-                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${
-                      focusedField === 'end_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
-                    }`}
+                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'end_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                      }`}
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                     onFocus={() => setFocusedField('end_date')}
@@ -1875,11 +1873,10 @@ const CreateEditProjectModal = ({
                       key={status.value}
                       type="button"
                       onClick={() => setFormData({ ...formData, status: status.value })}
-                      className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
-                        formData.status === status.value
-                          ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-500/20'
-                          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
-                      }`}
+                      className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${formData.status === status.value
+                        ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-500/20'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                        }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -1966,13 +1963,13 @@ const CreateEditProjectModal = ({
 };
 
 // Assignment Modal
-const AssignmentModal = ({ 
-  isOpen, 
-  onClose, 
-  project, 
-  availableUsers, 
+const AssignmentModal = ({
+  isOpen,
+  onClose,
+  project,
+  availableUsers,
   onAssignUser,
-  loading 
+  loading
 }) => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [error, setError] = useState('');
@@ -1982,7 +1979,7 @@ const AssignmentModal = ({
       setError('Please select a user to assign');
       return;
     }
-    
+
     try {
       await onAssignUser(selectedUserId);
       setSelectedUserId(null);
@@ -2032,11 +2029,10 @@ const AssignmentModal = ({
               availableUsers.map((user) => (
                 <motion.div
                   key={user.id}
-                  className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                    selectedUserId === user.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedUserId === user.id
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
                   onClick={() => setSelectedUserId(user.id)}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
@@ -2096,13 +2092,13 @@ const AssignmentModal = ({
 };
 
 // Assigned Members Modal
-const AssignedMembersModal = ({ 
-  isOpen, 
-  onClose, 
-  project, 
-  members, 
+const AssignedMembersModal = ({
+  isOpen,
+  onClose,
+  project,
+  members,
   onRemoveUser,
-  loading 
+  loading
 }) => {
   if (!isOpen || !project) return null;
 
@@ -2157,11 +2153,10 @@ const AssignedMembersModal = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      member.role_in_project === 'manager' ? 'bg-purple-100 text-purple-800' :
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.role_in_project === 'manager' ? 'bg-purple-100 text-purple-800' :
                       member.role_in_project === 'admin' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
+                        'bg-blue-100 text-blue-800'
+                      }`}>
                       {member.role_in_project}
                     </span>
                     <button
@@ -2204,6 +2199,7 @@ export default function ProjectsPage() {
   const navigate = useNavigate();
   const { currentCompany } = useCompany();
   const [projects, setProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]); // Filtered and sorted projects
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
@@ -2211,6 +2207,8 @@ export default function ProjectsPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
+  const [pageViewMode, setPageViewMode] = useState('projects'); // 'projects' or 'management'
+  const [activeProjectId, setActiveProjectId] = useState(null); // ID of project to show in detail view
   const [favoriteProjects, setFavoriteProjects] = useState(new Set());
   const [recentProjects, setRecentProjects] = useState([]);
   const [teamMembers, setTeamMembers] = useState({});
@@ -2218,7 +2216,7 @@ export default function ProjectsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  
+
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -2323,10 +2321,10 @@ export default function ProjectsPage() {
 
       console.log('✅ [DEBUG] Processed projects:', processedProjects.length, processedProjects.map(p => ({ id: p.id, name: p.name, role: p.project_assignments[0]?.role_in_project })));
       setProjects(processedProjects);
-      
+
       // Set recent projects (first 5)
       setRecentProjects(processedProjects?.slice(0, 5) || []);
-      
+
       // Fetch team members and user roles for each project
       const teamData = {};
       const userRolesData = {};
@@ -2346,16 +2344,16 @@ export default function ProjectsPage() {
               )
             `)
             .eq('project_id', project.id);
-          
+
           console.log(`[DEBUG] Project ${project.id} members:`, members);
-          
+
           if (!membersError && members) {
             teamData[project.id] = members.map(m => m.users).filter(Boolean);
-            
+
             // Store current user's role in this project
             const currentUserAssignment = members.find(m => m.user_id === user.id);
             console.log(`[DEBUG] Current user assignment for project ${project.id}:`, currentUserAssignment);
-            
+
             if (currentUserAssignment) {
               userRolesData[project.id] = currentUserAssignment.role_in_project;
               console.log(`[DEBUG] Set user role for project ${project.id}:`, currentUserAssignment.role_in_project);
@@ -2403,7 +2401,7 @@ export default function ProjectsPage() {
       }
 
       const newFavoriteStatus = !currentProject.is_favorite;
-      
+
       // Update the is_favorite column in the project_assignments table
       const { error } = await supabase
         .from('project_assignments')
@@ -2454,7 +2452,7 @@ export default function ProjectsPage() {
   const canManageProject = (projectId) => {
     // Use the user's main role from the users table instead of project-specific roles
     const mainUserRole = currentUser?.role;
-    
+
     // Debug logging
     console.log(`[DEBUG] canManageProject for project ${projectId}:`, {
       mainUserRole,
@@ -2464,31 +2462,52 @@ export default function ProjectsPage() {
       previousProjectRole: userProjectRoles[projectId],
       userProjectRoles
     });
-    
+
     if (!mainUserRole) {
       console.log(`[DEBUG] No main role found for current user`);
       return false;
     }
-    
+
     // Check for case-insensitive match to handle potential case differences
     const normalizedRole = mainUserRole.toLowerCase();
     const isManager = normalizedRole === 'manager';
     const isAdmin = normalizedRole === 'admin';
-    
+
     const canManage = isManager || isAdmin;
     console.log(`[DEBUG] User main role "${mainUserRole}" normalized to "${normalizedRole}" - Manager: ${isManager}, Admin: ${isAdmin}, CanManage: ${canManage}`);
-    
+    console.log(`[DEBUG] User main role "${mainUserRole}" normalized to "${normalizedRole}" - Manager: ${isManager}, Admin: ${isAdmin}, CanManage: ${canManage}`);
+
     return canManage;
   };
 
-  // Filter projects based on search and status
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch =
-      project.name.toLowerCase().includes(search.toLowerCase()) ||
-      project.description?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || project.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // Filter and sort projects based on search, status, and assignment
+  useEffect(() => {
+    // Filter Logic
+    let filtered = projects.filter(project => {
+      // Search filter
+      const matchesSearch = project.name.toLowerCase().includes(search.toLowerCase()) ||
+        project.description?.toLowerCase().includes(search.toLowerCase());
+
+      // Status filter
+      const matchesStatus = filterStatus === 'all' || project.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Sort Logic: Assigned projects first
+    filtered.sort((a, b) => {
+      const isAssignedA = userProjectRoles[a.id] || teamMembers[a.id]?.some(m => m.id === currentUser?.id);
+      const isAssignedB = userProjectRoles[b.id] || teamMembers[b.id]?.some(m => m.id === currentUser?.id);
+
+      if (isAssignedA && !isAssignedB) return -1;
+      if (!isAssignedA && isAssignedB) return 1;
+
+      // Secondary sort by date (newest first)
+      return new Date(b.created_at) - new Date(a.created_at);
+    });
+
+    setFilteredProjects(filtered);
+  }, [search, filterStatus, projects, userProjectRoles, teamMembers, currentUser]);
 
   // Handle create/edit project
   const handleSaveProject = async (formData) => {
@@ -2572,12 +2591,12 @@ export default function ProjectsPage() {
           .select('team_id')
           .eq('id', user.id)
           .single();
-        
+
         if (userData?.team_id) {
-          const message = formData.id 
+          const message = formData.id
             ? `Project "${formData.name}" has been updated.`
             : `New project "${formData.name}" has been created.`;
-          
+
           await notifyProjectUpdate(
             formData.name,
             message,
@@ -2611,7 +2630,7 @@ export default function ProjectsPage() {
         .from('projects')
         .delete()
         .eq('id', projectId);
-      
+
       if (error) throw error;
       await fetchProjects();
     } catch (err) {
@@ -2631,7 +2650,7 @@ export default function ProjectsPage() {
         .from('users')
         .select('id, name, email, role')
         .eq('team_id', currentUser.team_id);
-      
+
       if (usersError) throw usersError;
 
       // Get already assigned users for this project
@@ -2639,13 +2658,13 @@ export default function ProjectsPage() {
         .from('project_assignments')
         .select('user_id')
         .eq('project_id', projectId);
-      
+
       if (assignedError) throw assignedError;
 
       // Filter out already assigned users
       const assignedUserIds = assignedUsers.map(assignment => assignment.user_id);
       const availableUsers = allUsers.filter(user => !assignedUserIds.includes(user.id));
-      
+
       setAvailableUsers(availableUsers || []);
     } catch (err) {
       console.error('Error fetching available users:', err);
@@ -2664,9 +2683,9 @@ export default function ProjectsPage() {
           user_id: userId,
           role_in_project: 'member'
         });
-      
+
       if (error) throw error;
-      
+
       setShowAssignmentModal(false);
       await fetchProjects();
     } catch (err) {
@@ -2689,9 +2708,9 @@ export default function ProjectsPage() {
         .delete()
         .eq('project_id', selectedProject.id)
         .eq('user_id', userId);
-      
+
       if (error) throw error;
-      
+
       await fetchProjects();
       await fetchAssignedMembers(selectedProject.id);
     } catch (err) {
@@ -2716,7 +2735,7 @@ export default function ProjectsPage() {
           )
         `)
         .eq('project_id', projectId);
-      
+
       if (error) throw error;
       setAssignedMembers(data || []);
     } catch (err) {
@@ -2811,96 +2830,234 @@ export default function ProjectsPage() {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <ProjectsHeader
-            userRole={userRole}
-            projects={projects}
-            search={search}
-            onSearchChange={setSearch}
-            filterStatus={filterStatus}
-            onFilterChange={setFilterStatus}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            onRefresh={fetchProjects}
-            loading={loading}
-            stats={stats}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            isMobile={isMobile}
-            onCreateProject={handleCreateProject}
-            navigate={navigate}
-          />
+          {/* Header - StandupReports/LeaveCalendar Style */}
+          {!activeProjectId && (
+            <div className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-lg p-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
+                {/* Left Section - Title */}
+                <div className="flex items-center gap-3">
+                  {/* Mobile Menu Toggle */}
+                  {isMobile && (
+                    <HamburgerMenu
+                      isOpen={sidebarOpen}
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      isMobile={true}
+                    />
+                  )}
 
-          {/* Projects Content */}
-          <motion.main
-            className="flex-1 overflow-y-auto p-6"
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            {filteredProjects.length === 0 ? (
-              <motion.div
-                className="flex items-center justify-center h-full"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className="text-center max-w-md mx-auto">
-                  <motion.div
-                    className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  >
-                    <FiFolder className="w-12 h-12 text-gray-400" />
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-3">No Projects Found</h3>
-                  <p className="text-gray-600 mb-6">
-                    {search ? 'Try adjusting your search terms' : 'You are not assigned to any projects yet.'}
-                  </p>
-                  {search && (
+                  <div className={`p-2 bg-gradient-to-r ${pageViewMode === 'projects' ? 'from-blue-500 to-indigo-500 shadow-blue-200/50' : 'from-purple-500 to-pink-500 shadow-purple-200/50'} rounded-xl text-white shadow-lg transition-all duration-300`}>
+                    {pageViewMode === 'projects' ? <FiFolder className="w-5 h-5" /> : <FiSettings className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">
+                      {pageViewMode === 'projects' ? 'Projects' : 'Project Management'}
+                    </h1>
+                  </div>
+                </div>
+
+                {/* Center Section - Toggle Switch (Absolutely Centered) */}
+                <div className="hidden md:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                  <div className="relative group">
+                    <div className="relative bg-white/40 backdrop-blur-2xl p-1.5 rounded-2xl border border-white/50 shadow-inner flex items-center gap-1">
+                      {[
+                        { id: 'projects', icon: FiFolder, label: 'Projects', gradient: 'from-blue-500 via-indigo-500 to-purple-500' },
+                        { id: 'management', icon: FiSettings, label: 'Management', gradient: 'from-purple-500 via-pink-500 to-rose-500' }
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          className={`relative px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${pageViewMode === tab.id
+                            ? 'text-white shadow-lg'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                            }`}
+                          onClick={() => setPageViewMode(tab.id)}
+                        >
+                          {pageViewMode === tab.id && (
+                            <motion.div
+                              className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tab.gradient}`}
+                              layoutId="activeProjectTab"
+                            />
+                          )}
+                          <span className="relative z-10 flex items-center gap-2">
+                            <tab.icon className="w-4 h-4" />
+                            {tab.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Section - Stats & Actions */}
+                <div className="flex items-center gap-3 md:gap-6">
+                  {/* Stats with Info Icons - Only in Projects View */}
+                  {pageViewMode === 'projects' && (
+                    <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
+                      <div className="flex items-center gap-2 group cursor-help" title={`${stats.total} total projects`}>
+                        <div className="p-2 bg-slate-50 text-slate-600 rounded-full group-hover:bg-slate-100 transition-colors">
+                          <FiFolder className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.total}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Total</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 group cursor-help" title={`${stats.active} active projects`}>
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
+                          <FiTrendingUp className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800 leading-none">{stats.active}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Active</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {pageViewMode === 'projects' && (
+                      <motion.button
+                        onClick={handleCreateProject}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-blue-500/30 font-medium text-sm transition-all"
+                      >
+                        <FiPlus className="w-4 h-4" />
+                        Create Project
+                      </motion.button>
+                    )}
+
                     <motion.button
-                      onClick={() => setSearch('')}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      onClick={fetchProjects}
+                      className="p-2.5 bg-white/50 hover:bg-white rounded-xl text-gray-600 transition-colors"
+                      title="Refresh"
                     >
-                      Clear Search
+                      <FiRefreshCw className={loading ? "animate-spin" : ""} />
                     </motion.button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Toggle */}
+              <div className="md:hidden mt-3 flex justify-center">
+                <div className="relative bg-white/40 backdrop-blur-2xl p-1 rounded-xl border border-white/50 shadow-inner flex items-center gap-1">
+                  {[
+                    { id: 'projects', icon: FiFolder, label: 'Projects' },
+                    { id: 'management', icon: FiSettings, label: 'Management' }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      className={`relative px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${pageViewMode === tab.id
+                        ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow'
+                        : 'text-gray-600'
+                        }`}
+                      onClick={() => setPageViewMode(tab.id)}
+                    >
+                      <tab.icon className="w-3.5 h-3.5" />
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Content Area - Conditional Based on Page View Mode */}
+          {pageViewMode === 'projects' ? (
+            /* Projects View (List/Grid OR Details) */
+            <motion.main
+              className="flex-1 overflow-y-auto"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {activeProjectId ? (
+                /* Project Detail View */
+                <ProjectDetailPage
+                  projectId={activeProjectId}
+                  onBack={() => setActiveProjectId(null)}
+                />
+              ) : (
+                /* Projects Grid/List View */
+                <div className="p-6">
+                  {filteredProjects.length === 0 ? (
+                    <motion.div
+                      className="flex items-center justify-center h-full min-h-[50vh]"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div className="text-center max-w-md mx-auto">
+                        <motion.div
+                          className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                        >
+                          <FiFolder className="w-12 h-12 text-gray-400" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-3">No Projects Found</h3>
+                        <p className="text-gray-600 mb-6">
+                          {search ? 'Try adjusting your search terms' : 'You are not assigned to any projects yet.'}
+                        </p>
+                        {search && (
+                          <motion.button
+                            onClick={() => setSearch('')}
+                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            Clear Search
+                          </motion.button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      className={viewMode === 'grid'
+                        ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'
+                        : 'flex flex-col gap-3'
+                      }
+                      variants={pageVariants}
+                    >
+                      {filteredProjects.map((project, index) => (
+                        <motion.div
+                          key={project.id}
+                          variants={cardVariants}
+                          custom={index}
+                        >
+                          <ProjectCard
+                            project={project}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorite={isProjectFavorite(project.id)}
+                            viewMode={viewMode}
+                            teamMembers={teamMembers[project.id] || []}
+                            onEditProject={handleEditProject}
+                            onDeleteProject={handleDeleteProject}
+                            onAssignUsers={handleAssignUsers}
+                            onViewMembers={handleViewMembers}
+                            canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
+                            onProjectClick={(id) => setActiveProjectId(id)}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
                   )}
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                className={viewMode === 'grid' 
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
-                  : "space-y-4"
-                }
-                variants={{
-                  animate: {
-                    transition: { staggerChildren: 0.1 }
-                  }
-                }}
-                initial="initial"
-                animate="animate"
-              >
-                {filteredProjects.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    onToggleFavorite={toggleFavorite}
-                    isFavorite={isProjectFavorite(project.id)}
-                    viewMode={viewMode}
-                    teamMembers={teamMembers[project.id] || []}
-                    onEditProject={handleEditProject}
-                    onDeleteProject={handleDeleteProject}
-                    onAssignUsers={handleAssignUsers}
-                    onViewMembers={handleViewMembers}
-                    canManageProject={canManageProject(project.id)}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </motion.main>
+              )}
+            </motion.main>
+          ) : (
+            /* Project Management View */
+            <motion.div
+              className="flex-1 overflow-y-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProjectManagement onClose={() => setPageViewMode('projects')} />
+            </motion.div>
+          )}
         </div>
       </div>
 

@@ -10,7 +10,8 @@ const ProjectHeader = ({
     sidebarOpen,
     isMobile,
     currentUser,
-    editMode
+    editMode,
+    onBack
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -27,7 +28,11 @@ const ProjectHeader = ({
     const navigate = useNavigate();
 
     const goBackToProjectList = () => {
-        navigate('/projects');
+        if (onBack) {
+            onBack();
+        } else {
+            navigate('/projects');
+        }
     };
 
     return (
@@ -66,8 +71,8 @@ const ProjectHeader = ({
                 <button
                     onClick={toggleEditMode}
                     className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${editMode
-                            ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                            : 'text-gray-600 hover:bg-gray-100'
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100'
                         }`}
                 >
                     {editMode ? (

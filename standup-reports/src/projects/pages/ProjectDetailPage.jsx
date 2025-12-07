@@ -16,8 +16,9 @@ import ProjectActivityFeed from '../components/ProjectActivityFeed';
 import CreateModal from '../components/CreateModal';
 import ProjectHeader from '../components/ProjectHeader';
 
-export default function ProjectDetailPage() {
-    const { projectId } = useParams();
+export default function ProjectDetailPage({ projectId: propProjectId, onBack }) {
+    const { projectId: paramProjectId } = useParams();
+    const projectId = propProjectId || paramProjectId;
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const editMode = searchParams.get('editMode') === 'true';
@@ -377,7 +378,7 @@ export default function ProjectDetailPage() {
                 <div className="text-center max-w-md">
                     <FiAlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
-                    <button onClick={() => navigate('/projects')} className="text-indigo-600 hover:underline">
+                    <button onClick={onBack || (() => navigate('/projects'))} className="text-indigo-600 hover:underline">
                         Back to Projects
                     </button>
                 </div>
@@ -426,6 +427,7 @@ export default function ProjectDetailPage() {
                     isMobile={isMobile}
                     currentUser={currentUser}
                     editMode={editMode}
+                    onBack={onBack}
                 />
 
                 <div className="flex-1 overflow-y-auto scroll-smooth">

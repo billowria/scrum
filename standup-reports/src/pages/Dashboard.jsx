@@ -15,6 +15,7 @@ import {
 import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import UserListModal from '../components/UserListModal';
 import TaskDetailView from '../components/tasks/TaskDetailView';
+import HolidaysWidget from '../components/dashboard/HolidaysWidget';
 
 
 // Animation variants
@@ -1117,6 +1118,9 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [showTaskDetailModal, setShowTaskDetailModal] = useState(false);
 
+  // Holidays State
+  const [holidays, setHolidays] = useState([]);
+
   // Derived Stats
   const [stats, setStats] = useState({
     activeProjects: 0,
@@ -1233,6 +1237,29 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
             setAssignedTasks([]);
           }
         }
+
+        // 8. Fetch Holidays for Current Month - create a fresh Date object
+        const currentDate = new Date();
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        console.log('DEBUG: Fetching holidays for company_id:', currentCompany.id);
+        console.log('DEBUG: Date range:', startOfMonth, 'to', endOfMonth);
+
+        const { data: holidaysData, error: holidaysError } = await supabase
+          .from('holidays')
+          .select('*')
+          .eq('company_id', currentCompany.id)
+          .gte('date', startOfMonth)
+          .lte('date', endOfMonth);
+
+        if (holidaysError) {
+          console.error('Error fetching holidays:', holidaysError);
+        } else {
+          console.log('DEBUG: Holidays fetched successfully:', holidaysData);
+        }
+
+        setHolidays(holidaysData || []);
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -1393,9 +1420,14 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           />
         </div>
 
-        {/* Column 2: Projects */}
-        <div className="lg:col-span-1 h-[700px]">
-          <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
+        {/* Column 2: Projects & Holidays */}
+        <div className="lg:col-span-1 h-[700px] flex flex-col gap-6">
+          <div className="flex-1 overflow-hidden min-h-0">
+            <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
+          </div>
+          <div className="flex-1 overflow-hidden min-h-0">
+            <HolidaysWidget holidays={holidays} loading={loading} navigate={navigate} />
+          </div>
         </div>
 
         {/* Column 3: Assigned Tasks */}
