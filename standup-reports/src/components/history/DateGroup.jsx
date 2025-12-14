@@ -71,12 +71,12 @@ export const DateGroup = ({
   return (
     <motion.div
       className={`
-        bg-white rounded-xl border shadow-md overflow-hidden
-        ${isToday ? 'border-primary-200 bg-gradient-to-br from-white to-primary-50/20' : 'border-gray-200'}
+        bg-white/50 backdrop-blur-md rounded-2xl border border-white/60 shadow-sm overflow-hidden
+        ${isToday ? 'ring-2 ring-indigo-500/20 bg-indigo-50/30' : ''}
         ${className}
       `}
       style={{
-        boxShadow: 'var(--light-shadow-md)'
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)'
       }}
       variants={groupVariants}
       initial="initial"
@@ -85,43 +85,43 @@ export const DateGroup = ({
       {/* Header */}
       <motion.div
         className={`
-          p-4 cursor-pointer transition-colors duration-200
-          ${isToday ? 'bg-gradient-to-r from-primary-50 to-blue-50' : 'bg-white hover:bg-gray-50'}
+          p-5 cursor-pointer transition-all duration-300
+          ${isToday ? 'bg-gradient-to-r from-indigo-50/50 to-purple-50/50' : 'bg-white/30 hover:bg-white/50'}
         `}
         onClick={onToggle}
-        whileHover={{ scale: 1.005 }}
-        whileTap={{ scale: 0.995 }}
+        whileHover={{ scale: 1.002 }}
+        whileTap={{ scale: 0.998 }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             {/* Date indicator */}
             <div className={`
-              flex flex-col items-center justify-center w-14 h-14 rounded-xl
-              font-bold text-lg shadow-sm
+              flex flex-col items-center justify-center w-16 h-16 rounded-2xl
+              font-bold text-lg shadow-sm border
               ${isToday
-                ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700'
+                ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-indigo-400'
+                : 'bg-white text-slate-700 border-white/60'
               }
             `}>
-              <div className="text-xs font-medium uppercase tracking-wider">
+              <div className={`text-xs font-bold uppercase tracking-wider ${isToday ? 'text-indigo-100' : 'text-slate-400'}`}>
                 {dateObj.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
               </div>
-              <div>{dateObj.getDate()}</div>
+              <div className="text-2xl leading-none mt-0.5">{dateObj.getDate()}</div>
             </div>
 
             {/* Date info */}
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-gray-900">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-slate-800">
                   {dateObj.toLocaleDateString('en-US', { weekday: 'long' })}
                 </h2>
                 {relativeLabel && (
                   <motion.span
                     className={`
-                      px-2 py-1 text-xs font-semibold rounded-full
+                      px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider rounded-full shadow-sm border
                       ${isToday
-                        ? 'bg-primary-100 text-primary-800'
-                        : 'bg-gray-100 text-gray-700'
+                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
                       }
                     `}
                     initial={{ scale: 0 }}
@@ -132,28 +132,32 @@ export const DateGroup = ({
                   </motion.span>
                 )}
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm font-medium text-slate-500 mt-1">
                 {dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
 
           {/* Stats and controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {/* Stats */}
-            <div className="flex items-center gap-3 text-sm">
-              <div className="flex items-center gap-1.5 text-gray-600">
+            <div className="hidden sm:flex items-center gap-4 text-sm bg-white/40 px-4 py-2 rounded-xl border border-white/50">
+              <div className="flex items-center gap-2 text-slate-500" title="Total Reports">
                 <FiUsers className="w-4 h-4" />
-                <span className="font-medium">{totalCount}</span>
+                <span className="font-semibold">{totalCount}</span>
               </div>
 
-              <div className="flex items-center gap-1.5 text-green-600">
+              <div className="w-px h-4 bg-slate-200" />
+
+              <div className="flex items-center gap-2 text-emerald-600" title="Completed">
                 <FiCheckCircle className="w-4 h-4" />
-                <span className="font-medium">{completedCount}</span>
+                <span className="font-semibold">{completedCount}</span>
               </div>
 
-              <div className="text-xs font-medium text-gray-500">
-                {completionRate}% complete
+              <div className="w-px h-4 bg-slate-200" />
+
+              <div className={`text-xs font-bold ${completionRate === 100 ? 'text-indigo-600' : 'text-slate-500'}`}>
+                {completionRate}%
               </div>
             </div>
 
@@ -163,7 +167,7 @@ export const DateGroup = ({
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className={`
                 p-2 rounded-full transition-colors
-                ${isToday ? 'text-primary-600 hover:bg-primary-100' : 'text-gray-400 hover:bg-gray-100'}
+                ${isToday ? 'text-indigo-600 bg-indigo-100/50' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}
               `}
             >
               <FiChevronDown className="w-5 h-5" />
@@ -180,11 +184,11 @@ export const DateGroup = ({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="border-t border-gray-200/30"
+            className="border-t border-white/40 bg-white/20"
           >
-            <div className="p-4">
+            <div className="p-5">
               {variant === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {reports.map((report) => (
                     <ReportCard
                       key={report.id}
@@ -192,6 +196,7 @@ export const DateGroup = ({
                       onUserClick={onUserClick}
                       onViewDetails={onViewReport}
                       variant="default"
+                      className="h-full"
                     />
                   ))}
                 </div>

@@ -20,7 +20,8 @@ import {
   FiCheck,
   FiCircle,
   FiWifi,
-  FiWifiOff
+  FiWifiOff,
+  FiHeart
 } from 'react-icons/fi';
 import ConversationCard from './ConversationCard';
 import UserPresence from './UserPresence';
@@ -82,6 +83,8 @@ const ChatSidebar = ({
         direct.push(conv);
       } else if (conv.type === 'team') {
         team.push(conv);
+      } else if (conv.type === 'project') {
+        team.push(conv); // Group projects with teams for now, or create new array
       }
     });
 
@@ -294,12 +297,12 @@ const ChatSidebar = ({
       animate={{ width: 320 }}
       exit={{ width: 64 }}
       transition={{ duration: 0.3 }}
-      className="bg-white border-r border-gray-200 h-full flex flex-col"
+      className={`h-full flex flex-col ${className}`}
     >
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 pt-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent uppercase tracking-wider text-sm pl-1">
             Messages
           </h2>
           <div className="flex items-center gap-2">
@@ -333,7 +336,7 @@ const ChatSidebar = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 hover:bg-white/80 border border-gray-100 hover:border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all shadow-sm"
             autoComplete="off"
             data-form-type="other"
           />
@@ -375,8 +378,8 @@ const ChatSidebar = ({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedFilter(filter.value)}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${isSelected
-                    ? `bg-${filter.color}-100 text-${filter.color}-700 border-2 border-${filter.color}-300`
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? `bg-${filter.color}-100 text-${filter.color}-700 border-2 border-${filter.color}-300`
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <Icon className="w-3 h-3" />
@@ -441,7 +444,8 @@ const ChatSidebar = ({
       </div>
 
       {/* Conversations list */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-6 pt-2 scrollbar-hide">
         {filteredConversations.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -31,6 +31,21 @@ const ConversationCard = ({
   className = ""
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   // Get conversation name
   const getConversationName = () => {
@@ -58,13 +73,13 @@ const ConversationCard = ({
         );
       }
       return (
-        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white font-semibold text-lg">
+        <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
           {conversation.otherUser.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
       );
     }
     return (
-      <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white">
+      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white">
         <FiUsers className="w-5 h-5" />
       </div>
     );
@@ -107,14 +122,14 @@ const ConversationCard = ({
 
     const message = conversation.last_message;
     if (message.content) {
-      return message.content.length > 35
-        ? `${message.content.substring(0, 35)}...`
+      return message.content.length > 30
+        ? `${message.content.substring(0, 30)}...`
         : message.content;
     }
 
     // Handle different message types
     if (message.attachments && message.attachments.length > 0) {
-      return `📎 ${message.attachments.length} file${message.attachments.length > 1 ? 's' : ''}`;
+      return `📎 ${message.attachments.length} attachment${message.attachments.length > 1 ? 's' : ''}`;
     }
 
     if (message.type === 'voice') {
@@ -131,15 +146,15 @@ const ConversationCard = ({
 
     if (count > 99) {
       return (
-        <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-          <span className="text-white text-xs font-bold">99+</span>
+        <div className="w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center shadow-lg shadow-rose-200">
+          <span className="text-white text-[10px] font-bold">99+</span>
         </div>
       );
     }
 
     return (
-      <div className="min-w-[1.25rem] h-5 bg-red-500 rounded-full flex items-center justify-center px-1.5">
-        <span className="text-white text-xs font-bold">{count}</span>
+      <div className="min-w-[1.25rem] h-5 bg-rose-500 rounded-full flex items-center justify-center px-1.5 shadow-lg shadow-rose-200">
+        <span className="text-white text-[10px] font-bold">{count}</span>
       </div>
     );
   };
@@ -156,11 +171,9 @@ const ConversationCard = ({
         onMute?.();
         break;
       case 'archive':
-        // TODO: Implement archive functionality
         console.log('Archive conversation:', conversation.id);
         break;
       case 'info':
-        // TODO: Show conversation info modal
         console.log('Show conversation info:', conversation.id);
         break;
       default:
@@ -170,202 +183,118 @@ const ConversationCard = ({
 
   return (
     <motion.div
-      className={`relative group cursor-pointer transition-all duration-200 ${isActive
-        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500'
-        : 'hover:bg-gray-50 border-l-4 border-transparent'
-        } ${className}`}
-      onClick={onClick}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      className={`relative group mb-3 last:mb-0 mx-2 ${className}`}
       layout
+      style={{ zIndex: showDropdown ? 50 : 1 }}
     >
-      <div className="flex items-center gap-3 p-3">
-        {/* Avatar - Clickable for direct messages */}
-        <motion.div
-          className="relative flex-shrink-0"
-          whileHover={{ scale: conversation.type === 'direct' ? 1.05 : 1 }}
-          whileTap={{ scale: conversation.type === 'direct' ? 0.95 : 1 }}
-          onClick={(e) => {
-            if (conversation.type === 'direct' && conversation.otherUser?.id) {
-              e.stopPropagation();
-              onAvatarClick?.(conversation.otherUser.id);
-            }
-          }}
-        >
-          <div className={`w-12 h-12 rounded-full overflow-hidden shadow-sm ${conversation.type === 'direct' ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all' : ''}`}>
-            {getConversationAvatar()}
-          </div>
+      <motion.div
+        onClick={onClick}
+        whileHover={{ scale: 1.02, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        className={`
+          relative p-3 rounded-2xl cursor-pointer transition-all duration-300
+          ${isActive
+            ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-black/5'
+            : 'bg-white/40 hover:bg-white hover:shadow-lg backdrop-blur-sm hover:ring-1 hover:ring-black/5 border border-transparent hover:border-white/50'
+          }
+        `}
+      >
+        {isActive && (
+          <motion.div
+            layoutId="activeIndicator"
+            className="absolute left-0 top-3 bottom-3 w-1 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-r-full"
+          />
+        )}
 
-          {/* Online status indicator for direct messages */}
-          {conversation.type === 'direct' && (
-            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white ${isUserOnline()
-              ? 'bg-green-500'
-              : 'bg-gray-300'
-              }`} />
-          )}
-        </motion.div>
+        <div className="flex items-center gap-3">
+          {/* Avatar Area */}
+          <motion.div
+            className="relative flex-shrink-0"
+            onClick={(e) => {
+              if (conversation.type === 'direct' && conversation.otherUser?.id) {
+                e.stopPropagation();
+                onAvatarClick?.(conversation.otherUser.id);
+              }
+            }}
+          >
+            <div className={`w-12 h-12 rounded-2xl overflow-hidden shadow-sm transition-transform duration-300 ${conversation.type === 'direct' ? 'group-hover:scale-105 group-hover:rotate-3' : ''}`}>
+              {getConversationAvatar()}
+            </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className={`font-semibold truncate flex items-center gap-2 ${isActive
-              ? 'text-blue-600'
-              : 'text-gray-900'
-              }`}>
-              {getConversationName()}
+            {/* Online Badge */}
+            {conversation.type === 'direct' && isUserOnline() && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
+              </span>
+            )}
+          </motion.div>
 
-              {/* Status indicators */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {isPinned && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="p-0.5"
-                  >
-                    <FiBookmark className="w-3 h-3 text-yellow-500 fill-current" />
-                  </motion.div>
-                )}
-
-                {isMuted && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="p-0.5"
-                  >
-                    <FiVolumeX className="w-3 h-3 text-gray-400" />
-                  </motion.div>
-                )}
-              </div>
-            </h3>
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className={`text-xs ${isActive
-                ? 'text-blue-500 font-medium'
-                : 'text-gray-500'
-                }`}>
+          {/* Content Area */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <h3 className={`font-bold truncate text-sm flex items-center gap-1.5 ${isActive ? 'text-gray-900' : 'text-gray-700'}`}>
+                {getConversationName()}
+                {isPinned && <FiBookmark className="w-3 h-3 text-indigo-500 fill-current" />}
+                {isMuted && <FiVolumeX className="w-3 h-3 text-gray-400" />}
+              </h3>
+              <span className={`text-[10px] font-medium ${isActive ? 'text-indigo-500' : 'text-gray-400'}`}>
                 {formatTime(conversation.last_message_at)}
               </span>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <p className={`text-sm truncate ${isActive
-              ? 'text-blue-600'
-              : isMuted
-                ? 'text-gray-400'
-                : 'text-gray-600'
-              }`}>
-              {getLastMessagePreview()}
-            </p>
-
-            {/* Unread count */}
-            <AnimatePresence>
+            <div className="flex items-center justify-between">
+              <p className={`text-xs truncate max-w-[140px] ${isActive ? 'text-gray-600' : 'text-gray-500'}`}>
+                {conversation.isTyping ? (
+                  <span className="text-indigo-500 font-medium animate-pulse">Typing...</span>
+                ) : (
+                  getLastMessagePreview()
+                )}
+              </p>
               {getUnreadDisplay()}
-            </AnimatePresence>
+            </div>
           </div>
+        </div>
+      </motion.div>
 
-          {/* Typing indicator */}
-          {conversation.isTyping && (
+      {/* Floating Action Button (More) - Only visible on hover */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" ref={dropdownRef}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDropdown(!showDropdown);
+          }}
+          className={`p-1.5 rounded-full shadow-sm backdrop-blur-md border border-white/50 transition-colors ${showDropdown ? 'bg-gray-100 text-gray-900 opacity-100' : 'bg-white/80 text-gray-500 hover:text-indigo-600 hover:bg-white'
+            }`}
+        >
+          <FiMoreVertical className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Dropdown Menu */}
+        <AnimatePresence>
+          {showDropdown && (
             <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
-              className="text-xs text-blue-500 font-medium flex items-center gap-1"
+              initial={{ opacity: 0, scale: 0.9, y: 10, x: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 top-8 w-40 bg-white/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/50 z-50 overflow-hidden"
             >
-              <span>typing</span>
-              <div className="flex gap-0.5">
-                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="p-1">
+                <button onClick={() => handleAction('pin')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors">
+                  <FiBookmark className="w-3.5 h-3.5" /> {isPinned ? 'Unpin' : 'Pin'}
+                </button>
+                <button onClick={() => handleAction('mute')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors">
+                  {isMuted ? <FiVolume2 className="w-3.5 h-3.5" /> : <FiVolumeX className="w-3.5 h-3.5" />} {isMuted ? 'Unmute' : 'Mute'}
+                </button>
+                <div className="h-px bg-gray-200/50 my-1" />
+                <button onClick={() => handleAction('archive')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <FiArchive className="w-3.5 h-3.5" /> Archive
+                </button>
               </div>
             </motion.div>
           )}
-        </div>
-
-        {/* More options button */}
-        <div className="relative">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDropdown(!showDropdown);
-            }}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <FiMoreVertical className="w-4 h-4 text-gray-500" />
-          </motion.button>
-
-          {/* Dropdown menu */}
-          <AnimatePresence>
-            {showDropdown && (
-              <>
-                {/* Backdrop */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowDropdown(false)}
-                />
-
-                {/* Dropdown */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-20"
-                >
-                  <button
-                    onClick={() => handleAction('pin')}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <FiBookmark className="w-4 h-4 text-gray-400" />
-                    <span>{isPinned ? 'Unpin' : 'Pin'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleAction('mute')}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    {isMuted ? (
-                      <>
-                        <FiVolume2 className="w-4 h-4 text-gray-400" />
-                        <span>Unmute</span>
-                      </>
-                    ) : (
-                      <>
-                        <FiVolumeX className="w-4 h-4 text-gray-400" />
-                        <span>Mute</span>
-                      </>
-                    )}
-                  </button>
-
-                  {conversation.type === 'team' && (
-                    <button
-                      onClick={() => handleAction('info')}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <FiInfo className="w-4 h-4 text-gray-400" />
-                      <span>View Info</span>
-                    </button>
-                  )}
-
-                  <div className="border-t border-gray-200 my-1"></div>
-
-                  <button
-                    onClick={() => handleAction('archive')}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <FiArchive className="w-4 h-4 text-gray-400" />
-                    <span>Archive</span>
-                  </button>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
+        </AnimatePresence>
       </div>
     </motion.div>
   );

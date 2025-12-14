@@ -354,83 +354,110 @@ export default function History() {
     };
   }, [filteredReports, reportsByDate]);
 
+  // Premium UI Render
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative overflow-hidden bg-[#F3F4F6] text-slate-800 font-sans selection:bg-indigo-500/30">
+
+      {/* Ambient Animated Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-400/20 rounded-full blur-[120px] mix-blend-multiply opacity-50 animate-blob" />
+        <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] bg-purple-400/20 rounded-full blur-[120px] mix-blend-multiply opacity-50 animate-blob animation-delay-2000" />
+        <div className="absolute bottom-[-20%] right-[20%] w-[600px] h-[600px] bg-emerald-400/20 rounded-full blur-[120px] mix-blend-multiply opacity-50 animate-blob animation-delay-4000" />
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px]" />
+      </div>
 
       <motion.div
-        className="w-full h-full px-6 py-6"
+        className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {/* Header */}
         <motion.div
-          className="mb-8"
+          className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 w-full">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                Report History
-              </h1>
-              <div className="flex items-center gap-2 text-gray-600">
-                <FiCalendar className="w-4 h-4" />
-                <span className="text-sm">
-                  {new Date().toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </span>
-              </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600 tracking-tight mb-2">
+              Report History
+            </h1>
+            <div className="flex items-center gap-2 text-slate-500 font-medium">
+              <span className="p-1.5 bg-white/50 rounded-lg border border-white/50 backdrop-blur-sm">
+                <FiCalendar className="w-4 h-4 text-indigo-500" />
+              </span>
+              <span className="text-sm">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
             </div>
+          </div>
 
-            {/* Header Actions */}
-            <div className="flex items-center gap-3">
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
-                <motion.button
-                  onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+          {/* Header Actions */}
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-white/60 backdrop-blur-md rounded-xl border border-white/60 p-1 shadow-sm">
+              <motion.button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all relative ${viewMode === 'list'
+                  ? 'text-white'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {viewMode === 'list' && (
+                  <motion.div
+                    layoutId="view-mode-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
                   <FiList className="w-4 h-4" />
                   List
-                </motion.button>
-                <motion.button
-                  onClick={() => setViewMode('grid')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'grid'
-                      ? 'bg-primary-500 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                </span>
+              </motion.button>
+              <motion.button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all relative ${viewMode === 'grid'
+                  ? 'text-white'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {viewMode === 'grid' && (
+                  <motion.div
+                    layoutId="view-mode-tab"
+                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-md"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
                   <FiGrid className="w-4 h-4" />
                   Grid
-                </motion.button>
-              </div>
-
-              {/* Export Button */}
-              {filteredReports.length > 0 && (
-                <ExportOptions
-                  reports={filteredReports}
-                  startDate={startDate}
-                  endDate={endDate}
-                />
-              )}
+                </span>
+              </motion.button>
             </div>
+
+            {/* Export Button */}
+            {filteredReports.length > 0 && (
+              <ExportOptions
+                reports={filteredReports}
+                startDate={startDate}
+                endDate={endDate}
+              />
+            )}
           </div>
         </motion.div>
 
-        {/* Filter Panel */}
+        {/* Filter Panel - Wrapped for consistency, component will be updated later */}
         <FilterPanel
           startDate={startDate}
           endDate={endDate}
@@ -447,114 +474,62 @@ export default function History() {
           onClearFilters={clearFilters}
           isCollapsed={isFilterCollapsed}
           onToggleCollapse={() => setIsFilterCollapsed(!isFilterCollapsed)}
-          className="mb-6 w-full"
+          className="mb-8"
         />
 
         {/* Statistics Cards */}
         {!loading && filteredReports.length > 0 && (
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-6"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <motion.div
-              className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary-100 rounded-lg">
-                  <FiFileText className="w-5 h-5 text-primary-600" />
+            {[
+              { label: 'Total Reports', value: stats.totalReports, icon: FiFileText, color: 'text-blue-600', bg: 'bg-blue-100' },
+              { label: 'Completed', value: stats.completedReports, icon: FiCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100' },
+              { label: 'Team Members', value: stats.uniqueUsers, icon: FiUsers, color: 'text-amber-600', bg: 'bg-amber-100' },
+              { label: 'Days Active', value: stats.daysWithData, icon: FiCalendar, color: 'text-purple-600', bg: 'bg-purple-100' },
+              { label: 'Completion', value: `${stats.completionRate}%`, icon: FiCheckCircle, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-sm hover:shadow-lg hover:bg-white/80 transition-all cursor-default group"
+                whileHover={{ y: -4 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * i }}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`p-2.5 rounded-xl ${stat.bg} bg-opacity-50 group-hover:bg-opacity-100 transition-all`}>
+                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                  </div>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
-                  <p className="text-xs text-gray-500">Total Reports</p>
+                  <p className="text-2xl font-black text-slate-800 tracking-tight">{stat.value}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{stat.label}</p>
                 </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <FiCheckCircle className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completedReports}</p>
-                  <p className="text-xs text-gray-500">Completed</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <FiUsers className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.uniqueUsers}</p>
-                  <p className="text-xs text-gray-500">Team Members</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FiCalendar className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.daysWithData}</p>
-                  <p className="text-xs text-gray-500">Days</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-              whileHover={{ scale: 1.02, y: -2 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <span className="text-lg font-bold text-indigo-600">{stats.completionRate}%</span>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
-                  <p className="text-xs text-gray-500">Completion</p>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            ))}
           </motion.div>
         )}
 
         {/* Controls */}
         {!loading && filteredReports.length > 0 && (
           <motion.div
-            className="flex justify-between items-center mb-4"
+            className="flex flex-wrap justify-between items-center mb-6 gap-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h2 className="text-lg font-semibold text-gray-900">
-              {stats.daysWithData} {stats.daysWithData === 1 ? 'Day' : 'Days'} of Reports
+            <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              {stats.daysWithData} {stats.daysWithData === 1 ? 'Day' : 'Days'} Found
             </h2>
             <div className="flex items-center gap-2">
               <motion.button
                 onClick={() => toggleAllDates(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-100/80 rounded-xl transition-colors border border-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={anyExpanded}
@@ -564,7 +539,7 @@ export default function History() {
               </motion.button>
               <motion.button
                 onClick={() => toggleAllDates(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white/50 hover:bg-white/80 rounded-xl transition-colors border border-white/60 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={!anyExpanded}
@@ -574,7 +549,7 @@ export default function History() {
               </motion.button>
               <motion.button
                 onClick={() => window.location.reload()}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-white/50 hover:bg-white/80 rounded-xl transition-colors border border-white/60 shadow-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -587,18 +562,20 @@ export default function History() {
 
         {/* Main Content */}
         {loading ? (
-          <LoadingSpinner />
+          <div className="flex justify-center py-20">
+            <LoadingSpinner />
+          </div>
         ) : error ? (
           <motion.div
-            className="bg-red-50 border border-red-200 rounded-xl p-6 text-center"
+            className="bg-rose-50/80 backdrop-blur-md border border-rose-200 rounded-2xl p-8 text-center max-w-lg mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="text-red-600 mb-2">
-              <FiAlertCircle className="w-12 h-12 mx-auto mb-4" />
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiAlertCircle className="w-8 h-8 text-rose-600" />
             </div>
-            <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading Reports</h3>
-            <p className="text-red-700">{error}</p>
+            <h3 className="text-xl font-bold text-rose-900 mb-2">Error Loading Reports</h3>
+            <p className="text-rose-700">{error}</p>
           </motion.div>
         ) : filteredReports.length === 0 ? (
           <EmptyState
@@ -622,6 +599,7 @@ export default function History() {
                 onUserClick={handleUserClick}
                 onViewReport={handleViewReport}
                 variant={viewMode}
+                className="hover:shadow-lg transition-shadow duration-300"
               />
             ))}
           </motion.div>

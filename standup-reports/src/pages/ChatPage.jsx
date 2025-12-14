@@ -16,8 +16,9 @@ import NewChatModal from '../components/chat/NewChatModal';
 import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import '../components/chat/chat-design-tokens.css';
 
-import { FiChevronLeft, FiSettings, FiX, FiMessageSquare, FiMenu, FiUsers } from 'react-icons/fi';
+import { FiChevronLeft, FiSettings, FiX, FiMessageSquare, FiMenu, FiUsers, FiSearch, FiCheck } from 'react-icons/fi';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
+import ChatRightSidebar from '../components/chat/ChatRightSidebar';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -340,16 +341,16 @@ const ChatPage = () => {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Sidebar - Enhanced with Glass Morphism */}
         <div
           className={`
             ${isMobile
               ? (showSidebar ? 'absolute inset-y-0 left-0 z-20 w-full' : 'hidden')
-              : `relative flex-shrink-0 border-r border-gray-200 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-80'
+              : `relative flex-shrink-0 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-80'
               }`
             }
-            bg-white backdrop-blur-md transition-all duration-300
+            bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20
           `}
         >
           <ChatSidebar
@@ -371,30 +372,31 @@ const ChatPage = () => {
           />
         </div>
 
-        {/* Sidebar Toggle Button (Desktop) - Glass Morphism */}
+        {/* Sidebar Toggle Button (Desktop) - Adjusted position */}
         {!isMobile && (
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`absolute top-1/2 z-10 p-3 bg-white/80 backdrop-blur-md border border-gray-200
-              rounded-full shadow-lg hover:bg-white/90 transition-all duration-200
-              transform -translate-y-1/2 ${sidebarCollapsed ? 'left-16' : 'left-80'
+            className={`absolute top-6 z-30 p-1.5 bg-white shadow-md border border-gray-100
+              rounded-full hover:shadow-lg hover:border-indigo-100 hover:text-indigo-600 transition-all duration-200
+              ${sidebarCollapsed ? 'left-[4.5rem]' : 'left-[19.5rem]'
               }`}
           >
-            <FiChevronLeft className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${sidebarCollapsed ? '' : 'rotate-180'
-              }`} />
+            <FiMenu className="w-4 h-4" />
           </motion.button>
         )}
 
         {/* Main Chat Area - Enhanced Design */}
         <div
-          className={`flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-white to-gray-50 ${isMobile && showSidebar ? 'hidden' : ''
-            }`}
+          className={`flex-1 flex flex-col overflow-hidden relative transition-all duration-300
+            ${isMobile && showSidebar ? 'hidden' : ''}
+          `}
         >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-blue-50/40 pointer-events-none" />
+
           {activeConversation ? (
-            <>
-              {/* Chat Window */}
+            <div className="flex flex-1 overflow-hidden relative z-10">
               <ChatWindow
                 conversation={activeConversation}
                 currentUser={currentUser}
@@ -414,92 +416,82 @@ const ChatPage = () => {
                 typingUsers={typingUsers}
                 onBack={isMobile ? handleBackToConversations : undefined}
                 onAvatarClick={(userId) => {
-                  setSelectedUserId(userId);
-                  setShowProfileModal(true);
+                  setShowUserPresence(true);
                 }}
+                onToggleProfile={() => setShowUserPresence(!showUserPresence)}
               />
-            </>
+
+              {/* Right Context Sidebar */}
+              <ChatRightSidebar
+                conversation={activeConversation}
+                isOpen={showUserPresence}
+                onClose={() => setShowUserPresence(false)}
+                currentUser={currentUser}
+              />
+            </div>
           ) : (
-            /* Enhanced Empty State */
-            <div className="flex-1 flex items-center justify-center p-8">
+            /* Enhanced Empty State - Centered */
+            <div className="flex-1 flex items-center justify-center p-8 relative z-10 w-full h-full">
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={animations.variants.scaleIn}
-                className="text-center max-w-md"
+                className="text-center max-w-2xl w-full"
               >
-                <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                  <FiMessageSquare className="w-16 h-16 text-white" />
+                {/* Hero Graphic */}
+                <div className="relative w-full h-80 mb-12 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100/50 to-purple-100/50 rounded-full blur-3xl opacity-60 animate-pulse" />
+                  <div className="relative z-10 bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 ring-1 ring-white/60">
+                    <div className="grid grid-cols-2 gap-4 w-64">
+                      <div className="bg-indigo-50 p-4 rounded-2xl h-24 w-full animate-pulse delay-75"></div>
+                      <div className="bg-purple-50 p-4 rounded-2xl h-24 w-full translate-y-4 animate-pulse delay-150"></div>
+                      <div className="bg-blue-50 p-4 rounded-2xl h-24 w-full -translate-y-4 animate-pulse delay-300"></div>
+                      <div className="bg-pink-50 p-4 rounded-2xl h-24 w-full animate-pulse"></div>
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">
+                        <FiCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="h-2 w-20 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-2 w-12 bg-gray-100 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Sync Chat</h2>
-                <p className="text-gray-600 mb-8 leading-relaxed">
-                  Connect with your team in real-time. Select a conversation from the sidebar to start chatting.
+
+                <h2 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">
+                  Welcome to <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Sync Chat</span>
+                </h2>
+                <p className="text-xl text-gray-500 mb-12 leading-relaxed max-w-lg mx-auto">
+                  Your team's central hub for communication, seamlessly integrated with your tasks and projects.
                 </p>
 
-                <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <FiUsers className="w-5 h-5 text-blue-500" />
-                    Quick Tips
-                  </h3>
-                  <ul className="space-y-3 text-sm text-gray-600 text-left">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-500 mt-1">•</span>
-                      <span>Click on any conversation to start messaging</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-500 mt-1">•</span>
-                      <span>Look for the green dot to see who's online</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-500 mt-1">•</span>
-                      <span>Use Ctrl+K to toggle the sidebar</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-orange-500 mt-1">•</span>
-                      <span>Share files, images, and voice messages</span>
-                    </li>
-                  </ul>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  {[
+                    { icon: FiUsers, title: 'Team Sync', desc: 'Real-time collaboration' },
+                    { icon: FiSearch, title: 'Smart Search', desc: 'Find anything instantly' },
+                    { icon: FiSettings, title: 'Customizable', desc: 'Make it yours' }
+                  ].map((feature, i) => (
+                    <motion.div
+                      key={i}
+                      whileHover={{ y: -5 }}
+                      className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <div className="w-12 h-12 mx-auto bg-gradient-to-br from-indigo-50 to-white rounded-xl flex items-center justify-center mb-4 shadow-sm text-indigo-600">
+                        <feature.icon className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
+                      <p className="text-sm text-gray-500">{feature.desc}</p>
+                    </motion.div>
+                  ))}
                 </div>
 
-                {onlineUsers.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-6 flex items-center justify-center gap-2"
-                  >
-                    <div className="flex -space-x-2">
-                      {onlineUsers.slice(0, 5).map((user) => (
-                        <div
-                          key={user.id}
-                          className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full border-3 border-white flex items-center justify-center text-white text-sm font-semibold shadow-md"
-                        >
-                          {user.name?.charAt(0)?.toUpperCase()}
-                        </div>
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600">
-                      {onlineUsers.length} {onlineUsers.length === 1 ? 'person' : 'people'} online
-                    </span>
-                  </motion.div>
-                )}
               </motion.div>
             </div>
           )}
         </div>
       </div>
-
-      {/* User Presence Modal */}
-      <AnimatePresence>
-        {showUserPresence && activeConversation && (
-          <UserPresence
-            conversation={activeConversation}
-            currentUser={currentUser}
-            onlineUsers={onlineUsers}
-            onClose={() => setShowUserPresence(false)}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Settings Modal - Enhanced Design */}
       <AnimatePresence>
@@ -508,7 +500,7 @@ const ChatPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50"
             onClick={() => setShowSettings(false)}
           >
             <motion.div
@@ -516,75 +508,63 @@ const ChatPage = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={animations.variants.modal}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900">Chat Settings</h3>
+              <div className="p-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-2xl font-bold text-gray-900">Chat Settings</h3>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowSettings(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors bg-gray-50"
                   >
-                    <FiX className="w-5 h-5 text-gray-600" />
+                    <FiX className="w-5 h-5 text-gray-500" />
                   </motion.button>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      🔔 Notifications
+                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-600">🔔</span>
+                      Notifications
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-3 pl-10">
                       {[
                         { label: 'Message notifications', defaultChecked: true },
                         { label: 'Sound effects', defaultChecked: true },
                         { label: 'Desktop notifications', defaultChecked: false }
                       ].map((item) => (
-                        <label key={item.label} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                          <input type="checkbox" defaultChecked={item.defaultChecked} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" autoComplete="off" data-form-type="other" />
-                          <span className="text-sm text-gray-700">{item.label}</span>
+                        <label key={item.label} className="flex items-center gap-3 cursor-pointer group">
+                          <div className="relative flex items-center">
+                            <input type="checkbox" defaultChecked={item.defaultChecked} className="peer sr-only" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          </div>
+                          <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{item.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      🎨 Appearance
+                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">🎨</span>
+                      Appearance
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-3 pl-10">
                       {[
                         { label: 'Show online status', defaultChecked: true },
                         { label: 'Show typing indicators', defaultChecked: true },
                         { label: 'Show message timestamps', defaultChecked: true }
                       ].map((item) => (
-                        <label key={item.label} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
-                          <input type="checkbox" defaultChecked={item.defaultChecked} className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" autoComplete="off" data-form-type="other" />
-                          <span className="text-sm text-gray-700">{item.label}</span>
+                        <label key={item.label} className="flex items-center gap-3 cursor-pointer group">
+                          <div className="relative flex items-center">
+                            <input type="checkbox" defaultChecked={item.defaultChecked} className="peer sr-only" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                          </div>
+                          <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{item.label}</span>
                         </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      ⌨️ Keyboard Shortcuts
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      {[
-                        { key: 'Toggle sidebar', shortcut: 'Ctrl+K' },
-                        { key: 'Settings', shortcut: 'Ctrl+,' },
-                        { key: 'Search', shortcut: '/' }
-                      ].map((item) => (
-                        <div key={item.key} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
-                          <span className="text-gray-700">{item.key}</span>
-                          <kbd className="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-mono text-gray-600">
-                            {item.shortcut}
-                          </kbd>
-                        </div>
                       ))}
                     </div>
                   </div>

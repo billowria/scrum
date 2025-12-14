@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { notifySprintUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../contexts/CompanyContext';
@@ -35,6 +36,7 @@ import {
 } from 'react-icons/fi';
 import { createTaskNotification } from '../utils/notificationHelper';
 import { getSprintStatus } from '../utils/sprintUtils';
+import { uuidToShortId, shortIdToUuidPrefix, isShortId } from '../utils/taskIdUtils';
 import TaskForm from '../components/TaskForm';
 import TaskUpdateModal from '../components/TaskUpdateModal';
 import CreateTaskModalNew from '../components/tasks/CreateTaskModalNew';
@@ -784,6 +786,86 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   }, [currentUser, selectedProjectId]);
 
   // Fetch projects relevant to the current user
+
+  // URL Parameter Handling for Deep Linking
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTaskId = searchParams.get('taskId');
+
+  useEffect(() => {
+    const handleDeepLink = async () => {
+      if (!urlTaskId) return;
+
+      try {
+        let taskIdToFetch = urlTaskId;
+
+        // Check if it's a Short ID (numeric)
+        if (isShortId(urlTaskId)) {
+          console.log(`Deep link: Detected Short ID ${urlTaskId}`);
+          const prefix = shortIdToUuidPrefix(urlTaskId);
+          if (prefix) {
+            // PostgREST doesn't support id::text casting in JS client filters
+            // So we'll fetch task IDs and filter client-side
+            const { data: allTaskIds, error } = await supabase
+              .from('tasks')
+              .select('id')
+              .limit(1000); // Reasonable limit for most use cases
+
+            if (allTaskIds && allTaskIds.length > 0) {
+              // Find matching task by UUID prefix (case-insensitive)
+              const matchingTask = allTaskIds.find(t =>
+                t.id.toLowerCase().startsWith(prefix.toLowerCase())
+              );
+
+              if (matchingTask) {
+                taskIdToFetch = matchingTask.id;
+                console.log(`Deep link: Resolved Short ID ${urlTaskId} to UUID ${taskIdToFetch}`);
+              } else {
+                console.warn(`Deep link: No task found for Short ID ${urlTaskId} (prefix: ${prefix})`);
+                return;
+              }
+            } else {
+              console.warn(`Deep link: Failed to fetch tasks for resolution`);
+              return;
+            }
+          }
+        }
+
+        // Fetch full task details
+        const { data: task, error } = await supabase
+          .from('tasks')
+          .select(`
+            id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id,
+            assignee:users!assignee_id(
+              id, name, email, role, team_id, avatar_url
+            ),
+            reporter:users!reporter_id(
+              id, name, avatar_url
+            ),
+            team:team_id(id, name),
+            project:project_id(id, name),
+            sprint:sprint_id(id, name),
+            comments:comments(id),
+            assignee_id
+          `)
+          .eq('id', taskIdToFetch)
+          .single();
+
+        if (error) throw error;
+
+        if (task) {
+          setViewingTask(task);
+          setShowDetailModal(true);
+        }
+      } catch (err) {
+        console.error('Error handling deep link:', err);
+      }
+    };
+
+    if (currentUser) {
+      handleDeepLink();
+    }
+  }, [urlTaskId, currentUser]);
+
   const fetchProjects = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -896,6 +978,8 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const handleTaskView = (task) => {
     setViewingTask(task);
     setShowDetailModal(true);
+    // Sync URL with Short ID
+    setSearchParams({ taskId: uuidToShortId(task.id) });
   };
 
   const handleTaskDelete = async (task) => {
@@ -1570,6 +1654,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       <AnimatePresence>
         {showCreateModal && userRole === 'manager' && (
           <CreateTaskModalNew
+            key="create-task-modal"
             isOpen={showCreateModal}
             onClose={() => {
               setShowCreateModal(false);
@@ -1587,6 +1672,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
         {showUpdateModal && (
           <TaskUpdateModal
+            key="update-task-modal"
             isOpen={showUpdateModal}
             onClose={() => {
               setShowUpdateModal(false);
@@ -1602,10 +1688,13 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
         {showDetailModal && viewingTask && (
           <TaskDetailView
+            key={`task-detail-${viewingTask.id}`}
             isOpen={showDetailModal}
             onClose={() => {
               setShowDetailModal(false);
               setViewingTask(null);
+              // Clear URL param on close
+              setSearchParams({});
             }}
             taskId={viewingTask.id}
             onUpdate={() => {
@@ -1619,11 +1708,13 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
               setShowDetailModal(false);
               setViewingTask(null);
 
-              // Find the task and open its detail view, passing current task as parent
+              // Find the task and open its detail view
               const clickedTask = tasks.find(t => t.id === taskId);
               if (clickedTask) {
-                setViewingTask({ ...clickedTask, parentTaskId: viewingTask?.id }); // Pass current task ID as parent
+                setViewingTask({ ...clickedTask, parentTaskId: viewingTask?.id });
                 setShowDetailModal(true);
+                // Update URL for the new task
+                setSearchParams({ taskId: uuidToShortId(clickedTask.id) });
               }
             }}
           />

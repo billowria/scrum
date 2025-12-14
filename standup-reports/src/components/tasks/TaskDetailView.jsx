@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiX, FiEdit2, FiSave, FiTrash2, FiClock, FiCalendar,
@@ -8,13 +8,21 @@ import {
   FiMinus, FiMoreVertical, FiShare2, FiBell, FiBellOff,
   FiGitBranch, FiXCircle, FiSearch, FiTrendingUp, FiBarChart2,
   FiLayers, FiFileText, FiChevronDown, FiChevronUp, FiSend,
-  FiDownload, FiTarget, FiHash
+  FiDownload, FiTarget, FiHash, FiBold, FiItalic, FiList,
+  FiCode, FiUnderline
 } from 'react-icons/fi';
 import { format, formatDistanceToNow, isPast, parseISO } from 'date-fns';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
+import { uuidToShortId } from '../../utils/taskIdUtils';
 import Badge from '../shared/Badge';
 import Avatar from '../shared/Avatar';
 import LoadingSkeleton from '../shared/LoadingSkeleton';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
+import { getOrCreateDirectConversation, sendMessage } from '../../services/chatService';
 
 // --- EINSTEIN DESIGN SYSTEM ---
 // "Precision" Color Palette & Utilities
@@ -152,6 +160,20 @@ const TaskDetailView = ({
   const [sprintOpen, setSprintOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+
+  // Share Modal State
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUsers, setShareUsers] = useState([]);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSearch, setShareSearch] = useState('');
+  const [shareSending, setShareSending] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastUser, setToastUser] = useState(null);
+
+  // Navigation
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Inputs
   const [newSubtask, setNewSubtask] = useState('');
@@ -317,6 +339,142 @@ const TaskDetailView = ({
     }
   };
 
+  // --- Tiptap Description Editor ---
+  const descriptionEditor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Underline,
+      Placeholder.configure({
+        placeholder: 'Add a detailed description...',
+      }),
+    ],
+    content: task?.description || '',
+    editable: isEditingDescription,
+    onUpdate: ({ editor }) => {
+      setTask(prev => ({ ...prev, description: editor.getHTML() }));
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm max-w-none focus:outline-none p-4 min-h-[150px]',
+      }
+    }
+  });
+
+  // Update editor content when task loads
+  useEffect(() => {
+    if (descriptionEditor && task?.description !== undefined) {
+      const currentContent = descriptionEditor.getHTML();
+      if (currentContent !== task.description && !isEditingDescription) {
+        descriptionEditor.commands.setContent(task.description || '');
+      }
+    }
+  }, [task?.description, descriptionEditor, isEditingDescription]);
+
+  // Update editable state when editing mode changes
+  useEffect(() => {
+    if (descriptionEditor) {
+      descriptionEditor.setEditable(isEditingDescription);
+    }
+  }, [isEditingDescription, descriptionEditor]);
+
+  // Save description when editing mode is turned off
+  const handleDescriptionSave = useCallback(() => {
+    if (descriptionEditor) {
+      updateTask({ description: descriptionEditor.getHTML() });
+    }
+    setIsEditingDescription(false);
+  }, [descriptionEditor]);
+
+  // --- Share Modal Functions ---
+  const fetchShareUsers = useCallback(async () => {
+    setShareLoading(true);
+    try {
+      let query = supabase.from('users').select('id, name, avatar_url, email');
+      if (shareSearch) {
+        query = query.ilike('name', `%${shareSearch}%`);
+      }
+      if (currentUser?.id) {
+        query = query.neq('id', currentUser.id);
+      }
+      const { data } = await query.limit(10);
+      setShareUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+    setShareLoading(false);
+  }, [shareSearch, currentUser?.id]);
+
+  useEffect(() => {
+    if (showShareModal) {
+      fetchShareUsers();
+    }
+  }, [showShareModal, fetchShareUsers]);
+
+  const handleShareTask = async (userId, userName) => {
+    if (!task || shareSending) return;
+    setShareSending(true);
+    try {
+      // Get or create a direct conversation with the user
+      const conversation = await getOrCreateDirectConversation(userId);
+
+      // Build the task URL with Short ID
+      const shortId = uuidToShortId(task.id);
+      const taskUrl = `${window.location.origin}/tasks?taskId=${shortId}`;
+
+      // Format professional task share message with better visual hierarchy
+      const statusEmoji = task.status === 'Completed' ? '✅' : task.status === 'In Progress' ? '🔄' : task.status === 'Review' ? '👀' : '📝';
+      const priorityEmoji = task.priority === 'High' ? '🔴' : task.priority === 'Medium' ? '🟡' : '🟢';
+
+      const taskMessage = `╔═══════════════════════════════════╗
+📋 **TASK SHARED WITH YOU**
+╚═══════════════════════════════════╝
+
+**${task.title}**
+**ID:** #${shortId}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**📊 Details**
+${statusEmoji} Status: **${task.status}**
+${priorityEmoji} Priority: **${task.priority}**${task.project?.name ? `\n📁 Project: **${task.project.name}**` : ''}${task.due_date ? `\n📅 Due Date: **${format(new Date(task.due_date), 'MMM d, yyyy')}**` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔗 **Quick Access**
+Click to open: ${taskUrl}
+
+_Shared from Task Management System_`;
+
+      // Send the message
+      await sendMessage(conversation.id, taskMessage);
+
+      // Close the modal and show success toast
+      setShowShareModal(false);
+      setShareSearch('');
+
+      // Show success toast
+      setToastUser(userName);
+      setToastMessage(`Task shared with ${userName}`);
+      setShowToast(true);
+
+      // Auto-hide toast after 4 seconds
+      setTimeout(() => setShowToast(false), 4000);
+    } catch (error) {
+      console.error('Error sharing task:', error);
+      setToastMessage('Failed to share task');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+    }
+    setShareSending(false);
+  };
+
+  const removeDependency = async (depId) => {
+    const { error } = await supabase.from('task_dependencies').delete().eq('id', depId);
+    if (!error) {
+      fetchDependencies(taskId);
+    }
+  };
+
   // --- Render Helpers ---
 
   if (!isOpen) return null;
@@ -350,8 +508,10 @@ const TaskDetailView = ({
 
                 {/* Top Row: Breadcrumbs & Actions */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    {/* Functional Project Picker in Breadcrumb */}
+                  <div className="flex items-center gap-3 text-sm text-gray-500 mb-2 font-mono">
+                    <FiHash className="text-gray-400" />
+                    <span>{uuidToShortId(task.id)}</span>
+                    <span className="text-gray-300">|</span>
                     <div className="relative group">
                       <button className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-teal-50 hover:text-teal-600 transition-colors">
                         <FiBarChart2 className="text-teal-500" />
@@ -375,7 +535,21 @@ const TaskDetailView = ({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"><FiShare2 /></button>
+                    {/* Go to Tasks Page button */}
+                    <button
+                      onClick={() => navigate(`/tasks?taskId=${uuidToShortId(task.id)}`)}
+                      className="p-2 rounded-lg hover:bg-indigo-50 text-gray-400 hover:text-indigo-600 transition-colors"
+                      title="Open in Tasks Page"
+                    >
+                      <FiExternalLink />
+                    </button>
+                    <button
+                      onClick={() => setShowShareModal(true)}
+                      className="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Share Task"
+                    >
+                      <FiShare2 />
+                    </button>
                     <button className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"><FiMoreVertical /></button>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors"><FiX className="w-5 h-5" /></button>
                   </div>
@@ -394,37 +568,48 @@ const TaskDetailView = ({
                   </div>
 
                   <div className="flex gap-3">
-                    {/* Status Pill - Enhanced */}
+                    {/* Status Dropdown - Professional Glassmorphic */}
                     <div className="relative">
                       <motion.button
-                        onClick={() => setStatusOpen(!statusOpen)}
+                        onClick={() => { setStatusOpen(!statusOpen); setPriorityOpen(false); }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 border transition-all shadow-sm ${STATUS_CONFIG[task.status]?.bg} ${STATUS_CONFIG[task.status]?.text} ${STATUS_CONFIG[task.status]?.border}`}
+                        className="group relative h-11 px-5 rounded-2xl font-semibold text-sm flex items-center gap-3 transition-all duration-300 backdrop-blur-xl bg-white/80 border border-gray-200/60 shadow-lg shadow-gray-200/20 hover:shadow-xl hover:shadow-gray-200/30 hover:border-gray-300/60"
                       >
-                        <span className="text-gray-500 font-medium">Status:</span>
-                        {task.status}
-                        <motion.span animate={{ rotate: statusOpen ? 180 : 0 }}><FiChevronDown /></motion.span>
+                        <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${STATUS_CONFIG[task.status]?.gradient} shadow-sm`} />
+                        <span className="text-gray-900 font-medium">{task.status}</span>
+                        <motion.div animate={{ rotate: statusOpen ? 180 : 0 }} className="text-gray-400 group-hover:text-gray-600">
+                          <FiChevronDown className="w-4 h-4" />
+                        </motion.div>
                       </motion.button>
                       <AnimatePresence>
                         {statusOpen && (
                           <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            initial={{ opacity: 0, y: -8, scale: 0.96 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden"
+                            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            className="absolute right-0 top-full mt-2 w-56 backdrop-blur-xl bg-white/95 rounded-2xl shadow-2xl shadow-gray-300/30 border border-gray-200/60 p-2 z-50 overflow-hidden"
                           >
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3 py-2">Status</div>
                             {Object.entries(STATUS_CONFIG).map(([s, cfg]) => (
                               <motion.button
                                 key={s}
-                                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.02)' }}
+                                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                                 onClick={() => { updateTask({ status: s }); setStatusOpen(false); }}
-                                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors ${task.status === s ? cfg.bg + ' ' + cfg.text : 'text-gray-700 hover:bg-gray-50'}`}
+                                className={`w-full text-left px-3 py-3 rounded-xl text-sm font-medium flex items-center gap-3 transition-all ${task.status === s ? 'bg-gradient-to-r from-gray-100 to-gray-50' : ''}`}
                               >
-                                <span className="text-lg">{cfg.icon}</span>
-                                <span>{s}</span>
-                                {task.status === s && <FiCheck className="ml-auto text-emerald-500" />}
+                                <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${cfg.gradient} shadow-sm`} />
+                                <span className={task.status === s ? 'text-gray-900 font-semibold' : 'text-gray-700'}>{s}</span>
+                                {task.status === s && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-auto"
+                                  >
+                                    <FiCheck className="w-4 h-4 text-emerald-500" />
+                                  </motion.div>
+                                )}
                               </motion.button>
                             ))}
                           </motion.div>
@@ -432,37 +617,48 @@ const TaskDetailView = ({
                       </AnimatePresence>
                     </div>
 
-                    {/* Priority Pill - Enhanced */}
+                    {/* Priority Dropdown - Professional Glassmorphic */}
                     <div className="relative">
                       <motion.button
-                        onClick={() => setPriorityOpen(!priorityOpen)}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`h-10 px-4 flex items-center justify-center gap-2 rounded-xl border transition-all shadow-sm ${PRIORITY_CONFIG[task.priority]?.bg} ${PRIORITY_CONFIG[task.priority]?.text} ${PRIORITY_CONFIG[task.priority]?.border}`}
+                        onClick={() => { setPriorityOpen(!priorityOpen); setStatusOpen(false); }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="group relative h-11 px-5 rounded-2xl font-semibold text-sm flex items-center gap-3 transition-all duration-300 backdrop-blur-xl bg-white/80 border border-gray-200/60 shadow-lg shadow-gray-200/20 hover:shadow-xl hover:shadow-gray-200/30 hover:border-gray-300/60"
                       >
-                        <span className="text-gray-500 font-medium">Priority:</span>
-                        <span className="font-bold text-sm">{task.priority}</span>
-                        <motion.span animate={{ rotate: priorityOpen ? 180 : 0 }}><FiChevronDown className="w-3 h-3" /></motion.span>
+                        <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${PRIORITY_CONFIG[task.priority]?.gradient} shadow-sm`} />
+                        <span className="text-gray-900 font-medium">{task.priority}</span>
+                        <motion.div animate={{ rotate: priorityOpen ? 180 : 0 }} className="text-gray-400 group-hover:text-gray-600">
+                          <FiChevronDown className="w-4 h-4" />
+                        </motion.div>
                       </motion.button>
                       <AnimatePresence>
                         {priorityOpen && (
                           <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            initial={{ opacity: 0, y: -8, scale: 0.96 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 z-50"
+                            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                            className="absolute right-0 top-full mt-2 w-52 backdrop-blur-xl bg-white/95 rounded-2xl shadow-2xl shadow-gray-300/30 border border-gray-200/60 p-2 z-50 overflow-hidden"
                           >
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-3 py-2">Priority</div>
                             {Object.entries(PRIORITY_CONFIG).map(([p, cfg]) => (
                               <motion.button
                                 key={p}
-                                whileHover={{ x: 4 }}
+                                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.03)' }}
                                 onClick={() => { updateTask({ priority: p }); setPriorityOpen(false); }}
-                                className={`w-full text-left px-3 py-2.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-colors ${task.priority === p ? cfg.bg + ' ' + cfg.text : 'text-gray-700 hover:bg-gray-50'}`}
+                                className={`w-full text-left px-3 py-3 rounded-xl text-sm font-medium flex items-center gap-3 transition-all ${task.priority === p ? 'bg-gradient-to-r from-gray-100 to-gray-50' : ''}`}
                               >
-                                <span className="text-lg">{cfg.icon}</span>
-                                <span>{p}</span>
-                                {task.priority === p && <FiCheck className="ml-auto text-emerald-500" />}
+                                <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${cfg.gradient} shadow-sm`} />
+                                <span className={task.priority === p ? 'text-gray-900 font-semibold' : 'text-gray-700'}>{p}</span>
+                                {task.priority === p && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="ml-auto"
+                                  >
+                                    <FiCheck className="w-4 h-4 text-emerald-500" />
+                                  </motion.div>
+                                )}
                               </motion.button>
                             ))}
                           </motion.div>
@@ -480,7 +676,7 @@ const TaskDetailView = ({
                 <div className="w-full md:w-[80%] overflow-y-auto px-8 py-8 border-r border-gray-100 bg-white">
                   <div className="space-y-12">
 
-                    {/* Description - Expandable with button */}
+                    {/* Description - Rich Text Editor */}
                     <section className="group">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
@@ -496,47 +692,90 @@ const TaskDetailView = ({
                             </button>
                           )}
                           <button
-                            onClick={() => setIsEditingDescription(!isEditingDescription)}
+                            onClick={() => isEditingDescription ? handleDescriptionSave() : setIsEditingDescription(true)}
                             className={`text-xs font-bold flex items-center gap-1 transition-colors ${isEditingDescription ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-500 hover:text-gray-700'}`}
                           >
-                            {isEditingDescription ? <><FiCheck className="w-3 h-3" /> Done</> : <><FiEdit2 className="w-3 h-3" /> Edit</>}
+                            {isEditingDescription ? <><FiCheck className="w-3 h-3" /> Save</> : <><FiEdit2 className="w-3 h-3" /> Edit</>}
                           </button>
                         </div>
                       </div>
-                      {isEditingDescription ? (
-                        <textarea
-                          autoFocus
-                          ref={(el) => {
-                            if (el && isDescriptionExpanded) {
-                              el.style.height = 'auto';
-                              el.style.height = Math.max(200, el.scrollHeight) + 'px';
-                            }
-                          }}
-                          className={`w-full p-4 rounded-xl bg-white border-2 border-blue-200 focus:border-blue-500 transition-all text-gray-700 leading-relaxed resize-none focus:outline-none ${isDescriptionExpanded ? '' : 'max-h-[200px] overflow-hidden'}`}
-                          style={{ minHeight: '200px' }}
-                          placeholder="Add detailed description..."
-                          value={task.description || ''}
-                          onChange={(e) => {
-                            setTask({ ...task, description: e.target.value });
-                            if (isDescriptionExpanded) {
-                              e.target.style.height = 'auto';
-                              e.target.style.height = Math.max(200, e.target.scrollHeight) + 'px';
-                            }
-                          }}
-                          onBlur={(e) => updateTask({ description: e.target.value })}
-                        />
-                      ) : (
+
+                      {/* Rich Text Editor with Toolbar */}
+                      <div className={`rounded-xl border-2 transition-all overflow-hidden ${isEditingDescription ? 'border-blue-200 bg-white shadow-sm' : 'border-transparent bg-gray-50'}`}>
+                        {/* Formatting Toolbar - Only show when editing */}
+                        {isEditingDescription && descriptionEditor && (
+                          <div className="flex items-center gap-1 p-2 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleBold().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('bold') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Bold (Ctrl+B)"
+                            >
+                              <FiBold className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleItalic().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('italic') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Italic (Ctrl+I)"
+                            >
+                              <FiItalic className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleUnderline().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('underline') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Underline (Ctrl+U)"
+                            >
+                              <FiUnderline className="w-4 h-4" />
+                            </button>
+                            <div className="w-px h-6 bg-gray-300 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleBulletList().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Bullet List"
+                            >
+                              <FiList className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleOrderedList().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Numbered List"
+                            >
+                              <FiHash className="w-4 h-4" />
+                            </button>
+                            <div className="w-px h-6 bg-gray-300 mx-1" />
+                            <button
+                              type="button"
+                              onClick={() => descriptionEditor.chain().focus().toggleCodeBlock().run()}
+                              className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${descriptionEditor.isActive('codeBlock') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600'}`}
+                              title="Code Block"
+                            >
+                              <FiCode className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Editor Content */}
                         <div
-                          className={`w-full p-4 rounded-xl bg-gray-50 border-2 border-transparent text-gray-700 leading-relaxed cursor-default ${isDescriptionExpanded ? '' : 'max-h-[200px] overflow-hidden'}`}
-                          style={{ minHeight: '200px' }}
+                          className={`${isDescriptionExpanded ? '' : 'max-h-[300px] overflow-y-auto'}`}
+                          style={{ minHeight: '150px' }}
                         >
-                          {task.description ? (
-                            <div className="whitespace-pre-wrap">{task.description}</div>
+                          {descriptionEditor ? (
+                            <EditorContent
+                              editor={descriptionEditor}
+                              className={`prose prose-sm max-w-none ${!isEditingDescription ? 'cursor-default' : ''}`}
+                            />
                           ) : (
-                            <span className="text-gray-400 italic">No description added. Click Edit to add one.</span>
+                            <div className="p-4 text-gray-400 italic">Loading editor...</div>
+                          )}
+                          {!task.description && !isEditingDescription && (
+                            <div className="p-4 text-gray-400 italic">No description added. Click Edit to add one.</div>
                           )}
                         </div>
-                      )}
+                      </div>
                     </section>
 
                     {/* Subtasks */}
@@ -573,6 +812,115 @@ const TaskDetailView = ({
                           />
                           <button onClick={addSubtask} className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">ADD</button>
                         </div>
+                      </div>
+                    </section>
+
+                    {/* Dependencies Section - Moved from sidebar */}
+                    <section>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                          <FiGitBranch className="text-gray-300" /> Dependencies
+                          <span className="bg-rose-50 text-rose-600 px-2 rounded-full font-bold text-[10px]">{dependencies.length}</span>
+                        </h3>
+                        <button
+                          onClick={() => setIsAddingDep(!isAddingDep)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${isAddingDep ? 'bg-gray-200 text-gray-600' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}
+                        >
+                          {isAddingDep ? 'Cancel' : '+ Add Dependency'}
+                        </button>
+                      </div>
+
+                      {/* Add Dependency Search */}
+                      {isAddingDep && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mb-4 bg-white rounded-xl border-2 border-rose-200 shadow-lg overflow-hidden"
+                        >
+                          <div className="p-3 border-b border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <FiSearch className="text-gray-400" />
+                              <input
+                                autoFocus
+                                className="flex-1 text-sm p-1 focus:outline-none"
+                                placeholder="Search tasks in this project..."
+                                value={depSearch}
+                                onChange={e => setDepSearch(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto">
+                            {availableTasks.map(t => (
+                              <button
+                                key={t.id}
+                                onClick={() => addDependency(t.id)}
+                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left border-b border-gray-50 last:border-0 transition-colors"
+                              >
+                                <div className={`w-2 h-2 rounded-full ${t.status === 'Completed' ? 'bg-emerald-400' : t.status === 'In Progress' ? 'bg-blue-400' : 'bg-gray-300'}`} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 truncate">{t.title}</div>
+                                </div>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${t.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : t.status === 'In Progress' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                                  {t.status}
+                                </span>
+                              </button>
+                            ))}
+                            {availableTasks.length === 0 && (
+                              <div className="p-4 text-center text-sm text-gray-400 italic">No tasks found</div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Dependency List */}
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        {dependencies.length > 0 ? (
+                          <div className="divide-y divide-gray-50">
+                            {dependencies.map(d => (
+                              <motion.div
+                                key={d.id}
+                                className="group flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors"
+                              >
+                                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${d.depends_on_task?.status === 'Completed' ? 'bg-emerald-400' : d.depends_on_task?.status === 'In Progress' ? 'bg-blue-400' : 'bg-gray-300'}`} />
+                                <div
+                                  className="flex-1 min-w-0 cursor-pointer"
+                                  onClick={() => onNavigateToTask && onNavigateToTask(d.depends_on_task?.id)}
+                                >
+                                  <div className="font-medium text-gray-900 truncate group-hover:text-rose-600 transition-colors">
+                                    {d.depends_on_task?.title}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[10px] text-rose-500 font-bold uppercase">Blocks</span>
+                                    <span className="text-xs text-gray-400">{d.depends_on_task?.status}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => onNavigateToTask && onNavigateToTask(d.depends_on_task?.id)}
+                                    className="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Open Task"
+                                  >
+                                    <FiExternalLink className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); removeDependency(d.id); }}
+                                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="Remove Dependency"
+                                  >
+                                    <FiXCircle className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="p-8 text-center">
+                            <FiGitBranch className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">No dependencies linked</p>
+                            <p className="text-xs text-gray-300 mt-1">Click "+ Add Dependency" to link related tasks</p>
+                          </div>
+                        )}
                       </div>
                     </section>
 
@@ -721,75 +1069,21 @@ const TaskDetailView = ({
                       </div>
                     </div>
 
-                    {/* DATA GROUP */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-xl bg-white border border-gray-100 text-center">
-                        <div className="text-[10px] font-bold uppercase text-gray-400 mb-1">Created</div>
-                        <div className="font-medium text-gray-700">{format(new Date(task.created_at), 'MMM d')}</div>
+                    {/* DATES - Properly Sized */}
+                    <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-100">
+                      <div
+                        className="flex items-center gap-2 text-xs text-gray-500"
+                        title={format(new Date(task.created_at), 'PPpp')}
+                      >
+                        <FiClock className="w-3.5 h-3.5 text-gray-400" />
+                        <span>Created {formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}</span>
                       </div>
-                      <div className="p-3 rounded-xl bg-white border border-gray-100 text-center">
-                        <div className="text-[10px] font-bold uppercase text-gray-400 mb-1">Updated</div>
-                        <div className="font-medium text-gray-700">{format(new Date(task.updated_at), 'MMM d')}</div>
-                      </div>
-                    </div>
-
-                    {/* RELATIONS GROUP */}
-                    <div className="space-y-3 pt-6 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-black uppercase tracking-widest text-gray-400">Dependencies</h4>
-                        <button
-                          onClick={() => setIsAddingDep(!isAddingDep)}
-                          className="text-[10px] font-bold bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-600 transition-colors"
-                        >
-                          {isAddingDep ? 'CANCEL' : '+ ADD'}
-                        </button>
-                      </div>
-
-                      {isAddingDep && (
-                        <div className="bg-white p-2 rounded-xl border border-blue-200 shadow-lg animate-in fade-in slide-in-from-top-2">
-                          <input
-                            autoFocus
-                            className="w-full text-xs p-2 border-b border-gray-100 focus:outline-none mb-2"
-                            placeholder="Search current project..."
-                            value={depSearch}
-                            onChange={e => setDepSearch(e.target.value)}
-                          />
-                          <div className="max-h-32 overflow-y-auto space-y-1">
-                            {availableTasks.map(t => (
-                              <button
-                                key={t.id}
-                                onClick={() => addDependency(t.id)}
-                                className="w-full text-left text-xs p-1.5 hover:bg-gray-50 rounded flex justify-between"
-                              >
-                                <span className="truncate flex-1">{t.title}</span>
-                                <span className="ml-2 text-gray-400">{t.status}</span>
-                              </button>
-                            ))}
-                            {availableTasks.length === 0 && <div className="text-xs text-gray-400 italic p-2 text-center">No tasks found</div>}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        {dependencies.map(d => (
-                          <motion.div
-                            key={d.id}
-                            whileHover={{ scale: 1.02, x: 2 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => onNavigateToTask && onNavigateToTask(d.depends_on_task?.id)}
-                            className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:border-rose-300 hover:shadow-md transition-all cursor-pointer group"
-                          >
-                            <FiGitBranch className="text-rose-400 w-4 h-4" />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-gray-900 truncate group-hover:text-rose-600 transition-colors">{d.depends_on_task?.title}</div>
-                              <div className="text-[10px] text-gray-400">{d.depends_on_task?.status}</div>
-                            </div>
-                            <FiExternalLink className="w-3 h-3 text-gray-300 group-hover:text-rose-500 transition-colors" />
-                          </motion.div>
-                        ))}
-                        {dependencies.length === 0 && !isAddingDep && (
-                          <div className="text-xs text-gray-400 italic text-center p-4 border border-dashed border-gray-200 rounded-xl">No dependencies linked</div>
-                        )}
+                      <div className="w-1 h-1 rounded-full bg-gray-300" />
+                      <div
+                        className="flex items-center gap-2 text-xs text-gray-500"
+                        title={format(new Date(task.updated_at), 'PPpp')}
+                      >
+                        <span>Updated {formatDistanceToNow(new Date(task.updated_at), { addSuffix: true })}</span>
                       </div>
                     </div>
 
@@ -801,7 +1095,165 @@ const TaskDetailView = ({
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
+
+      {/* Share Task Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => { setShowShareModal(false); setShareSearch(''); }}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-xl">
+                      <FiShare2 className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Share Task</h3>
+                      <p className="text-xs text-gray-500">Send this task to a team member via chat</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setShowShareModal(false); setShareSearch(''); }}
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <FiX className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Task Preview */}
+              <div className="p-4 bg-gray-50 border-b border-gray-100">
+                <div className="flex items-start gap-3 p-3 bg-white rounded-xl border border-gray-200">
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <FiCheckSquare className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{task?.title}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_CONFIG[task?.status]?.bg} ${STATUS_CONFIG[task?.status]?.text}`}>
+                        {task?.status}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${PRIORITY_CONFIG[task?.priority]?.bg} ${PRIORITY_CONFIG[task?.priority]?.text}`}>
+                        {task?.priority}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Search */}
+              <div className="p-4 border-b border-gray-100">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200">
+                  <FiSearch className="w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={shareSearch}
+                    onChange={(e) => setShareSearch(e.target.value)}
+                    placeholder="Search users..."
+                    className="flex-1 bg-transparent text-sm focus:outline-none text-gray-700 placeholder-gray-400"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {/* User List */}
+              <div className="max-h-64 overflow-y-auto">
+                {shareLoading ? (
+                  <div className="p-8 text-center">
+                    <FiLoader className="w-6 h-6 text-gray-400 animate-spin mx-auto" />
+                    <p className="text-sm text-gray-400 mt-2">Loading users...</p>
+                  </div>
+                ) : shareUsers.length > 0 ? (
+                  <div className="divide-y divide-gray-50">
+                    {shareUsers.map(user => (
+                      <button
+                        key={user.id}
+                        onClick={() => handleShareTask(user.id, user.name)}
+                        disabled={shareSending}
+                        className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 text-left transition-colors disabled:opacity-50"
+                      >
+                        <Avatar user={user} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{user.name}</div>
+                          <div className="text-xs text-gray-400 truncate">{user.email}</div>
+                        </div>
+                        {shareSending ? (
+                          <FiLoader className="w-4 h-4 text-blue-500 animate-spin" />
+                        ) : (
+                          <FiSend className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center">
+                    <FiUsers className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                    <p className="text-sm text-gray-400">No users found</p>
+                    {shareSearch && (
+                      <p className="text-xs text-gray-300 mt-1">Try a different search term</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-gray-50 border-t border-gray-100">
+                <p className="text-xs text-gray-400 text-center">
+                  Select a user to share this task via direct message
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence >
+
+      {/* Glassmorphic Success Toast */}
+      < AnimatePresence >
+        {showToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-6 right-6 z-[200]"
+          >
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl backdrop-blur-xl bg-white/90 border border-gray-200/60 shadow-2xl shadow-gray-300/30">
+              <div className="p-2 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl">
+                <FiCheck className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{toastMessage}</p>
+                <p className="text-xs text-gray-500">Task link sent via chat</p>
+              </div>
+              <button
+                onClick={() => setShowToast(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors ml-2"
+              >
+                <FiX className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence >
+    </AnimatePresence >
   );
 };
 

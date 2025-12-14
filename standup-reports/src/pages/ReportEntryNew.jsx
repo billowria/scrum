@@ -1,1248 +1,617 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
-// import TaskDetailView from '../components/tasks/TaskDetailView';
-import { 
-  FiCalendar, FiCheckCircle, FiAlertCircle, FiClipboard, FiList, FiUsers, 
-  FiSend, FiCopy, FiStar, FiBold, FiItalic, FiCode, FiAtSign, FiFileText, 
-  FiPlus, FiCheck, FiEdit, FiX, FiClock, FiTarget, FiTrendingUp, FiZap,
-  FiBookmark, FiHash, FiLink, FiSave, FiRefreshCw, FiArrowLeft, FiChevronDown,
-  FiChevronUp, FiMaximize2, FiMinimize2, FiTag, FiUser, FiFlag, FiPaperclip,
-  FiThumbsUp, FiMessageSquare, FiBarChart2, FiAward, FiCoffee, FiShield,
-  FiCompass, FiDatabase, FiGitBranch, FiSettings, FiTool, FiFilter,
-  FiNavigation, FiPackage, FiLayers, FiMapPin, FiHome, FiMonitor,
-  FiSmartphone, FiTablet, FiHeadphones, FiCamera, FiVideo,
-  FiMic, FiSpeaker, FiPrinter, FiServer, FiCloud, FiWifi,
-  FiBluetooth, FiBattery, FiPower, FiLock, FiUnlock,
-  FiKey, FiEye, FiEyeOff, FiHeart, FiSmile, FiFrown,
-  FiMeh, FiThumbsDown, FiShare2, FiDownload, FiUpload,
-  FiTrash2, FiArchive, FiInbox, FiMail, FiPhone,
-  FiGlobe, FiMap, FiNavigation2, FiCompass as FiCompass2,
-  FiAnchor, FiLifeBuoy, FiTool as FiTool2, FiSettings as FiSettings2
-} from 'react-icons/fi';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { supabase } from '../supabaseClient';
+import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiCalendar,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiSend,
+  FiLoader,
+  FiSave,
+  FiClock,
+  FiHash,
+  FiUser,
+  FiTrendingUp,
+  FiCopy,
+  FiZap,
+  FiTarget,
+  FiUsers,
+  FiFileText,
+  FiCommand
+} from 'react-icons/fi';
 import { format, subDays } from 'date-fns';
-import '../tiptap.css';
 
-
-
-// Success animation
-const SuccessAnimation = ({ onComplete }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => onComplete?.(), 2000);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
-  
-  return (
-    <motion.div 
-      className="fixed inset-0 flex items-center justify-center z-50 bg-black/60 backdrop-blur-md"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div 
-        className="bg-white rounded-3xl p-12 shadow-2xl max-w-md"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-      >
-        <div className="flex flex-col items-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
-          >
-            <FiCheckCircle className="h-24 w-24 text-green-500 mb-4" />
-          </motion.div>
-          <h3 className="text-3xl font-bold text-gray-800 mb-2">Success!</h3>
-          <p className="text-gray-600 text-center">Your daily report has been submitted</p>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Formatting toolbar component
-const EditorToolbar = ({ editor, onInsert }) => {
-  if (!editor) return null;
-  
-  return (
-    <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-      <motion.button
-        type="button"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
-          editor.isActive('bold') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
-        }`}
-        title="Bold (Ctrl+B)"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FiBold className="h-4 w-4" />
-      </motion.button>
-      <motion.button
-        type="button"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
-          editor.isActive('italic') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
-        }`}
-        title="Italic (Ctrl+I)"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FiItalic className="h-4 w-4" />
-      </motion.button>
-      <motion.button
-        type="button"
-        onClick={() => editor.chain().focus().toggleCode().run()}
-        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
-          editor.isActive('code') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
-        }`}
-        title="Code"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FiCode className="h-4 w-4" />
-      </motion.button>
-      <div className="h-5 w-px bg-gray-300 mx-1"></div>
-      <motion.button
-        type="button"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
-          editor.isActive('bulletList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
-        }`}
-        title="Bullet List"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FiList className="h-4 w-4" />
-      </motion.button>
-      <motion.button
-        type="button"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-2 rounded-lg hover:bg-gray-200 transition-colors ${
-          editor.isActive('orderedList') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700'
-        }`}
-        title="Numbered List"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <FiFileText className="h-4 w-4" />
-      </motion.button>
-      <div className="h-5 w-px bg-gray-300 mx-1"></div>
-      <motion.button
-        type="button"
-        onClick={() => onInsert?.('task')}
-        className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg text-sm font-medium hover:from-indigo-600 hover:to-indigo-700 transition-all flex items-center gap-1 shadow-sm hover:shadow-md"
-        title="Insert Task"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <FiPlus className="h-3 w-3" />
-        Task
-      </motion.button>
-      <motion.button
-        type="button"
-        onClick={() => onInsert?.('mention')}
-        className="px-3 py-1.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-purple-700 transition-all flex items-center gap-1 shadow-sm hover:shadow-md"
-        title="Mention User"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <FiAtSign className="h-3 w-3" />
-        Mention
-      </motion.button>
-    </div>
-  );
-};
-
-export default function ReportEntryNew() {
-  // Company context
-  const { currentCompany } = useCompany();
-
-  // State management
-  const [yesterday, setYesterday] = useState('');
-  const [today, setToday] = useState('');
-  const [blockers, setBlockers] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+const ReportEntryNew = () => {
+  const { selectedCompany } = useCompany();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
-  const [existingReport, setExistingReport] = useState(null);
-  const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [teamMembers, setTeamMembers] = useState([]);
+  const [fetchingTasks, setFetchingTasks] = useState(false);
   const [myTasks, setMyTasks] = useState([]);
-  const [showTaskPicker, setShowTaskPicker] = useState(false);
-  const [showMentionPicker, setShowMentionPicker] = useState(false);
-  const [activeEditor, setActiveEditor] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [stats, setStats] = useState({ tasksCompleted: 0, reportsThisWeek: 0 });
   const [lastSaved, setLastSaved] = useState(null);
-  const [previousReport, setPreviousReport] = useState(null);
-  const [showQuickActions, setShowQuickActions] = useState(true);
-  const [wordCount, setWordCount] = useState({ yesterday: 0, today: 0, blockers: 0 });
-  const [taskSearch, setTaskSearch] = useState('');
-  const [tasksLoading, setTasksLoading] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState(null);
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [activeEditor, setActiveEditor] = useState(null);
 
-  const navigate = useNavigate();
+  // Form State
+  const [yesterdayContent, setYesterdayContent] = useState('');
+  const [todayContent, setTodayContent] = useState('');
+  const [blockersContent, setBlockersContent] = useState('');
 
-  // Utility function to parse task references from text with positions
-  const parseTaskReferences = (text) => {
-    // Match patterns like [TASK:id|title] or TASK:id
-    const taskPattern = /\[TASK:([^\]|]+)\|([^\]]+)\]|\bTASK:([A-Z0-9]{8,})\b/g;
-    const matches = [];
-    let match;
-    
-    while ((match = taskPattern.exec(text)) !== null) {
-      const taskId = match[1] || match[3];
-      const taskTitle = match[2] || taskId;
-      
-      if (taskId) {
-        matches.push({
-          id: taskId,
-          title: taskTitle,
-          index: match.index,
-          length: match[0].length,
-          fullMatch: match[0]
-        });
-      }
-    }
-    
-    return matches;
+  // UI State
+  const [showMentionPopup, setShowMentionPopup] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  const saveTimeoutRef = useRef(null);
+
+  // Templates for quick insertion
+  const templates = {
+    yesterday: [
+      '✅ Implemented [feature name]',
+      '🐛 Fixed bug in [component]',
+      '📝 Reviewed PRs for [project]',
+      '🚀 Deployed [version] to production',
+      '🤝 Met with team to discuss [topic]'
+    ],
+    today: [
+      '🎯 Working on [task name]',
+      '🔍 Investigating [issue]',
+      '📞 Meeting with [person] at [time]',
+      '✨ Starting work on [feature]',
+      '🧪 Testing [component]'
+    ],
+    blockers: [
+      '⏳ Waiting for [person/thing]',
+      '❓ Need clarification on [topic]',
+      '🔧 Blocked by [technical issue]',
+      '📄 Missing [documentation/resource]'
+    ]
   };
 
-  // Utility function to parse mentions from text with positions
-  const parseMentions = (text) => {
-    // Match patterns like @name{id:uuid}
-    const mentionPattern = /@([^\{\s]+)\{id:([a-f0-9\-]+)\}/g;
-    const mentions = [];
-    let match;
-    
-    while ((match = mentionPattern.exec(text)) !== null) {
-      mentions.push({
-        name: match[1],
-        id: match[2],
-        index: match.index,
-        length: match[0].length,
-        fullMatch: match[0]
-      });
+  // Initialize Editors  
+  const editorProps = {
+    attributes: {
+      class: 'prose prose-sm max-w-none focus:outline-none text-slate-700 dark:text-slate-300 text-sm leading-relaxed'
     }
-    
-    return mentions;
   };
 
-  // Custom component to render content with clickable task references and mentions
-  const ContentRenderer = ({ content, onTaskClick, onMentionClick }) => {
-    // Parse task references and mentions from the content
-    const taskReferences = parseTaskReferences(content);
-    const mentions = parseMentions(content);
-    
-    // Create an array of all clickable elements with their positions
-    const clickableElements = [
-      ...taskReferences.map(ref => ({ ...ref, type: 'task' })),
-      ...mentions.map(mention => ({ ...mention, type: 'mention' }))
-    ].sort((a, b) => a.index - b.index);
-    
-    // If no clickable elements, just render the content as plain text
-    if (clickableElements.length === 0) {
-      return (
-        <div 
-          className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }} 
-        />
-      );
-    }
-    
-    // Split the content by clickable elements
-    const elements = [];
-    let lastIndex = 0;
-    
-    clickableElements.forEach((element, index) => {
-      // Add text before the clickable element
-      if (element.index > lastIndex) {
-        const text = content.substring(lastIndex, element.index);
-        elements.push(
-          <span 
-            key={`text-${index}`} 
-            dangerouslySetInnerHTML={{ __html: text }} 
-          />
-        );
-      }
-      
-      // Add the clickable element
-      if (element.type === 'task') {
-        elements.push(
-          <motion.button
-            key={`task-${element.id}`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors shadow-sm cursor-pointer"
-            onClick={() => onTaskClick(element.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiTag className="w-3 h-3" />
-            <span>{element.id}</span>
-          </motion.button>
-        );
-      } else if (element.type === 'mention') {
-        elements.push(
-          <motion.button
-            key={`mention-${element.id}`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 hover:bg-purple-200 transition-colors shadow-sm cursor-pointer"
-            onClick={() => onMentionClick(element.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiUser className="w-3 h-3" />
-            <span>{element.name}</span>
-          </motion.button>
-        );
-      }
-      
-      lastIndex = element.index + element.length;
-    });
-    
-    // Add remaining text after the last clickable element
-    if (lastIndex < content.length) {
-      const text = content.substring(lastIndex);
-      elements.push(
-        <span 
-          key="text-end" 
-          dangerouslySetInnerHTML={{ __html: text }} 
-        />
-      );
-    }
-    
-    return (
-      <div className="prose prose-sm max-w-none">
-        {elements}
-      </div>
-    );
-  };
-
-  // Tiptap editors
   const yesterdayEditor = useEditor({
-    extensions: [StarterKit],
-    content: yesterday,
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'What did you accomplish yesterday?' })
+    ],
+    content: yesterdayContent,
+    editorProps,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      setYesterday(html);
-      setWordCount(prev => ({ ...prev, yesterday: editor.getText().split(/\s+/).filter(Boolean).length }));
+      setYesterdayContent(editor.getHTML());
+      debouncedSave();
     },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] p-4',
-      },
-    },
+    onFocus: () => setActiveEditor('yesterday')
   });
 
   const todayEditor = useEditor({
-    extensions: [StarterKit],
-    content: today,
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'What will you work on today?' })
+    ],
+    content: todayContent,
+    editorProps,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      setToday(html);
-      setWordCount(prev => ({ ...prev, today: editor.getText().split(/\s+/).filter(Boolean).length }));
+      setTodayContent(editor.getHTML());
+      debouncedSave();
     },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[150px] p-4',
-      },
-    },
+    onFocus: () => setActiveEditor('today')
   });
 
   const blockersEditor = useEditor({
-    extensions: [StarterKit],
-    content: blockers,
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'Any blockers? (Optional)' })
+    ],
+    content: blockersContent,
+    editorProps,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      setBlockers(html);
-      setWordCount(prev => ({ ...prev, blockers: editor.getText().split(/\s+/).filter(Boolean).length }));
+      setBlockersContent(editor.getHTML());
+      debouncedSave();
     },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[100px] p-4',
-      },
-    },
+    onFocus: () => setActiveEditor('blockers')
   });
 
-  // Fetch previous day's report
-  const fetchPreviousReport = async (userId) => {
+  // Fetch data
+  useEffect(() => {
+    if (selectedCompany) {
+      fetchReport();
+      fetchMyTasks();
+      fetchTeamMembers();
+      fetchStats();
+    }
+  }, [selectedCompany, reportDate]);
+
+  const fetchReport = async () => {
     try {
-      if (!currentCompany?.id) return;
-
-      const previousDate = format(subDays(new Date(date), 1), 'yyyy-MM-dd');
-      const { data, error } = await supabase
-        .from('daily_reports')
-        .select('today')
-        .eq('user_id', userId)
-        .eq('date', previousDate)
-        .eq('company_id', currentCompany.id) // Company filter
-        .single();
-
-      if (data && !error) {
-        setPreviousReport(data);
-      }
-    } catch (error) {
-      console.error('Error fetching previous report:', error);
-    }
-  };
-
-  // Copy yesterday's "today" to current "yesterday"
-  const copyFromPreviousReport = () => {
-    if (previousReport?.today) {
-      setYesterday(previousReport.today);
-      if (yesterdayEditor?.view) {
-        try {
-          yesterdayEditor.commands.setContent(previousReport.today);
-        } catch (error) {
-          console.warn('Error setting content:', error);
-        }
-      }
-      setMessage({ type: 'success', text: 'Copied from yesterday\'s planned tasks!' });
-    }
-  };
-
-  // Initialize data
-  useEffect(() => {
-    const initializeData = async () => {
-      try {
-        // Wait for company context to be available
-        if (!currentCompany?.id) return;
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        setCurrentUser(user);
-
-        // Fetch teams with company filtering
-        const { data: teamsData } = await supabase
-          .from('teams')
-          .select('id, name')
-          .eq('company_id', currentCompany.id);
-        setTeams(teamsData || []);
-
-        // Fetch user's team and role with company filtering
-        const { data: userData } = await supabase
-          .from('users')
-          .select('team_id, role')
-          .eq('id', user.id)
-          .eq('company_id', currentCompany.id) // Company filter
-          .single();
-
-        if (userData?.team_id) {
-          setSelectedTeam(userData.team_id);
-
-          // Fetch team members with company filtering
-          const { data: members } = await supabase
-            .from('users')
-            .select('id, name')
-            .eq('team_id', userData.team_id)
-            .eq('company_id', currentCompany.id) // Company filter
-            .order('name');
-          setTeamMembers(members || []);
-        }
-
-        if (userData?.role) {
-          setUserRole(userData.role);
-        }
-
-        // Fetch user's tasks
-        setTasksLoading(true);
-        const { data: tasks, error: tasksError } = await supabase
-          .from('tasks')
-          .select('id, title, status, priority, assignee:users!tasks_assignee_id_fkey(name)')
-          .eq('assignee_id', user.id)
-          .order('updated_at', { ascending: false })
-          .limit(100);
-        
-        if (tasksError) {
-          console.error('Tasks error:', tasksError);
-        } else {
-          console.log('Fetched tasks:', tasks);
-          setMyTasks(tasks || []);
-        }
-        setTasksLoading(false);
-
-        // Fetch previous report
-        await fetchPreviousReport(user.id);
-
-        // Check for existing report
-        const { data: reportData } = await supabase
-          .from('daily_reports')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('date', date)
-          .eq('company_id', currentCompany.id) // Company filter
-          .single();
-
-        if (reportData) {
-          setExistingReport(reportData);
-          setYesterday(reportData.yesterday || '');
-          setToday(reportData.today || '');
-          setBlockers(reportData.blockers || '');
-          setMessage({ type: 'info', text: 'Editing existing report for this date.' });
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-
-    initializeData();
-  }, [date, currentCompany]);
-
-  // Sync content to editors
-  useEffect(() => {
-    if (yesterdayEditor?.view && yesterday !== yesterdayEditor.getHTML()) {
-      try {
-        yesterdayEditor.commands.setContent(yesterday);
-      } catch (error) {
-        console.warn('Error setting yesterday content:', error);
-      }
-    }
-  }, [yesterday, yesterdayEditor]);
-
-  useEffect(() => {
-    if (todayEditor?.view && today !== todayEditor.getHTML()) {
-      try {
-        todayEditor.commands.setContent(today);
-      } catch (error) {
-        console.warn('Error setting today content:', error);
-      }
-    }
-  }, [today, todayEditor]);
-
-  useEffect(() => {
-    if (blockersEditor?.view && blockers !== blockersEditor.getHTML()) {
-      try {
-        blockersEditor.commands.setContent(blockers);
-      } catch (error) {
-        console.warn('Error setting blockers content:', error);
-      }
-    }
-  }, [blockers, blockersEditor]);
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (!autoSaveEnabled || !yesterday && !today && !blockers) return;
-    
-    const autoSaveTimer = setTimeout(async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !selectedTeam || !currentCompany?.id) return;
-
-        const reportData = {
-          user_id: user.id,
-          date,
-          yesterday,
-          today,
-          blockers,
-          company_id: currentCompany.id, // Add company_id
-          updated_at: new Date().toISOString()
-        };
-
-        if (existingReport) {
-          await supabase
-            .from('daily_reports')
-            .update(reportData)
-            .eq('id', existingReport.id);
-        } else {
-          reportData.created_at = new Date().toISOString();
-          const { data } = await supabase
-            .from('daily_reports')
-            .insert([reportData])
-            .select()
-            .single();
-          
-          if (data) setExistingReport(data);
-        }
-        
-        setLastSaved(new Date());
-      } catch (error) {
-        console.error('Auto-save error:', error);
-      }
-    }, 5000); // Auto-save after 5 seconds of inactivity
-
-    return () => clearTimeout(autoSaveTimer);
-  }, [yesterday, today, blockers, autoSaveEnabled, date, selectedTeam, existingReport]);
-
-  // Handle task click to open task modal
-  const handleTaskClick = (taskId) => {
-    setSelectedTaskId(taskId);
-    setShowTaskModal(true);
-  };
-
-  // Handle mention click to navigate to profile
-  const handleMentionClick = (userId) => {
-    navigate(`/profile/${userId}`);
-  };
-
-  // Close task modal
-  const handleCloseTaskModal = () => {
-    setShowTaskModal(false);
-    setSelectedTaskId(null);
-  };
-
-  // Submit handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!selectedTeam) {
-      setMessage({ type: 'error', text: 'You must be assigned to a team to submit reports' });
-      return;
-    }
-
-    if (!currentCompany?.id) {
-      setMessage({ type: 'error', text: 'Company context not available' });
-      return;
-    }
-
-    setLoading(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const reportData = {
-        user_id: user.id,
-        date,
-        yesterday,
-        today,
-        blockers,
-        company_id: currentCompany.id, // Add company_id
-        updated_at: new Date().toISOString()
-      };
-
-      if (existingReport) {
-        await supabase
-          .from('daily_reports')
-          .update(reportData)
-          .eq('id', existingReport.id);
-      } else {
-        reportData.created_at = new Date().toISOString();
-        await supabase
-          .from('daily_reports')
-          .insert([reportData]);
-      }
-
-      setShowSuccess(true);
-    } catch (error) {
-      console.error('Error submitting report:', error);
-      setMessage({ type: 'error', text: `Error: ${error.message}` });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSuccessComplete = () => {
-    navigate('/dashboard');
-  };
-
-  // Insert task
-  // Refresh tasks
-  const refreshTasks = async () => {
-    try {
-      setTasksLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: tasks, error: tasksError } = await supabase
+      const { data, error } = await supabase
+        .from('daily_reports')
+        .select('*')
+        .eq('company_id', selectedCompany.id)
+        .eq('user_id', user.id)
+        .eq('report_date', reportDate)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching report:', error);
+      }
+
+      if (data) {
+        setYesterdayContent(data.yesterday_text || '');
+        setTodayContent(data.today_text || '');
+        setBlockersContent(data.blockers_text || '');
+
+        yesterdayEditor?.commands.setContent(data.yesterday_text || '');
+        todayEditor?.commands.setContent(data.today_text || '');
+        blockersEditor?.commands.setContent(data.blockers_text || '');
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
+  };
+
+  const fetchMyTasks = async () => {
+    setFetchingTasks(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, status, priority, assignee:users!tasks_assignee_id_fkey(name)')
-        .eq('assignee_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(100);
-      
-      if (tasksError) {
-        console.error('Tasks error:', tasksError);
-      } else {
-        console.log('Refreshed tasks:', tasks);
-        setMyTasks(tasks || []);
-        setMessage({ type: 'success', text: `Loaded ${tasks?.length || 0} tasks` });
-      }
-    } catch (error) {
-      console.error('Error refreshing tasks:', error);
-      setMessage({ type: 'error', text: 'Failed to load tasks' });
+        .select('id, title, status, priority, project_id, projects(name, color)')
+        .eq('company_id', selectedCompany.id)
+        .contains('assignees', [user.id])
+        .neq('status', 'Done')
+        .limit(10);
+
+      if (error) throw error;
+      setMyTasks(data || []);
+    } catch (err) {
+      console.error('Error fetching tasks:', err);
     } finally {
-      setTasksLoading(false);
+      setFetchingTasks(false);
     }
   };
 
+  const fetchTeamMembers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, avatar_url')
+        .eq('company_id', selectedCompany.id)
+        .limit(8);
+
+      if (error) throw error;
+      setTeamMembers(data || []);
+    } catch (err) {
+      console.error('Error fetching team:', err);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get completed tasks this week
+      const weekAgo = subDays(new Date(), 7).toISOString();
+      const { count: tasksCount } = await supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', selectedCompany.id)
+        .contains('assignees', [user.id])
+        .eq('status', 'Done')
+        .gte('updated_at', weekAgo);
+
+      // Get reports this week
+      const { count: reportsCount } = await supabase
+        .from('daily_reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('company_id', selectedCompany.id)
+        .eq('user_id', user.id)
+        .gte('report_date', format(subDays(new Date(), 7), 'yyyy-MM-dd'));
+
+      setStats({
+        tasksCompleted: tasksCount || 0,
+        reportsThisWeek: reportsCount || 0
+      });
+    } catch (err) {
+      console.error('Error fetching stats:', err);
+    }
+  };
+
+  // Auto-save
+  const debouncedSave = () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      handleDraftSave();
+    }, 2000);
+  };
+
+  const handleDraftSave = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const reportData = {
+        company_id: selectedCompany.id,
+        user_id: user.id,
+        report_date: reportDate,
+        yesterday_text: yesterdayContent,
+        today_text: todayContent,
+        blockers_text: blockersContent,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('daily_reports')
+        .upsert(reportData, { onConflict: 'company_id, user_id, report_date' });
+
+      if (error) throw error;
+      setLastSaved(new Date());
+    } catch (err) {
+      console.error('Auto-save failed:', err);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    await handleDraftSave();
+    setTimeout(() => {
+      setLoading(false);
+      alert('✅ Report submitted successfully!');
+      fetchStats(); // Refresh stats
+    }, 800);
+  };
+
+  // Template insertion
+  const insertTemplate = (template) => {
+    let editor = null;
+    if (activeEditor === 'yesterday') editor = yesterdayEditor;
+    if (activeEditor === 'today') editor = todayEditor;
+    if (activeEditor === 'blockers') editor = blockersEditor;
+
+    if (editor) {
+      const currentContent = editor.getText();
+      const newLine = currentContent.trim() ? '<br>' : '';
+      editor.chain().focus().insertContent(newLine + template).run();
+    }
+  };
+
+  // Insert task
   const insertTask = (task) => {
-    const editor = activeEditor || todayEditor;
-    if (editor?.view) {
-      try {
-        editor.commands.insertContent(`[TASK:${task.id}|${task.title}] `);
-        editor.commands.focus();
-        setShowTaskPicker(false);
-        setTaskSearch('');
-      } catch (error) {
-        console.warn('Insert task error:', error);
-      }
+    let editor = null;
+    if (activeEditor === 'yesterday') editor = yesterdayEditor;
+    if (activeEditor === 'today') editor = todayEditor;
+    if (activeEditor === 'blockers') editor = blockersEditor;
+
+    if (editor) {
+      const taskLink = `<a href="/tasks/${task.id}" class="text-indigo-600 font-medium hover:underline">#${task.title}</a> `;
+      editor.chain().focus().insertContent(taskLink).run();
     }
   };
 
-  // Insert mention
-  const insertMention = (member) => {
-    const editor = activeEditor || todayEditor;
-    if (editor?.view) {
-      try {
-        editor.commands.insertContent(`@${member.name}{id:${member.id}} `);
-        editor.commands.focus();
-        setShowMentionPicker(false);
-      } catch (error) {
-        console.warn('Insert mention error:', error);
-      }
+  // Mention team member
+  const mentionMember = (member) => {
+    let editor = null;
+    if (activeEditor === 'yesterday') editor = yesterdayEditor;
+    if (activeEditor === 'today') editor = todayEditor;
+    if (activeEditor === 'blockers') editor = blockersEditor;
+
+    if (editor) {
+      const mention = `<span class="text-blue-600 font-medium">@${member.name}</span> `;
+      editor.chain().focus().insertContent(mention).run();
+    }
+    setShowMentionPopup(false);
+  };
+
+  const wordCount = (html) => {
+    const text = html.replace(/<[^>]*>/g, '');
+    return text.trim().split(/\s+/).filter(w => w).length;
+  };
+
+  return (
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 overflow-hidden">
+      {/* Header */}
+      <header className="h-16 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between px-6 shrink-0">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">Daily Standup Report</h1>
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <FiCalendar className="w-3 h-3" />
+              <span>{format(new Date(reportDate), 'EEEE, MMM d, yyyy')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {lastSaved && (
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <FiSave className="w-3 h-3" />
+              <span>Saved {format(lastSaved, 'h:mm a')}</span>
+            </div>
+          )}
+
+          <motion.button
+            onClick={handleSubmit}
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <FiLoader className="animate-spin w-4 h-4" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <FiSend className="w-4 h-4" />
+                <span>Submit Report</span>
+              </>
+            )}
+          </motion.button>
+        </div>
+      </header>
+
+      {/* Main Grid */}
+      <main className="flex-1 grid grid-cols-[260px_1fr_300px] gap-0 overflow-hidden">
+        {/* Left Panel */}
+        <aside className="border-r border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+          <div className="p-4 space-y-6">
+            {/* Stats */}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FiTrendingUp className="w-3 h-3" />
+                This Week
+              </h3>
+              <div className="space-y-2">
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FiCheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">Tasks Done</span>
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.tasksCompleted}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FiFileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">Reports</span>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.reportsThisWeek}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Tasks */}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FiTarget className="w-3 h-3" />
+                Your Tasks
+              </h3>
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {fetchingTasks ? (
+                  <div className="text-xs text-slate-400 flex items-center gap-2 p-2">
+                    <FiLoader className="animate-spin w-3 h-3" /> Loading...
+                  </div>
+                ) : myTasks.length > 0 ? (
+                  myTasks.map(task => (
+                    <button
+                      key={task.id}
+                      onClick={() => insertTask(task)}
+                      disabled={!activeEditor}
+                      className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+                        <span className="text-[10px] text-slate-500 uppercase">{task.projects?.name}</span>
+                      </div>
+                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {task.title}
+                      </p>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 italic p-2">No active tasks</p>
+                )}
+              </div>
+            </div>
+
+            {/* Team */}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FiUsers className="w-3 h-3" />
+                Quick Mention
+              </h3>
+              <div className="grid grid-cols-4 gap-2">
+                {teamMembers.slice(0, 8).map(member => (
+                  <button
+                    key={member.id}
+                    onClick={() => mentionMember(member)}
+                    disabled={!activeEditor}
+                    title={member.name}
+                    className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
+                  >
+                    {member.avatar_url ? (
+                      <img src={member.avatar_url} alt={member.name} className="w-full h-full object-cover rounded-lg" />
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        {member.name?.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Center - Editors */}
+        <div className="flex flex-col p-6 gap-4 overflow-hidden">
+          {/* Yesterday */}
+          <CompactEditor
+            icon={<FiCheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
+            title="Yesterday"
+            subtitle="Accomplishments"
+            color="emerald"
+            editor={yesterdayEditor}
+            isActive={activeEditor === 'yesterday'}
+            wordCount={wordCount(yesterdayContent)}
+          />
+
+          {/* Today */}
+          <CompactEditor
+            icon={<FiTarget className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+            title="Today"
+            subtitle="Plans"
+            color="blue"
+            editor={todayEditor}
+            isActive={activeEditor === 'today'}
+            wordCount={wordCount(todayContent)}
+          />
+
+          {/* Blockers */}
+          <CompactEditor
+            icon={<FiAlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
+            title="Blockers"
+            subtitle="Optional"
+            color="amber"
+            editor={blockersEditor}
+            isActive={activeEditor === 'blockers'}
+            wordCount={wordCount(blockersContent)}
+          />
+        </div>
+
+        {/* Right Panel */}
+        <aside className="border-l border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+          <div className="p-4 space-y-6">
+            {/* Templates */}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FiZap className="w-3 h-3" />
+                Quick Templates
+              </h3>
+              {activeEditor && (
+                <div className="space-y-2">
+                  <p className="text-[10px] text-slate-400 mb-2">
+                    For: <span className="font-semibold capitalize">{activeEditor}</span>
+                  </p>
+                  {templates[activeEditor]?.map((template, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => insertTemplate(template)}
+                      className="w-full p-2 text-left text-xs rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-700 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800"
+                    >
+                      {template}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!activeEditor && (
+                <p className="text-xs text-slate-400 italic">Click on an editor to see templates</p>
+              )}
+            </div>
+
+            {/* Keyboard Shortcuts */}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <FiCommand className="w-3 h-3" />
+                Shortcuts
+              </h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Submit</span>
+                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ Enter</kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Bold</span>
+                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ B</kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">Italic</span>
+                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ I</kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400">List</span>
+                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ ⇧ 8</kbd>
+                </div>
+              </div>
+            </div>
+
+            {/* Tips */}
+            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/30">
+              <div className="flex items-start gap-2 mb-2">
+                <FiZap className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-semibold text-indigo-900 dark:text-indigo-300 mb-1">Pro Tip</h4>
+                  <p className="text-[11px] text-indigo-700 dark:text-indigo-400 leading-relaxed">
+                    Click tasks on the left to insert links. Use templates for consistency. Mention teammates for collaboration.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  );
+};
+
+// Compact Editor Component
+const CompactEditor = ({ icon, title, subtitle, color, editor, isActive, wordCount }) => {
+  const colorClasses = {
+    emerald: {
+      bg: 'from-emerald-500/5 to-teal-500/5',
+      ring: 'ring-emerald-500/30',
+      border: 'border-emerald-200 dark:border-emerald-800'
+    },
+    blue: {
+      bg: 'from-blue-500/5 to-indigo-500/5',
+      ring: 'ring-blue-500/30',
+      border: 'border-blue-200 dark:border-blue-800'
+    },
+    amber: {
+      bg: 'from-amber-500/5 to-orange-500/5',
+      ring: 'ring-amber-500/30',
+      border: 'border-amber-200 dark:border-amber-800'
     }
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+    <div className={`flex-1 flex flex-col rounded-2xl border ${isActive ? `${colorClasses[color].border} ring-2 ${colorClasses[color].ring}` : 'border-slate-200 dark:border-slate-800'} bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm overflow-hidden transition-all`}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className={`mx-auto ${isFullscreen ? 'max-w-full px-8' : 'max-w-[1600px] px-8'} py-4`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <motion.button
-                onClick={() => navigate('/dashboard')}
-                className="p-3 hover:bg-gray-100 rounded-xl transition-colors shadow-sm hover:shadow-md"
-                title="Back to Dashboard"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiArrowLeft className="h-5 w-5 text-gray-700" />
-              </motion.button>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
-                  {existingReport ? 'Update Daily Report' : 'Create Daily Report'}
-                </h1>
-                <div className="flex items-center gap-3 mt-1">
-                  <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                    <motion.div 
-                      className="p-1.5 rounded-lg bg-indigo-100 text-indigo-600"
-                      whileHover={{ scale: 1.1 }}
-                    >
-                      <FiCalendar className="h-4 w-4" />
-                    </motion.div>
-                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
-                  </p>
-                  {selectedTeam && (
-                    <p className="text-sm text-gray-600 flex items-center gap-1.5">
-                      <motion.div 
-                        className="p-1.5 rounded-lg bg-purple-100 text-purple-600"
-                        whileHover={{ scale: 1.1 }}
-                      >
-                        <FiUsers className="h-4 w-4" />
-                      </motion.div>
-                      {teams.find(t => t.id === selectedTeam)?.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {lastSaved && (
-                <motion.span 
-                  className="text-xs text-gray-500 flex items-center gap-1 bg-green-50 px-2.5 py-1.5 rounded-lg"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <motion.div
-                    className="p-1 rounded-full bg-green-100 text-green-600"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <FiCheck className="h-3 w-3" />
-                  </motion.div>
-                  Saved {format(lastSaved, 'HH:mm')}
-                </motion.span>
-              )}
-              <motion.button
-                type="button"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="p-3 hover:bg-gray-100 rounded-xl transition-colors shadow-sm hover:shadow-md"
-                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {isFullscreen ? 
-                  <motion.div
-                    initial={{ rotate: -90 }}
-                    animate={{ rotate: 0 }}
-                  >
-                    <FiMinimize2 className="h-5 w-5 text-gray-700" />
-                  </motion.div> : 
-                  <FiMaximize2 className="h-5 w-5 text-gray-700" />
-                }
-              </motion.button>
-              <motion.button
-                type="button"
-                onClick={() => setShowQuickActions(!showQuickActions)}
-                className="p-3 hover:bg-indigo-100 rounded-xl transition-colors shadow-sm hover:shadow-md text-indigo-600"
-                title="Quick Actions"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiZap className="h-5 w-5" />
-              </motion.button>
-            </div>
+      <div className={`px-4 py-3 border-b border-slate-100 dark:border-slate-800 ${isActive ? `bg-gradient-to-r ${colorClasses[color].bg}` : 'bg-slate-50/50 dark:bg-slate-900/50'} flex items-center justify-between transition-all`}>
+        <div className="flex items-center gap-3">
+          {icon}
+          <div>
+            <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{title}</h3>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">{subtitle}</p>
           </div>
         </div>
+        {wordCount > 0 && (
+          <span className="text-[10px] text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
+            {wordCount} words
+          </span>
+        )}
       </div>
 
-      {/* Quick Actions Menu */}
-      <AnimatePresence>
-        {showQuickActions && (
-          <motion.div
-            className="fixed top-20 right-8 z-30 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden min-w-[200px]"
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Content */}
-      <div className={`mx-auto ${isFullscreen ? 'max-w-full px-8' : 'max-w-[1600px] px-8'} py-8`}>
-        <AnimatePresence>
-          {message.text && (
-            <motion.div 
-              className={`mb-6 p-4 rounded-xl flex items-start shadow-lg ${
-                {
-                  success: 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200',
-                  error: 'bg-gradient-to-r from-red-50 to-orange-50 text-red-700 border border-red-200',
-                  info: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200'
-                }[message.type]
-              }`}
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <div className="mr-3">
-                {message.type === 'success' && <FiCheckCircle className="h-5 w-5" />}
-                {message.type === 'error' && <FiAlertCircle className="h-5 w-5" />}
-                {message.type === 'info' && <FiFileText className="h-5 w-5" />}
-              </div>
-              <span className="text-sm font-medium">{message.text}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-         
-
-          {/* Editor Sections */}
-          <div className={`grid ${isFullscreen ? 'grid-cols-3' : 'grid-cols-1 lg:grid-cols-3'} gap-6`}>
-            {/* Yesterday */}
-            <motion.div 
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FiCheckCircle className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-bold text-white text-xl">Yesterday</h3>
-                      <p className="text-emerald-100 text-sm">What you accomplished</p>
-                    </div>
-                  </div>
-                  {previousReport && (
-                    <motion.button
-                      type="button"
-                      onClick={copyFromPreviousReport}
-                      className="px-3 py-1.5 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm font-medium flex items-center gap-1.5 shadow-sm"
-                      title="Copy from yesterday's plan"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiCopy className="h-3.5 w-3.5" />
-                      Copy
-                    </motion.button>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5 text-emerald-100">
-                    <FiFileText className="h-4 w-4" />
-                    <span className="text-sm font-medium">{wordCount.yesterday} words</span>
-                  </div>
-                  <div className="h-4 w-px bg-emerald-300/50"></div>
-                  <div className="flex items-center gap-1.5 text-emerald-100">
-                    <FiClock className="h-4 w-4" />
-                    <span className="text-sm font-medium">Completed</span>
-                  </div>
-                </div>
-              </div>
-              <EditorToolbar 
-                editor={yesterdayEditor} 
-                onInsert={(type) => {
-                  setActiveEditor(yesterdayEditor);
-                  if (type === 'task') setShowTaskPicker(true);
-                  if (type === 'mention') setShowMentionPicker(true);
-                }}
-              />
-              <div className="bg-white min-h-[200px]">
-                <EditorContent editor={yesterdayEditor} />
-              </div>
-            </motion.div>
-
-            {/* Today */}
-            <motion.div 
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="bg-gradient-to-r from-indigo-500 to-blue-500 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FiTarget className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-bold text-white text-xl">Today</h3>
-                      <p className="text-indigo-100 text-sm">What you plan to do</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5 text-indigo-100">
-                    <FiFileText className="h-4 w-4" />
-                    <span className="text-sm font-medium">{wordCount.today} words</span>
-                  </div>
-                  <div className="h-4 w-px bg-indigo-300/50"></div>
-                  <div className="flex items-center gap-1.5 text-indigo-100">
-                    <FiTrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-medium">Planned</span>
-                  </div>
-                </div>
-              </div>
-              <EditorToolbar 
-                editor={todayEditor} 
-                onInsert={(type) => {
-                  setActiveEditor(todayEditor);
-                  if (type === 'task') setShowTaskPicker(true);
-                  if (type === 'mention') setShowMentionPicker(true);
-                }}
-              />
-              <div className="bg-white min-h-[200px]">
-                <EditorContent editor={todayEditor} />
-              </div>
-            </motion.div>
-
-            {/* Blockers */}
-            <motion.div 
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
-              whileHover={{ y: -5 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <FiAlertCircle className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="font-bold text-white text-xl">Blockers</h3>
-                      <p className="text-amber-100 text-sm">What's blocking you</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="flex items-center gap-1.5 text-amber-100">
-                    <FiFileText className="h-4 w-4" />
-                    <span className="text-sm font-medium">{wordCount.blockers} words</span>
-                  </div>
-                  <div className="h-4 w-px bg-amber-300/50"></div>
-                  <div className="flex items-center gap-1.5 text-amber-100">
-                    <FiShield className="h-4 w-4" />
-                    <span className="text-sm font-medium">Issues</span>
-                  </div>
-                </div>
-              </div>
-              <EditorToolbar 
-                editor={blockersEditor} 
-                onInsert={(type) => {
-                  setActiveEditor(blockersEditor);
-                  if (type === 'task') setShowTaskPicker(true);
-                  if (type === 'mention') setShowMentionPicker(true);
-                }}
-              />
-              <div className="bg-white min-h-[200px]">
-                <EditorContent editor={blockersEditor} />
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end gap-4 mt-8">
-            <motion.button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="px-6 py-3.5 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all shadow-md hover:shadow-lg flex items-center gap-2.5"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <FiX className="h-5 w-5" />
-              Cancel
-            </motion.button>
-            <motion.button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center gap-2.5 relative overflow-hidden"
-              whileHover={{ scale: loading ? 1 : 1.03 }}
-              whileTap={{ scale: loading ? 1 : 0.97 }}
-            >
-              {loading ? (
-                <>
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600"
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  />
-                  <span className="relative z-10 flex items-center gap-2">
-                    <FiRefreshCw className="h-5 w-5 animate-spin" />
-                    Submitting Report...
-                  </span>
-                </>
-              ) : (
-                <span className="relative z-10 flex items-center gap-2">
-                  <FiSend className="h-5 w-5" />
-                  {existingReport ? 'Update Report' : 'Submit Report'}
-                </span>
-              )}
-            </motion.button>
-          </div>
-        </form>
+      {/* Editor */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        <EditorContent editor={editor} />
       </div>
-
-      {/* Task Picker Modal */}
-      <AnimatePresence>
-        {showTaskPicker && (
-          <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => { setShowTaskPicker(false); setTaskSearch(''); }}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[600px] overflow-hidden"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold">Select Task</h3>
-                    <p className="text-sm text-gray-500 mt-0.5">{myTasks.length} tasks available</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={refreshTasks}
-                      disabled={tasksLoading}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
-                      title="Refresh tasks"
-                    >
-                      <FiRefreshCw className={`h-5 w-5 ${tasksLoading ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => { setShowTaskPicker(false); setTaskSearch(''); }}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <FiX className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={taskSearch}
-                  onChange={(e) => setTaskSearch(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  autoFocus
-                />
-              </div>
-              <div className="p-4 overflow-y-auto max-h-[500px]">
-                {tasksLoading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                    <span className="ml-3 text-gray-600">Loading tasks...</span>
-                  </div>
-                ) : myTasks.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FiList className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No tasks assigned to you</p>
-                    <p className="text-gray-400 text-sm mt-1">Tasks will appear here once assigned</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {myTasks
-                      .filter(task => {
-                        if (!taskSearch) return true;
-                        const searchLower = taskSearch.toLowerCase();
-                        return task.title.toLowerCase().includes(searchLower) ||
-                               task.status.toLowerCase().includes(searchLower);
-                      })
-                      .map(task => (
-                        <button
-                          key={task.id}
-                          type="button"
-                          onClick={() => insertTask(task)}
-                          className="w-full text-left p-4 rounded-lg hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 transition-all group"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900 group-hover:text-indigo-700">{task.title}</div>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                  task.status === 'todo' ? 'bg-gray-100 text-gray-700' :
-                                  task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                                  task.status === 'review' ? 'bg-amber-100 text-amber-700' :
-                                  task.status === 'done' ? 'bg-green-100 text-green-700' :
-                                  'bg-gray-100 text-gray-700'
-                                }`}>
-                                  {task.status.replace('_', ' ')}
-                                </span>
-                                {task.priority && (
-                                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                    task.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                                    task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                                    task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                                    'bg-gray-100 text-gray-600'
-                                  }`}>
-                                    {task.priority}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <FiPlus className="h-5 w-5 text-gray-400 group-hover:text-indigo-600" />
-                          </div>
-                        </button>
-                      ))}
-                    {myTasks.filter(task => {
-                      if (!taskSearch) return true;
-                      const searchLower = taskSearch.toLowerCase();
-                      return task.title.toLowerCase().includes(searchLower) ||
-                             task.status.toLowerCase().includes(searchLower);
-                    }).length === 0 && (
-                      <p className="text-center text-gray-500 py-8">No tasks match your search</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Mention Picker Modal */}
-      <AnimatePresence>
-        {showMentionPicker && (
-          <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowMentionPicker(false)}
-          >
-            <motion.div
-              className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[600px] overflow-hidden"
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Mention Team Member</h3>
-                <button
-                  onClick={() => setShowMentionPicker(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <FiX className="h-5 w-5" />
-                </button>
-              </div>
-              <div className="p-4 overflow-y-auto max-h-[500px]">
-                {teamMembers.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No team members found</p>
-                ) : (
-                  <div className="space-y-2">
-                    {teamMembers.map(member => (
-                      <button
-                        key={member.id}
-                        type="button"
-                        onClick={() => insertMention(member)}
-                        className="w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors flex items-center gap-3"
-                      >
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium">
-                          {member.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="font-medium text-gray-900">{member.name}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Success Animation */}
-      <AnimatePresence>
-        {showSuccess && <SuccessAnimation onComplete={handleSuccessComplete} />}
-      </AnimatePresence>
-
-      {/* Task Detail Modal */}
-      <AnimatePresence>
-        {/* TaskDetailView temporarily removed - needs to be re-implemented */}
-        {/* {showTaskModal && selectedTaskId && (
-          <TaskDetailView
-            isOpen={showTaskModal}
-            onClose={handleCloseTaskModal}
-            taskId={selectedTaskId}
-            currentUser={currentUser}
-            userRole={userRole}
-          />
-        )} */}
-      </AnimatePresence>
     </div>
   );
-}
+};
+
+export default ReportEntryNew;

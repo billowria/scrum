@@ -32,7 +32,7 @@ export const FilterPanel = ({
   onClearFilters,
   className = '',
   isCollapsed = false,
-  onToggleCollapse = () => {}
+  onToggleCollapse = () => { }
 }) => {
   const [isPresetMenuOpen, setIsPresetMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -120,23 +120,26 @@ export const FilterPanel = ({
   return (
     <motion.div
       className={`
-        bg-white border border-gray-200 rounded-xl
-        shadow-md overflow-hidden
+        bg-white/60 backdrop-blur-xl border border-white/60 rounded-2xl
+        shadow-sm overflow-hidden
         ${className}
       `}
       style={{
-        boxShadow: 'var(--light-shadow-md)'
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)'
       }}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header - Always Visible */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200/30 bg-gradient-to-r from-gray-50 to-white">
+      <div
+        onClick={onToggleCollapse}
+        className="flex items-center justify-between p-4 border-b border-white/40 bg-white/20 cursor-pointer hover:bg-white/30 transition-colors group"
+      >
         <div className="flex items-center gap-3">
           <motion.button
-            onClick={onToggleCollapse}
-            className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+            className="p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -144,9 +147,9 @@ export const FilterPanel = ({
           </motion.button>
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+            <h2 className="text-lg font-bold text-slate-800 group-hover:text-indigo-700 transition-colors">Filters</h2>
             {hasActiveFilters && (
-              <p className="text-xs text-primary-600 font-medium">
+              <p className="text-xs text-indigo-600 font-medium">
                 {[
                   startDate && 'Date range',
                   selectedTeam !== 'all' && 'Team',
@@ -161,8 +164,8 @@ export const FilterPanel = ({
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
             <motion.button
-              onClick={onClearFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+              onClick={(e) => { e.stopPropagation(); onClearFilters(); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50/50 hover:bg-rose-100/80 rounded-lg transition-colors border border-rose-100"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -172,8 +175,8 @@ export const FilterPanel = ({
           )}
 
           <motion.button
-            onClick={onToggleCollapse}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={(e) => { e.stopPropagation(); onToggleCollapse(); }}
+            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white/50 rounded-lg transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -195,32 +198,29 @@ export const FilterPanel = ({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="p-6 space-y-6 bg-gray-50/50">
+            <div className="p-6 space-y-6 bg-white/20">
               {/* Search */}
-              <div className="relative">
+              <div className="relative group">
                 <motion.div
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <FiSearch className="text-gray-400 w-5 h-5" />
+                  <FiSearch className="text-slate-400 group-focus-within:text-indigo-500 transition-colors w-5 h-5" />
                 </motion.div>
                 <motion.input
                   type="text"
                   placeholder="Search reports by user, team, or content..."
                   value={searchTerm || ''}
                   onChange={(e) => onSearchChange?.(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-primary-300 focus:ring-2 focus:ring-primary-500/20 transition-all text-gray-900 placeholder-gray-400"
-                  whileFocus={{
-                    scale: 1.005,
-                    boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                  }}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border border-white/50 bg-white/50 focus:bg-white/80 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/10 transition-all text-slate-800 placeholder-slate-400 outline-none backdrop-blur-sm"
+                  whileFocus={{ scale: 1.005 }}
                 />
                 {searchTerm && (
                   <motion.button
                     onClick={() => onSearchChange?.('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-white/50 transition-colors"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -230,85 +230,95 @@ export const FilterPanel = ({
               </div>
 
               {/* Filter Pills */}
-              <div className="flex flex-wrap gap-2">
-                {/* Date Range Presets */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-600">Date:</span>
-                  {datePresets.map((preset) => (
-                    <motion.button
-                      key={preset.label}
-                      onClick={() => handlePresetClick(preset)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-full hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 transition-all"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      {preset.label}
-                    </motion.button>
-                  ))}
-                </div>
+              <div className="flex flex-col sm:flex-row gap-6">
+                {/* Left Column */}
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Date Presets</label>
+                    <div className="flex flex-wrap gap-2">
+                      {datePresets.map((preset) => (
+                        <motion.button
+                          key={preset.label}
+                          onClick={() => handlePresetClick(preset)}
+                          className="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white/40 border border-white/60 rounded-lg hover:bg-indigo-50/50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {preset.label}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
 
-                {/* Team Filter Pills */}
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-600">Team:</span>
-                  <motion.button
-                    onClick={() => onTeamChange?.('all')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
-                      selectedTeam === 'all'
-                        ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    All Teams
-                  </motion.button>
-                  {teams.map((team) => (
-                    <motion.button
-                      key={team.id}
-                      onClick={() => onTeamChange?.(team.id)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
-                        selectedTeam === team.id
-                          ? 'bg-primary-100 text-primary-700 border border-primary-200'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <FiUsers className="inline w-3 h-3 mr-1" />
-                      {team.name}
-                    </motion.button>
-                  ))}
-                </div>
-
-                {/* User Filter Pills */}
-                {availableUsers.length > 0 && (
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-sm font-medium text-gray-600">Users:</span>
-
-                    {/* User Selector Dropdown */}
-                    <div className="relative">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Team Context</label>
+                    <div className="flex flex-wrap gap-2">
                       <motion.button
-                        ref={userButtonRef}
-                        onClick={handleUserMenuToggle}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-all"
+                        onClick={() => onTeamChange?.('all')}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${selectedTeam === 'all'
+                          ? 'bg-indigo-100/80 text-indigo-700 border-indigo-200 shadow-sm'
+                          : 'bg-white/40 text-slate-600 border-white/60 hover:bg-white/60'
+                          }`}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <FiUser className="w-3 h-3" />
-                        <span>
-                          {selectedUsers && selectedUsers.length > 0
-                            ? `${selectedUsers.length} selected`
-                            : 'Select Users'
-                          }
-                        </span>
-                        <FiChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                        All Teams
                       </motion.button>
+                      {teams.map((team) => (
+                        <motion.button
+                          key={team.id}
+                          onClick={() => onTeamChange?.(team.id)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all border ${selectedTeam === team.id
+                            ? 'bg-indigo-100/80 text-indigo-700 border-indigo-200 shadow-sm'
+                            : 'bg-white/40 text-slate-600 border-white/60 hover:bg-white/60'
+                            }`}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FiUsers className="inline w-3 h-3 mr-1" />
+                          {team.name}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">User Selection</label>
+                    {/* User Selector Dropdown */}
+                    <div className="relative">
+                      {availableUsers.length > 0 ? (
+                        <motion.button
+                          ref={userButtonRef}
+                          onClick={handleUserMenuToggle}
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium bg-white/50 border border-white/60 rounded-xl hover:bg-white/80 transition-all shadow-sm text-slate-700"
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="bg-indigo-100 p-1 rounded-md text-indigo-600"><FiUser className="w-3 h-3" /></span>
+                            <span>
+                              {selectedUsers && selectedUsers.length > 0
+                                ? `${selectedUsers.length} Users selected`
+                                : 'Filter by Team Members'
+                              }
+                            </span>
+                          </div>
+                          <FiChevronDown className={`w-4 h-4 transition-transform text-slate-400 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                        </motion.button>
+                      ) : (
+                        <div className="px-4 py-2.5 text-sm text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                          No users available
+                        </div>
+                      )}
 
                       <AnimatePresence>
                         {isUserMenuOpen && (
                           <motion.div
                             ref={dropdownRef}
-                            className="fixed bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden z-[9999]"
+                            className="fixed bg-white/90 backdrop-blur-xl rounded-xl border border-white/50 shadow-2xl overflow-hidden z-[9999]"
                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -317,7 +327,7 @@ export const FilterPanel = ({
                               top: `${userMenuPosition.top}px`,
                               left: `${userMenuPosition.left}px`,
                               width: `${userMenuPosition.width}px`,
-                              maxHeight: '16rem',
+                              maxHeight: '20rem',
                               overflowY: 'auto'
                             }}
                           >
@@ -327,8 +337,7 @@ export const FilterPanel = ({
                                   onUserChange?.([]);
                                   setIsUserMenuOpen(false);
                                 }}
-                                className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
-                                whileHover={{ backgroundColor: 'var(--gray-50)' }}
+                                className="w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100 mb-2"
                               >
                                 Clear Selection
                               </motion.button>
@@ -343,12 +352,10 @@ export const FilterPanel = ({
                                         : [...(selectedUsers || []), user.id];
                                       onUserChange?.(newSelection);
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                                      isSelected
-                                        ? 'bg-primary-50 text-primary-700'
-                                        : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                    whileHover={{ backgroundColor: isSelected ? 'var(--primary-100)' : 'var(--gray-50)' }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-xl transition-all border ${isSelected
+                                      ? 'bg-indigo-50 border-indigo-100 text-indigo-900'
+                                      : 'text-slate-700 hover:bg-white/60 border-transparent hover:border-white/50'
+                                      }`}
                                   >
                                     <UserAvatar
                                       name={user.name}
@@ -356,11 +363,13 @@ export const FilterPanel = ({
                                       size="sm"
                                     />
                                     <div className="flex-1 text-left">
-                                      <div className="font-medium">{user.name}</div>
-                                      <div className="text-xs text-gray-500">{user.team_name}</div>
+                                      <div className="font-semibold">{user.name}</div>
+                                      <div className="text-xs text-slate-500">{user.team_name}</div>
                                     </div>
                                     {isSelected && (
-                                      <FiCheck className="w-4 h-4 text-primary-600" />
+                                      <div className="bg-indigo-500 text-white p-0.5 rounded-full">
+                                        <FiCheck className="w-3 h-3" />
+                                      </div>
                                     )}
                                   </motion.button>
                                 );
@@ -370,61 +379,56 @@ export const FilterPanel = ({
                         )}
                       </AnimatePresence>
                     </div>
-                  </div>
-                )}
 
-                {/* Selected Users Display */}
-                {selectedUsers && selectedUsers.length > 0 && (
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-sm font-medium text-gray-600">Selected:</span>
-                    {selectedUsers.map(userId => {
-                      const user = availableUsers.find(u => u.id === userId);
-                      if (!user) return null;
-                      return (
-                        <motion.div
-                          key={userId}
-                          className="flex items-center gap-2 px-2 py-1 bg-primary-50 text-primary-700 rounded-full text-xs font-medium border border-primary-200"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          exit={{ scale: 0 }}
-                        >
-                          <UserAvatar
-                            name={user.name}
-                            avatarUrl={user.avatar_url}
-                            size="xs"
-                          />
-                          <span>{user.name}</span>
-                          <motion.button
-                            onClick={() => {
-                              const newSelection = selectedUsers.filter(id => id !== userId);
-                              onUserChange?.(newSelection);
-                            }}
-                            className="ml-1 hover:text-primary-900"
-                            whileHover={{ scale: 1.2 }}
-                            whileTap={{ scale: 0.8 }}
-                          >
-                            <FiX className="w-3 h-3" />
-                          </motion.button>
-                        </motion.div>
-                      );
-                    })}
+                    {selectedUsers && selectedUsers.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedUsers.map(userId => {
+                          const user = availableUsers.find(u => u.id === userId);
+                          if (!user) return null;
+                          return (
+                            <motion.button
+                              key={userId}
+                              className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium border border-indigo-100 hover:bg-indigo-100 hover:border-indigo-200 transition-colors"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              exit={{ scale: 0 }}
+                              onClick={() => {
+                                const newSelection = selectedUsers.filter(id => id !== userId);
+                                onUserChange?.(newSelection);
+                              }}
+                            >
+                              <div className="w-4 h-4 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center text-[8px] font-bold">
+                                {user.name.charAt(0)}
+                              </div>
+                              <span>{user.name}</span>
+                              <FiX className="w-3 h-3 opacity-60 hover:opacity-100" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Custom Range</label>
+                    <div className="grid grid-cols-2 gap-3 min-w-[280px]">
+                      <DatePicker
+                        label=""
+                        value={startDate}
+                        onChange={onStartDateChange}
+                        className="w-full bg-white/50 border-white/60 rounded-xl"
+                      />
+                      <DatePicker
+                        label=""
+                        value={endDate}
+                        onChange={onEndDateChange}
+                        className="w-full bg-white/50 border-white/60 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Custom Date Range */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white rounded-lg border border-gray-200">
-                <DatePicker
-                  label="Custom Start Date"
-                  value={startDate}
-                  onChange={onStartDateChange}
-                />
-                <DatePicker
-                  label="Custom End Date"
-                  value={endDate}
-                  onChange={onEndDateChange}
-                />
-              </div>
             </div>
           </motion.div>
         )}

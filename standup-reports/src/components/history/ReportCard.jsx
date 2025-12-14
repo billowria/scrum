@@ -65,7 +65,7 @@ export const ReportCard = ({
   if (variant === 'minimal') {
     return (
       <motion.div
-        className={`p-3 bg-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all ${className}`}
+        className={`p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-white/60 hover:border-indigo-200 transition-all ${className}`}
         variants={cardVariants}
         initial="initial"
         animate="animate"
@@ -80,8 +80,8 @@ export const ReportCard = ({
               onClick={onUserClick}
             />
             <div>
-              <p className="font-medium text-gray-900">{users?.name}</p>
-              <p className="text-xs text-gray-500">{users?.teams?.name}</p>
+              <p className="font-semibold text-slate-800">{users?.name}</p>
+              <p className="text-xs text-slate-500">{users?.teams?.name}</p>
             </div>
           </div>
           <StatusBadge status={status} size="sm" />
@@ -93,47 +93,51 @@ export const ReportCard = ({
   return (
     <motion.div
       className={`
-        relative bg-white rounded-xl border shadow-sm
+        relative bg-white/70 backdrop-blur-md rounded-2xl border border-white/60 shadow-sm
         overflow-hidden transition-all duration-300
-        ${hasBlockers ? 'border-amber-200 bg-gradient-to-br from-white to-amber-50/30' : 'border-gray-200'}
-        hover:shadow-lg hover:border-gray-300
+        ${hasBlockers ? 'shadow-amber-500/10 ring-1 ring-amber-500/20' : 'hover:shadow-indigo-500/10 hover:border-indigo-200/50'}
         ${className}
       `}
       variants={cardVariants}
       initial="initial"
       animate="animate"
       whileHover="hover"
+      layout
     >
-      {/* Status indicator bar */}
+      {/* Status indicator bar - Enhanced */}
       <div
-        className={`h-1 w-full ${
-          status === 'submitted'
-            ? 'bg-gradient-to-r from-success-500 to-emerald-500'
-            : 'bg-gradient-to-r from-warning-500 to-amber-500'
-        }`}
+        className={`h-1.5 w-full ${status === 'submitted'
+          ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400'
+          : 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400'
+          }`}
       />
 
-      <div className="p-4">
+      <div className="p-5">
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <UserAvatar
-              name={users?.name}
-              avatarUrl={users?.avatar_url}
-              size="md"
-              onClick={onUserClick}
-            />
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full opacity-0 group-hover:opacity-30 transition blur-sm" />
+              <div className="relative">
+                <UserAvatar
+                  name={users?.name}
+                  avatarUrl={users?.avatar_url}
+                  size="md"
+                  onClick={onUserClick}
+                />
+              </div>
+            </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{users?.name}</h3>
-              <p className="text-sm text-gray-500 flex items-center gap-1">
+              <h3 className="text-lg font-bold text-slate-800">{users?.name}</h3>
+              <p className="text-sm text-slate-500 flex items-center gap-1.5 font-medium">
                 <span>{users?.teams?.name}</span>
-                <span className="text-gray-400">•</span>
+                <span className="text-slate-300">•</span>
                 <span className="text-xs">{formatDate(report.date)}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <StatusBadge
               status={status}
               size="sm"
@@ -143,17 +147,17 @@ export const ReportCard = ({
             <div className="relative">
               <motion.button
                 onClick={() => setIsActionsOpen(!isActionsOpen)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-colors"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <FiMoreHorizontal className="w-4 h-4" />
+                <FiMoreHorizontal className="w-5 h-5" />
               </motion.button>
 
               <AnimatePresence>
                 {isActionsOpen && (
                   <motion.div
-                    className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-xl z-10 overflow-hidden"
+                    className="absolute right-0 top-full mt-2 w-48 bg-white/90 backdrop-blur-xl rounded-xl border border-white/60 shadow-xl z-20 overflow-hidden"
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -164,8 +168,7 @@ export const ReportCard = ({
                         onViewDetails?.(report);
                         setIsActionsOpen(false);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                      whileHover={{ backgroundColor: 'var(--gray-50)' }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left border-b border-gray-100/50"
                     >
                       <FiEye className="w-4 h-4" />
                       View Details
@@ -175,8 +178,7 @@ export const ReportCard = ({
                         onUserClick?.(users);
                         setIsActionsOpen(false);
                       }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                      whileHover={{ backgroundColor: 'var(--gray-50)' }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors text-left"
                     >
                       <FiUser className="w-4 h-4" />
                       View Profile
@@ -189,80 +191,56 @@ export const ReportCard = ({
         </div>
 
         {/* Report Content */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Yesterday */}
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <span className="text-xs font-bold text-blue-600">Y</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Yesterday</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {isExpanded ? (report.yesterday || 'No update') : truncateText(report.yesterday)}
-              </p>
+          <div className="group rounded-xl p-3 bg-slate-50/50 hover:bg-white/50 border border-transparent hover:border-slate-100 transition-all">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100/50 text-blue-600 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/10">
+                Y
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Yesterday</div>
+                <div className="prose prose-sm prose-slate max-w-none max-h-32 overflow-y-auto custom-scrollbar">
+                  <RichTextDisplay content={report.yesterday} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Today */}
-          <div className="flex gap-3">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center">
-              <span className="text-xs font-bold text-primary-600">T</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Today</h4>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {isExpanded ? (report.today || 'No update') : truncateText(report.today)}
-              </p>
+          <div className="group rounded-xl p-3 bg-slate-50/50 hover:bg-white/50 border border-transparent hover:border-slate-100 transition-all">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-100/50 text-indigo-600 flex items-center justify-center font-bold text-xs ring-1 ring-indigo-500/10">
+                T
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Today</div>
+                <div className="prose prose-sm prose-slate max-w-none max-h-32 overflow-y-auto custom-scrollbar">
+                  <RichTextDisplay content={report.today} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Blockers */}
-          <div className="flex gap-3">
-            <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-              hasBlockers ? 'bg-amber-50' : 'bg-emerald-50'
-            }`}>
-              {hasBlockers ? (
-                <FiAlertCircle className="w-4 h-4 text-amber-600" />
-              ) : (
-                <FiCheckCircle className="w-4 h-4 text-emerald-600" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Blockers</h4>
-              <p className={`text-sm leading-relaxed ${
-                hasBlockers ? 'text-amber-700' : 'text-emerald-700'
-              }`}>
-                {isExpanded ? (report.blockers || 'No blockers reported') : truncateText(report.blockers)}
-              </p>
-            </div>
-          </div>
-
-          {/* Notes */}
-          {hasNotes && (
-            <div className="pt-3 border-t border-gray-100">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Notes</h4>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                {isExpanded ? report.notes : truncateText(report.notes)}
-              </p>
+          {report.blockers && (
+            <div className="group rounded-xl p-3 bg-rose-50/30 hover:bg-rose-50/50 border border-transparent hover:border-rose-100 transition-all">
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-rose-100/50 text-rose-600 flex items-center justify-center font-bold text-xs ring-1 ring-rose-500/10">
+                  B
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-rose-600/80 uppercase tracking-wider mb-1">Blockers</div>
+                  <div className="prose prose-sm prose-rose max-w-none max-h-32 overflow-y-auto custom-scrollbar">
+                    <RichTextDisplay content={report.blockers} />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Expand/Collapse Button */}
-        {(report.yesterday?.length > 100 || report.today?.length > 100 || report.blockers?.length > 100 || hasNotes) && (
-          <div className="mt-4 flex justify-center">
-            <motion.button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>{isExpanded ? 'Show Less' : 'Show More'}</span>
-            </motion.button>
-          </div>
-        )}
       </div>
-    </motion.div>
+    </motion.div >
   );
 };
 

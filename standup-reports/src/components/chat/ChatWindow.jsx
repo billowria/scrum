@@ -30,6 +30,7 @@ const ChatWindow = ({
   typingUsers = [],
   onBack = null,
   onAvatarClick,
+  onToggleProfile,
   className = ""
 }) => {
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -187,7 +188,7 @@ const ChatWindow = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col bg-white min-h-0 ${className}`}>
+    <div className={`flex-1 flex flex-col min-h-0 bg-white/60 backdrop-blur-sm ${className}`}>
 
       {/* Search Bar */}
       <AnimatePresence>
@@ -223,7 +224,7 @@ const ChatWindow = ({
       </AnimatePresence>
 
       {/* Enhanced Compact Modern Header */}
-      <div className="flex-shrink-0 px-4 py-3 bg-white border-b border-gray-200/50 backdrop-blur-sm">
+      <div className="flex-shrink-0 px-6 py-4 bg-white/80 border-b border-gray-200/50 backdrop-blur-md shadow-sm z-10">
         <div className="flex items-center justify-between">
           {/* Left Section - Back Button, Avatar, and Title */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -377,6 +378,18 @@ const ChatWindow = ({
               <FiVideo className="w-4 h-4" />
             </motion.button>
 
+
+            {/* Toggle Info Sidebar */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onToggleProfile}
+              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors ml-1"
+              title="Conversation Info"
+            >
+              <FiInfo className="w-5 h-5" />
+            </motion.button>
+
             {/* More Options Dropdown */}
             <div className="relative">
               <motion.button
@@ -391,7 +404,6 @@ const ChatWindow = ({
               >
                 <FiMoreVertical className="w-4 h-4" />
               </motion.button>
-
               <AnimatePresence>
                 {showMoreOptions && (
                   <motion.div
@@ -401,18 +413,6 @@ const ChatWindow = ({
                     transition={{ duration: 0.2 }}
                     className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 min-w-[200px]"
                   >
-                    {/* Conversation Info */}
-                    <button
-                      onClick={() => {
-                        setShowConversationInfo(true);
-                        setShowMoreOptions(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <FiInfo className="w-4 h-4 text-blue-500" />
-                      <span>Conversation info</span>
-                    </button>
-
                     {/* Team Members (for team chats) */}
                     {conversation.type === 'team' && (
                       <button

@@ -610,6 +610,22 @@ export default function Sidebar({ mode, setMode, user }) {
           </button>
         </div>
       </nav>
+
+      {/* Love Footer */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.8 }}
+            exit={{ opacity: 0 }}
+            className="p-4 pb-6 text-center"
+          >
+            <p className="text-[10px] text-gray-400 font-semibold tracking-widest flex items-center justify-center gap-1.5 uppercase">
+              Made with <FiHeart className="w-3 h-3 text-rose-500 fill-current animate-pulse" /> by Akhil Billowria
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </aside>
   );
 }
