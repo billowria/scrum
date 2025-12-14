@@ -64,8 +64,8 @@ const SidebarItem = ({
         <motion.div
             layout
             className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 relative ${active
-                    ? `${colorConfig.bg ? colorConfig.bg + ' ' : ''}${colorConfig.text} font-medium shadow-sm ${colorConfig.hoverBg || 'hover:bg-gray-100'}`
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                ? `${colorConfig.bg ? colorConfig.bg + ' ' : ''}${colorConfig.text} font-medium shadow-sm ${colorConfig.hoverBg || 'hover:bg-gray-100'}`
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
             style={{ paddingLeft: `${depth * 12 + 12}px` }}
             onClick={hasChildren ? onToggle : onClick}
@@ -147,6 +147,7 @@ const SidebarItem = ({
 };
 
 const ProjectSidebar = ({
+    projectName,
     sections = [],
     selectedTopic,
     selectedContent,
@@ -248,6 +249,16 @@ const ProjectSidebar = ({
         >
             {/* Sidebar Header */}
             <div className="p-4 sticky top-0 bg-slate-50/90 backdrop-blur-md z-10 space-y-3">
+                {/* Project Name */}
+                {isOpen && projectName && (
+                    <div className="flex items-center gap-2 px-1 pb-2 border-b border-gray-200">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                            <FiFileText className="w-3.5 h-3.5 text-white" />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-800 truncate">{projectName}</span>
+                    </div>
+                )}
+
                 {isOpen && (
                     <div className="flex items-center gap-2 text-gray-500 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm w-full focus-within:ring-2 focus-within:ring-indigo-100 transition-shadow">
                         <FiSearch className="w-4 h-4" />
@@ -427,8 +438,8 @@ const ProjectSidebar = ({
                                                     <div className="flex items-center justify-center gap-1">
                                                         <button
                                                             className={`p-2 rounded-lg w-8 h-8 flex items-center justify-center transition-colors mx-auto ${selectedTopic?.id === topic.id || (selectedContent && selectedContent.topic_id === topic.id)
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : 'text-gray-500 hover:bg-gray-200'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'text-gray-500 hover:bg-gray-200'
                                                                 }`}
                                                             title={topic.name}
                                                             onClick={() => onSelectTopic(topic)}

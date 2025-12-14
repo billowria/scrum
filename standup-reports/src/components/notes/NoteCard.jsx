@@ -11,6 +11,16 @@ const NoteCard = ({
   onToggleFavorite,
   onDeleteNote
 }) => {
+  // Helper to strip HTML tags
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
+  const plainTextContent = stripHtml(note.content);
+
   const getTextStats = (text) => {
     if (!text) return { characters: 0, words: 0, lines: 1 };
     const characters = text.length;
@@ -19,7 +29,7 @@ const NoteCard = ({
     return { characters, words, lines };
   };
 
-  const noteStats = getTextStats(note.content);
+  const noteStats = getTextStats(plainTextContent);
 
   const getCategoryColor = (category) => {
     const colorMap = {
@@ -35,171 +45,112 @@ const NoteCard = ({
   };
 
   return (
-    <div
-      className={`border cursor-pointer transition-all duration-200 relative overflow-hidden group ${
-        isSelected
-          ? 'border-blue-400 shadow-sm bg-blue-50/50'
-          : 'border-gray-200 hover:border-blue-300 hover:shadow-sm bg-white'
-      }`}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ y: -2 }}
+      className={`border cursor-pointer transition-all duration-300 relative overflow-hidden group rounded-xl ${isSelected
+          ? 'border-blue-500 shadow-md bg-white ring-1 ring-blue-500/20'
+          : 'border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 bg-white'
+        }`}
       style={{
-        height: '72px',
-        marginBottom: '4px',
-        backgroundColor: note.background_color || '#ffffff'
+        height: '80px',
+        marginBottom: '8px',
       }}
       onClick={() => onSelectNote(note)}
     >
-      {/* Status indicator - thin vertical line */}
-      <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${
-        isOpenInTab
-          ? 'bg-green-500'
-          : note.is_favorite
-            ? 'bg-amber-500'
-            : note.is_shared
-              ? 'bg-purple-500'
-              : 'bg-gray-300'
-      }`} />
+      {/* Background Color Indicator */}
+      <div
+        className="absolute top-0 left-0 w-1 h-full transition-colors duration-300"
+        style={{ backgroundColor: note.background_color !== '#ffffff' ? note.background_color : (isSelected ? '#3b82f6' : 'transparent') }}
+      />
 
-      <div className="flex items-center h-full px-3 py-2">
+      <div className="flex items-center h-full px-4 py-3 pl-5">
         {/* Left side - Icon and title */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          {/* Pinned indicator */}
-          {note.is_pinned && (
-            <FiTarget className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-          )}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
 
-          {/* Status dot */}
-          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-            isOpenInTab
-              ? 'bg-green-500'
-              : note.is_favorite
-                ? 'bg-amber-500'
-                : note.is_shared
-                  ? 'bg-purple-500'
-                  : 'bg-gray-300'
-          }`} />
+          {/* File icon with status dot */}
+          <div className="relative flex-shrink-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'}`}>
+              <FiFileText className="w-4 h-4" />
+            </div>
 
-          {/* File icon */}
-          <FiFileText className={`w-3.5 h-3.5 flex-shrink-0 ${
-            isSelected ? 'text-blue-600' : 'text-gray-500'
-          }`} />
+            {/* Status Dot Overlay */}
+            {(isOpenInTab || note.is_favorite || note.is_shared) && (
+              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center ${isOpenInTab ? 'bg-green-500' :
+                  note.is_favorite ? 'bg-amber-500' :
+                    'bg-purple-500'
+                }`}>
+                {note.is_favorite && <FiStar className="w-1.5 h-1.5 text-white fill-current" />}
+              </div>
+            )}
+          </div>
 
           {/* Title and content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <h3 className={`text-sm font-medium truncate ${
-                isSelected ? 'text-gray-900' : 'text-gray-700'
-              }`} style={{ fontSize: `${note.font_size || 14}px` }}>
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <div className="flex items-center gap-2">
+              <h3 className={`text-sm font-semibold truncate transition-colors ${isSelected ? 'text-gray-900' : 'text-gray-700'
+                }`}>
                 {note.title || 'Untitled'}
               </h3>
 
               {/* Category badge */}
               {note.category && note.category !== 'general' && (
-                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getCategoryColor(note.category)}`}>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium tracking-wide uppercase ${getCategoryColor(note.category)}`}>
                   {note.category}
                 </span>
               )}
+
+              {/* Pinned Icon */}
+              {note.is_pinned && <FiTarget className="w-3 h-3 text-red-500" />}
             </div>
 
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-xs text-gray-500 truncate">
-                {note.content || 'No content'}
-              </p>
-
-              {/* Tags */}
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {note.tags.slice(0, 2).map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-1 py-0.5 rounded text-[9px] bg-indigo-50 text-indigo-600"
-                    >
-                      <FiTag className="w-2 h-2 mr-0.5" />
-                      {tag}
-                    </span>
-                  ))}
-                  {note.tags.length > 2 && (
-                    <span className="text-[9px] text-gray-500">+{note.tags.length - 2}</span>
-                  )}
-                </div>
-              )}
-            </div>
+            <p className="text-xs text-gray-400 truncate mt-0.5 leading-relaxed font-medium">
+              {plainTextContent || 'No content'}
+            </p>
           </div>
         </div>
 
         {/* Right side - Stats and actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Shared indicator */}
-          {note.is_shared && (
-            <div className="flex items-center gap-1 text-xs text-purple-600">
-              <FiShare2 className="w-3 h-3" />
-            </div>
-          )}
-
-          {/* Word count */}
-          <span className="text-xs text-gray-500 hidden sm:block">
-            {noteStats.words}w
-          </span>
-
+        <div className="flex flex-col items-end gap-1 ml-3">
           {/* Time */}
-          <span className="text-xs text-gray-500">
-            {new Date(note.updated_at || note.created_at).toLocaleDateString('en-US', {
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">
+            {new Date(note.updated_at || note.created_at).toLocaleDateString(undefined, {
               month: 'short',
               day: 'numeric'
             })}
           </span>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {/* Share button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onShareNote(note);
-              }}
-              className={`p-1 rounded transition-colors ${
-                note.is_shared
-                  ? 'text-purple-500'
-                  : 'text-gray-400 hover:text-purple-500'
-              }`}
-            >
-              <FiShare2 className="w-3.5 h-3.5" />
-            </motion.button>
-
-            {/* Favorite button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+          {/* Action buttons (Visible on hover) */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-200">
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(note.id);
               }}
-              className={`p-1 rounded transition-colors ${
-                note.is_favorite
-                  ? 'text-amber-500'
-                  : 'text-gray-400 hover:text-amber-500'
-              }`}
+              className={`p-1.5 rounded-md transition-colors ${note.is_favorite
+                  ? 'text-amber-500 bg-amber-50'
+                  : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'
+                }`}
             >
               <FiStar className={`w-3.5 h-3.5 ${note.is_favorite ? 'fill-current' : ''}`} />
-            </motion.button>
+            </button>
 
-            {/* Delete button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteNote(note.id);
               }}
-              className="p-1 rounded transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
+              className="p-1.5 rounded-md transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
             >
               <FiTrash2 className="w-3.5 h-3.5" />
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

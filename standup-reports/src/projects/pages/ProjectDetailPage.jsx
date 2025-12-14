@@ -15,6 +15,7 @@ import TopicView from '../components/TopicView';
 import ProjectActivityFeed from '../components/ProjectActivityFeed';
 import CreateModal from '../components/CreateModal';
 import ProjectHeader from '../components/ProjectHeader';
+import ProjectsListSidebar from '../../components/projects/ProjectsListSidebar';
 
 export default function ProjectDetailPage({ projectId: propProjectId, onBack }) {
     const { projectId: paramProjectId } = useParams();
@@ -25,6 +26,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
 
     // State
     const [project, setProject] = useState(null);
+    const [allProjects, setAllProjects] = useState([]); // For projects navigation sidebar
     const [sections, setSections] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
     const [selectedContent, setSelectedContent] = useState(null);
@@ -33,7 +35,9 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
     const [showAddContent, setShowAddContent] = useState(false);
 
     // UI State
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [projectsListOpen, setProjectsListOpen] = useState(false); // Projects navigation sidebar
+    const [projectsListCollapsed, setProjectsListCollapsed] = useState(false);
     const [activityFeedOpen, setActivityFeedOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: null, data: null });
@@ -92,6 +96,39 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             setError('Failed to load project');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch all projects for navigation sidebar
+    const fetchAllProjects = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data, error } = await supabase
+                .from('project_assignments')
+                .select(`
+                    is_favorite,
+                    projects (
+                        id,
+                        name,
+                        status
+                    )
+                `)
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+
+            const projectsList = data
+                ?.map(item => ({
+                    ...item.projects,
+                    is_favorite: item.is_favorite
+                }))
+                .filter(Boolean) || [];
+
+            setAllProjects(projectsList);
+        } catch (err) {
+            console.error('Error fetching projects list:', err);
         }
     };
 
@@ -162,6 +199,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             fetchSections();
             fetchActivities();
         }
+        fetchAllProjects(); // Always fetch projects list for navigation
     }, [projectId]);
 
     // Actions
@@ -386,10 +424,28 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
         );
     }
 
+    // Check if rendered inline (from ProjectsPage) - don't show projects list sidebar in that case
+    const isInline = !!propProjectId;
+
     return (
-        <div className="flex h-screen bg-white overflow-hidden font-sans text-slate-900">
-            {/* Sidebar */}
+        <div className={`flex ${isInline ? 'h-full' : 'h-screen'} bg-white overflow-hidden font-sans text-slate-900`}>
+            {/* Projects Navigation Sidebar - only show when not inline */}
+            {!isInline && (
+                <ProjectsListSidebar
+                    projects={allProjects}
+                    activeProjectId={projectId}
+                    onProjectSelect={(proj) => navigate(`/projects/${proj.id}`)}
+                    isOpen={projectsListOpen}
+                    onClose={() => setProjectsListOpen(false)}
+                    isMobile={isMobile}
+                    sidebarCollapsed={projectsListCollapsed}
+                    onToggleSidebarCollapse={() => setProjectsListCollapsed(!projectsListCollapsed)}
+                />
+            )}
+
+            {/* Project Sections Sidebar */}
             <ProjectSidebar
+                projectName={project?.name}
                 sections={sections}
                 selectedTopic={selectedTopic}
                 selectedContent={selectedContent}

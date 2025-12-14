@@ -10,7 +10,7 @@
     font-family: 'Inter', system-ui, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
-  
+
   body {
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -31,7 +31,7 @@
   --confluence-blue-700: #0369a1;
   --confluence-blue-800: #075985;
   --confluence-blue-900: #0c4a6e;
-  
+
   /* Neutral Grays */
   --confluence-gray-50: #f8fafc;
   --confluence-gray-100: #f1f5f9;
@@ -43,7 +43,7 @@
   --confluence-gray-700: #334155;
   --confluence-gray-800: #1e293b;
   --confluence-gray-900: #0f172a;
-  
+
   /* Accent Purple */
   --confluence-purple-50: #fdf4ff;
   --confluence-purple-100: #fae8ff;
@@ -59,63 +59,64 @@
 
 /* Responsive breakpoints utilities */
 @layer utilities {
+
   /* Mobile-first responsive utilities */
   .container-fluid {
     width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
+
   @media (min-width: 640px) {
     .container-fluid {
       padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .container-fluid {
       padding-left: 2rem;
       padding-right: 2rem;
     }
   }
-  
+
   /* Sidebar responsive utilities */
   .sidebar-mobile {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
-  
+
   .sidebar-mobile.open {
     transform: translateX(0);
   }
-  
+
   @media (min-width: 1024px) {
     .sidebar-mobile {
       transform: translateX(0);
     }
   }
-  
+
   /* Project grid responsive utilities */
   .projects-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
   }
-  
+
   @media (min-width: 768px) {
     .projects-grid {
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2rem;
     }
   }
-  
+
   @media (min-width: 1024px) {
     .projects-grid {
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: 2rem;
     }
   }
-  
+
   @media (min-width: 1280px) {
     .projects-grid {
       grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -129,11 +130,11 @@
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white;
   }
-  
+
   .focus-ring-inset {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset;
   }
-  
+
   /* Skip to content link for screen readers */
   .skip-to-content {
     position: absolute;
@@ -147,7 +148,7 @@
     z-index: 1000;
     transition: top 0.3s;
   }
-  
+
   .skip-to-content:focus {
     top: 6px;
   }
@@ -158,11 +159,11 @@
   .no-print {
     display: none !important;
   }
-  
+
   .print-break-before {
     page-break-before: always;
   }
-  
+
   .print-break-after {
     page-break-after: always;
   }
@@ -178,6 +179,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -193,6 +195,7 @@
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -291,6 +294,7 @@
       inset 0 0 8px rgba(255, 255, 255, 0.2),
       0 0 3px rgba(0, 0, 0, 0.1);
   }
+
   100% {
     box-shadow:
       inset 0 0 12px rgba(255, 255, 255, 0.3),
@@ -317,11 +321,15 @@
 
 /* Hide scrollbar completely (cross-browser) */
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -365,9 +373,12 @@
 
 /* Enhanced animations */
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -421,9 +432,12 @@
 
 /* Status indicator animations */
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px currentColor;
   }
+
   50% {
     box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
   }
@@ -457,6 +471,7 @@
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -485,6 +500,25 @@
 }
 
 @keyframes progress-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  min-height: 50vh;
+  outline: none !important;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }

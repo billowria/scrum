@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiHeart, FiFileText, FiShare2, FiChevronDown } from 'react-icons/fi';
+import { FiHeart, FiFileText, FiShare2, FiChevronDown, FiPlus } from 'react-icons/fi';
 import NoteCard from './NoteCard';
 
 const NotesSidebar = ({
@@ -21,10 +21,16 @@ const NotesSidebar = ({
   openTabs
 }) => {
   return (
-    <div className="w-80 border-r border-gray-200 bg-white/50 backdrop-blur-sm flex flex-col h-full">
+    <div className="w-80 border-r border-gray-100 bg-gray-50/50 backdrop-blur-xl flex flex-col h-full shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200 bg-white/80 flex-shrink-0">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">My Notes</h2>
+      <div className="p-6 border-b border-gray-100 bg-white/50 backdrop-blur-sm flex-shrink-0 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800 tracking-tight">My Notes</h2>
+          <p className="text-xs text-gray-500 mt-1 font-medium">Organize your thoughts</p>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs ring-2 ring-blue-100">
+          {allNotes.length}
+        </div>
       </div>
 
       {/* Scrollable Content Area */}
@@ -32,28 +38,29 @@ const NotesSidebar = ({
         className="flex-1 overflow-y-auto"
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 #f1f5f9'
+          scrollbarColor: '#cbd5e1 transparent'
         }}
       >
-        <div className="p-4">
+        <div className="p-4 space-y-6">
           {/* Favorites Section */}
-          <div className="mb-6">
+          <div>
             <div
-              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-white p-2 rounded-lg transition-all duration-200 group"
               onClick={onToggleFavorites}
             >
-              <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                <FiHeart className="text-red-500" />
+              <h3 className="font-semibold text-gray-700 flex items-center gap-2.5 text-sm uppercase tracking-wider">
+                <FiHeart className="text-red-500 transition-transform group-hover:scale-110" />
                 Favorites
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full font-mono">
                   {favoriteNotes.length}
                 </span>
               </h3>
               <motion.div
-                animate={{ rotate: favoritesCollapsed ? 180 : 0 }}
+                animate={{ rotate: favoritesCollapsed ? -90 : 0 }}
                 transition={{ duration: 0.2 }}
+                className="text-gray-400"
               >
-                <FiChevronDown className="text-gray-400" />
+                <FiChevronDown />
               </motion.div>
             </div>
             <AnimatePresence>
@@ -63,7 +70,7 @@ const NotesSidebar = ({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-2 overflow-hidden"
+                  className="space-y-2 overflow-hidden pl-2"
                 >
                   {favoriteNotes.length > 0 ? (
                     favoriteNotes.map(note => (
@@ -79,8 +86,8 @@ const NotesSidebar = ({
                       />
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-400 text-sm">
-                      <FiHeart className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <div className="text-center py-6 text-gray-300 text-xs border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                      <FiHeart className="w-6 h-6 mx-auto mb-2 opacity-30" />
                       No favorite notes yet
                     </div>
                   )}
@@ -90,23 +97,24 @@ const NotesSidebar = ({
           </div>
 
           {/* All Notes Section */}
-          <div className="mb-6">
+          <div>
             <div
-              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-white p-2 rounded-lg transition-all duration-200 group"
               onClick={onToggleAllNotes}
             >
-              <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                <FiFileText />
+              <h3 className="font-semibold text-gray-700 flex items-center gap-2.5 text-sm uppercase tracking-wider">
+                <FiFileText className="text-blue-500 transition-transform group-hover:scale-110" />
                 All Notes
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full font-mono">
                   {allNotes.length}
                 </span>
               </h3>
               <motion.div
-                animate={{ rotate: allNotesCollapsed ? 180 : 0 }}
+                animate={{ rotate: allNotesCollapsed ? -90 : 0 }}
                 transition={{ duration: 0.2 }}
+                className="text-gray-400"
               >
-                <FiChevronDown className="text-gray-400" />
+                <FiChevronDown />
               </motion.div>
             </div>
             <AnimatePresence>
@@ -116,7 +124,7 @@ const NotesSidebar = ({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-2 overflow-hidden"
+                  className="space-y-2 overflow-hidden pl-2"
                 >
                   {allNotes.length > 0 ? (
                     allNotes.map(note => (
@@ -143,23 +151,24 @@ const NotesSidebar = ({
           </div>
 
           {/* Shared Notes Section */}
-          <div className="mb-6">
+          <div>
             <div
-              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              className="flex items-center justify-between mb-3 cursor-pointer hover:bg-white p-2 rounded-lg transition-all duration-200 group"
               onClick={onToggleShared}
             >
-              <h3 className="font-semibold text-gray-700 flex items-center gap-2">
-                <FiShare2 className="text-purple-500" />
-                Shared with Me
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+              <h3 className="font-semibold text-gray-700 flex items-center gap-2.5 text-sm uppercase tracking-wider">
+                <FiShare2 className="text-purple-500 transition-transform group-hover:scale-110" />
+                Shared
+                <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full font-mono">
                   {sharedNotes.length}
                 </span>
               </h3>
               <motion.div
-                animate={{ rotate: sharedCollapsed ? 180 : 0 }}
+                animate={{ rotate: sharedCollapsed ? -90 : 0 }}
                 transition={{ duration: 0.2 }}
+                className="text-gray-400"
               >
-                <FiChevronDown className="text-gray-400" />
+                <FiChevronDown />
               </motion.div>
             </div>
             <AnimatePresence>
@@ -169,7 +178,7 @@ const NotesSidebar = ({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-2 overflow-hidden"
+                  className="space-y-2 overflow-hidden pl-2"
                 >
                   {sharedNotes.length > 0 ? (
                     sharedNotes.map(note => (
@@ -185,8 +194,8 @@ const NotesSidebar = ({
                       />
                     ))
                   ) : (
-                    <div className="text-center py-8 text-gray-400 text-sm">
-                      <FiShare2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <div className="text-center py-6 text-gray-300 text-xs border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                      <FiShare2 className="w-6 h-6 mx-auto mb-2 opacity-30" />
                       No shared notes
                     </div>
                   )}
@@ -195,6 +204,11 @@ const NotesSidebar = ({
             </AnimatePresence>
           </div>
         </div>
+      </div>
+
+      {/* Footer / Info */}
+      <div className="p-4 border-t border-gray-100 bg-gray-50 text-[10px] text-gray-400 text-center font-medium uppercase tracking-widest">
+        Sync Notes Premium
       </div>
     </div>
   );

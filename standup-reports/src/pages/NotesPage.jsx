@@ -44,11 +44,18 @@ const NotesPage = ({ sidebarOpen }) => {
   const editorRef = useRef(null);
 
   // Utility functions
-  const getTextStats = (text) => {
-    if (!text) return { characters: 0, words: 0, lines: 1 };
+  const getTextStats = (html) => {
+    if (!html) return { characters: 0, words: 0, lines: 1 };
+
+    // Strip HTML tags
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    const text = tmp.textContent || tmp.innerText || '';
+
     const characters = text.length;
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     const lines = text.split('\n').length;
+
     return { characters, words, lines };
   };
 
@@ -317,11 +324,11 @@ const NotesPage = ({ sidebarOpen }) => {
         prevNotes.map(n =>
           n.id === shareNote.id
             ? {
-                ...n,
-                is_shared: true,
-                shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
-                shared_at: new Date().toISOString()
-              }
+              ...n,
+              is_shared: true,
+              shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
+              shared_at: new Date().toISOString()
+            }
             : n
         )
       );

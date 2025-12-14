@@ -18,6 +18,7 @@ import { notifyProjectUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../contexts/CompanyContext';
 
 import ProjectDetailPage from '../projects/pages/ProjectDetailPage';
+import ProjectsListSidebar from '../components/projects/ProjectsListSidebar';
 
 // Import design system
 import { colors, animations, shadows, breakpoints, typography } from '../config/designSystem';
@@ -273,504 +274,8 @@ const HamburgerMenu = ({ isOpen, onClick, className = '', isMobile = false }) =>
 // STREAMLINED PROJECTS SIDEBAR COMPONENT
 // ============================================
 
-const ProjectsSidebar = ({
-  projects,
-  activeFilter,
-  onProjectSelect,
-  isOpen,
-  onClose,
-  isMobile,
-  favoriteProjects,
-  sidebarCollapsed,
-  onToggleSidebarCollapse,
-  className = ''
-}) => {
-  const [expanded, setExpanded] = useState(false);
-  const [favoritesExpanded, setFavoritesExpanded] = useState(false);
+// Local ProjectsSidebar removed - using shared component
 
-  const toggleSection = () => {
-    setExpanded(!expanded);
-  };
-
-  const toggleFavoritesSection = () => {
-    setFavoritesExpanded(!favoritesExpanded);
-  };
-
-  // Filter favorite projects based on is_favorite field from project_assignments
-  const favoriteProjectsList = projects.filter(project => project.is_favorite === true);
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' };
-      case 'completed':
-        return { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' };
-      case 'archived':
-        return { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
-      default:
-        return { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
-    }
-  };
-
-
-  return (
-    <>
-      {/* Mobile Overlay with Enhanced Animation */}
-      {isMobile && (
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{
-                opacity: 1,
-                transition: {
-                  duration: 0.3,
-                  ease: [0.25, 0.46, 0.45, 0.94]
-                }
-              }}
-              exit={{
-                opacity: 0,
-                transition: {
-                  duration: 0.2,
-                  ease: [0.4, 0, 0.2, 1]
-                }
-              }}
-              onClick={onClose}
-            />
-          )}
-        </AnimatePresence>
-      )}
-
-      {isMobile ? (
-        <AnimatePresence>
-          {isOpen && (
-            <motion.aside
-              className="bg-white text-gray-800 h-full overflow-hidden flex flex-col shadow-lg border-r border-gray-200 fixed left-0 top-0 z-50 w-80"
-              variants={sidebarVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{
-                duration: 0.4,
-                ease: [0.25, 0.46, 0.45, 0.94],
-                bounce: 0.3
-              }}
-            >
-              {/* Sidebar Header with Toggle Button */}
-              <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-                {!sidebarCollapsed && (
-                  <h2 className="text-lg font-bold text-gray-800">
-                    Project Spaces
-                  </h2>
-                )}
-
-                {/* Toggle Button */}
-                <motion.button
-                  onClick={onClose}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="Close sidebar"
-                  title="Close sidebar"
-                >
-                  <FiX className="w-4 h-4" />
-                </motion.button>
-              </div>
-
-              {/* Project Spaces Section */}
-              <div className="flex-1 overflow-y-auto p-4">
-                {/* Favorites Section */}
-                {favoriteProjectsList.length > 0 && (
-                  <div className="mb-4">
-                    <motion.button
-                      onClick={toggleFavoritesSection}
-                      className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 border border-amber-200"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500">
-                          <FiStar className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-gray-800 font-medium">Favorites</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-amber-100 px-2 py-1 rounded-full text-amber-700">
-                          {favoriteProjectsList.length}
-                        </span>
-                        <motion.div
-                          animate={{ rotate: favoritesExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <FiChevronDown className="w-4 h-4 text-gray-500" />
-                        </motion.div>
-                      </div>
-                    </motion.button>
-
-                    <AnimatePresence>
-                      {favoritesExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="space-y-2 mt-2 overflow-hidden"
-                        >
-                          {favoriteProjectsList.map((project) => {
-                            const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-
-                            return (
-                              <motion.button
-                                key={project.id}
-                                onClick={() => onProjectSelect(project)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
-                                  ? 'bg-amber-50 border border-amber-300'
-                                  : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
-                                  }`}
-                                whileHover={{ scale: 1.02, x: 4 }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 bg-opacity-80">
-                                  <FiStar className="w-4 h-4 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-800 truncate flex items-center gap-2">
-                                    {project.name}
-                                    <FiStar className="w-3 h-3 text-amber-500" fill="currentColor" />
-                                  </div>
-                                  {project.description && (
-                                    <div className="text-xs text-gray-500 truncate">{project.description}</div>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <div className="flex items-center gap-1">
-                                      <FiUsers className="w-3 h-3 text-gray-500" />
-                                      <span className="text-xs text-gray-500">{teamCount}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
-                                  {project.status}
-                                </span>
-                              </motion.button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
-                <motion.button
-                  onClick={toggleSection}
-                  className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-blue-50 hover:bg-blue-100 border border-blue-200"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500">
-                      <FiFolder className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-800 font-medium">Project Spaces</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
-                      {projects.length}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: expanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <FiChevronDown className="w-4 h-4 text-gray-500" />
-                    </motion.div>
-                  </div>
-                </motion.button>
-
-                <AnimatePresence>
-                  {expanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="space-y-2 mt-2 overflow-hidden"
-                    >
-                      {projects.map((project) => {
-                        const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-
-                        return (
-                          <motion.button
-                            key={project.id}
-                            onClick={() => onProjectSelect(project)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
-                              ? 'bg-blue-50 border border-blue-300'
-                              : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
-                              }`}
-                            whileHover={{ scale: 1.02, x: 4 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="p-2 rounded-lg bg-blue-500 bg-opacity-80">
-                              <FiFolder className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-800 truncate">{project.name}</div>
-                              {project.description && (
-                                <div className="text-xs text-gray-500 truncate">{project.description}</div>
-                              )}
-                              <div className="flex items-center gap-3 mt-2">
-                                <div className="flex items-center gap-1">
-                                  <FiUsers className="w-3 h-3 text-gray-500" />
-                                  <span className="text-xs text-gray-500">{teamCount}</span>
-                                </div>
-                                <div className="flex-1">
-                                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div
-                                      className={`h-1.5 rounded-full ${getProgressColor(progress)}`}
-                                      style={{ width: `${progress}%` }}
-                                    />
-                                  </div>
-                                </div>
-                                <span className="text-xs text-gray-500">{progress}%</span>
-                              </div>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
-                              {project.status}
-                            </span>
-                          </motion.button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-      ) : (
-        <motion.aside
-          className={`bg-white text-gray-800 h-full overflow-hidden flex flex-col shadow-lg border-r border-gray-200 ${sidebarCollapsed
-            ? 'w-16 relative'
-            : 'w-80 relative'
-            } ${className}`}
-          variants={sidebarVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={{
-            duration: 0.4,
-            ease: [0.25, 0.46, 0.45, 0.94],
-            bounce: 0.3
-          }}
-        >
-          {/* Sidebar Header with Toggle Button */}
-          <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-            {!sidebarCollapsed && (
-              <h2 className="text-lg font-bold text-gray-800">
-                Project Spaces
-              </h2>
-            )}
-
-            {/* Enhanced Toggle Button */}
-            <HamburgerMenu
-              isOpen={!sidebarCollapsed}
-              onClick={onToggleSidebarCollapse}
-              isMobile={false}
-              className="ml-2"
-            />
-          </div>
-
-          {/* Project Spaces Section */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {sidebarCollapsed ? (
-              // Collapsed state - show only icons
-              <div className="space-y-4">
-                {/* Favorites Section - Collapsed */}
-                {favoriteProjectsList.length > 0 && (
-                  <div className="flex flex-col items-center">
-                    <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 mb-1">
-                      <FiStar className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-xs text-gray-500">{favoriteProjectsList.length}</span>
-                  </div>
-                )}
-
-                {/* Projects Section - Collapsed */}
-                <div className="flex flex-col items-center">
-                  <div className="p-2 rounded-lg bg-blue-500 mb-1">
-                    <FiFolder className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-xs text-gray-500">{projects.length}</span>
-                </div>
-              </div>
-            ) : (
-              // Expanded state - show full content
-              <>
-                {/* Favorites Section */}
-                {favoriteProjectsList.length > 0 && (
-                  <div className="mb-4">
-                    <motion.button
-                      onClick={toggleFavoritesSection}
-                      className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 border border-amber-200"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500">
-                          <FiStar className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="text-gray-800 font-medium">Favorites</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-amber-100 px-2 py-1 rounded-full text-amber-700">
-                          {favoriteProjectsList.length}
-                        </span>
-                        <motion.div
-                          animate={{ rotate: favoritesExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <FiChevronDown className="w-4 h-4 text-gray-500" />
-                        </motion.div>
-                      </div>
-                    </motion.button>
-
-                    <AnimatePresence>
-                      {favoritesExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="space-y-2 mt-2 overflow-hidden"
-                        >
-                          {favoriteProjectsList.map((project) => {
-                            const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-
-                            return (
-                              <motion.button
-                                key={project.id}
-                                onClick={() => onProjectSelect(project)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
-                                  ? 'bg-amber-50 border border-amber-300'
-                                  : 'bg-amber-50/50 hover:bg-amber-50 border border-transparent hover:border-amber-300'
-                                  }`}
-                                whileHover={{ scale: 1.02, x: 4 }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <div className="p-2 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 bg-opacity-80">
-                                  <FiStar className="w-4 h-4 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-800 truncate flex items-center gap-2">
-                                    {project.name}
-                                    <FiStar className="w-3 h-3 text-amber-500" fill="currentColor" />
-                                  </div>
-                                  {project.description && (
-                                    <div className="text-xs text-gray-500 truncate">{project.description}</div>
-                                  )}
-                                  <div className="flex items-center gap-2 mt-2">
-                                    <div className="flex items-center gap-1">
-                                      <FiUsers className="w-3 h-3 text-gray-500" />
-                                      <span className="text-xs text-gray-500">{teamCount}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
-                                  {project.status}
-                                </span>
-                              </motion.button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
-                <motion.button
-                  onClick={toggleSection}
-                  className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-blue-50 hover:bg-blue-100 border border-blue-200"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500">
-                      <FiFolder className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-gray-800 font-medium">Project Spaces</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-700">
-                      {projects.length}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: expanded ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <FiChevronDown className="w-4 h-4 text-gray-500" />
-                    </motion.div>
-                  </div>
-                </motion.button>
-
-                <AnimatePresence>
-                  {expanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="space-y-2 mt-2 overflow-hidden"
-                    >
-                      {projects.map((project) => {
-                        const teamCount = Math.floor(Math.random() * 10) + 1; // Mock team count
-
-                        return (
-                          <motion.button
-                            key={project.id}
-                            onClick={() => onProjectSelect(project)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 group ${activeFilter === project.id
-                              ? 'bg-blue-50 border border-blue-300'
-                              : 'bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-gray-300'
-                              }`}
-                            whileHover={{ scale: 1.02, x: 4 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="p-2 rounded-lg bg-blue-500 bg-opacity-80">
-                              <FiFolder className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-800 truncate">{project.name}</div>
-                              {project.description && (
-                                <div className="text-xs text-gray-500 truncate">{project.description}</div>
-                              )}
-                              <div className="flex items-center gap-3 mt-2">
-                                <div className="flex items-center gap-1">
-                                  <FiUsers className="w-3 h-3 text-gray-500" />
-                                  <span className="text-xs text-gray-500">{teamCount}</span>
-                                </div>
-                                <div className="flex-1">
-                                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                    <div
-                                      className={`h-1.5 rounded-full ${getProgressColor(progress)}`}
-                                      style={{ width: `${progress}%` }}
-                                    />
-                                  </div>
-                                </div>
-                                <span className="text-xs text-gray-500">{progress}%</span>
-                              </div>
-                            </div>
-                            <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status).bg} ${getStatusColor(project.status).text} ${getStatusColor(project.status).border}`}>
-                              {project.status}
-                            </span>
-                          </motion.button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </>
-            )}
-          </div>
-        </motion.aside>
-      )}
-    </>
-  );
-};
 
 // ============================================
 // MODERN COMPACT HEADER COMPONENT
@@ -2216,7 +1721,7 @@ export default function ProjectsPage() {
   const [userProjectRoles, setUserProjectRoles] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
@@ -2768,6 +2273,17 @@ export default function ProjectsPage() {
     setShowMembersModal(true);
   };
 
+  const handleProjectSelect = (project) => {
+    setActiveProjectId(project.id);
+    if (isMobile) {
+      setSidebarOpen(false); // Close sidebar on mobile after selection
+    }
+  };
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -2814,16 +2330,15 @@ export default function ProjectsPage() {
       {/* Main Layout Container */}
       <div className="flex h-screen">
         {/* Sidebar */}
-        <ProjectsSidebar
+        <ProjectsListSidebar
           projects={projects}
-          activeFilter={filterStatus}
-          onProjectSelect={(project) => navigate(`/projects/${project.id}?editMode=false`)}
+          activeProjectId={activeProjectId}
+          onProjectSelect={handleProjectSelect}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           isMobile={isMobile}
-          favoriteProjects={favoriteProjects}
           sidebarCollapsed={sidebarCollapsed}
-          onToggleSidebarCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onToggleSidebarCollapse={toggleSidebarCollapse}
         />
 
         {/* Main Content */}
