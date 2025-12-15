@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient';
 import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
 import brandLogo from './assets/brand/squadsync-logo.png';
 import { CompanyProvider } from './contexts/CompanyContext';
+import { TaskModalProvider } from './contexts/TaskModalContext';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -222,29 +223,31 @@ function App() {
       {session ? (
         <CompanyProvider>
           <>
-            <Navbar
-              user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
-              sidebarMode={sidebarMode}
-              setSidebarMode={setSidebarMode}
-            />
-            <div className="flex pt-16">
-              <Sidebar
-                mode={sidebarMode}
-                setMode={setSidebarMode}
+            <TaskModalProvider>
+              <Navbar
                 user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
+                sidebarMode={sidebarMode}
+                setSidebarMode={setSidebarMode}
               />
-              <div className="flex-1 flex min-h-screen">
-                <div
-                  className="flex-1 bg-gray-50 overflow-hidden relative"
-                  style={{
-                    marginLeft: getMarginLeft(),
-                    transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-                  }}
-                >
-                  <AppContent session={session} userRole={userRole} sidebarMode={sidebarMode} />
+              <div className="flex pt-16">
+                <Sidebar
+                  mode={sidebarMode}
+                  setMode={setSidebarMode}
+                  user={userProfile || { name: '', role: userRole || 'member', avatar: null, avatar_url: null }}
+                />
+                <div className="flex-1 flex min-h-screen">
+                  <div
+                    className="flex-1 bg-gray-50 overflow-hidden relative"
+                    style={{
+                      marginLeft: getMarginLeft(),
+                      transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  >
+                    <AppContent session={session} userRole={userRole} sidebarMode={sidebarMode} />
+                  </div>
                 </div>
               </div>
-            </div>
+            </TaskModalProvider>
           </>
         </CompanyProvider>
       ) : (

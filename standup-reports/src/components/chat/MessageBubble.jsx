@@ -5,6 +5,7 @@ import {
   FiCheck, FiCheckCircle, FiClock, FiMoreVertical, FiEdit2, FiTrash2,
   FiCornerUpLeft, FiSmile, FiPaperclip, FiEye, FiDownload, FiCopy
 } from 'react-icons/fi';
+import { useTaskModal } from '../../contexts/TaskModalContext';
 
 const MessageBubble = ({
   message,
@@ -22,6 +23,8 @@ const MessageBubble = ({
   const [showActions, setShowActions] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+
+  const { openTask } = useTaskModal();
 
   // Available reactions
   const reactions = ['❤️', '👍', '😊', '🎉', '😂', '🤔', '👎', '😢'];
@@ -131,9 +134,11 @@ const MessageBubble = ({
           <button
             onClick={(e) => {
               e.preventDefault();
-              if (taskData.url) {
-                // Determine if we should internal nav or full load. 
-                // Since this is in app, we can just use window.location if it's our domain
+              if (taskData.shortId) {
+                const userRole = currentUser?.role || 'member';
+                openTask(taskData.shortId, { currentUser, userRole });
+              } else if (taskData.url) {
+                // Fallback to URL if no ID
                 window.location.href = taskData.url;
               }
             }}

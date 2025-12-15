@@ -12,18 +12,15 @@ import {
   FiSend,
   FiLoader,
   FiSave,
-  FiClock,
-  FiHash,
-  FiUser,
-  FiTrendingUp,
-  FiCopy,
-  FiZap,
+  FiBriefcase,
   FiTarget,
   FiUsers,
-  FiFileText,
-  FiCommand
+  FiZap,
+  FiActivity,
+  FiArrowRight,
+  FiArrowLeft
 } from 'react-icons/fi';
-import { format, subDays } from 'date-fns';
+import { format, subDays, isToday, isYesterday } from 'date-fns';
 
 const ReportEntryNew = () => {
   const { selectedCompany } = useCompany();
@@ -34,16 +31,16 @@ const ReportEntryNew = () => {
   const [stats, setStats] = useState({ tasksCompleted: 0, reportsThisWeek: 0 });
   const [lastSaved, setLastSaved] = useState(null);
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-  const [activeEditor, setActiveEditor] = useState(null);
+
+  // Wizard State
+  const [activeStep, setActiveStep] = useState(0); // 0: Yesterday, 1: Today, 2: Blockers
+  const steps = ['yesterday', 'today', 'blockers'];
+  const activeEditorKey = steps[activeStep];
 
   // Form State
   const [yesterdayContent, setYesterdayContent] = useState('');
   const [todayContent, setTodayContent] = useState('');
   const [blockersContent, setBlockersContent] = useState('');
-
-  // UI State
-  const [showMentionPopup, setShowMentionPopup] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
 
   const saveTimeoutRef = useRef(null);
 
@@ -74,7 +71,7 @@ const ReportEntryNew = () => {
   // Initialize Editors  
   const editorProps = {
     attributes: {
-      class: 'prose prose-sm max-w-none focus:outline-none text-slate-700 dark:text-slate-300 text-sm leading-relaxed'
+      class: 'prose prose-sm max-w-none focus:outline-none text-slate-600 leading-relaxed min-h-[200px]'
     }
   };
 
@@ -89,7 +86,7 @@ const ReportEntryNew = () => {
       setYesterdayContent(editor.getHTML());
       debouncedSave();
     },
-    onFocus: () => setActiveEditor('yesterday')
+    // No onFocus needed as we strictly control visibility
   });
 
   const todayEditor = useEditor({
@@ -103,7 +100,6 @@ const ReportEntryNew = () => {
       setTodayContent(editor.getHTML());
       debouncedSave();
     },
-    onFocus: () => setActiveEditor('today')
   });
 
   const blockersEditor = useEditor({
@@ -117,7 +113,6 @@ const ReportEntryNew = () => {
       setBlockersContent(editor.getHTML());
       debouncedSave();
     },
-    onFocus: () => setActiveEditor('blockers')
   });
 
   // Fetch data
@@ -173,7 +168,8 @@ const ReportEntryNew = () => {
         .eq('company_id', selectedCompany.id)
         .contains('assignees', [user.id])
         .neq('status', 'Done')
-        .limit(10);
+        .order('created_at', { ascending: false })
+        .limit(15);
 
       if (error) throw error;
       setMyTasks(data || []);
@@ -190,7 +186,7 @@ const ReportEntryNew = () => {
         .from('users')
         .select('id, name, avatar_url')
         .eq('company_id', selectedCompany.id)
-        .limit(8);
+        .limit(10);
 
       if (error) throw error;
       setTeamMembers(data || []);
@@ -270,17 +266,17 @@ const ReportEntryNew = () => {
     await handleDraftSave();
     setTimeout(() => {
       setLoading(false);
-      alert('✅ Report submitted successfully!');
-      fetchStats(); // Refresh stats
+      // Optional: Add a toast notification here
+      fetchStats();
     }, 800);
   };
 
   // Template insertion
   const insertTemplate = (template) => {
     let editor = null;
-    if (activeEditor === 'yesterday') editor = yesterdayEditor;
-    if (activeEditor === 'today') editor = todayEditor;
-    if (activeEditor === 'blockers') editor = blockersEditor;
+    if (activeEditorKey === 'yesterday') editor = yesterdayEditor;
+    if (activeEditorKey === 'today') editor = todayEditor;
+    if (activeEditorKey === 'blockers') editor = blockersEditor;
 
     if (editor) {
       const currentContent = editor.getText();
@@ -292,12 +288,12 @@ const ReportEntryNew = () => {
   // Insert task
   const insertTask = (task) => {
     let editor = null;
-    if (activeEditor === 'yesterday') editor = yesterdayEditor;
-    if (activeEditor === 'today') editor = todayEditor;
-    if (activeEditor === 'blockers') editor = blockersEditor;
+    if (activeEditorKey === 'yesterday') editor = yesterdayEditor;
+    if (activeEditorKey === 'today') editor = todayEditor;
+    if (activeEditorKey === 'blockers') editor = blockersEditor;
 
     if (editor) {
-      const taskLink = `<a href="/tasks/${task.id}" class="text-indigo-600 font-medium hover:underline">#${task.title}</a> `;
+      const taskLink = `<a href="/tasks/${task.id}" class="text-indigo-600 font-medium hover:underline decoration-indigo-300 underline-offset-2">#${task.title}</a> `;
       editor.chain().focus().insertContent(taskLink).run();
     }
   };
@@ -305,313 +301,374 @@ const ReportEntryNew = () => {
   // Mention team member
   const mentionMember = (member) => {
     let editor = null;
-    if (activeEditor === 'yesterday') editor = yesterdayEditor;
-    if (activeEditor === 'today') editor = todayEditor;
-    if (activeEditor === 'blockers') editor = blockersEditor;
+    if (activeEditorKey === 'yesterday') editor = yesterdayEditor;
+    if (activeEditorKey === 'today') editor = todayEditor;
+    if (activeEditorKey === 'blockers') editor = blockersEditor;
 
     if (editor) {
-      const mention = `<span class="text-blue-600 font-medium">@${member.name}</span> `;
+      const mention = `<span class="text-blue-600 font-medium bg-blue-50 px-1 rounded">@${member.name}</span> `;
       editor.chain().focus().insertContent(mention).run();
     }
-    setShowMentionPopup(false);
   };
 
-  const wordCount = (html) => {
-    const text = html.replace(/<[^>]*>/g, '');
-    return text.trim().split(/\s+/).filter(w => w).length;
+  const formatDateLabel = (dateStr) => {
+    const date = new Date(dateStr);
+    if (isToday(date)) return 'Today';
+    if (isYesterday(date)) return 'Yesterday';
+    return format(date, 'EEEE, MMM d');
+  };
+
+  const nextStep = () => {
+    if (activeStep < 2) setActiveStep(prev => prev + 1);
+  };
+
+  const prevStep = () => {
+    if (activeStep > 0) setActiveStep(prev => prev - 1);
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 overflow-hidden">
-      {/* Header */}
-      <header className="h-16 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl flex items-center justify-between px-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-slate-800 dark:text-slate-200">Daily Standup Report</h1>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <FiCalendar className="w-3 h-3" />
-              <span>{format(new Date(reportDate), 'EEEE, MMM d, yyyy')}</span>
+    <div className="h-screen w-full bg-slate-50 flex flex-col font-sans text-slate-800 antialiased overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+
+      {/* Main Workspace */}
+      <main className="flex-1 flex overflow-hidden">
+
+        {/* Left Sidebar: Context */}
+        <aside className="w-[320px] border-r border-slate-100 bg-white flex flex-col shrink-0 z-0">
+          <div className="px-6 pt-6 pb-2">
+            <div className="mb-6">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Daily Standup</h1>
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-400 mt-1">
+                <FiCalendar className="w-4 h-4" />
+                <span>{formatDateLabel(reportDate)}</span>
+                <span className="text-slate-300">•</span>
+                <span>{format(new Date(reportDate), 'MMMM d, yyyy')}</span>
+              </div>
+              {lastSaved && (
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-400 mt-2">
+                  <FiSave className="w-3 h-3" />
+                  <span>Saved {format(lastSaved, 'h:mm a')}</span>
+                </div>
+              )}
+            </div>
+
+            <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center gap-2">
+              <FiActivity className="w-3.5 h-3.5" />
+              Activity Overview
+            </h3>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 group hover:border-emerald-200 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold text-emerald-700 tracking-tight">{stats.tasksCompleted}</span>
+                  <span className="text-[11px] font-semibold text-emerald-600/70 uppercase tracking-wide mt-1">Tasks Done</span>
+                </div>
+              </div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-100 group hover:border-indigo-200 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold text-indigo-700 tracking-tight">{stats.reportsThisWeek}</span>
+                  <span className="text-[11px] font-semibold text-indigo-600/70 uppercase tracking-wide mt-1">Reports</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-gradient-to-r from-transparent via-slate-100 to-transparent mb-6"></div>
+
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase flex items-center gap-2">
+                <FiTarget className="w-3.5 h-3.5" />
+                Active Tasks
+              </h3>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">{myTasks.length}</span>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          {lastSaved && (
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <FiSave className="w-3 h-3" />
-              <span>Saved {format(lastSaved, 'h:mm a')}</span>
-            </div>
-          )}
-
-          <motion.button
-            onClick={handleSubmit}
-            disabled={loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading ? (
-              <>
-                <FiLoader className="animate-spin w-4 h-4" />
-                <span>Submitting...</span>
-              </>
-            ) : (
-              <>
-                <FiSend className="w-4 h-4" />
-                <span>Submit Report</span>
-              </>
-            )}
-          </motion.button>
-        </div>
-      </header>
-
-      {/* Main Grid */}
-      <main className="flex-1 grid grid-cols-[260px_1fr_300px] gap-0 overflow-hidden">
-        {/* Left Panel */}
-        <aside className="border-r border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-          <div className="p-4 space-y-6">
-            {/* Stats */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FiTrendingUp className="w-3 h-3" />
-                This Week
-              </h3>
-              <div className="space-y-2">
-                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
-                  <div className="flex items-center gap-2 mb-1">
-                    <FiCheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-xs text-slate-600 dark:text-slate-400">Tasks Done</span>
-                  </div>
-                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.tasksCompleted}</p>
-                </div>
-                <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                  <div className="flex items-center gap-2 mb-1">
-                    <FiFileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span className="text-xs text-slate-600 dark:text-slate-400">Reports</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.reportsThisWeek}</p>
-                </div>
+          <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-2 custom-scrollbar">
+            {fetchingTasks ? (
+              <div className="flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
+                <FiLoader className="animate-spin w-5 h-5" />
+                <span className="text-xs">Loading tasks...</span>
               </div>
-            </div>
-
-            {/* Active Tasks */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FiTarget className="w-3 h-3" />
-                Your Tasks
-              </h3>
-              <div className="space-y-1.5 max-h-64 overflow-y-auto">
-                {fetchingTasks ? (
-                  <div className="text-xs text-slate-400 flex items-center gap-2 p-2">
-                    <FiLoader className="animate-spin w-3 h-3" /> Loading...
-                  </div>
-                ) : myTasks.length > 0 ? (
-                  myTasks.map(task => (
-                    <button
-                      key={task.id}
-                      onClick={() => insertTask(task)}
-                      disabled={!activeEditor}
-                      className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-1.5 h-1.5 rounded-full ${task.status === 'In Progress' ? 'bg-blue-500' : 'bg-slate-400'}`} />
-                        <span className="text-[10px] text-slate-500 uppercase">{task.projects?.name}</span>
-                      </div>
-                      <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {task.title}
-                      </p>
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 italic p-2">No active tasks</p>
-                )}
-              </div>
-            </div>
-
-            {/* Team */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FiUsers className="w-3 h-3" />
-                Quick Mention
-              </h3>
-              <div className="grid grid-cols-4 gap-2">
-                {teamMembers.slice(0, 8).map(member => (
-                  <button
-                    key={member.id}
-                    onClick={() => mentionMember(member)}
-                    disabled={!activeEditor}
-                    title={member.name}
-                    className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group"
-                  >
-                    {member.avatar_url ? (
-                      <img src={member.avatar_url} alt={member.name} className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                        {member.name?.charAt(0).toUpperCase()}
+            ) : myTasks.length > 0 ? (
+              myTasks.map(task => (
+                <motion.button
+                  key={task.id}
+                  onClick={() => insertTask(task)}
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.01, x: 2 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full text-left p-3.5 rounded-xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/5 transition-all group relative overflow-hidden"
+                >
+                  <div className={`absolute top-0 left-0 bottom-0 w-1 ${task.status === 'In Progress' ? 'bg-indigo-500' : 'bg-slate-300'} group-hover:bg-indigo-500 transition-colors`}></div>
+                  <div className="pl-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${task.status === 'In Progress' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                        {task.status}
                       </span>
-                    )}
-                  </button>
-                ))}
+                      {task.priority === 'High' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" title="High Priority" />
+                      )}
+                      <span className="text-[10px] font-medium text-slate-400 truncate max-w-[120px]">
+                        {task.projects?.name}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-medium text-slate-700 group-hover:text-indigo-700 transition-colors truncate leading-tight">
+                      {task.title}
+                    </h4>
+                  </div>
+                </motion.button>
+              ))
+            ) : (
+              <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <FiBriefcase className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs text-slate-500 font-medium">No active tasks</p>
+                <p className="text-[10px] text-slate-400">You're all caught up!</p>
               </div>
-            </div>
+            )}
           </div>
         </aside>
 
-        {/* Center - Editors */}
-        <div className="flex flex-col p-6 gap-4 overflow-hidden">
-          {/* Yesterday */}
-          <CompactEditor
-            icon={<FiCheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />}
-            title="Yesterday"
-            subtitle="Accomplishments"
-            color="emerald"
-            editor={yesterdayEditor}
-            isActive={activeEditor === 'yesterday'}
-            wordCount={wordCount(yesterdayContent)}
-          />
+        {/* Center: Wizard Experience */}
+        <div className="flex-1 bg-slate-50/50 relative flex flex-col items-center justify-center p-8 overflow-hidden">
 
-          {/* Today */}
-          <CompactEditor
-            icon={<FiTarget className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
-            title="Today"
-            subtitle="Plans"
-            color="blue"
-            editor={todayEditor}
-            isActive={activeEditor === 'today'}
-            wordCount={wordCount(todayContent)}
-          />
+          <div className="w-full max-w-2xl">
+            {/* Step Indicators */}
+            <div className="flex justify-center mb-8 gap-3">
+              {[0, 1, 2].map((step) => (
+                <div
+                  key={step}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${activeStep === step ? 'w-8 bg-indigo-500' : activeStep > step ? 'w-4 bg-indigo-200' : 'w-4 bg-slate-200'}`}
+                />
+              ))}
+            </div>
 
-          {/* Blockers */}
-          <CompactEditor
-            icon={<FiAlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
-            title="Blockers"
-            subtitle="Optional"
-            color="amber"
-            editor={blockersEditor}
-            isActive={activeEditor === 'blockers'}
-            wordCount={wordCount(blockersContent)}
-          />
+            <AnimatePresence mode="wait">
+              {activeStep === 0 && (
+                <motion.div
+                  key="step-yesterday"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PremiumEditor
+                    title="Yesterday's Progress"
+                    subtitle="What did you implement, fix, or achieve?"
+                    icon={<FiCheckCircle className="w-5 h-5 text-emerald-500" />}
+                    editor={yesterdayEditor}
+                    isActive={true}
+                    accentColor="emerald"
+                  />
+                  <div className="flex justify-end mt-6">
+                    <button
+                      onClick={nextStep}
+                      className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+                    >
+                      <span>Next: Today's Focus</span>
+                      <FiArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeStep === 1 && (
+                <motion.div
+                  key="step-today"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PremiumEditor
+                    title="Today's Focus"
+                    subtitle="What are your key goals and priorities?"
+                    icon={<FiTarget className="w-5 h-5 text-indigo-500" />}
+                    editor={todayEditor}
+                    isActive={true}
+                    accentColor="indigo"
+                  />
+                  <div className="flex justify-between mt-6">
+                    <button
+                      onClick={prevStep}
+                      className="px-6 py-3 text-slate-500 hover:text-slate-700 font-medium transition-colors flex items-center gap-2"
+                    >
+                      <FiArrowLeft className="w-4 h-4" />
+                      Back
+                    </button>
+                    <button
+                      onClick={nextStep}
+                      className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95"
+                    >
+                      <span>Next: Blockers</span>
+                      <FiArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeStep === 2 && (
+                <motion.div
+                  key="step-blockers"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <PremiumEditor
+                    title="Blockers & Impediments"
+                    subtitle="Is anything holding you back?"
+                    icon={<FiAlertCircle className="w-5 h-5 text-rose-500" />}
+                    editor={blockersEditor}
+                    isActive={true}
+                    accentColor="rose"
+                  />
+                  <div className="flex justify-between mt-6">
+                    <button
+                      onClick={prevStep}
+                      className="px-6 py-3 text-slate-500 hover:text-slate-700 font-medium transition-colors flex items-center gap-2"
+                    >
+                      <FiArrowLeft className="w-4 h-4" />
+                      Back
+                    </button>
+
+                    <motion.button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="group relative px-8 py-3 bg-slate-900 text-white text-base font-semibold rounded-xl shadow-[0_4px_12px_rgba(15,23,42,0.15)] hover:shadow-[0_6px_20px_rgba(15,23,42,0.25)] transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:shadow-none overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center gap-2 relative z-10">
+                        {loading ? (
+                          <>
+                            <FiLoader className="animate-spin w-5 h-5" />
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Submit Report</span>
+                            <FiSend className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                          </>
+                        )}
+                      </div>
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        {/* Right Panel */}
-        <aside className="border-l border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-          <div className="p-4 space-y-6">
-            {/* Templates */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FiZap className="w-3 h-3" />
-                Quick Templates
-              </h3>
-              {activeEditor && (
-                <div className="space-y-2">
-                  <p className="text-[10px] text-slate-400 mb-2">
-                    For: <span className="font-semibold capitalize">{activeEditor}</span>
-                  </p>
-                  {templates[activeEditor]?.map((template, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => insertTemplate(template)}
-                      className="w-full p-2 text-left text-xs rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-slate-700 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800"
-                    >
-                      {template}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {!activeEditor && (
-                <p className="text-xs text-slate-400 italic">Click on an editor to see templates</p>
-              )}
-            </div>
+        {/* Right Sidebar: Helpers */}
+        <aside className="w-[280px] bg-white border-l border-slate-100 flex flex-col shrink-0">
+          <div className="p-6">
+            <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center gap-2">
+              <FiZap className="w-3.5 h-3.5" />
+              Quick Actions
+            </h3>
 
-            {/* Keyboard Shortcuts */}
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FiCommand className="w-3 h-3" />
-                Shortcuts
-              </h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Submit</span>
-                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ Enter</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Bold</span>
-                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ B</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">Italic</span>
-                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ I</kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">List</span>
-                  <kbd className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-[10px] font-mono border border-slate-200 dark:border-slate-700">⌘ ⇧ 8</kbd>
-                </div>
-              </div>
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium text-slate-400 mb-2 flex items-center gap-1.5">
+                Editing <span className="text-slate-700 px-1.5 py-0.5 bg-slate-100 rounded capitalize">{activeEditorKey}</span>
+              </p>
+              {templates[activeEditorKey]?.map((template, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => insertTemplate(template)}
+                  className="w-full text-left p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 text-xs font-medium transition-colors border border-transparent hover:border-indigo-100 group"
+                >
+                  <span className="opacity-70 group-hover:opacity-100">{template}</span>
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Tips */}
-            <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-100 dark:border-indigo-800/30">
-              <div className="flex items-start gap-2 mb-2">
-                <FiZap className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-semibold text-indigo-900 dark:text-indigo-300 mb-1">Pro Tip</h4>
-                  <p className="text-[11px] text-indigo-700 dark:text-indigo-400 leading-relaxed">
-                    Click tasks on the left to insert links. Use templates for consistency. Mention teammates for collaboration.
-                  </p>
-                </div>
-              </div>
+          <div className="mt-auto p-6 border-t border-slate-100">
+            <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center gap-2">
+              <FiUsers className="w-3.5 h-3.5" />
+              Team Mention
+            </h3>
+            <div className="grid grid-cols-4 gap-2">
+              {teamMembers.map(member => (
+                <button
+                  key={member.id}
+                  onClick={() => mentionMember(member)}
+                  className="aspect-square rounded-full bg-slate-100 hover:bg-indigo-100 hover:ring-2 ring-indigo-500/20 transition-all flex items-center justify-center relative group"
+                  title={member.name}
+                >
+                  {member.avatar_url ? (
+                    <img src={member.avatar_url} alt={member.name} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-slate-500 group-hover:text-indigo-600">{member.name?.charAt(0)}</span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </aside>
+
       </main>
     </div>
   );
 };
 
-// Compact Editor Component
-const CompactEditor = ({ icon, title, subtitle, color, editor, isActive, wordCount }) => {
-  const colorClasses = {
-    emerald: {
-      bg: 'from-emerald-500/5 to-teal-500/5',
-      ring: 'ring-emerald-500/30',
-      border: 'border-emerald-200 dark:border-emerald-800'
-    },
-    blue: {
-      bg: 'from-blue-500/5 to-indigo-500/5',
-      ring: 'ring-blue-500/30',
-      border: 'border-blue-200 dark:border-blue-800'
-    },
-    amber: {
-      bg: 'from-amber-500/5 to-orange-500/5',
-      ring: 'ring-amber-500/30',
-      border: 'border-amber-200 dark:border-amber-800'
-    }
+const PremiumEditor = ({ title, subtitle, icon, editor, isActive, accentColor, isPrimary }) => {
+
+  const activeStyles = {
+    emerald: "ring-4 ring-emerald-500/30 border-emerald-400/50 shadow-[0_8px_30px_rgb(16,185,129,0.12)]",
+    indigo: "ring-4 ring-indigo-500/30 border-indigo-400/50 shadow-[0_8px_30px_rgb(99,102,241,0.12)]",
+    rose: "ring-4 ring-rose-500/30 border-rose-400/50 shadow-[0_8px_30px_rgb(244,63,94,0.12)]",
   };
 
   return (
-    <div className={`flex-1 flex flex-col rounded-2xl border ${isActive ? `${colorClasses[color].border} ring-2 ${colorClasses[color].ring}` : 'border-slate-200 dark:border-slate-800'} bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm overflow-hidden transition-all`}>
-      {/* Header */}
-      <div className={`px-4 py-3 border-b border-slate-100 dark:border-slate-800 ${isActive ? `bg-gradient-to-r ${colorClasses[color].bg}` : 'bg-slate-50/50 dark:bg-slate-900/50'} flex items-center justify-between transition-all`}>
-        <div className="flex items-center gap-3">
-          {icon}
+    <div
+      className={`
+                group relative bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col min-h-[400px]
+                ${isActive
+          ? `${activeStyles[accentColor]} translate-y-[-2px]`
+          : 'border-slate-200 hover:border-slate-300 hover:shadow-lg'
+        }
+            `}
+    >
+      <div className={`
+                px-6 py-5 border-b flex items-center justify-between
+                ${isActive ? 'border-slate-100 bg-slate-50/50' : 'border-slate-100 bg-white'}
+                rounded-t-2xl
+            `}>
+        <div className="flex items-center gap-4">
+          <div className={`
+                        p-2.5 rounded-xl transition-colors
+                        ${isActive ? 'bg-white shadow-sm' : 'bg-slate-50 group-hover:bg-slate-100'}
+                    `}>
+            {icon}
+          </div>
           <div>
-            <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-200">{title}</h3>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">{subtitle}</p>
+            <h3 className={`text-lg font-bold ${isActive ? 'text-slate-800' : 'text-slate-700'}`}>{title}</h3>
+            <p className="text-sm text-slate-400 font-medium">{subtitle}</p>
           </div>
         </div>
-        {wordCount > 0 && (
-          <span className="text-[10px] text-slate-400 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
-            {wordCount} words
-          </span>
-        )}
+
+        {/* Visual Indicator for Active State */}
+        <div className={`
+                    w-2.5 h-2.5 rounded-full transition-all duration-500
+                    ${isActive ? `bg-${accentColor}-500 scale-100` : 'bg-slate-200 scale-0'}
+                 `} />
       </div>
 
-      {/* Editor */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <EditorContent editor={editor} />
+      <div className="p-6 flex-1 flex flex-col relative cursor-text" onClick={() => editor?.commands.focus()}>
+        <EditorContent editor={editor} className="flex-1" />
+
+        {!isActive && !editor?.getText()?.trim() && (
+          <div className="absolute inset-0 bg-slate-50/30 flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs font-semibold text-slate-400 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-slate-200/50">
+              Click to edit
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
-};
+}
 
 export default ReportEntryNew;
