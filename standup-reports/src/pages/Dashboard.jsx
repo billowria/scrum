@@ -56,114 +56,100 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-indigo-300/60 h-full flex flex-col overflow-hidden"
-      initial={{ borderColor: 'rgba(165, 180, 252, 0)' }}
-      animate={{ borderColor: 'rgba(165, 180, 252, 0.6)' }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200"
     >
       {/* Compact Header */}
-      <motion.div
-        className="p-4 border-b-2 border-indigo-400/60 bg-gradient-to-r from-indigo-50/30 via-white to-purple-50/30 relative overflow-hidden"
-        initial={{ borderColor: 'rgba(129, 140, 248, 0)' }}
-        animate={{ borderColor: 'rgba(129, 140, 248, 0.6)' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-      >
-        {/* Animated shimmer on border */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
-          initial={{ width: '0%', left: '-10%' }}
-          animate={{ left: '100%' }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
-          style={{ width: '20%' }}
-        />
+      <div className="p-5 border-b border-indigo-100/50 bg-gradient-to-r from-indigo-50/30 via-white to-transparent">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg">
-              <FiBriefcase className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+              <FiBriefcase className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">Projects</h3>
-              <p className="text-[10px] text-gray-500">{activeProjects.length} active</p>
+              <h3 className="text-base font-bold text-gray-900 leading-tight">Projects</h3>
+              <p className="text-[11px] font-medium text-gray-500">{activeProjects.length} active</p>
             </div>
           </div>
           <button
             onClick={() => navigate('/projects')}
-            className="text-xs text-indigo-600 font-bold hover:text-indigo-700 flex items-center gap-1"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
           >
-            View All <FiArrowRight className="w-3 h-3" />
+            <FiArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner scale={0.6} />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {activeProjects.length > 0 ? (
-            <div className="divide-y divide-gray-50">
-              {activeProjects.slice(0, 5).map((project, idx) => {
-                const priority = getPriorityConfig(idx);
-                const progress = Math.floor(Math.random() * 40) + 30;
+      {
+        loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner scale={0.6} />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {activeProjects.length > 0 ? (
+              <div className="divide-y divide-gray-50">
+                {activeProjects.slice(0, 5).map((project, idx) => {
+                  const priority = getPriorityConfig(idx);
+                  const progress = Math.floor(Math.random() * 40) + 30;
 
-                return (
-                  <motion.div
-                    key={project.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                    className="group p-4 hover:bg-indigo-50/50 cursor-pointer transition-all relative"
-                  >
-                    <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${priority.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                  return (
+                    <motion.div
+                      key={project.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="group p-4 hover:bg-indigo-50/50 cursor-pointer transition-all relative"
+                    >
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${priority.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
 
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${priority.gradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-                        {project.name.substring(0, 2).toUpperCase()}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${priority.gradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                          {project.name.substring(0, 2).toUpperCase()}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
+                              {project.name}
+                            </h4>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-${priority.color}-50 text-${priority.color}-700 ml-2`}>
+                              {priority.label}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                            <span>Progress: {progress}%</span>
+                            <span className="flex items-center gap-1">
+                              <FiClock className="w-3 h-3" />
+                              {Math.floor(Math.random() * 15) + 5}d
+                            </span>
+                          </div>
+
+                          <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              transition={{ duration: 0.8, delay: idx * 0.1 }}
+                              className={`absolute inset-y-0 left-0 bg-gradient-to-r ${priority.gradient} rounded-full`}
+                            />
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
-                            {project.name}
-                          </h4>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-${priority.color}-50 text-${priority.color}-700 ml-2`}>
-                            {priority.label}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                          <span>Progress: {progress}%</span>
-                          <span className="flex items-center gap-1">
-                            <FiClock className="w-3 h-3" />
-                            {Math.floor(Math.random() * 15) + 5}d
-                          </span>
-                        </div>
-
-                        <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ duration: 0.8, delay: idx * 0.1 }}
-                            className={`absolute inset-y-0 left-0 bg-gradient-to-r ${priority.gradient} rounded-full`}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
-              <FiBriefcase className="w-12 h-12 mb-3 text-gray-300" />
-              <p className="text-sm font-medium text-gray-500">No active projects</p>
-            </div>
-          )}
-        </div>
-      )}
-    </motion.div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
+                <FiBriefcase className="w-12 h-12 mb-3 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No active projects</p>
+              </div>
+            )}
+          </div>
+        )
+      }
+    </motion.div >
   );
 };
 
@@ -192,134 +178,121 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-amber-300/60 h-full flex flex-col overflow-hidden"
-      initial={{ borderColor: 'rgba(252, 211, 77, 0)' }}
-      animate={{ borderColor: 'rgba(252, 211, 77, 0.6)' }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-200"
     >
       {/* Header */}
-      <motion.div
-        className="p-4 border-b-2 border-amber-400/60 bg-gradient-to-r from-amber-50/30 via-white to-orange-50/30 relative overflow-hidden"
-        initial={{ borderColor: 'rgba(251, 191, 36, 0)' }}
-        animate={{ borderColor: 'rgba(251, 191, 36, 0.6)' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-      >
-        {/* Animated shimmer on border */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
-          initial={{ width: '0%', left: '-10%' }}
-          animate={{ left: '100%' }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
-          style={{ width: '20%' }}
-        />
+      <div className="p-5 border-b border-amber-100/50 bg-gradient-to-r from-amber-50/30 via-white to-transparent">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg">
-              <FiTarget className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+              <FiTarget className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900">Pending Tasks</h3>
-              <p className="text-[10px] text-gray-500">
-                {incompleteTasks.length} tasks
+              <h3 className="text-base font-bold text-gray-900 leading-tight">My Tasks</h3>
+              <p className="text-[11px] font-medium text-gray-500">
+                {incompleteTasks.length} pending
               </p>
             </div>
           </div>
           <button
             onClick={() => window.location.href = '/tasks'}
-            className="text-xs text-amber-600 font-bold hover:text-amber-700 flex items-center gap-1">
-            View All <FiArrowRight className="w-3 h-3" />
+            className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+          >
+            <FiArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner scale={0.6} />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {incompleteTasks.length > 0 ? (
-            <div className="divide-y divide-gray-50">
-              {incompleteTasks.slice(0, 8).map((task, idx) => {
-                const statusStyle = getStatusStyle(task.status);
-                const priorityInfo = getPriorityIcon(task.priority);
+      {
+        loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner scale={0.6} />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {incompleteTasks.length > 0 ? (
+              <div className="divide-y divide-gray-50">
+                {incompleteTasks.slice(0, 8).map((task, idx) => {
+                  const statusStyle = getStatusStyle(task.status);
+                  const priorityInfo = getPriorityIcon(task.priority);
 
-                return (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`group p-4 hover:bg-gray-100/70 cursor-pointer transition-all relative border-l-2 rounded-r-lg mb-2 mx-2 ${statusStyle.border}`}
-                    onClick={() => onTaskClick?.(task)}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="text-sm font-bold text-gray-900 line-clamp-2 pr-2">
-                            {task.title}
-                          </h4>
-                          <span className="text-xs flex-shrink-0">{priorityInfo.icon}</span>
-                        </div>
-
-                        {/* Project Name */}
-                        {task.project_name && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              <FiBriefcase className="w-3 h-3 mr-1" />
-                              {task.project_name}
-                            </span>
-                          </div>
-                        )}
-
-                        {task.description && (
-                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
-                            {task.description}
-                          </p>
-                        )}
-
-                        {/* Status, Comments, and Due Date */}
-                        <div className="flex items-center justify-between pt-1">
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                              {task.status}
-                            </span>
-
-                            {/* Comments indicator */}
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <FiMessageSquare className="w-3 h-3" />
-                              <span>{task.comments_count}</span>
-                            </div>
+                  return (
+                    <motion.div
+                      key={task.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`group p-4 hover:bg-gray-100/70 cursor-pointer transition-all relative border-l-2 rounded-r-lg mb-2 mx-2 ${statusStyle.border}`}
+                      onClick={() => onTaskClick?.(task)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 pr-2">
+                              {task.title}
+                            </h4>
+                            <span className="text-xs flex-shrink-0">{priorityInfo.icon}</span>
                           </div>
 
-                          {task.due_date && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <FiClock className="w-3 h-3" />
-                              <span>{formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}</span>
+                          {/* Project Name */}
+                          {task.project_name && (
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                <FiBriefcase className="w-3 h-3 mr-1" />
+                                {task.project_name}
+                              </span>
                             </div>
                           )}
+
+                          {task.description && (
+                            <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                              {task.description}
+                            </p>
+                          )}
+
+                          {/* Status, Comments, and Due Date */}
+                          <div className="flex items-center justify-between pt-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                                {task.status}
+                              </span>
+
+                              {/* Comments indicator */}
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <FiMessageSquare className="w-3 h-3" />
+                                <span>{task.comments_count}</span>
+                              </div>
+                            </div>
+
+                            {task.due_date && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <FiClock className="w-3 h-3" />
+                                <span>{formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Professional icon on hover */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <FiExternalLink className="w-4 h-4 text-gray-500" />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
-              <FiTarget className="w-12 h-12 mb-3 text-gray-300" />
-              <p className="text-sm font-medium text-gray-500">No pending tasks</p>
-              <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
-            </div>
-          )}
-        </div>
-      )}
-    </motion.div>
+                      {/* Professional icon on hover */}
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FiExternalLink className="w-4 h-4 text-gray-500" />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
+                <FiTarget className="w-12 h-12 mb-3 text-gray-300" />
+                <p className="text-sm font-medium text-gray-500">No pending tasks</p>
+                <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+              </div>
+            )}
+          </div>
+        )
+      }
+    </motion.div >
   );
 };
 
@@ -337,185 +310,171 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-emerald-300/60 h-full flex flex-col overflow-hidden"
-      initial={{ borderColor: 'rgba(110, 231, 183, 0)' }}
-      animate={{ borderColor: 'rgba(110, 231, 183, 0.6)' }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200"
     >
       {/* Header */}
-      <motion.div
-        className="p-5 border-b-2 border-emerald-400/60 bg-gradient-to-r from-emerald-50/30 via-white to-teal-50/30 relative overflow-hidden"
-        initial={{ borderColor: 'rgba(52, 211, 153, 0)' }}
-        animate={{ borderColor: 'rgba(52, 211, 153, 0.6)' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-      >
-        {/* Animated shimmer on border */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
-          initial={{ width: '0%', left: '-10%' }}
-          animate={{ left: '100%' }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
-          style={{ width: '20%' }}
-        />
+      <div className="p-5 border-b border-emerald-100/50 bg-gradient-to-r from-emerald-50/30 via-white to-transparent">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur opacity-20"></div>
-            <div className="relative p-2 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl">
-              <FiTarget className="w-5 h-5 text-white" />
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
+              <FiActivity className="w-5 h-5 text-white" />
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Task Analytics</h3>
-            <p className="text-xs text-gray-500">Monthly performance metrics</p>
+            <h3 className="text-lg font-bold text-gray-900 leading-tight">Analytics</h3>
+            <p className="text-[11px] font-medium text-gray-500">Monthly breakdown</p>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <LoadingSpinner scale={0.6} />
-        </div>
-      ) : (
-        <div className="flex-1 p-5 flex flex-col">
-          {/* Donut Chart with Center Stats */}
-          <div className="flex justify-center mb-5">
-            <div className="relative w-40 h-40">
-              {/* SVG Donut Chart */}
-              <svg className="w-full h-full transform -rotate-90">
-                {/* Background circle */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
-                  stroke="currentColor"
-                  strokeWidth="16"
-                  fill="transparent"
-                  className="text-gray-100"
-                />
-                {/* Completed segment (green) */}
-                <circle
-                  cx="80"
-                  cy="80"
-                  r="70"
-                  stroke="url(#gradient-completed)"
-                  strokeWidth="16"
-                  fill="transparent"
-                  strokeDasharray={439.82}
-                  strokeDashoffset={439.82 - (439.82 * completionRate) / 100}
-                  className="transition-all duration-1000 ease-out"
-                  strokeLinecap="round"
-                />
-                {/* Gradient definitions */}
-                <defs>
-                  <linearGradient id="gradient-completed" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#14b8a6" />
-                  </linearGradient>
-                </defs>
-              </svg>
+      {
+        loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <LoadingSpinner scale={0.6} />
+          </div>
+        ) : (
+          <div className="flex-1 p-5 flex flex-col">
+            {/* Donut Chart with Center Stats */}
+            <div className="flex justify-center mb-5">
+              <div className="relative w-40 h-40">
+                {/* SVG Donut Chart */}
+                <svg className="w-full h-full transform -rotate-90">
+                  {/* Background circle */}
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="currentColor"
+                    strokeWidth="16"
+                    fill="transparent"
+                    className="text-gray-100"
+                  />
+                  {/* Completed segment (green) */}
+                  <circle
+                    cx="80"
+                    cy="80"
+                    r="70"
+                    stroke="url(#gradient-completed)"
+                    strokeWidth="16"
+                    fill="transparent"
+                    strokeDasharray={439.82}
+                    strokeDashoffset={439.82 - (439.82 * completionRate) / 100}
+                    className="transition-all duration-1000 ease-out"
+                    strokeLinecap="round"
+                  />
+                  {/* Gradient definitions */}
+                  <defs>
+                    <linearGradient id="gradient-completed" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#14b8a6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
 
-              {/* Center Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="relative">
-                  <span className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    {completionRate}%
-                  </span>
-                  <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full opacity-30"></div>
+                {/* Center Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="relative">
+                    <span className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                      {completionRate}%
+                    </span>
+                    <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full opacity-30"></div>
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1">Complete</span>
                 </div>
-                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1">Complete</span>
               </div>
             </div>
+
+            {/* Detailed Stats Cards */}
+            <div className="space-y-2 mb-4 flex-1">
+              {/* Completed */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                      <FiCheckCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-gray-600 block">Completed</span>
+                      <span className="text-[10px] text-emerald-600 font-bold">{completedPercent}% of total</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">{taskStats.completed}</span>
+                    <span className="text-xs text-gray-500 block">tasks</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* In Progress */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
+                      <FiActivity className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-gray-600 block">In Progress</span>
+                      <span className="text-[10px] text-blue-600 font-bold">{inProgressPercent}% of total</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">{taskStats.inProgress}</span>
+                    <span className="text-xs text-gray-500 block">tasks</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* To Do */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-slate-400 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-400 to-slate-400 flex items-center justify-center shadow-md">
+                      <FiLayers className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-gray-600 block">To Do</span>
+                      <span className="text-[10px] text-gray-600 font-bold">{todoPercent}% of total</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-bold text-gray-900">{taskStats.todo}</span>
+                    <span className="text-xs text-gray-500 block">tasks</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Action Button */}
+            <button
+              onClick={() => navigate('/tasks')}
+              className="group w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <span className="text-sm">Open Task Board</span>
+              <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
-
-          {/* Detailed Stats Cards */}
-          <div className="space-y-2 mb-4 flex-1">
-            {/* Completed */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="group relative p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
-                    <FiCheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-gray-600 block">Completed</span>
-                    <span className="text-[10px] text-emerald-600 font-bold">{completedPercent}% of total</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-gray-900">{taskStats.completed}</span>
-                  <span className="text-xs text-gray-500 block">tasks</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* In Progress */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="group relative p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
-                    <FiActivity className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-gray-600 block">In Progress</span>
-                    <span className="text-[10px] text-blue-600 font-bold">{inProgressPercent}% of total</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-gray-900">{taskStats.inProgress}</span>
-                  <span className="text-xs text-gray-500 block">tasks</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* To Do */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="group relative p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:shadow-md transition-all cursor-pointer overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-slate-400 opacity-0 group-hover:opacity-5 transition-opacity"></div>
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-400 to-slate-400 flex items-center justify-center shadow-md">
-                    <FiLayers className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-gray-600 block">To Do</span>
-                    <span className="text-[10px] text-gray-600 font-bold">{todoPercent}% of total</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-gray-900">{taskStats.todo}</span>
-                  <span className="text-xs text-gray-500 block">tasks</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Action Button */}
-          <button
-            onClick={() => navigate('/tasks')}
-            className="group w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <span className="text-sm">Open Task Board</span>
-            <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-      )}
-    </motion.div>
+        )
+      }
+    </motion.div >
   );
 };
 
@@ -561,41 +520,25 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-sm border-2 border-purple-300/60 h-full flex flex-col overflow-hidden"
-      initial={{ borderColor: 'rgba(216, 180, 254, 0)' }}
-      animate={{ borderColor: 'rgba(216, 180, 254, 0.6)' }}
-      transition={{ duration: 0.8, ease: 'easeOut' }}
+      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-200"
     >
-      <motion.div
-        className="p-5 border-b-2 border-purple-400/60 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white relative overflow-hidden"
-        initial={{ borderColor: 'rgba(192, 132, 252, 0)' }}
-        animate={{ borderColor: 'rgba(192, 132, 252, 0.6)' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-      >
-        {/* Animated shimmer on border */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent"
-          initial={{ width: '0%', left: '-10%' }}
-          animate={{ left: '100%' }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
-          style={{ width: '20%' }}
-        />
+      <div className="p-5 border-b border-purple-100/50 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shadow-sm border border-purple-100">
             <FiUsers className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Team Pulse</h3>
-            <p className="text-xs text-gray-500">{myTeamMembers.length} members</p>
+            <h3 className="text-lg font-bold text-gray-900 leading-tight">Team Pulse</h3>
+            <p className="text-[11px] font-medium text-gray-500">{myTeamMembers.length} members</p>
           </div>
         </div>
         <button
           onClick={() => navigate('/team-management')}
-          className="text-xs text-purple-600 font-bold hover:text-purple-700 flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-purple-50 transition-colors"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 hover:text-purple-600 transition-all"
         >
-          View All <FiArrowRight className="w-3.5 h-3.5" />
+          <FiArrowRight className="w-4 h-4" />
         </button>
-      </motion.div>
+      </div>
 
       {loading || loadingLeave ? (
         <div className="flex-1 flex items-center justify-center">
@@ -1561,11 +1504,11 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         </div>
 
         {/* Column 2: Projects & Holidays */}
-        <div className="lg:col-span-1 h-[700px] flex flex-col gap-6">
-          <div className="flex-1 overflow-hidden min-h-0">
+        <div className="lg:col-span-1 h-[700px] flex flex-col gap-4 py-2">
+          <div className="flex-1 min-h-0">
             <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
           </div>
-          <div className="flex-1 overflow-hidden min-h-0">
+          <div className="flex-1 min-h-0">
             <HolidaysWidget holidays={holidays} loading={loading} navigate={navigate} />
           </div>
         </div>

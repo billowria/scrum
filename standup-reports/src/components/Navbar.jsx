@@ -40,349 +40,384 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   }, [dropdownOpen]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/50 flex items-center justify-between px-3 sm:px-4 md:px-6 h-16">
-      {/* Left side - Sidebar Control (Wonder Design) */}
-      <div className="flex items-center">
-        <AnimatePresence mode="wait">
-          {sidebarMode === 'hidden' ? (
-            <motion.button
-              key="show-sidebar"
-              onClick={() => setSidebarMode('expanded')}
-              className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 shadow-sm group"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title="Show Sidebar"
-            >
-              <FiSidebar size={20} />
-              <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                Show Sidebar
-              </span>
-            </motion.button>
-          ) : (
-            <motion.div
-              key="sidebar-controls"
-              className="flex items-center bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-xl p-1 shadow-sm"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-            >
-              {/* Expand/Collapse Toggle */}
+    <nav
+      className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 pointer-events-none"
+    >
+      <div
+        className="pointer-events-auto relative bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between px-3 sm:px-4 md:px-6 h-16 w-full group"
+        style={{
+          boxShadow: `
+                0 4px 30px rgba(0, 0, 0, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 0 20px rgba(255, 255, 255, 0.05)
+            `
+        }}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+          e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+        }}
+      >
+        {/* Liquid Sheen Effect */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none mix-blend-screen"
+          style={{
+            background: `radial-gradient(
+                    600px circle at var(--mouse-x) var(--mouse-y), 
+                    rgba(255, 160, 90, 0.25), 
+                    transparent 40%
+                )`
+          }}
+        />
+
+        {/* Chromatic Edge Simulation (Fake Refraction) */}
+        <div className="absolute inset-0 pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
+
+        {/* Left side - Sidebar Control (Wonder Design) */}
+        <div className="flex items-center relative z-10 w-1/3">
+          <AnimatePresence mode="wait">
+            {sidebarMode === 'hidden' ? (
               <motion.button
-                onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
-                className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
-                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                  : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
-                  }`}
+                key="show-sidebar"
+                onClick={() => setSidebarMode('expanded')}
+                className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 shadow-sm group"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                title={sidebarMode === 'expanded' ? "Collapse Sidebar" : "Expand Sidebar"}
+                title="Show Sidebar"
               >
-                {sidebarMode === 'expanded' ? <FiChevronLeft size={18} /> : <FiMenu size={18} />}
+                <FiSidebar size={20} />
+                <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Show Sidebar
+                </span>
               </motion.button>
-
-              {/* Divider */}
-              <div className="w-px h-4 bg-slate-300/50 mx-1" />
-
-              {/* Hide Button */}
-              <motion.button
-                onClick={() => setSidebarMode('hidden')}
-                className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Hide Sidebar"
+            ) : (
+              <motion.div
+                key="sidebar-controls"
+                className="flex items-center bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-xl p-1 shadow-sm"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
               >
-                <FiEyeOff size={18} />
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Brand - Centered */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>
-        {/* Cool Animated Logo */}
-        <div className="flex items-center gap-3">
-          {/* Dynamic Animated Logo */}
-          <motion.div
-            className="w-10 h-10 relative"
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400 }}
-          >
-            {/* Outer Ring */}
-            <motion.div
-              className="absolute inset-0 rounded-full border-2 border-blue-500"
-              animate={{
-                rotate: 360,
-                scale: [1, 1.05, 1],
-              }}
-              transition={{
-                rotate: {
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "linear"
-                },
-                scale: {
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut"
-                }
-              }}
-            />
-
-            {/* Middle Ring */}
-            <motion.div
-              className="absolute inset-1 rounded-full border border-purple-400"
-              animate={{
-                rotate: -360,
-              }}
-              transition={{
-                duration: 6,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            />
-
-            {/* Inner Element */}
-            <motion.div
-              className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600"
-              animate={{
-                scale: [1, 1.2, 1],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Pulsing Center Dot */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.7, 1, 0.7],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-
-            {/* Glow Effect */}
-            <motion.div
-              className="absolute inset-0 rounded-full bg-blue-500 opacity-20 blur-md"
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.2, 0.4, 0.2],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-          </motion.div>
-
-          {/* Animated Brand Name */}
-          <div className="relative overflow-hidden">
-            <motion.h1
-              className="text-xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"
-              animate={{
-                backgroundPosition: ["0%", "100%", "0%"],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              style={{
-                backgroundSize: "200% auto",
-                backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
-              }}
-            >
-              Sync
-            </motion.h1>
-
-            {/* Subtle underline animation */}
-            <motion.div
-              className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-              animate={{
-                width: ["0%", "100%", "0%"],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Right Side - Actions & User */}
-      <div className="relative flex items-center gap-3">
-        {/* Notification Bell */}
-        <NotificationBell userRole={user.role} />
-
-        {/* User Profile */}
-        <motion.button
-          ref={buttonRef}
-          onClick={() => setDropdownOpen(v => !v)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-700 hover:text-slate-800 hover:bg-white/70 transition-all duration-200 shadow-sm"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={user.name} className="w-7 h-7 rounded-lg object-cover shadow-sm border border-slate-200/50" />
-          ) : (
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-medium text-sm shadow-sm">
-              {userInitial}
-            </div>
-          )}
-          <span className="hidden sm:inline text-sm font-medium">{user.name?.split(' ')[0]}</span>
-          <motion.div
-            animate={{ rotate: dropdownOpen ? 180 : 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          >
-            <FiChevronDown size={14} />
-          </motion.div>
-        </motion.button>
-
-        {/* Enhanced Cool Dropdown */}
-        <AnimatePresence>
-          {dropdownOpen && (
-            <motion.div
-              key="dropdown"
-              ref={dropdownRef}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{
-                duration: 0.25,
-                ease: "easeOut",
-                type: 'spring',
-                stiffness: 300,
-                damping: 25
-              }}
-              className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 overflow-hidden z-50 origin-top"
-              style={{
-                transformOrigin: 'top right',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2)'
-              }}
-            >
-              {/* User Info Header with Gradient */}
-              <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50">
-                <div className="flex items-center gap-3">
-                  {avatarUrl ? (
-                    <motion.img
-                      src={avatarUrl}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-xl object-cover shadow-md border-2 border-white"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-                    />
-                  ) : (
-                    <motion.div
-                      className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-                    >
-                      {userInitial}
-                    </motion.div>
-                  )}
-                  <div>
-                    <motion.div
-                      className="font-bold text-slate-800 text-base"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      {user.name}
-                    </motion.div>
-                    <motion.div
-                      className="text-slate-500 text-sm capitalize"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      {user.role}
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Menu Items with Cool Design */}
-              <div className="py-2">
-                {/* Profile Menu Item */}
+                {/* Expand/Collapse Toggle */}
                 <motion.button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    navigate('/profile');
-                  }}
-                  className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: 'spring', stiffness: 400 }}
+                  onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
+                  className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
+                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                    }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={sidebarMode === 'expanded' ? "Collapse Sidebar" : "Expand Sidebar"}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition-colors">
-                    <FiUser size={16} />
-                  </div>
-                  <span>My Profile</span>
-                </motion.button>
-
-                {/* Settings Menu Item */}
-                <motion.button
-                  className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: 'spring', stiffness: 400 }}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-200 transition-colors">
-                    <FiSettings size={16} />
-                  </div>
-                  <span>Settings</span>
+                  {sidebarMode === 'expanded' ? <FiChevronLeft size={18} /> : <FiMenu size={18} />}
                 </motion.button>
 
                 {/* Divider */}
-                <div className="border-t border-slate-100/50 my-2 mx-4"></div>
+                <div className="w-px h-4 bg-slate-300/50 mx-1" />
 
-                {/* Sign Out Menu Item */}
+                {/* Hide Button */}
                 <motion.button
-                  onClick={handleSignOut}
-                  className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50/80 transition-colors flex items-center gap-3 group"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: 'spring', stiffness: 400 }}
+                  onClick={() => setSidebarMode('hidden')}
+                  className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Hide Sidebar"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-200 transition-colors">
-                    <FiLogOut size={16} />
-                  </div>
-                  <span>Sign out</span>
+                  <FiEyeOff size={18} />
                 </motion.button>
-              </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-              {/* Footer with Status */}
-              <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-slate-500">Online</span>
-                  </div>
-                  <div className="text-xs text-slate-400">
-                    {currentCompany?.name || 'v2.1.0'}
+        {/* Brand - Centered */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>
+          {/* Cool Animated Logo */}
+          <div className="flex items-center gap-3">
+            {/* Dynamic Animated Logo */}
+            <motion.div
+              className="w-10 h-10 relative"
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: 'spring', stiffness: 400 }}
+            >
+              {/* Outer Ring */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-blue-500"
+                animate={{
+                  rotate: 360,
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  rotate: {
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "linear"
+                  },
+                  scale: {
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }
+                }}
+              />
+
+              {/* Middle Ring */}
+              <motion.div
+                className="absolute inset-1 rounded-full border border-purple-400"
+                animate={{
+                  rotate: -360,
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
+              />
+
+              {/* Inner Element */}
+              <motion.div
+                className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  rotate: [0, 180, 360],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+
+              {/* Pulsing Center Dot */}
+              <motion.div
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"
+                animate={{
+                  scale: [1, 1.5, 1],
+                  opacity: [0.7, 1, 0.7],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+
+              {/* Glow Effect */}
+              <motion.div
+                className="absolute inset-0 rounded-full bg-blue-500 opacity-20 blur-md"
+                animate={{
+                  scale: [1, 1.5, 1],
+                  opacity: [0.2, 0.4, 0.2],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+            </motion.div>
+
+            {/* Animated Brand Name */}
+            <div className="relative overflow-hidden">
+              <motion.h1
+                className="text-xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"
+                animate={{
+                  backgroundPosition: ["0%", "100%", "0%"],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                style={{
+                  backgroundSize: "200% auto",
+                  backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
+                }}
+              >
+                Sync
+              </motion.h1>
+
+              {/* Subtle underline animation */}
+              <motion.div
+                className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                animate={{
+                  width: ["0%", "100%", "0%"],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Actions & User */}
+        <div className="relative flex items-center gap-3">
+          {/* Notification Bell */}
+          <NotificationBell userRole={user.role} />
+
+          {/* User Profile */}
+          <motion.button
+            ref={buttonRef}
+            onClick={() => setDropdownOpen(v => !v)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-700 hover:text-slate-800 hover:bg-white/70 transition-all duration-200 shadow-sm"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={user.name} className="w-7 h-7 rounded-lg object-cover shadow-sm border border-slate-200/50" />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-600 via-gray-600 to-slate-700 flex items-center justify-center text-white font-medium text-sm shadow-sm">
+                {userInitial}
+              </div>
+            )}
+            <span className="hidden sm:inline text-sm font-medium">{user.name?.split(' ')[0]}</span>
+            <motion.div
+              animate={{ rotate: dropdownOpen ? 180 : 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <FiChevronDown size={14} />
+            </motion.div>
+          </motion.button>
+
+          {/* Enhanced Cool Dropdown */}
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                key="dropdown"
+                ref={dropdownRef}
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{
+                  duration: 0.25,
+                  ease: "easeOut",
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 25
+                }}
+                className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 overflow-hidden z-50 origin-top"
+                style={{
+                  transformOrigin: 'top right',
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                {/* User Info Header with Gradient */}
+                <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50">
+                  <div className="flex items-center gap-3">
+                    {avatarUrl ? (
+                      <motion.img
+                        src={avatarUrl}
+                        alt={user.name}
+                        className="w-12 h-12 rounded-xl object-cover shadow-md border-2 border-white"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
+                      />
+                    ) : (
+                      <motion.div
+                        className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
+                      >
+                        {userInitial}
+                      </motion.div>
+                    )}
+                    <div>
+                      <motion.div
+                        className="font-bold text-slate-800 text-base"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        {user.name}
+                      </motion.div>
+                      <motion.div
+                        className="text-slate-500 text-sm capitalize"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        {user.role}
+                      </motion.div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+                {/* Menu Items with Cool Design */}
+                <div className="py-2">
+                  {/* Profile Menu Item */}
+                  <motion.button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/profile');
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition-colors">
+                      <FiUser size={16} />
+                    </div>
+                    <span>My Profile</span>
+                  </motion.button>
+
+                  {/* Settings Menu Item */}
+                  <motion.button
+                    className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-200 transition-colors">
+                      <FiSettings size={16} />
+                    </div>
+                    <span>Settings</span>
+                  </motion.button>
+
+                  {/* Divider */}
+                  <div className="border-t border-slate-100/50 my-2 mx-4"></div>
+
+                  {/* Sign Out Menu Item */}
+                  <motion.button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50/80 transition-colors flex items-center gap-3 group"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-200 transition-colors">
+                      <FiLogOut size={16} />
+                    </div>
+                    <span>Sign out</span>
+                  </motion.button>
+                </div>
+
+                {/* Footer with Status */}
+                <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-slate-500">Online</span>
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {currentCompany?.name || 'v2.1.0'}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </nav>
   );

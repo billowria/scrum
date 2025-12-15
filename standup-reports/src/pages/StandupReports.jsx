@@ -193,6 +193,7 @@ export default function StandupReports() {
     const [dragStart, setDragStart] = useState(0);
     const [dragEnd, setDragEnd] = useState(0);
     const [selectedUserProfileId, setSelectedUserProfileId] = useState(null);
+    const headerRef = useRef(null);
 
     // Fetch User Info
     useEffect(() => {
@@ -494,26 +495,70 @@ export default function StandupReports() {
             <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-300/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-300/20 rounded-full blur-[120px] pointer-events-none" />
 
-            {/* Premium Header */}
-            <div className="z-40 relative px-6 py-4 flex-shrink-0">
-                <div className="bg-white/70 backdrop-blur-2xl rounded-3xl p-2 border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between">
+            {/* Liquid Glass Header - Fixed Position */}
+            <motion.div
+                ref={headerRef}
+                className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
+                initial={{ y: -30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 260, damping: 25 }}
+                style={{
+                    left: '80px',
+                    width: 'calc(100% - 80px)',
+                    transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+            >
+                <div
+                    className="pointer-events-auto relative overflow-hidden bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
+                    style={{
+                        boxShadow: `
+                            0 8px 32px 0 rgba(31, 38, 135, 0.15),
+                            inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+                            inset 0 0 20px rgba(255, 255, 255, 0.05)
+                        `
+                    }}
+                    onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+                        e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+                    }}
+                >
+                    {/* Liquid Sheen Effect */}
+                    <div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                        style={{
+                            background: `radial-gradient(
+                                800px circle at var(--mouse-x) var(--mouse-y), 
+                                rgba(255, 255, 255, 0.15), 
+                                transparent 40%
+                            )`
+                        }}
+                    />
+
+                    {/* Chromatic Edge Simulation (Fake Refraction) */}
+                    <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
 
                     {/* Left: Title & Context */}
-                    <div className="flex items-center gap-4 px-4">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40"></div>
-                            <div className="relative p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30">
+                    <div className="flex items-center gap-4 px-4 relative z-10">
+                        <div className="relative group/icon cursor-pointer">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-60 transition-opacity"></div>
+                            <div className="relative p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300">
                                 <FiFileText className="w-5 h-5" />
                             </div>
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-700 tracking-tight">
+                            <h1 className="text-xl font-bold text-gray-900 tracking-tight drop-shadow-sm">
                                 Standup Reports
                             </h1>
-                            <p className="text-xs font-medium text-gray-500 flex items-center gap-2">
+                            <p className="text-xs font-medium text-gray-600 flex items-center gap-2">
                                 {reportsViewMode === 'today' ? (
                                     <>
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="relative flex h-2 w-2">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
                                         Live Updates
                                     </>
                                 ) : (
@@ -527,45 +572,78 @@ export default function StandupReports() {
                     </div>
 
                     {/* Center: Futuristic Toggle */}
-                    <div className="hidden md:flex bg-gray-100/50 backdrop-blur-sm p-1.5 rounded-2xl border border-white/50 relative">
+                    <div className="hidden md:flex bg-gray-100/30 backdrop-blur-xl p-1.5 rounded-2xl relative z-10 border border-white/40 shadow-inner overflow-hidden">
                         {[
                             { id: 'today', icon: FiCalendar, label: 'Active Sprint' },
                             { id: 'history', icon: FiClock, label: 'Past Reports' }
                         ].map((tab) => (
-                            <button
+                            <motion.button
                                 key={tab.id}
-                                onClick={() => setReportsViewMode(tab.id)}
-                                className={`relative px-6 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${reportsViewMode === tab.id ? 'text-white' : 'text-gray-500 hover:text-gray-700'
+                                className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${reportsViewMode === tab.id
+                                    ? 'text-white shadow-lg'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
                                     }`}
+                                onClick={() => setReportsViewMode(tab.id)}
+                                whileHover={{
+                                    scale: 1.05,
+                                    rotateY: reportsViewMode === tab.id ? 0 : 2,
+                                    z: 10
+                                }}
+                                whileTap={{ scale: 0.95 }}
+                                style={{
+                                    perspective: '1000px',
+                                    transformStyle: 'preserve-3d'
+                                }}
                             >
+                                {/* Active Indicator Background */}
                                 {reportsViewMode === tab.id && (
-                                    <motion.div
-                                        layoutId="header-tab"
-                                        className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 rounded-xl"
-                                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                    />
+                                    <>
+                                        <motion.div
+                                            className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'history'
+                                                ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' // History -> Pink/Purple
+                                                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500' // Active -> Blue/Cyan
+                                                }`}
+                                            layoutId="activeTabReport"
+                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                        />
+
+                                        {/* Inner Pulse/Glow */}
+                                        <motion.div
+                                            className={`absolute inset-0.5 rounded-xl opacity-50 ${tab.id === 'history'
+                                                ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
+                                                : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400'
+                                                }`}
+                                            animate={{ opacity: [0.3, 0.6, 0.3] }}
+                                            transition={{ duration: 2, repeat: Infinity }}
+                                        />
+
+                                        {/* Diagonal Surface Shine */}
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent rounded-xl"
+                                            animate={{ x: ['-100%', '200%'] }}
+                                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                        />
+                                    </>
                                 )}
-                                <span className="relative z-10 flex items-center gap-2">
-                                    <tab.icon className="w-4 h-4" />
+
+                                <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
+                                    <tab.icon className={`w-4 h-4 ${reportsViewMode === tab.id ? 'text-white' : ''}`} />
                                     {tab.label}
                                 </span>
-                            </button>
+                            </motion.button>
                         ))}
                     </div>
 
                     {/* Right: Actions */}
-                    <div className="flex items-center gap-3 px-2">
+                    <div className="flex items-center gap-3 px-2 relative z-10">
                         {/* Refresh */}
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleRefresh}
-                            className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors relative group"
+                            className="p-2.5 text-gray-600 hover:text-indigo-600 hover:bg-white/50 rounded-xl transition-colors relative group"
                         >
                             <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-                            <span className="absolute top-full right-0 mt-2 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                Refresh Data
-                            </span>
                         </motion.button>
 
                         {/* New Report CTA */}
@@ -573,7 +651,7 @@ export default function StandupReports() {
                             whileHover={{ scale: 1.05, y: -1 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/report')}
-                            className="relative overflow-hidden px-5 py-2.5 bg-gray-900 text-white rounded-xl font-semibold text-sm shadow-xl shadow-indigo-900/20 group"
+                            className="relative overflow-hidden px-5 py-2.5 bg-gray-900 text-white rounded-xl font-semibold text-sm shadow-xl shadow-indigo-900/20 group border border-gray-800"
                         >
                             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[length:200%_auto] animate-gradient" />
                             <span className="relative z-10 flex items-center gap-2">
@@ -583,11 +661,11 @@ export default function StandupReports() {
                         </motion.button>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto px-6 pb-20 custom-scrollbar">
-                <div className="max-w-7xl mx-auto space-y-8 pt-4">
+            {/* Scrollable Content Area - Full Width */}
+            <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth">
+                <div className="w-full space-y-8 pt-32 px-4">
 
                     {/* Navigation & Filters Bar */}
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
