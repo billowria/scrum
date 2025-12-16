@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FiMail, FiShield, FiUsers, FiMoreVertical, FiEdit2, FiTrash2,
-    FiUserCheck, FiStar, FiClock
+    FiUserCheck, FiStar, FiClock, FiChevronDown, FiCheck, FiX
 } from 'react-icons/fi';
 import { supabase } from '../../supabaseClient';
+import { useCompany } from '../../contexts/CompanyContext';
 import TeamAssignmentModal from './TeamAssignmentModal';
 
 const getRoleColor = (role) => {
@@ -30,15 +31,46 @@ const getRoleBadgeColor = (role) => {
 };
 
 const getTeamColor = (index) => {
-    const hue = (index * 137.5) % 360; // Golden angle for color distribution
+    const hue = (index * 137.5) % 360;
     return `hsl(${hue}, 65%, 50%)`;
 };
 
 export default function UserCardView({ users, teams, loading, onRefresh, showToast }) {
+    const { currentCompany } = useCompany();
     const [hoveredCard, setHoveredCard] = useState(null);
     const [showActionsMenu, setShowActionsMenu] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [showTeamModal, setShowTeamModal] = useState(false);
+    const [managers, setManagers] = useState([]);
+
+    // Inline edit states
+    const [editingTeam, setEditingTeam] = useState(null);
+    const [editingManager, setEditingManager] = useState(null);
+    const [savingTeam, setSavingTeam] = useState(null);
+    const [savingManager, setSavingManager] = useState(null);
+
+    // Fetch managers on mount
+    useEffect(() => {
+        if (currentCompany?.id) {
+            fetchManagers();
+        }
+    }, [currentCompany]);
+
+    const fetchManagers = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('id, name, avatar_url, role')
+                .eq('company_id', currentCompany?.id)
+                .in('role', ['admin', 'manager'])
+                .order('name');
+
+            if (error) throw error;
+            setManagers(data || []);
+        } catch (error) {
+            console.error('Error fetching managers:', error);
+        }
+    };
 
     const handleDelete = async (userId, userName) => {
         if (!confirm(`Are you sure you want to delete ${userName}?`)) return;
@@ -62,6 +94,60 @@ export default function UserCardView({ users, teams, loading, onRefresh, showToa
         setSelectedUser(user);
         setShowTeamModal(true);
         setShowActionsMenu(null);
+    };
+
+    // Inline team assignment
+    const handleInlineTeamChange = async (userId, teamId) => {
+        setSavingTeam(userId);
+        try {
+            // Update primary team
+            const { error: userError } = await supabase
+                .from('users')
+                .update({ team_id: teamId || null })
+                .eq('id', userId);
+
+            if (userError) throw userError;
+
+            // Also update team_members table
+            await supabase.from('team_members').delete().eq('user_id', userId);
+
+            if (teamId) {
+                await supabase.from('team_members').insert({
+                    user_id: userId,
+                    team_id: teamId,
+                    role: 'member'
+                });
+            }
+
+            showToast('success', 'Team updated');
+            onRefresh();
+        } catch (error) {
+            showToast('error', 'Failed to update team', error.message);
+        } finally {
+            setSavingTeam(null);
+            setEditingTeam(null);
+        }
+    };
+
+    // Inline manager assignment
+    const handleInlineManagerChange = async (userId, managerId) => {
+        setSavingManager(userId);
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ manager_id: managerId || null })
+                .eq('id', userId);
+
+            if (error) throw error;
+
+            showToast('success', 'Manager updated');
+            onRefresh();
+        } catch (error) {
+            showToast('error', 'Failed to update manager', error.message);
+        } finally {
+            setSavingManager(null);
+            setEditingManager(null);
+        }
     };
 
     if (loading) {
@@ -172,7 +258,7 @@ export default function UserCardView({ users, teams, loading, onRefresh, showToa
                                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-blue-50 flex items-center gap-2"
                                             >
                                                 <FiUsers className="w-4 h-4" />
-                                                Assign Teams
+                                                Manage Assignments
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -212,62 +298,132 @@ export default function UserCardView({ users, teams, loading, onRefresh, showToa
                             )}
                         </div>
 
-                        {/* Teams */}
+                        {/* Teams - Inline Editable */}
                         <div className="mb-4">
-                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Teams</div>
-                            {user.assignedTeams && user.assignedTeams.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                    {user.assignedTeams.slice(0, 3).map((team, idx) => (
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</div>
+                                {editingTeam !== user.id && (
+                                    <button
+                                        onClick={() => setEditingTeam(user.id)}
+                                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                                    >
+                                        Change
+                                    </button>
+                                )}
+                            </div>
+
+                            {editingTeam === user.id ? (
+                                <div className="relative">
+                                    <select
+                                        defaultValue={user.primaryTeam?.id || user.teams?.id || ''}
+                                        onChange={(e) => handleInlineTeamChange(user.id, e.target.value || null)}
+                                        disabled={savingTeam === user.id}
+                                        className="w-full px-3 py-2 pr-8 bg-white border-2 border-indigo-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                                    >
+                                        <option value="">No Team</option>
+                                        {teams.map((team, idx) => (
+                                            <option key={team.id} value={team.id}>{team.name}</option>
+                                        ))}
+                                    </select>
+                                    <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <button
+                                        onClick={() => setEditingTeam(null)}
+                                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <FiX className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    {user.assignedTeams && user.assignedTeams.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {user.assignedTeams.slice(0, 2).map((team, idx) => (
+                                                <span
+                                                    key={team?.id || idx}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border rounded-lg text-xs font-medium shadow-sm"
+                                                    style={{
+                                                        borderColor: getTeamColor(idx),
+                                                        color: getTeamColor(idx)
+                                                    }}
+                                                >
+                                                    <div
+                                                        className="w-2 h-2 rounded-full"
+                                                        style={{ backgroundColor: getTeamColor(idx) }}
+                                                    />
+                                                    {team?.name || 'Unknown'}
+                                                </span>
+                                            ))}
+                                            {user.assignedTeams.length > 2 && (
+                                                <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
+                                                    +{user.assignedTeams.length - 2} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    ) : user.primaryTeam || user.teams ? (
                                         <span
-                                            key={team?.id || idx}
                                             className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border rounded-lg text-xs font-medium shadow-sm"
                                             style={{
-                                                borderColor: getTeamColor(idx),
-                                                color: getTeamColor(idx)
+                                                borderColor: getTeamColor(0),
+                                                color: getTeamColor(0)
                                             }}
                                         >
                                             <div
                                                 className="w-2 h-2 rounded-full"
-                                                style={{ backgroundColor: getTeamColor(idx) }}
+                                                style={{ backgroundColor: getTeamColor(0) }}
                                             />
-                                            {team?.name || 'Unknown'}
+                                            {user.primaryTeam?.name || user.teams?.name}
                                         </span>
-                                    ))}
-                                    {user.assignedTeams.length > 3 && (
-                                        <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
-                                            +{user.assignedTeams.length - 3} more
-                                        </span>
+                                    ) : (
+                                        <span className="text-sm text-gray-400 italic">No team assigned</span>
                                     )}
-                                </div>
-                            ) : user.primaryTeam ? (
-                                <span
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border rounded-lg text-xs font-medium shadow-sm"
-                                    style={{
-                                        borderColor: getTeamColor(0),
-                                        color: getTeamColor(0)
-                                    }}
-                                >
-                                    <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{ backgroundColor: getTeamColor(0) }}
-                                    />
-                                    {user.primaryTeam.name}
-                                </span>
-                            ) : (
-                                <span className="text-sm text-gray-400 italic">No teams assigned</span>
+                                </>
                             )}
                         </div>
 
-                        {/* Manager */}
-                        {user.manager && (
-                            <div className="mb-4">
-                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Manager</div>
+                        {/* Manager - Inline Editable */}
+                        <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Manager</div>
+                                {editingManager !== user.id && (
+                                    <button
+                                        onClick={() => setEditingManager(user.id)}
+                                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                                    >
+                                        Change
+                                    </button>
+                                )}
+                            </div>
+
+                            {editingManager === user.id ? (
+                                <div className="relative">
+                                    <select
+                                        defaultValue={user.manager?.id || ''}
+                                        onChange={(e) => handleInlineManagerChange(user.id, e.target.value || null)}
+                                        disabled={savingManager === user.id}
+                                        className="w-full px-3 py-2 pr-8 bg-white border-2 border-indigo-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
+                                    >
+                                        <option value="">No Manager</option>
+                                        {managers.filter(m => m.id !== user.id).map((manager) => (
+                                            <option key={manager.id} value={manager.id}>{manager.name}</option>
+                                        ))}
+                                    </select>
+                                    <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    <button
+                                        onClick={() => setEditingManager(null)}
+                                        className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <FiX className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : user.manager ? (
                                 <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
                                     <FiUserCheck className="w-4 h-4 text-indigo-600" />
                                     <span className="text-sm font-medium text-indigo-900">{user.manager.name}</span>
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <span className="text-sm text-gray-400 italic">No manager assigned</span>
+                            )}
+                        </div>
 
                         {/* Footer: Created At */}
                         <div className="pt-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
@@ -287,7 +443,7 @@ export default function UserCardView({ users, teams, loading, onRefresh, showToa
                                         className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
                                     >
                                         <FiUsers className="w-3.5 h-3.5" />
-                                        Manage Teams
+                                        More Options
                                     </motion.button>
                                 )}
                             </AnimatePresence>
@@ -307,7 +463,7 @@ export default function UserCardView({ users, teams, loading, onRefresh, showToa
                         setSelectedUser(null);
                     }}
                     onSuccess={() => {
-                        showToast('success', 'Teams updated', `Teams for ${selectedUser.name} have been updated`);
+                        showToast('success', 'Assignments updated', `Assignments for ${selectedUser.name} have been updated`);
                         onRefresh();
                         setShowTeamModal(false);
                         setSelectedUser(null);

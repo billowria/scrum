@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
+import './ReportEntryNew.css'; // Create this file or add styles inline if preferred, but for now we inject style
 import { supabase } from '../supabaseClient';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -23,7 +25,8 @@ import {
 import { format, subDays, isToday, isYesterday } from 'date-fns';
 
 const ReportEntryNew = () => {
-  const { selectedCompany } = useCompany();
+  const navigate = useNavigate();
+  const { currentCompany: selectedCompany } = useCompany();
   const [loading, setLoading] = useState(false);
   const [fetchingTasks, setFetchingTasks] = useState(false);
   const [myTasks, setMyTasks] = useState([]);
@@ -42,7 +45,17 @@ const ReportEntryNew = () => {
   const [todayContent, setTodayContent] = useState('');
   const [blockersContent, setBlockersContent] = useState('');
 
+
+
   const saveTimeoutRef = useRef(null);
+
+  // Ref to hold latest actions to avoid stale closures in editor event handlers
+  const actionsRef = useRef({ nextStep: () => { }, handleSubmit: () => { } });
+
+  // Update actions ref
+  useEffect(() => {
+    actionsRef.current = { nextStep, handleSubmit };
+  }, [activeStep, loading]); // Dependencies that affect these functions
 
   // Templates for quick insertion
   const templates = {
@@ -81,12 +94,21 @@ const ReportEntryNew = () => {
       Placeholder.configure({ placeholder: 'What did you accomplish yesterday?' })
     ],
     content: yesterdayContent,
-    editorProps,
     onUpdate: ({ editor }) => {
       setYesterdayContent(editor.getHTML());
       debouncedSave();
     },
-    // No onFocus needed as we strictly control visibility
+    editorProps: {
+      ...editorProps,
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && event.shiftKey) {
+          event.preventDefault();
+          actionsRef.current.nextStep();
+          return true;
+        }
+        return false;
+      }
+    }
   });
 
   const todayEditor = useEditor({
@@ -95,11 +117,21 @@ const ReportEntryNew = () => {
       Placeholder.configure({ placeholder: 'What will you work on today?' })
     ],
     content: todayContent,
-    editorProps,
     onUpdate: ({ editor }) => {
       setTodayContent(editor.getHTML());
       debouncedSave();
     },
+    editorProps: {
+      ...editorProps,
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && event.shiftKey) {
+          event.preventDefault();
+          actionsRef.current.nextStep();
+          return true;
+        }
+        return false;
+      }
+    }
   });
 
   const blockersEditor = useEditor({
@@ -108,11 +140,21 @@ const ReportEntryNew = () => {
       Placeholder.configure({ placeholder: 'Any blockers? (Optional)' })
     ],
     content: blockersContent,
-    editorProps,
     onUpdate: ({ editor }) => {
       setBlockersContent(editor.getHTML());
       debouncedSave();
     },
+    editorProps: {
+      ...editorProps,
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Enter' && event.shiftKey) {
+          event.preventDefault();
+          actionsRef.current.handleSubmit();
+          return true;
+        }
+        return false;
+      }
+    }
   });
 
   // Fetch data
@@ -143,13 +185,13 @@ const ReportEntryNew = () => {
       }
 
       if (data) {
-        setYesterdayContent(data.yesterday_text || '');
-        setTodayContent(data.today_text || '');
-        setBlockersContent(data.blockers_text || '');
+        setYesterdayContent(data.yesterday || '');
+        setTodayContent(data.today || '');
+        setBlockersContent(data.blockers || '');
 
-        yesterdayEditor?.commands.setContent(data.yesterday_text || '');
-        todayEditor?.commands.setContent(data.today_text || '');
-        blockersEditor?.commands.setContent(data.blockers_text || '');
+        yesterdayEditor?.commands.setContent(data.yesterday || '');
+        todayEditor?.commands.setContent(data.today || '');
+        blockersEditor?.commands.setContent(data.blockers || '');
       }
     } catch (err) {
       console.error('Fetch error:', err);
@@ -201,6 +243,8 @@ const ReportEntryNew = () => {
       if (!user) return;
 
       // Get completed tasks this week
+      if (!selectedCompany?.id) return;
+
       const weekAgo = subDays(new Date(), 7).toISOString();
       const { count: tasksCount } = await supabase
         .from('tasks')
@@ -238,15 +282,15 @@ const ReportEntryNew = () => {
   const handleDraftSave = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !selectedCompany?.id) return;
 
       const reportData = {
         company_id: selectedCompany.id,
         user_id: user.id,
         report_date: reportDate,
-        yesterday_text: yesterdayContent,
-        today_text: todayContent,
-        blockers_text: blockersContent,
+        yesterday: yesterdayContent,
+        today: todayContent,
+        blockers: blockersContent,
         updated_at: new Date().toISOString()
       };
 
@@ -268,6 +312,7 @@ const ReportEntryNew = () => {
       setLoading(false);
       // Optional: Add a toast notification here
       fetchStats();
+      navigate('/standup-reports');
     }, 800);
   };
 

@@ -98,18 +98,18 @@ const createNavLinks = (counts, user) => {
       }
     },
     {
-      to: '/achievements',
-      icon: <FiAward />,
-      label: 'Achievements',
-      description: 'Recognition & Goals',
-      badge: counts.achievements > 0 ? 'new' : null,
+      to: '/team-management',
+      icon: <FiUsers />,
+      label: 'Manage Users',
+      description: 'Team & User Management',
+      badge: null,
       colors: {
-        gradient: 'from-yellow-400 to-yellow-600',
-        hoverBg: 'hover:bg-yellow-50',
-        activeBg: 'bg-yellow-100',
-        activeText: 'text-yellow-700',
-        activeBorder: 'border-yellow-500',
-        iconBg: 'bg-yellow-500',
+        gradient: 'from-slate-400 to-slate-600',
+        hoverBg: 'hover:bg-slate-50',
+        activeBg: 'bg-slate-100',
+        activeText: 'text-slate-700',
+        activeBorder: 'border-slate-500',
+        iconBg: 'bg-slate-500',
         iconText: 'text-white'
       }
     },
@@ -142,6 +142,22 @@ const createNavLinks = (counts, user) => {
         activeText: 'text-pink-700',
         activeBorder: 'border-pink-500',
         iconBg: 'bg-pink-500',
+        iconText: 'text-white'
+      }
+    },
+    {
+      to: '/achievements',
+      icon: <FiAward />,
+      label: 'Achievements',
+      description: 'Recognition & Goals',
+      badge: counts.achievements > 0 ? 'new' : null,
+      colors: {
+        gradient: 'from-yellow-400 to-yellow-600',
+        hoverBg: 'hover:bg-yellow-50',
+        activeBg: 'bg-yellow-100',
+        activeText: 'text-yellow-700',
+        activeBorder: 'border-yellow-500',
+        iconBg: 'bg-yellow-500',
         iconText: 'text-white'
       }
     },

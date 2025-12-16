@@ -1,0 +1,4 @@
+/* ProseMirror specific styles for Tiptap */
+.ProseMirror {
+    white-space: pre-wrap;
+}

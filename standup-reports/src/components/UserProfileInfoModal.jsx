@@ -85,11 +85,9 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
 
     const fetchManager = async (userId) => {
         try {
-            const { data: userData } = await supabase.from('users').select('team_id').eq('id', userId).single();
-            if (!userData?.team_id) return null;
-            const { data: teamData } = await supabase.from('teams').select('manager_id').eq('id', userData.team_id).single();
-            if (!teamData?.manager_id) return null;
-            const { data: managerData } = await supabase.from('users').select('id, name, avatar_url, email, job_title').eq('id', teamData.manager_id).single();
+            const { data: userData } = await supabase.from('users').select('manager_id').eq('id', userId).single();
+            if (!userData?.manager_id) return null;
+            const { data: managerData } = await supabase.from('users').select('id, name, avatar_url, email, job_title').eq('id', userData.manager_id).single();
             return managerData;
         } catch (err) { return null; }
     };
@@ -104,7 +102,7 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
     const fetchTeam = async (teamId) => {
         if (!teamId) return null;
         try {
-            const { data } = await supabase.from('teams').select('id, name, description').eq('id', teamId).single();
+            const { data } = await supabase.from('teams').select('id, name').eq('id', teamId).single();
             return data;
         } catch (err) { return null; }
     };
@@ -112,7 +110,7 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
     const fetchLeaveStatus = async (userId) => {
         try {
             const today = new Date().toISOString().split('T')[0];
-            const { data } = await supabase.from('leave_plans').select('start_date, end_date, status, leave_type').eq('user_id', userId).eq('status', 'approved').lte('start_date', today).gte('end_date', today).maybeSingle();
+            const { data } = await supabase.from('leave_plans').select('start_date, end_date, status').eq('user_id', userId).eq('status', 'approved').lte('start_date', today).gte('end_date', today).maybeSingle();
             return data;
         } catch (err) { return null; }
     };

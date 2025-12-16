@@ -279,7 +279,7 @@ export default function UserTableView({ users, teams, loading, onRefresh, showTo
                                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                 whileHover={{ scale: 1.1 }}
                                                 whileTap={{ scale: 0.9 }}
-                                                title="Assign Teams"
+                                                title="Manage Assignments"
                                             >
                                                 <FiUsers className="w-4 h-4" />
                                             </motion.button>

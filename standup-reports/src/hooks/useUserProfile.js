@@ -31,7 +31,7 @@ export const useUserProfile = (userId = null) => {
       // 2. Fetch user basic info
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('id, name, email, avatar_url, role, team_id')
+        .select('id, name, email, avatar_url, role, team_id, manager_id')
         .eq('id', targetUserId)
         .single();
 
