@@ -551,12 +551,12 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 bg-gray-50/50"
+      className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 bg-gray-50/50 dark:bg-slate-950 transition-colors duration-500"
     >
       {/* ================= LIQUID GLASS HEADER ================= */}
       {showHeader && (
         <motion.div
-          className="fixed top-16 right-0 z-[35]"
+          className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
           id="leave-calendar-header"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -570,11 +570,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         >
           {/* Liquid Glass Header */}
           <div
-            className="mx-6 mt-4 pointer-events-auto relative overflow-hidden bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
+            className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group min-h-[70px]"
             style={{
               boxShadow: `
                 0 8px 32px 0 rgba(31, 38, 135, 0.15),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1),
                 inset 0 0 20px rgba(255, 255, 255, 0.05)
               `
             }}
@@ -604,11 +604,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
             {/* Left: Title & Context */}
             <div className="flex items-center gap-4 px-4 relative z-10">
               <div className="relative group/icon cursor-pointer">
-                <div className={`absolute inset-0 rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-60 transition-opacity ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-500' :
+                <div className={`absolute inset-0 rounded-2xl blur-lg opacity-40 dark:opacity-20 group-hover/icon:opacity-60 transition-opacity ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-500' :
                   viewMode === 'timesheets' ? 'bg-gradient-to-tr from-purple-500 to-pink-500' :
                     'bg-gradient-to-tr from-amber-500 to-orange-500'
                   }`}></div>
-                <div className={`relative p-2.5 rounded-2xl text-white shadow-lg ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300 ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-cyan-500/30' :
+                <div className={`relative p-2.5 rounded-2xl text-white shadow-lg ring-1 ring-white/20 dark:ring-white/10 group-hover/icon:scale-105 transition-transform duration-300 ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-cyan-500/30' :
                   viewMode === 'timesheets' ? 'bg-gradient-to-tr from-purple-500 to-pink-600 shadow-purple-500/30' :
                     'bg-gradient-to-tr from-amber-500 to-orange-600 shadow-amber-500/30'
                   }`}>
@@ -618,10 +618,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight drop-shadow-sm">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
                   {viewMode === 'leaves' ? 'Team Calendar' : viewMode === 'timesheets' ? 'Timesheets' : 'Holidays'}
                 </h1>
-                <p className="text-xs font-medium text-gray-600 flex items-center gap-2">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   {viewMode === 'leaves' ? 'Manage team availability' :
                     viewMode === 'timesheets' ? 'Track your work hours' :
                       'Company holidays'}
@@ -638,9 +638,9 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               ].map((tab) => (
                 <motion.button
                   key={tab.id}
-                  className={`relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${viewMode === tab.id
+                  className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${viewMode === tab.id
                     ? 'text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/40'
                     }`}
                   onClick={() => {
                     setViewMode(tab.id);
@@ -734,7 +734,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
 
               {/* Refresh Button - Icon Only */}
               <motion.button
-                className="p-2 bg-white/50 backdrop-blur-sm border border-white/40 text-gray-600 rounded-lg hover:bg-white/70 hover:text-gray-800 transition-all"
+                className="p-2 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/40 dark:border-white/5 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-white/70 dark:hover:bg-slate-700/70 hover:text-gray-800 dark:hover:text-white transition-all shadow-sm"
                 onClick={() => {
                   if (viewMode === 'leaves') fetchLeaveData();
                   else if (viewMode === 'timesheets') fetchTimesheets();
@@ -750,7 +750,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               {/* Professional Create Button */}
               {viewMode === 'leaves' && (
                 <motion.button
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 border border-gray-700 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 dark:hover:bg-indigo-500 border border-gray-700 dark:border-indigo-500/50 transition-all"
                   onClick={handleRequestLeave}
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
@@ -761,7 +761,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               )}
               {viewMode === 'timesheets' && (
                 <motion.button
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 border border-gray-700 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 dark:hover:bg-indigo-500 border border-gray-700 dark:border-indigo-500/50 transition-all"
                   onClick={() => {
                     if (selectedTimesheetDates.length > 0) {
                       handleBatchLogTime();
@@ -782,7 +782,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               )}
               {viewMode === 'holidays' && currentUser?.role === 'manager' && (
                 <motion.button
-                  className={`flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 border border-gray-700 transition-all ${!selectedHolidayDate ? 'opacity-60' : ''}`}
+                  className={`flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 dark:hover:bg-indigo-500 border border-gray-700 dark:border-indigo-500/50 transition-all ${!selectedHolidayDate ? 'opacity-60' : ''}`}
                   onClick={() => {
                     if (!selectedHolidayDate) {
                       setMessage({ type: 'warning', text: 'Select a date first' });
@@ -817,7 +817,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       {/* Show Header Button - Icon Only, Clean Design */}
       {!showHeader && (
         <motion.button
-          className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 backdrop-blur-xl border border-gray-200 text-gray-700 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transition-all"
+          className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-800 transition-all"
           onClick={() => setShowHeader(true)}
           initial={{ opacity: 0, y: -20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -831,32 +831,32 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       )}
 
       {/* ================= SCROLLABLE CONTENT AREA (flows under header) ================= */}
-      <div className={`flex-1 overflow-y-auto relative z-10 ${showHeader ? 'pt-20' : 'pt-0'}`}>
+      <div className={`flex-1 overflow-y-auto relative z-10 ${showHeader ? 'pt-32' : 'pt-0'}`}>
         {/* Control Bar */}
         <div className="px-4 md:px-8 py-4 w-full max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-between bg-white/60 p-2 rounded-2xl border border-white/60 shadow-sm backdrop-blur-sm">
+          <div className="flex items-center justify-between bg-white/60 dark:bg-slate-900/40 p-2 rounded-2xl border border-white/60 dark:border-white/5 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <button
                 onClick={goToPreviousMonth}
-                className="p-2 hover:bg-white rounded-xl transition-all text-gray-600 hover:text-gray-900 shadow-sm hover:shadow"
+                className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm hover:shadow"
               >
                 <FiChevronLeft className="w-5 h-5" />
               </button>
               <div className="px-4 py-1">
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
                   {format(currentMonth, 'MMMM yyyy')}
                 </span>
               </div>
               <button
                 onClick={goToNextMonth}
-                className="p-2 hover:bg-white rounded-xl transition-all text-gray-600 hover:text-gray-900 shadow-sm hover:shadow"
+                className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white shadow-sm hover:shadow"
               >
                 <FiChevronRight className="w-5 h-5" />
               </button>
             </div>
 
             {/* Legend or Stats */}
-            <div className="hidden md:flex items-center gap-4 text-xs font-medium text-gray-600 px-4">
+            <div className="hidden md:flex items-center gap-4 text-xs font-medium text-gray-600 dark:text-gray-400 px-4">
               {viewMode === 'leaves' && (
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-400"></div> High Availability</div>
@@ -865,7 +865,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 </div>
               )}
               {viewMode === 'timesheets' && (
-                <span className="text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">Select dates to log time</span>
+                <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-lg">Select dates to log time</span>
               )}
             </div>
           </div>
@@ -878,7 +878,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
           {/* --- Calendar Grid --- */}
           <div className="grid grid-cols-7 gap-4 mb-4">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="text-center font-bold text-gray-400 uppercase text-xs tracking-wider">
+              <div key={day} className="text-center font-bold text-gray-400 dark:text-gray-500 uppercase text-xs tracking-wider">
                 {day}
               </div>
             ))}
@@ -912,21 +912,24 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 <motion.div
                   key={dateStr}
                   onClick={(e) => handleDayClick(day, e)}
-                  whileHover={{ y: -4, boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)" }}
+                  whileHover={{ y: -4, boxShadow: "0 10px 25px -5px rgba(0,0,0,0.2)" }}
                   whileTap={{ scale: 0.98 }}
                   className={`
-                        relative min-h-[140px] p-3 rounded-2xl border bg-white flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
-                        ${isSelected ? 'ring-2 ring-blue-500 shadow-md bg-blue-50/30' : 'border-gray-200 shadow-sm hover:shadow-md'}
-                        ${!isSameMonth(day, currentMonth) ? 'opacity-40 bg-gray-50' : ''}
-                     `}
+                        relative min-h-[140px] p-3 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
+                        ${isSelected
+                      ? 'ring-2 ring-blue-500 dark:ring-blue-600 shadow-md bg-blue-50/30 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                      : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800'
+                    }
+                        ${!isSameMonth(day, currentMonth) ? 'opacity-40 bg-gray-50 dark:bg-slate-950' : ''}
+                      `}
                 >
                   {/* Top Row: Date & Status */}
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col">
-                      <span className={`text-xs uppercase font-bold tracking-wide ${isToday ? 'text-blue-600' : 'text-gray-400'}`}>
+                      <span className={`text-xs uppercase font-bold tracking-wide ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>
                         {format(day, 'EEE')}
                       </span>
-                      <span className={`text-lg font-bold leading-tight ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                      <span className={`text-lg font-bold leading-tight ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
                         {format(day, 'd')}
                       </span>
                     </div>
@@ -965,11 +968,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                         }
                       }}
                     >
-                      <div className="flex justify-between text-[9px] text-gray-500 mb-0.5">
+                      <div className="flex justify-between text-[9px] text-gray-500 dark:text-gray-500 mb-0.5">
                         <span>Availability</span>
-                        <span>{availPercent}%</span>
+                        <span className="dark:text-gray-400 font-medium">{availPercent}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${availPercent > 70 ? 'bg-emerald-400' :
                             availPercent > 40 ? 'bg-amber-400' : 'bg-rose-400'

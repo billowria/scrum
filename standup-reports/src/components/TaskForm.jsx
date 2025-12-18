@@ -5,23 +5,23 @@ import { FiX, FiCalendar, FiUser, FiUsers, FiAlertCircle, FiPlus, FiEdit3, FiChe
 import { supabase } from '../supabaseClient';
 
 const modalVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     scale: 0.8,
     y: 50
   },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     y: 0,
-    transition: { 
+    transition: {
       type: 'spring',
       stiffness: 300,
       damping: 30,
       duration: 0.4
     }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     scale: 0.8,
     y: 50,
@@ -31,18 +31,18 @@ const modalVariants = {
 
 const overlayVariants = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
     transition: { duration: 0.4 }
   },
-  exit: { 
+  exit: {
     opacity: 0,
     transition: { duration: 0.3 }
   }
 };
 
 const inputVariants = {
-  focus: { 
+  focus: {
     scale: 1.02,
     transition: { duration: 0.2 }
   }
@@ -61,9 +61,9 @@ const buttonVariants = {
   }
 };
 
-export default function TaskForm({ 
-  isOpen, 
-  onClose, 
+export default function TaskForm({
+  isOpen,
+  onClose,
   task = null, // If provided, we're editing an existing task
   onSuccess,
   currentUser = null,
@@ -76,11 +76,12 @@ export default function TaskForm({
   const [assigneeId, setAssigneeId] = useState(task?.assignee_id || null);
   const [teamId, setTeamId] = useState(task?.team_id || null);
   const [dueDate, setDueDate] = useState(task?.due_date || null);
-  
+  const [effortsInDays, setEffortsInDays] = useState(task?.efforts_in_days || '');
+
   // Loading states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Options for dropdowns
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -88,7 +89,7 @@ export default function TaskForm({
   const [projectId, setProjectId] = useState(task?.project_id || '');
   const [sprints, setSprints] = useState([]);
   const [sprintId, setSprintId] = useState(task?.sprint_id || '');
-  
+
   // Status options with colors
   const statusOptions = [
     { value: 'To Do', label: 'To Do', color: 'bg-gray-100 text-gray-700' },
@@ -96,11 +97,11 @@ export default function TaskForm({
     { value: 'Review', label: 'Review', color: 'bg-yellow-100 text-yellow-700' },
     { value: 'Completed', label: 'Completed', color: 'bg-green-100 text-green-700' }
   ];
-  
+
   // Prevent members from creating tasks
   const isManager = userRole === 'manager';
   const isEdit = !!task;
-  
+
   // Fetch users and teams
   useEffect(() => {
     const fetchOptions = async () => {
@@ -109,18 +110,18 @@ export default function TaskForm({
         const { data: usersData, error: usersError } = await supabase
           .from('users')
           .select('id, name, avatar_url, team_id');
-        
+
         if (usersError) throw usersError;
         setUsers(usersData);
-        
+
         // Fetch teams
         const { data: teamsData, error: teamsError } = await supabase
           .from('teams')
           .select('id, name');
-        
+
         if (teamsError) throw teamsError;
         setTeams(teamsData);
-        
+
         // Fetch projects
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
@@ -128,16 +129,16 @@ export default function TaskForm({
           .order('name', { ascending: true });
         if (projectsError) throw projectsError;
         setProjects(projectsData || []);
-        
+
       } catch (err) {
         console.error('Error fetching options:', err);
         setError('Failed to load form options. Please try again.');
       }
     };
-    
+
     fetchOptions();
   }, []);
-  
+
   // Fetch sprints based on selected project
   useEffect(() => {
     const fetchSprints = async () => {
@@ -145,14 +146,14 @@ export default function TaskForm({
         setSprints([]);
         return;
       }
-      
+
       try {
         const { data, error } = await supabase
           .from('sprints')
           .select('id, name, start_date, end_date, status')
           .eq('project_id', projectId)
           .order('start_date', { ascending: false });
-          
+
         if (error) throw error;
         setSprints(data || []);
       } catch (err) {
@@ -160,10 +161,10 @@ export default function TaskForm({
         setSprints([]);
       }
     };
-    
+
     fetchSprints();
   }, [projectId]);
-  
+
   // Update teamId when assignee changes
   useEffect(() => {
     if (assigneeId && users.length > 0) {
@@ -175,32 +176,32 @@ export default function TaskForm({
       }
     }
   }, [assigneeId, users]);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isManager && !isEdit) {
       setError('Only managers can create tasks.');
       return;
     }
-    
+
     if (!title.trim()) {
       setError('Title is required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         throw new Error('User not authenticated');
       }
-      
+
       // Get existing metadata or create new object
       const existingMetadata = task?.metadata || {};
-      
+
       // Create task data with metadata
       const taskData = {
         title: title.trim(),
@@ -209,6 +210,7 @@ export default function TaskForm({
         assignee_id: assigneeId,
         team_id: teamId,
         due_date: dueDate,
+        efforts_in_days: effortsInDays ? parseFloat(effortsInDays) : null,
         reporter_id: task?.reporter_id || user.id,
         project_id: projectId || null,
         metadata: {
@@ -216,9 +218,9 @@ export default function TaskForm({
           sprint_id: sprintId || null
         }
       };
-      
+
       let result;
-      
+
       if (task) {
         // Update existing task
         result = await supabase
@@ -235,13 +237,13 @@ export default function TaskForm({
           .select()
           .single();
       }
-      
+
       const { error: dbError } = result;
       if (dbError) throw dbError;
-      
+
       onSuccess();
       onClose();
-      
+
     } catch (err) {
       console.error('Error saving task:', err);
       setError(`Failed to ${task ? 'update' : 'create'} task. Please try again.`);
@@ -249,7 +251,7 @@ export default function TaskForm({
       setLoading(false);
     }
   };
-  
+
   if (!isOpen) return null;
   return (
     <AnimatePresence>
@@ -393,7 +395,7 @@ export default function TaskForm({
                   </select>
                 </div>
               </div>
-              
+
               {/* Sprint Field */}
               <div className="relative group">
                 <label htmlFor="sprint" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Sprint</label>
@@ -418,6 +420,25 @@ export default function TaskForm({
                   <p className="mt-1 text-xs text-amber-600 ml-1">No sprints available for this project</p>
                 )}
               </div>
+
+              {/* Efforts in Days Field */}
+              <div className="relative group">
+                <label htmlFor="effortsInDays" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Effort (Days)</label>
+                <div className="relative">
+                  <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-400" />
+                  <input
+                    id="effortsInDays"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    placeholder="e.g. 2.5"
+                    className="w-full border-2 border-rose-100 rounded-xl p-2 pl-9 bg-white/90 text-rose-700 font-semibold focus:ring-2 focus:ring-rose-400 focus:border-rose-500 transition-all shadow-sm text-sm"
+                    value={effortsInDays}
+                    onChange={e => setEffortsInDays(e.target.value)}
+                  />
+                </div>
+              </div>
+
               {/* Status Field (edit only) */}
               {isEdit && (
                 <div className="relative group">
@@ -439,7 +460,7 @@ export default function TaskForm({
               )}
               {/* Error message */}
               {error && (
-                <motion.div 
+                <motion.div
                   className="mb-2 p-2 bg-red-100 text-red-800 rounded-xl border border-red-200 flex items-start gap-2 shadow animate-pulse text-xs"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}

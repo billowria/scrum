@@ -30,14 +30,14 @@ const CreateModal = ({ isOpen, onClose, title, children }) => {
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel as={motion.div} className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl transition-all">
+                            <Dialog.Panel as={motion.div} className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl transition-all border border-gray-100 dark:border-slate-800">
                                 <div className="flex items-center justify-between mb-4">
-                                    <Dialog.Title className="text-lg font-semibold text-gray-900">
+                                    <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white">
                                         {title}
                                     </Dialog.Title>
                                     <button
                                         onClick={onClose}
-                                        className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                                        className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                                     >
                                         <FiX className="w-5 h-5" />
                                     </button>

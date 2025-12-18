@@ -404,7 +404,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-slate-950 flex items-center justify-center">
                 <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
@@ -412,11 +412,11 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
 
     if (error || !project) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
+            <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-8">
                 <div className="text-center max-w-md">
                     <FiAlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
-                    <button onClick={onBack || (() => navigate('/projects'))} className="text-indigo-600 hover:underline">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Project Not Found</h2>
+                    <button onClick={onBack || (() => navigate('/projects'))} className="text-indigo-600 dark:text-indigo-400 hover:underline">
                         Back to Projects
                     </button>
                 </div>
@@ -428,7 +428,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
     const isInline = !!propProjectId;
 
     return (
-        <div className={`flex ${isInline ? 'h-full' : 'h-screen'} bg-white overflow-hidden font-sans text-slate-900`}>
+        <div className={`flex ${isInline ? 'h-full' : 'h-screen'} bg-white dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-white`}>
             {/* Projects Navigation Sidebar - only show when not inline */}
             {!isInline && (
                 <ProjectsListSidebar
@@ -473,7 +473,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             )}
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col min-w-0 bg-white relative">
+            <main className="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-950 relative">
                 {/* Global Sticky Header */}
                 <ProjectHeader
                     projectName={project.name}
@@ -526,14 +526,14 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
 
                                 {/* Empty State / Call to Action */}
                                 {sections.length === 0 && (
-                                    <div className="max-w-md mx-auto mt-12 text-center p-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                                        <FiBookOpen className="w-16 h-16 text-indigo-200 mx-auto mb-6" />
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2">Start Building Your Project</h3>
-                                        <p className="text-gray-500 mb-8">Create sections and topics to organize your documentation.</p>
+                                    <div className="max-w-md mx-auto mt-12 text-center p-12 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                                        <FiBookOpen className="w-16 h-16 text-indigo-200 dark:text-indigo-900 mx-auto mb-6" />
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Start Building Your Project</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mb-8">Create sections and topics to organize your documentation.</p>
                                         {editMode && (
                                             <button
                                                 onClick={() => openModal('ADD_SECTION')}
-                                                className="px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 font-medium hover:scale-105 active:scale-95"
+                                                className="px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 dark:shadow-none font-medium hover:scale-105 active:scale-95"
                                             >
                                                 Create First Section
                                             </button>
@@ -567,12 +567,12 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             >
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
                         <input
                             type="text"
                             value={modalInput}
                             onChange={(e) => setModalInput(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                             placeholder={modalConfig.type === 'ADD_SECTION' ? "e.g., Documentation" : "e.g., Getting Started"}
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleModalSubmit()}
@@ -582,13 +582,13 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                     {/* Description field for topics only */}
                     {(modalConfig.type === 'ADD_TOPIC' || modalConfig.type === 'RENAME_TOPIC') && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Description <span className="text-gray-400 font-normal">(optional)</span>
                             </label>
                             <textarea
                                 value={modalDescription}
                                 onChange={(e) => setModalDescription(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
+                                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-none"
                                 placeholder="Brief description of this topic..."
                                 rows={3}
                             />
@@ -598,7 +598,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                     <div className="flex justify-end gap-3 pt-2">
                         <button
                             onClick={closeModal}
-                            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                         >
                             Cancel
                         </button>

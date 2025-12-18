@@ -40,7 +40,7 @@ const Modal = ({ isOpen, onClose, children, title, maxWidth = 'max-w-4xl' }) => 
                 />
 
                 <motion.div
-                    className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
+                    className={`relative w-full ${maxWidth} bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
                     variants={modalVariants}
                     initial="hidden"
                     animate="visible"
@@ -49,11 +49,11 @@ const Modal = ({ isOpen, onClose, children, title, maxWidth = 'max-w-4xl' }) => 
                 >
                     {/* Default Header if Title Provided */}
                     {title && (
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                            <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors"
+                                className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full text-gray-500 dark:text-gray-400 transition-colors"
                             >
                                 <FiX className="w-5 h-5" />
                             </button>
@@ -64,7 +64,7 @@ const Modal = ({ isOpen, onClose, children, title, maxWidth = 'max-w-4xl' }) => 
                     {!title && (
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 z-10 p-2 bg-white/50 backdrop-blur hover:bg-white rounded-full text-gray-500 shadow-sm transition-all"
+                            className="absolute top-4 right-4 z-10 p-2 bg-white/50 dark:bg-slate-800/50 backdrop-blur hover:bg-white dark:hover:bg-slate-700 rounded-full text-gray-500 dark:text-gray-400 shadow-sm transition-all"
                         >
                             <FiX className="w-5 h-5" />
                         </button>

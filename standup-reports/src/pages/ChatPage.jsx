@@ -315,14 +315,14 @@ const ChatPage = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 pt-16">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 pt-16">
       {/* pt-16 accounts for the main app navbar */}
 
       {/* Mobile back button overlay */}
@@ -333,9 +333,9 @@ const ChatPage = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             onClick={handleBackToConversations}
-            className="absolute top-20 left-4 z-30 p-3 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
+            className="absolute top-20 left-4 z-30 p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
           >
-            <FiChevronLeft className="w-6 h-6 text-gray-700" />
+            <FiChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -350,7 +350,7 @@ const ChatPage = () => {
               : `relative flex-shrink-0 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-80'
               }`
             }
-            bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20
+            bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-white/20 dark:border-slate-700/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20
           `}
         >
           <ChatSidebar
@@ -372,20 +372,7 @@ const ChatPage = () => {
           />
         </div>
 
-        {/* Sidebar Toggle Button (Desktop) - Adjusted position */}
-        {!isMobile && (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`absolute top-6 z-30 p-1.5 bg-white shadow-md border border-gray-100
-              rounded-full hover:shadow-lg hover:border-indigo-100 hover:text-indigo-600 transition-all duration-200
-              ${sidebarCollapsed ? 'left-[4.5rem]' : 'left-[19.5rem]'
-              }`}
-          >
-            <FiMenu className="w-4 h-4" />
-          </motion.button>
-        )}
+
 
         {/* Main Chat Area - Enhanced Design */}
         <div
@@ -393,7 +380,7 @@ const ChatPage = () => {
             ${isMobile && showSidebar ? 'hidden' : ''}
           `}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-blue-50/40 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-blue-50/40 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-blue-950/20 pointer-events-none" />
 
           {activeConversation ? (
             <div className="flex flex-1 overflow-hidden relative z-10">
@@ -441,29 +428,29 @@ const ChatPage = () => {
                 {/* Hero Graphic */}
                 <div className="relative w-full h-80 mb-12 flex items-center justify-center">
                   <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100/50 to-purple-100/50 rounded-full blur-3xl opacity-60 animate-pulse" />
-                  <div className="relative z-10 bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 ring-1 ring-white/60">
+                  <div className="relative z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/50 dark:border-slate-700/50 ring-1 ring-white/60 dark:ring-slate-700/60">
                     <div className="grid grid-cols-2 gap-4 w-64">
-                      <div className="bg-indigo-50 p-4 rounded-2xl h-24 w-full animate-pulse delay-75"></div>
-                      <div className="bg-purple-50 p-4 rounded-2xl h-24 w-full translate-y-4 animate-pulse delay-150"></div>
-                      <div className="bg-blue-50 p-4 rounded-2xl h-24 w-full -translate-y-4 animate-pulse delay-300"></div>
-                      <div className="bg-pink-50 p-4 rounded-2xl h-24 w-full animate-pulse"></div>
+                      <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl h-24 w-full animate-pulse delay-75"></div>
+                      <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-2xl h-24 w-full translate-y-4 animate-pulse delay-150"></div>
+                      <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-2xl h-24 w-full -translate-y-4 animate-pulse delay-300"></div>
+                      <div className="bg-pink-50 dark:bg-pink-900/30 p-4 rounded-2xl h-24 w-full animate-pulse"></div>
                     </div>
-                    <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3">
+                    <div className="absolute -bottom-6 -right-6 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-white/20 dark:border-slate-700/50">
                       <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">
                         <FiCheck className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="h-2 w-20 bg-gray-200 rounded mb-2"></div>
-                        <div className="h-2 w-12 bg-gray-100 rounded"></div>
+                        <div className="h-2 w-20 bg-gray-200 dark:bg-slate-700 rounded mb-2"></div>
+                        <div className="h-2 w-12 bg-gray-100 dark:bg-slate-800 rounded"></div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <h2 className="text-4xl font-extrabold text-gray-900 mb-6 tracking-tight">
-                  Welcome to <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Sync Chat</span>
+                <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
+                  Welcome to <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Sync Chat</span>
                 </h2>
-                <p className="text-xl text-gray-500 mb-12 leading-relaxed max-w-lg mx-auto">
+                <p className="text-xl text-gray-500 dark:text-gray-400 mb-12 leading-relaxed max-w-lg mx-auto">
                   Your team's central hub for communication, seamlessly integrated with your tasks and projects.
                 </p>
 
@@ -476,13 +463,13 @@ const ChatPage = () => {
                     <motion.div
                       key={i}
                       whileHover={{ y: -5 }}
-                      className="bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition-all"
+                      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-6 rounded-2xl border border-white/50 dark:border-slate-700/50 shadow-lg hover:shadow-xl transition-all"
                     >
                       <div className="w-12 h-12 mx-auto bg-gradient-to-br from-indigo-50 to-white rounded-xl flex items-center justify-center mb-4 shadow-sm text-indigo-600">
                         <feature.icon className="w-6 h-6" />
                       </div>
-                      <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
-                      <p className="text-sm text-gray-500">{feature.desc}</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{feature.desc}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -508,17 +495,17 @@ const ChatPage = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={animations.variants.modal}
-              className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20"
+              className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20 dark:border-slate-700"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-8">
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900">Chat Settings</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Chat Settings</h3>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowSettings(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors bg-gray-50"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors bg-gray-50 dark:bg-slate-800"
                   >
                     <FiX className="w-5 h-5 text-gray-500" />
                   </motion.button>
@@ -526,7 +513,7 @@ const ChatPage = () => {
 
                 <div className="space-y-8">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-600">🔔</span>
                       Notifications
                     </h4>
@@ -541,14 +528,14 @@ const ChatPage = () => {
                             <input type="checkbox" defaultChecked={item.defaultChecked} className="peer sr-only" />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                           </div>
-                          <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{item.label}</span>
+                          <span className="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{item.label}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">🎨</span>
                       Appearance
                     </h4>

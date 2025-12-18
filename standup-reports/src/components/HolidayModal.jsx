@@ -107,7 +107,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     >
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
                             {/* Header */}
                             <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white relative">
                                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
@@ -134,8 +134,8 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                 <form onSubmit={handleSubmit} className="space-y-5">
                                     {/* Name */}
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg"><FiStar className="w-4 h-4" /></div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg"><FiStar className="w-4 h-4" /></div>
                                             Holiday Name
                                         </label>
                                         <input
@@ -144,15 +144,15 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                             value={formData.name}
                                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                             placeholder="e.g., Christmas Day"
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all bg-gray-50/50 hover:bg-white text-gray-700 font-medium"
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all bg-gray-50/50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-gray-700 dark:text-white font-medium"
                                             disabled={!isManager}
                                         />
                                     </div>
 
                                     {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                                            <div className="p-1.5 bg-gray-100 text-gray-600 rounded-lg"><FiFileText className="w-4 h-4" /></div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                            <div className="p-1.5 bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-400 rounded-lg"><FiFileText className="w-4 h-4" /></div>
                                             Description (optional)
                                         </label>
                                         <textarea
@@ -160,14 +160,14 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                             value={formData.description}
                                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                             placeholder="Additional notes..."
-                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-500 focus:ring-4 focus:ring-gray-500/10 outline-none transition-all bg-gray-50/50 hover:bg-white resize-none text-gray-700"
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 focus:border-gray-500 focus:ring-4 focus:ring-gray-500/10 outline-none transition-all bg-gray-50/50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 resize-none text-gray-700 dark:text-white"
                                             disabled={!isManager}
                                         />
                                     </div>
 
                                     {/* Action Bar */}
                                     {isManager ? (
-                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-700">
                                             {initialData ? (
                                                 <button
                                                     type="button"
@@ -185,7 +185,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                                 <button
                                                     type="button"
                                                     onClick={onClose}
-                                                    className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-semibold"
+                                                    className="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors font-semibold"
                                                 >
                                                     Cancel
                                                 </button>
@@ -200,7 +200,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="pt-4 border-t border-gray-100 text-center text-sm text-gray-500">
+                                        <div className="pt-4 border-t border-gray-100 dark:border-slate-700 text-center text-sm text-gray-500 dark:text-gray-400">
                                             Only managers can edit holidays.
                                         </div>
                                     )}

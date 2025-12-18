@@ -49,13 +49,13 @@ const SprintManagement = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 relative overflow-hidden">
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
       {/* Animated Background Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full blur-3xl opacity-20"
+            className="absolute rounded-full blur-3xl opacity-20 dark:opacity-10"
             style={{
               width: `${200 + Math.random() * 300}px`,
               height: `${200 + Math.random() * 300}px`,
@@ -94,17 +94,17 @@ const SprintManagement = ({
           >
             {/* Section Header with View Toggle */}
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
                 Your Projects
               </h2>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-2 bg-white/60 backdrop-blur-xl rounded-xl p-1.5 border border-gray-200 shadow-md">
+              <div className="flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
                 <motion.button
                   onClick={() => setViewMode('board')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'board'
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -116,7 +116,7 @@ const SprintManagement = ({
                   onClick={() => setViewMode('list')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'list'
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                    : 'text-gray-600 hover:text-gray-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -157,12 +157,12 @@ const SprintManagement = ({
             <div className="flex items-center justify-between">
               <motion.button
                 onClick={() => setSelectedProjectId('all')}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 backdrop-blur-xl rounded-lg shadow-sm border border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all text-sm"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <FiChevronLeft className="w-4 h-4 text-purple-600" />
-                <span className="font-medium text-gray-700">Back to Projects</span>
+                <FiChevronLeft className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-200">Back to Projects</span>
               </motion.button>
 
               {userRole === 'manager' && onCreateSprint && (
@@ -179,23 +179,23 @@ const SprintManagement = ({
             </div>
 
             {/* Filter Controls with View Toggle */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200">
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-bold text-gray-900">Filter Sprints</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Filter Sprints</h3>
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <FiFilter className="w-4 h-4" />
                     <span className="font-semibold">{filteredSprints.filter(s => s.project_id === selectedProjectId).length} sprint{filteredSprints.filter(s => s.project_id === selectedProjectId).length !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-900/50 rounded-xl p-1">
                   <motion.button
                     onClick={() => setViewMode('board')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'board'
-                      ? 'bg-white text-purple-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -206,8 +206,8 @@ const SprintManagement = ({
                   <motion.button
                     onClick={() => setViewMode('list')}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'list'
-                      ? 'bg-white text-purple-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -225,7 +225,7 @@ const SprintManagement = ({
                     onClick={() => setFilterStatus(status)}
                     className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${filterStatus === status
                       ? 'text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-slate-900/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-800'
                       }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -284,16 +284,16 @@ const SprintManagement = ({
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-20 bg-white/60 backdrop-blur-xl rounded-3xl border-2 border-dashed border-purple-300 shadow-xl"
+                className="text-center py-20 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl border-2 border-dashed border-purple-300 dark:border-purple-500/50 shadow-xl"
               >
                 <div className="relative w-20 h-20 mx-auto mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 blur-2xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 dark:opacity-10 blur-2xl" />
                   <FiTarget className="w-20 h-20 mx-auto text-purple-400 relative" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                   {filterStatus === 'all' ? 'No Sprints Yet' : `No ${filterStatus} Sprints`}
                 </h3>
-                <p className="text-gray-600 mb-8 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
                   {filterStatus === 'all'
                     ? 'Create your first sprint to start planning your work'
                     : `No sprints found with status: ${filterStatus}`

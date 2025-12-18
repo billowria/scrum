@@ -1,14 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, isAfter, isBefore, isToday, isTomorrow } from 'date-fns';
-import { 
-  FiEdit2, 
-  FiTrash2, 
-  FiMoreVertical, 
-  FiCalendar, 
-  FiUser, 
-  FiUsers, 
-  FiChevronUp, 
+import {
+  FiEdit2,
+  FiTrash2,
+  FiMoreVertical,
+  FiCalendar,
+  FiUser,
+  FiUsers,
+  FiChevronUp,
   FiChevronDown,
   FiFilter,
   FiSearch,
@@ -16,7 +16,8 @@ import {
   FiClock,
   FiCheckCircle,
   FiAlertCircle,
-  FiStar
+  FiStar,
+  FiActivity
 } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 
@@ -50,10 +51,10 @@ const getPriorityColor = (priority) => {
 
 const getDueDateStatus = (dueDate) => {
   if (!dueDate) return { status: 'no-due-date', color: 'text-gray-400', icon: FiClock };
-  
+
   const due = parseISO(dueDate);
   const now = new Date();
-  
+
   if (isAfter(now, due)) {
     return { status: 'overdue', color: 'text-red-600', icon: FiAlertCircle };
   } else if (isToday(due)) {
@@ -65,10 +66,10 @@ const getDueDateStatus = (dueDate) => {
   }
 };
 
-export default function TaskList({ 
-  tasks, 
-  onTaskUpdate, 
-  onTaskEdit, 
+export default function TaskList({
+  tasks,
+  onTaskUpdate,
+  onTaskEdit,
   onTaskDelete,
   onTaskView
 }) {
@@ -83,10 +84,10 @@ export default function TaskList({
   const processedTasks = useMemo(() => {
     let filtered = tasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+        task.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
       const matchesAssignee = assigneeFilter === 'all' || task.assignee?.id === assigneeFilter;
-      
+
       return matchesSearch && matchesStatus && matchesAssignee;
     });
 
@@ -104,10 +105,15 @@ export default function TaskList({
         bValue = b.team?.name || '';
       }
 
-      // Handle dates
       if (aValue && bValue && (sortConfig.key === 'due_date' || sortConfig.key === 'created_at')) {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
+      }
+
+      // Handle numbers (efforts)
+      if (sortConfig.key === 'efforts_in_days') {
+        aValue = aValue || 0;
+        bValue = bValue || 0;
       }
 
       if (aValue < bValue) {
@@ -182,14 +188,16 @@ export default function TaskList({
   };
 
   const SortableHeader = ({ column, label, children }) => (
-    <th 
-      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-50"
+    <th
+      className="px-6 py-4 text-left text-xs font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest cursor-pointer hover:bg-gray-100/50 dark:hover:bg-white/5 transition-colors group"
       onClick={() => handleSort(column)}
     >
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-2">
         <span>{label}</span>
         {sortConfig.key === column && (
-          sortConfig.direction === 'asc' ? <FiChevronUp className="w-4 h-4" /> : <FiChevronDown className="w-4 h-4" />
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+            {sortConfig.direction === 'asc' ? <FiChevronUp className="w-3.5 h-3.5 text-indigo-500" /> : <FiChevronDown className="w-3.5 h-3.5 text-indigo-500" />}
+          </motion.div>
         )}
       </div>
       {children}
@@ -197,224 +205,228 @@ export default function TaskList({
   );
 
   return (
-    <div className="space-y-4">
-      {/* Filters and Search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-4 items-center">
-          {/* Search */}
-          <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              />
-            </div>
-          </div>
-          {/* Removed status and assignee filter dropdowns */}
-        </div>
+    <div className="space-y-6">
+      {/* Search & Bulk Actions Header Container */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Bulk Actions (Left) */}
+        <AnimatePresence>
+          {selectedTasks.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/30 rounded-2xl px-4 py-2.5 flex items-center gap-4"
+            >
+              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                {selectedTasks.size} Selected
+              </span>
+              <div className="flex items-center gap-2">
+                <select
+                  onChange={(e) => handleBulkStatusUpdate(e.target.value)}
+                  className="bg-white/80 dark:bg-slate-800/80 border border-indigo-500/20 dark:border-indigo-400/20 text-xs font-bold py-1.5 px-3 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-gray-700 dark:text-slate-200"
+                >
+                  <option value="">Status</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Review">Review</option>
+                  <option value="Completed">Completed</option>
+                </select>
+                <button
+                  onClick={handleBulkDelete}
+                  className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  title="Delete Selected"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+
       </div>
 
-      {/* Bulk Actions */}
-      {selectedTasks.size > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-700">
-              {selectedTasks.size} task{selectedTasks.size !== 1 ? 's' : ''} selected
-            </span>
-            <div className="flex items-center space-x-2">
-              <select
-                onChange={(e) => handleBulkStatusUpdate(e.target.value)}
-                className="px-3 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Update Status</option>
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Review">Review</option>
-                <option value="Completed">Completed</option>
-              </select>
-              <button
-                onClick={handleBulkDelete}
-                className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Tasks Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      {/* Tasks Table Container */}
+      <div className="bg-white/70 dark:bg-slate-900/40 backdrop-blur-2xl rounded-3xl border border-white/30 dark:border-slate-800/60 shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-none overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="min-w-full border-collapse">
+            <thead className="bg-gray-50/50 dark:bg-slate-800/40 border-b border-gray-100 dark:border-slate-800/60">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="px-6 py-5 text-left w-10">
                   <input
                     type="checkbox"
                     checked={selectedTasks.size === processedTasks.length && processedTasks.length > 0}
                     onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-indigo-500 focus:ring-indigo-500/20"
                   />
                 </th>
                 <SortableHeader column="title" label="Task">
-                  <div className="text-xs text-gray-400 mt-1">Title & Description</div>
+                  <span className="block text-[10px] opacity-40 lowercase font-medium">title & description</span>
                 </SortableHeader>
-                <SortableHeader column="status" label="Status">
-                  <div className="text-xs text-gray-400 mt-1">Current Status</div>
-                </SortableHeader>
-                <SortableHeader column="assignee" label="Assignee">
-                  <div className="text-xs text-gray-400 mt-1">Assigned To</div>
-                </SortableHeader>
-                <SortableHeader column="team" label="Team">
-                  <div className="text-xs text-gray-400 mt-1">Team</div>
-                </SortableHeader>
-                <SortableHeader column="due_date" label="Due Date">
-                  <div className="text-xs text-gray-400 mt-1">Deadline</div>
-                </SortableHeader>
-                <SortableHeader column="created_at" label="Created">
-                  <div className="text-xs text-gray-400 mt-1">Date Created</div>
-                </SortableHeader>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader column="status" label="Status" />
+                <SortableHeader column="assignee" label="Assignee" />
+                <SortableHeader column="team" label="Team" />
+                <SortableHeader column="due_date" label="Due Date" />
+                <SortableHeader column="efforts_in_days" label="Effort" />
+                <SortableHeader column="created_at" label="Created" />
+                <th className="px-6 py-5 text-right text-xs font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-100 dark:divide-slate-800/40">
               <AnimatePresence>
                 {processedTasks.map((task, index) => {
                   const dueDateStatus = getDueDateStatus(task.due_date);
                   const DueDateIcon = dueDateStatus.icon;
-                  
+
                   return (
                     <motion.tr
                       key={task.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="hover:bg-gray-50 transition-colors"
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="group hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5 transition-all duration-300"
                     >
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5">
                         <input
                           type="checkbox"
                           checked={selectedTasks.has(task.id)}
                           onChange={() => handleSelectTask(task.id)}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-indigo-500 focus:ring-indigo-500/20"
                         />
                       </td>
-                      
+
                       {/* Task Title & Description */}
-                      <td className="px-4 py-4 cursor-pointer hover:bg-gray-50" onClick={() => onTaskView?.(task)}>
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate hover:text-emerald-600 transition-colors">
-                              {task.title}
+                      <td className="px-6 py-5 cursor-pointer max-w-md" onClick={() => onTaskView?.(task)}>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-bold text-gray-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            {task.title}
+                          </p>
+                          {task.description && (
+                            <p className="text-xs text-gray-500 dark:text-slate-500 line-clamp-1 italic">
+                              {task.description}
                             </p>
-                            {task.description && (
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                {task.description}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(task.status)}`}>
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-tighter border ${getStatusColor(task.status)} dark:bg-white/5`}>
+                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${task.status === 'Completed' ? 'bg-emerald-500' :
+                            task.status === 'In Progress' ? 'bg-blue-500' :
+                              task.status === 'Review' ? 'bg-amber-500' : 'bg-slate-400'
+                            }`} />
                           {task.status}
                         </span>
                       </td>
 
                       {/* Assignee */}
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         {task.assignee ? (
-                          <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              {task.assignee.avatar_url ? (
-                                <img 
-                                  src={task.assignee.avatar_url} 
-                                  alt={task.assignee.name}
-                                  className="w-8 h-8 rounded-full"
-                                />
-                              ) : (
-                                <FiUser className="w-4 h-4 text-gray-500" />
-                              )}
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-indigo-500 rounded-lg blur-md opacity-20" />
+                              <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-white/20 shadow-sm flex items-center justify-center bg-gray-100 dark:bg-slate-800">
+                                {task.assignee.avatar_url ? (
+                                  <img
+                                    src={task.assignee.avatar_url}
+                                    alt={task.assignee.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <FiUser className="w-4 h-4 text-gray-400" />
+                                )}
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{task.assignee.name}</p>
-                              <p className="text-xs text-gray-500">{task.assignee.email}</p>
+                            <div className="flex flex-col">
+                              <p className="text-sm font-bold text-gray-800 dark:text-slate-200">{task.assignee.name}</p>
+                              <p className="text-[10px] text-gray-500 dark:text-slate-500 uppercase font-medium">{task.assignee.role || 'Member'}</p>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">Unassigned</span>
+                          <span className="text-xs font-bold text-gray-400 dark:text-slate-600 uppercase italic">Unassigned</span>
                         )}
                       </td>
 
                       {/* Team */}
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         {task.team ? (
-                          <div className="flex items-center space-x-2">
-                            <FiUsers className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm text-gray-900">{task.team.name}</span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-lg">
+                              <FiUsers className="w-3.5 h-3.5 text-slate-500" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{task.team.name}</span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">No team</span>
+                          <span className="text-xs text-gray-400">---</span>
                         )}
                       </td>
 
                       {/* Due Date */}
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-6 py-5 whitespace-nowrap">
                         {task.due_date ? (
-                          <div className="flex items-center space-x-2">
-                            <DueDateIcon className={`w-4 h-4 ${dueDateStatus.color}`} />
-                            <span className={`text-sm ${dueDateStatus.color}`}>
-                              {format(parseISO(task.due_date), 'MMM dd, yyyy')}
+                          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${dueDateStatus.status === 'overdue' ? 'bg-rose-50/50 dark:bg-rose-500/5 border-rose-200/50 dark:border-rose-500/20' :
+                            'bg-gray-50/50 dark:bg-slate-800/40 border-gray-100 dark:border-slate-700/50'
+                            }`}>
+                            <DueDateIcon className={`w-3.5 h-3.5 ${dueDateStatus.color}`} />
+                            <span className={`text-[11px] font-bold ${dueDateStatus.color} uppercase tracking-tighter`}>
+                              {format(parseISO(task.due_date), 'MMM dd')}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">No due date</span>
+                          <span className={`text-[11px] font-bold text-gray-400 dark:text-slate-600 uppercase`}>no deadline</span>
+                        )}
+                      </td>
+
+                      {/* Effort */}
+                      <td className="px-6 py-5 whitespace-nowrap">
+                        {task.efforts_in_days ? (
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-200/50 dark:border-emerald-500/20">
+                            <FiActivity className="w-3.5 h-3.5 text-emerald-500" />
+                            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-tighter">
+                              {task.efforts_in_days}d
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] font-bold text-gray-400 dark:text-slate-600 uppercase">--</span>
                         )}
                       </td>
 
                       {/* Created Date */}
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-5 whitespace-nowrap text-[11px] font-medium text-gray-400 dark:text-slate-500 tabular-nums">
                         {format(parseISO(task.created_at), 'MMM dd, yyyy')}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => onTaskView?.(task)}
-                            className="text-blue-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50"
-                            title="View task details"
+                            className="p-2 text-indigo-500 hover:bg-indigo-500/10 rounded-xl transition-colors"
                           >
                             <FiEye className="w-4 h-4" />
-                          </button>
-                          <button
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => onTaskEdit(task)}
-                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-                            title="Edit task"
+                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors"
                           >
                             <FiEdit2 className="w-4 h-4" />
-                          </button>
-                          <button
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => onTaskDelete(task)}
-                            className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-gray-100"
-                            title="Delete task"
+                            className="p-2 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors"
                           >
                             <FiTrash2 className="w-4 h-4" />
-                          </button>
+                          </motion.button>
                         </div>
                       </td>
                     </motion.tr>
@@ -427,33 +439,50 @@ export default function TaskList({
 
         {/* Empty State */}
         {processedTasks.length === 0 && (
-          <div className="text-center py-12">
-            <FiSearch className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No tasks found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || statusFilter !== 'all' || assigneeFilter !== 'all' 
-                ? 'Try adjusting your filters or search terms.'
-                : 'Get started by creating a new task.'
-              }
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24 bg-white/5 dark:bg-transparent"
+          >
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 animate-pulse" />
+              <div className="relative p-6 bg-slate-100 dark:bg-slate-800 rounded-3xl border border-white/20 shadow-inner">
+                <FiSearch className="h-10 w-10 text-slate-400" />
+              </div>
+            </div>
+            <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">No tasks matched your search</h3>
+            <p className="mt-2 text-sm text-gray-500 dark:text-slate-400 max-w-xs mx-auto font-medium">
+              We couldn't find any tasks with those filters. Try searching for a different title or task ID.
             </p>
-          </div>
+          </motion.div>
         )}
       </div>
 
-      {/* Summary */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Showing {processedTasks.length} of {tasks.length} tasks
+      {/* Summary Footer */}
+      <div className="flex flex-wrap items-center justify-between gap-6 px-10 py-6 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-800/40">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-indigo-500" />
+          <span className="text-xs font-black text-gray-700 dark:text-slate-300 uppercase tracking-widest">
+            {processedTasks.length} {processedTasks.length === 1 ? 'Task' : 'Tasks'} tracked
           </span>
-          <div className="flex items-center space-x-4">
-            <span>To Do: {tasks.filter(t => t.status === 'To Do').length}</span>
-            <span>In Progress: {tasks.filter(t => t.status === 'In Progress').length}</span>
-            <span>Review: {tasks.filter(t => t.status === 'Review').length}</span>
-            <span>Completed: {tasks.filter(t => t.status === 'Completed').length}</span>
-          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          {[
+            { label: 'To Do', count: tasks.filter(t => t.status === 'To Do').length, color: 'bg-slate-400' },
+            { label: 'In Progress', count: tasks.filter(t => t.status === 'In Progress').length, color: 'bg-blue-500' },
+            { label: 'Review', count: tasks.filter(t => t.status === 'Review').length, color: 'bg-amber-500' },
+            { label: 'Done', count: tasks.filter(t => t.status === 'Completed').length, color: 'bg-emerald-500' }
+          ].map((stat) => (
+            <div key={stat.label} className="flex items-center gap-2.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${stat.color}`} />
+              <span className="text-[10px] font-black text-gray-500 dark:text-slate-400 uppercase tracking-tighter">
+                {stat.label}: <span className="text-gray-900 dark:text-white ml-0.5">{stat.count}</span>
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
-} 
+}

@@ -95,8 +95,8 @@ const NotificationCard = ({
       className={`
         relative p-4 mb-3 rounded-xl border transition-all duration-200 cursor-pointer group
         ${read
-          ? 'bg-white/60 border-gray-100'
-          : 'bg-white border-blue-100 shadow-sm shadow-blue-50'
+          ? 'bg-white/60 dark:bg-slate-800/60 border-gray-100 dark:border-slate-700'
+          : 'bg-white dark:bg-slate-800 border-blue-100 dark:border-blue-900 shadow-sm shadow-blue-50 dark:shadow-blue-950'
         }
         ${priority === 'Critical' ? 'border-l-4 border-l-red-500' : ''}
       `}
@@ -114,16 +114,16 @@ const NotificationCard = ({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1 pr-4">
-            <h3 className={`text-sm font-semibold truncate ${read ? 'text-gray-700' : 'text-gray-900'}`}>
+            <h3 className={`text-sm font-semibold truncate ${read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
               {title}
             </h3>
-            <span className="text-xs text-gray-400 flex-shrink-0 flex items-center gap-1">
+            <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 flex items-center gap-1">
               <FiClock className="w-3 h-3" />
               {created_at && formatDistanceToNow(new Date(created_at), { addSuffix: true })}
             </span>
           </div>
 
-          <p className={`text-sm line-clamp-2 mb-2 ${read ? 'text-gray-500' : 'text-gray-600'}`}>
+          <p className={`text-sm line-clamp-2 mb-2 ${read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
             {message}
           </p>
 
@@ -175,7 +175,7 @@ const NotificationCard = ({
                   e.stopPropagation();
                   onDelete && onDelete(id);
                 }}
-                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                 title="Remove"
               >
                 <FiTrash2 className="w-4 h-4" />
@@ -187,7 +187,7 @@ const NotificationCard = ({
 
       {/* Unread Indicator */}
       {!read && (
-        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500 ring-4 ring-blue-50" />
+        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-blue-950" />
       )}
     </motion.div>
   );

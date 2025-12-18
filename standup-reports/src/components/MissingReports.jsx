@@ -79,22 +79,22 @@ const MissingReports = ({ date, teamId, companyId, onAvatarClick }) => {
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100 shadow-sm mb-6"
+      className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-xl p-4 border border-orange-100 dark:border-orange-900/50 shadow-sm mb-6 transition-all duration-300"
       onMouseLeave={() => setHoveredUserId(null)}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-orange-100 text-orange-600 rounded-lg">
+          <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
             <FiAlertCircle className="w-4 h-4" />
           </div>
-          <h3 className="font-semibold text-orange-900 text-sm">
+          <h3 className="font-semibold text-orange-900 dark:text-orange-300 text-sm">
             Missing Reports ({missingReports.length})
           </h3>
         </div>
 
         {hasMore && (
           <motion.button
-            className="flex items-center gap-1 text-orange-700 text-xs font-medium hover:text-orange-900"
+            className="flex items-center gap-1 text-orange-700 dark:text-orange-400 text-xs font-medium hover:text-orange-900 dark:hover:text-orange-200 transition-colors"
             onClick={() => setExpanded(!expanded)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -117,8 +117,8 @@ const MissingReports = ({ date, teamId, companyId, onAvatarClick }) => {
           <motion.div
             key={member.id}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer ${hoveredUserId === member.id
-              ? 'bg-white shadow-md border border-orange-200 scale-105'
-              : 'bg-white border border-orange-100'
+              ? 'bg-white dark:bg-slate-800 shadow-md border border-orange-200 dark:border-orange-800 scale-105'
+              : 'bg-white/80 dark:bg-slate-900/80 border border-orange-100 dark:border-orange-900/30 backdrop-blur-sm'
               }`}
             onMouseEnter={() => setHoveredUserId(member.id)}
             onMouseLeave={() => setHoveredUserId(null)}
@@ -137,11 +137,11 @@ const MissingReports = ({ date, teamId, companyId, onAvatarClick }) => {
                 className="w-5 h-5 rounded-full object-cover"
               />
             ) : (
-              <div className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[10px] font-bold">
+              <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center text-[10px] font-bold">
                 {member.name[0]}
               </div>
             )}
-            <span className={`text-gray-700 truncate max-w-[80px] ${hoveredUserId === member.id ? 'font-medium' : ''}`}>
+            <span className={`text-gray-700 dark:text-gray-300 truncate max-w-[80px] ${hoveredUserId === member.id ? 'font-medium text-orange-900 dark:text-orange-200' : ''}`}>
               {member.name}
             </span>
           </motion.div>
@@ -150,7 +150,7 @@ const MissingReports = ({ date, teamId, companyId, onAvatarClick }) => {
         {/* Show "and X more" when collapsed and there are more than MAX_VISIBLE */}
         {!expanded && hasMore && (
           <motion.div
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-orange-100 text-xs font-medium text-gray-500"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/50 dark:bg-slate-900/50 border border-orange-100 dark:border-orange-900/30 text-xs font-medium text-gray-500 dark:text-gray-500"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2, delay: 0.1 }}

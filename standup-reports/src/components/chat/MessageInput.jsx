@@ -192,7 +192,7 @@ const MessageInput = ({
   const canSend = (value.trim() || attachments.length > 0) && !disabled;
 
   return (
-    <div className={`bg-gradient-to-b from-white to-gray-50 border-t border-gray-200 ${className}`}>
+    <div className={`bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-colors duration-300 ${className}`}>
       {/* Typing Indicator */}
       <AnimatePresence>
         {showTypingIndicator && (
@@ -200,7 +200,7 @@ const MessageInput = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="px-6 py-2 text-sm text-gray-500 italic"
+            className="px-6 py-2 text-sm text-gray-500 dark:text-gray-400 italic"
           >
             Someone is typing...
           </motion.div>
@@ -220,7 +220,7 @@ const MessageInput = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="px-4 py-3 border-b border-gray-200"
+            className="px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30"
           >
             <VoiceRecorder
               onRecordingComplete={handleVoiceMessageComplete}
@@ -271,10 +271,10 @@ const MessageInput = ({
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
           disabled={disabled}
-          className="w-full p-3 bg-gradient-to-r from-red-50 to-pink-50
-                   border border-red-200 rounded-xl text-red-600 font-medium
-                   hover:from-red-100 hover:to-pink-100 transition-colors
-                   flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full p-3 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20
+                   border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium
+                   hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 transition-colors
+                   flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
         >
           <FiMic className="w-5 h-5" />
           {showVoiceRecorder ? 'Close Voice Recorder' : 'Voice Message'}

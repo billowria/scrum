@@ -57,7 +57,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                     >
                         <motion.button
                             onClick={() => setSelectedProjectId(project.id)}
-                            className="w-full h-full text-left bg-white/80 backdrop-blur-xl rounded-2xl border border-gray-200 hover:border-purple-300 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden flex flex-col"
+                            className="w-full h-full text-left bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden flex flex-col"
                             whileHover={{ y: -8, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
@@ -71,7 +71,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                 {/* Project Header */}
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1 min-w-0 pr-4">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors truncate">
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
                                             {project.name}
                                         </h3>
                                         {activeSprints > 0 ? (
@@ -81,7 +81,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                                     animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
                                                     transition={{ duration: 2, repeat: Infinity }}
                                                 />
-                                                <span className="text-sm font-semibold text-emerald-600">
+                                                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                                                     {activeSprints} Active Sprint{activeSprints !== 1 ? 's' : ''}
                                                 </span>
                                             </div>
@@ -100,7 +100,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                                 stroke="currentColor"
                                                 strokeWidth="4"
                                                 fill="none"
-                                                className="text-gray-100"
+                                                className="text-gray-100 dark:text-slate-700"
                                             />
                                             <motion.circle
                                                 cx="32"
@@ -125,24 +125,24 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                             </defs>
                                         </svg>
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <span className="text-sm font-bold text-gray-900">{completionPercentage}%</span>
+                                            <span className="text-sm font-bold text-gray-900 dark:text-white">{completionPercentage}%</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Sprint Stats */}
                                 <div className="grid grid-cols-3 gap-3">
-                                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 border border-blue-200/50 text-center">
-                                        <div className="text-xl font-bold text-blue-700">{sprintCount}</div>
-                                        <div className="text-xs font-medium text-blue-600">Sprints</div>
+                                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-3 border border-blue-200/50 dark:border-blue-800/50 text-center">
+                                        <div className="text-xl font-bold text-blue-700 dark:text-blue-400">{sprintCount}</div>
+                                        <div className="text-xs font-medium text-blue-600 dark:text-blue-500">Sprints</div>
                                     </div>
-                                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-3 border border-emerald-200/50 text-center">
-                                        <div className="text-xl font-bold text-emerald-700">{totalTasks}</div>
-                                        <div className="text-xs font-medium text-emerald-600">Tasks</div>
+                                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl p-3 border border-emerald-200/50 dark:border-emerald-800/50 text-center">
+                                        <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{totalTasks}</div>
+                                        <div className="text-xs font-medium text-emerald-600 dark:text-emerald-500">Tasks</div>
                                     </div>
-                                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-200/50 text-center">
-                                        <div className="text-xl font-bold text-purple-700">{completedTasks}</div>
-                                        <div className="text-xs font-medium text-purple-600">Done</div>
+                                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-3 border border-purple-200/50 dark:border-purple-800/50 text-center">
+                                        <div className="text-xl font-bold text-purple-700 dark:text-purple-400">{completedTasks}</div>
+                                        <div className="text-xs font-medium text-purple-600 dark:text-purple-500">Done</div>
                                     </div>
                                 </div>
 
@@ -161,7 +161,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                                             <FiBarChart2 className="w-4 h-4 text-orange-600" />
                                                     }
                                                 </div>
-                                                <span className="text-sm font-semibold text-gray-700">Project Health</span>
+                                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Project Health</span>
                                             </div>
                                             <div className={`text-lg font-bold ${completedSprints / Math.max(sprintCount, 1) > 0.8 ? 'text-emerald-600' :
                                                 completedSprints / Math.max(sprintCount, 1) > 0.6 ? 'text-blue-600' : 'text-orange-600'
@@ -170,9 +170,9 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="text-center py-3 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                            <FiCalendar className="w-5 h-5 mx-auto mb-1 text-gray-300" />
-                                            <div className="text-xs text-gray-400">No sprints completed yet</div>
+                                        <div className="text-center py-3 bg-gray-50 dark:bg-slate-900/50 rounded-xl border-2 border-dashed border-gray-200 dark:border-slate-700">
+                                            <FiCalendar className="w-5 h-5 mx-auto mb-1 text-gray-300 dark:text-gray-600" />
+                                            <div className="text-xs text-gray-400 dark:text-gray-500">No sprints completed yet</div>
                                         </div>
                                     )}
                                 </div>

@@ -131,7 +131,7 @@ const InlineSectionEditor = ({
 
   return (
     <motion.div
-      className={`bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm ${isDragging ? 'shadow-lg rotate-1 scale-105' : 'hover:shadow-md'
+      className={`bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm ${isDragging ? 'shadow-lg rotate-1 scale-105' : 'hover:shadow-md'
         } transition-all duration-200`}
       layout
       initial={{ opacity: 0, y: 20 }}
@@ -139,16 +139,16 @@ const InlineSectionEditor = ({
       exit={{ opacity: 0, y: -20 }}
     >
       {/* Section Header */}
-      <div className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
+      <div className="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
         {/* Drag Handle */}
-        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+        <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
           <FiMenu className="w-5 h-5" />
         </div>
 
         {/* Expand/Collapse Button */}
         <button
           onClick={() => onToggle(section.id)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           {isExpanded ? <FiChevronDown className="w-5 h-5" /> : <FiChevronRight className="w-5 h-5" />}
         </button>
@@ -161,7 +161,7 @@ const InlineSectionEditor = ({
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full text-lg font-semibold bg-transparent border-b-2 outline-none transition-colors ${errors.name ? 'border-red-500' : 'border-blue-500 focus:border-blue-600'
+                className={`w-full text-lg font-semibold bg-transparent border-b-2 outline-none transition-colors text-gray-900 dark:text-white ${errors.name ? 'border-red-500' : 'border-blue-500 focus:border-blue-600'
                   }`}
                 placeholder="Section name..."
                 autoFocus
@@ -190,10 +190,10 @@ const InlineSectionEditor = ({
             </div>
           ) : (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">{section.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{section.name}</h3>
               {section.description && (
                 <div
-                  className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
+                  className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose prose-sm dark:prose-invert max-w-none"
                   dangerouslySetInnerHTML={{ __html: section.description }}
                 />
               )}
@@ -223,7 +223,7 @@ const InlineSectionEditor = ({
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                     title="Cancel"
                   >
                     <FiX className="w-4 h-4" />
@@ -257,7 +257,7 @@ const InlineSectionEditor = ({
           )}
 
           {/* Topic Count Badge */}
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
             {topics.length} {topics.length === 1 ? 'topic' : 'topics'}
           </span>
         </div>
@@ -270,11 +270,11 @@ const InlineSectionEditor = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-t border-gray-100"
+            className="overflow-hidden border-t border-gray-100 dark:border-slate-800"
           >
-            <div className="p-4 space-y-2 bg-gray-50">
+            <div className="p-4 space-y-2 bg-gray-50 dark:bg-slate-800/50">
               {topics.length === 0 && !showTopicForm ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <p className="mb-3">No topics yet in this section</p>
                   {canEdit && (
                     <button
@@ -293,14 +293,14 @@ const InlineSectionEditor = ({
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-4 p-4 bg-white border border-blue-200 rounded-lg"
+                      className="mb-4 p-4 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg"
                     >
                       <div className="space-y-3">
                         <input
                           type="text"
                           value={newTopic.name}
                           onChange={(e) => setNewTopic(prev => ({ ...prev, name: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Topic name..."
                           autoFocus
                         />
@@ -325,7 +325,7 @@ const InlineSectionEditor = ({
                               setShowTopicForm(false);
                               setNewTopic({ name: '', description: '' });
                             }}
-                            className="px-3 py-1.5 text-gray-600 text-sm hover:text-gray-800 transition-colors"
+                            className="px-3 py-1.5 text-gray-600 dark:text-gray-400 text-sm hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                           >
                             Cancel
                           </button>
@@ -341,25 +341,25 @@ const InlineSectionEditor = ({
                         key={topic.id}
                         onClick={() => onSelectTopic && onSelectTopic(topic)}
                         className={`p-3 border rounded-lg transition-colors cursor-pointer ${selectedTopic?.id === topic.id
-                            ? 'bg-blue-50 border-blue-300 shadow-sm'
-                            : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700 shadow-sm'
+                          : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-slate-800'
                           }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${selectedTopic?.id === topic.id ? 'bg-blue-200' : 'bg-blue-100'
+                          <div className={`p-2 rounded-lg ${selectedTopic?.id === topic.id ? 'bg-blue-200 dark:bg-blue-800' : 'bg-blue-100 dark:bg-blue-900/30'
                             }`}>
-                            <div className="w-4 h-4 bg-blue-600 rounded"></div>
+                            <div className="w-4 h-4 bg-blue-600 dark:bg-blue-400 rounded"></div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className={`font-medium ${selectedTopic?.id === topic.id ? 'text-blue-900' : 'text-gray-900'
+                            <h4 className={`font-medium ${selectedTopic?.id === topic.id ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-white'
                               }`}>{topic.name}</h4>
                             {topic.description && (
-                              <p className="text-sm text-gray-600 line-clamp-1">{topic.description}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">{topic.description}</p>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
                             {topic.project_topic_content && topic.project_topic_content.length > 0 && (
-                              <span className="text-xs text-green-600">
+                              <span className="text-xs text-green-600 dark:text-green-400">
                                 ✓ {topic.project_topic_content.length} {topic.project_topic_content.length === 1 ? 'item' : 'items'}
                               </span>
                             )}
@@ -375,7 +375,7 @@ const InlineSectionEditor = ({
                   {canEdit && !showTopicForm && topics.length > 0 && (
                     <button
                       onClick={() => setShowTopicForm(true)}
-                      className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       <FiPlus className="w-4 h-4" />
                       Add Topic

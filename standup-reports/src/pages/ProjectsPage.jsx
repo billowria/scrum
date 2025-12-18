@@ -300,7 +300,7 @@ const ProjectsHeader = ({
 }) => {
   return (
     <motion.header
-      className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-200/60 backdrop-blur-sm px-4 lg:px-6 py-3 lg:py-4 shadow-sm"
+      className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 border-b border-slate-200/60 dark:border-slate-700/60 backdrop-blur-sm px-4 lg:px-6 py-3 lg:py-4 shadow-sm"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -315,16 +315,16 @@ const ProjectsHeader = ({
                 isOpen={true}
                 onClick={onToggleSidebar}
                 isMobile={true}
-                className="backdrop-blur-sm"
+                className="backdrop-blur-sm dark:text-white"
               />
             )}
 
             {/* Title Section */}
             <div>
-              <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                 Projects
               </h1>
-              <p className="text-xs lg:text-sm text-slate-500 font-medium">
+              <p className="text-xs lg:text-sm text-slate-500 dark:text-slate-400 font-medium">
                 Manage and explore your project spaces
               </p>
             </div>
@@ -335,23 +335,23 @@ const ProjectsHeader = ({
             {/* Stats Pills - Desktop Only */}
             {!isMobile && (
               <div className="hidden md:flex items-center gap-1 mr-4">
-                <div className="flex items-center gap-3 px-3 py-1.5 bg-white/60 rounded-lg border border-slate-200/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
                   <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-slate-500"></div>
-                    <span className="text-xs font-semibold text-slate-700">{stats.total}</span>
-                    <span className="text-xs text-slate-500">Total</span>
+                    <div className="w-2 h-2 rounded-full bg-slate-500 dark:bg-slate-400"></div>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{stats.total}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Total</span>
                   </div>
-                  <div className="w-px h-4 bg-slate-200"></div>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-600"></div>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-xs font-semibold text-emerald-700">{stats.active}</span>
-                    <span className="text-xs text-slate-500">Active</span>
+                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{stats.active}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Active</span>
                   </div>
-                  <div className="w-px h-4 bg-slate-200"></div>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-600"></div>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-xs font-semibold text-blue-700">{stats.completed}</span>
-                    <span className="text-xs text-slate-500">Done</span>
+                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-400">{stats.completed}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Done</span>
                   </div>
                 </div>
               </div>
@@ -419,7 +419,7 @@ const ProjectsHeader = ({
                 placeholder="Search projects..."
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full sm:w-64 pl-9 pr-8 py-2 bg-white/70 border border-slate-200/50 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-slate-900 placeholder-slate-400 text-sm backdrop-blur-sm"
+                className="w-full sm:w-64 pl-9 pr-8 py-2 bg-white/70 dark:bg-slate-700/50 border border-slate-200/50 dark:border-slate-600/50 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm backdrop-blur-sm"
               />
               {search && (
                 <motion.button
@@ -434,7 +434,7 @@ const ProjectsHeader = ({
             </div>
 
             {/* Status Filters */}
-            <div className="flex items-center gap-1 bg-white/60 rounded-lg p-1 border border-slate-200/50 backdrop-blur-sm">
+            <div className="flex items-center gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
               {[
                 { key: 'all', label: 'All', count: stats.total },
                 { key: 'active', label: 'Active', count: stats.active },
@@ -445,8 +445,8 @@ const ProjectsHeader = ({
                   key={filter.key}
                   onClick={() => onFilterChange(filter.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-200 text-xs font-medium ${filterStatus === filter.key
-                    ? 'bg-white text-blue-600 shadow-sm border border-blue-200'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm border border-blue-200 dark:border-blue-500/30'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
                     }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -466,12 +466,12 @@ const ProjectsHeader = ({
           {/* View Controls */}
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex bg-white/60 rounded-lg p-1 border border-slate-200/50 backdrop-blur-sm">
+            <div className="flex bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
               <motion.button
                 onClick={() => onViewModeChange('grid')}
                 className={`p-1.5 rounded-md transition-all duration-200 ${viewMode === 'grid'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -481,8 +481,8 @@ const ProjectsHeader = ({
               <motion.button
                 onClick={() => onViewModeChange('list')}
                 className={`p-1.5 rounded-md transition-all duration-200 ${viewMode === 'list'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -494,7 +494,7 @@ const ProjectsHeader = ({
             {/* Refresh Button */}
             <motion.button
               onClick={onRefresh}
-              className="p-2 text-slate-600 hover:text-slate-900 hover:bg-white/70 rounded-lg transition-all duration-200 backdrop-blur-sm"
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/70 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
               whileHover={{ scale: 1.05, rotate: 180 }}
               whileTap={{ scale: 0.95 }}
               title="Refresh projects"
@@ -541,36 +541,36 @@ const ProjectCard = ({
     switch (status) {
       case 'active':
         return {
-          bg: 'bg-gradient-to-r from-green-50 to-emerald-50',
-          text: 'text-green-700',
-          border: 'border-green-200',
+          bg: 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20',
+          text: 'text-green-700 dark:text-green-400',
+          border: 'border-green-200 dark:border-green-800/30',
           dot: 'bg-green-500',
           label: 'Active',
           icon: '🟢'
         };
       case 'completed':
         return {
-          bg: 'bg-gradient-to-r from-blue-50 to-indigo-50',
-          text: 'text-blue-700',
-          border: 'border-blue-200',
+          bg: 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20',
+          text: 'text-blue-700 dark:text-blue-400',
+          border: 'border-blue-200 dark:border-blue-800/30',
           dot: 'bg-blue-500',
           label: 'Completed',
           icon: '🔵'
         };
       case 'archived':
         return {
-          bg: 'bg-gradient-to-r from-gray-50 to-slate-50',
-          text: 'text-gray-700',
-          border: 'border-gray-200',
+          bg: 'bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/40 dark:to-slate-800/40',
+          text: 'text-gray-700 dark:text-gray-400',
+          border: 'border-gray-200 dark:border-gray-700/50',
           dot: 'bg-gray-500',
           label: 'Archived',
           icon: '⚪'
         };
       default:
         return {
-          bg: 'bg-gradient-to-r from-gray-50 to-slate-50',
-          text: 'text-gray-700',
-          border: 'border-gray-200',
+          bg: 'bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/40 dark:to-slate-800/40',
+          text: 'text-gray-700 dark:text-gray-400',
+          border: 'border-gray-200 dark:border-gray-700/50',
           dot: 'bg-gray-500',
           label: 'Unknown',
           icon: '❓'
@@ -592,8 +592,8 @@ const ProjectCard = ({
 
   // Glassmorphic icon styles
   const getGlassmorphicIconStyle = (iconType, viewMode = 'grid') => {
-    const baseTextColor = viewMode === 'list' ? 'text-gray-700' : 'text-white';
-    const baseStyle = `p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 shadow-lg ${baseTextColor} hover:scale-110`;
+    const baseTextColor = viewMode === 'list' ? 'text-gray-700 dark:text-gray-300' : 'text-white';
+    const baseStyle = `p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 dark:border-white/10 shadow-lg ${baseTextColor} hover:scale-110 dark:bg-slate-800/50`;
 
     switch (iconType) {
       case 'favorite':
@@ -614,7 +614,7 @@ const ProjectCard = ({
   if (viewMode === 'list') {
     return (
       <motion.div
-        className="bg-white border border-gray-200 rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden group"
+        className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:shadow-xl transition-all duration-300 overflow-hidden group"
         variants={cardVariants}
         whileHover="hover"
         onClick={() => {
@@ -637,7 +637,7 @@ const ProjectCard = ({
             {/* Project Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-xl font-bold text-gray-900 truncate">{project.name}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">{project.name}</h3>
                 <span className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${statusConfig.bg} ${statusConfig.text} border ${statusConfig.border}`}>
                   <div className={`w-2 h-2 ${statusConfig.dot} rounded-full`} />
                   {statusConfig.label}
@@ -645,13 +645,13 @@ const ProjectCard = ({
               </div>
 
               <div
-                className="text-gray-600 mb-2 line-clamp-2 prose prose-sm max-w-none"
+                className="text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 prose prose-sm max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{
                   __html: project.description || 'No description available'
                 }}
               />
 
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-2">
                   <FiCalendar className="w-4 h-4" />
                   {formatDate(project.start_date)} - {formatDate(project.end_date)}
@@ -774,7 +774,7 @@ const ProjectCard = ({
 
   return (
     <motion.div
-      className="bg-white border border-gray-200 rounded-xl hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
+      className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer group relative"
       variants={cardVariants}
       whileHover="hover"
       onClick={() => {
@@ -788,7 +788,7 @@ const ProjectCard = ({
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Card Header with Gradient - Reduced height */}
-      <div className={`relative h-16 bg-gradient-to-br from-blue-500 to-indigo-600 p-4`}>
+      <div className={`relative h-16 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 p-4`}>
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
           <span className={`flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30`}>
@@ -977,13 +977,13 @@ const ProjectCard = ({
       {/* Card Content */}
       <div className="p-4 space-y-3">
         {/* Project Title */}
-        <h3 className="text-base font-bold text-gray-900 line-clamp-1">
+        <h3 className="text-base font-bold text-gray-900 dark:text-white line-clamp-1">
           {project.name}
         </h3>
 
         {/* Description */}
         <div
-          className="text-sm text-gray-600 line-clamp-2 prose prose-sm max-w-none"
+          className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose prose-sm max-w-none dark:prose-invert"
           dangerouslySetInnerHTML={{
             __html: project.description || 'No description available'
           }}
@@ -991,14 +991,14 @@ const ProjectCard = ({
 
 
         {/* Date Range */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <FiCalendar className="w-3 h-3" />
           <span>{formatDate(project.start_date)} - {formatDate(project.end_date)}</span>
         </div>
 
         {/* Team Members */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <FiUsers className="w-3 h-3" />
             <span>{teamMembers.length}</span>
           </div>
@@ -1017,8 +1017,8 @@ const ProjectCard = ({
                 setIsEditMode(!isEditMode);
               }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${isEditMode
-                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200'
-                : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200'
+                ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800/30'
+                : 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800/30'
                 }`}
               title={isEditMode ? 'Switch to View Mode' : 'Switch to Edit Mode'}
               whileHover={{ scale: 1.02 }}
@@ -1157,7 +1157,7 @@ const CreateEditProjectModal = ({
             damping: 25,
             duration: 0.4
           }}
-          className="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-2xl shadow-2xl border border-white/20 overflow-hidden"
+          className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl w-full max-w-2xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
           style={{
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
@@ -1249,13 +1249,13 @@ const CreateEditProjectModal = ({
                 transition={{ delay: 0.5 }}
                 className={`relative ${focusedField === 'name' ? 'z-10' : ''}`}
               >
-                <label className={`absolute left-4 transition-all duration-200 text-sm font-medium ${formData.name ? '-top-2.5 text-xs bg-white px-2 text-blue-600' : 'top-4 text-gray-500'
+                <label className={`absolute left-4 transition-all duration-200 text-sm font-medium ${formData.name ? '-top-2.5 text-xs bg-white dark:bg-slate-800 px-2 text-blue-600 dark:text-blue-400' : 'top-4 text-gray-500 dark:text-gray-400'
                   }`}>
                   Project Name *
                 </label>
                 <motion.input
                   type="text"
-                  className={`w-full border-2 rounded-xl px-4 py-3 pt-6 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'name' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                  className={`w-full border-2 rounded-xl px-4 py-3 pt-6 bg-gray-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 dark:text-white ${focusedField === 'name' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200 dark:border-slate-700'
                     }`}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -1283,7 +1283,7 @@ const CreateEditProjectModal = ({
                 transition={{ delay: 0.6 }}
                 className="relative"
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Description
                   {formData.description && (
                     <span className="text-xs text-gray-500 ml-2">
@@ -1292,7 +1292,7 @@ const CreateEditProjectModal = ({
                   )}
                 </label>
                 <motion.textarea
-                  className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none ${focusedField === 'description' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                  className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none dark:text-white ${focusedField === 'description' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200 dark:border-slate-700'
                     }`}
                   value={formData.description}
                   onChange={(e) => {
@@ -1328,13 +1328,13 @@ const CreateEditProjectModal = ({
                 className="grid grid-cols-2 gap-4"
               >
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <FiCalendar className="inline mr-2" />
                     Start Date
                   </label>
                   <motion.input
                     type="date"
-                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'start_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 dark:text-white ${focusedField === 'start_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200 dark:border-slate-700'
                       }`}
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
@@ -1346,13 +1346,13 @@ const CreateEditProjectModal = ({
                 </div>
 
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     <FiTarget className="inline mr-2" />
                     End Date
                   </label>
                   <motion.input
                     type="date"
-                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 ${focusedField === 'end_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200'
+                    className={`w-full border-2 rounded-xl px-4 py-3 bg-gray-50/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 dark:text-white ${focusedField === 'end_date' ? 'border-blue-500 shadow-lg shadow-blue-500/10' : 'border-gray-200 dark:border-slate-700'
                       }`}
                     value={formData.end_date}
                     onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
@@ -1370,7 +1370,7 @@ const CreateEditProjectModal = ({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                   Project Status
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -1380,8 +1380,8 @@ const CreateEditProjectModal = ({
                       type="button"
                       onClick={() => setFormData({ ...formData, status: status.value })}
                       className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${formData.status === status.value
-                        ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-500/20'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg shadow-blue-500/20'
+                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 hover:shadow-md'
                         }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -1390,7 +1390,7 @@ const CreateEditProjectModal = ({
                         <div className={`p-2 rounded-lg bg-gradient-to-r ${status.gradient} text-white`}>
                           <status.icon className="w-4 h-4" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">{status.label}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{status.label}</span>
                       </div>
                       {formData.status === status.value && (
                         <motion.div
@@ -1432,7 +1432,7 @@ const CreateEditProjectModal = ({
                 <motion.button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-6 py-4 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-4 border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600 transition-all duration-200 flex items-center justify-center gap-2"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -1509,16 +1509,16 @@ const AssignmentModal = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl"
+          className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Assign Users</h2>
-              <p className="text-gray-600 mt-1">to {project.name}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Assign Users</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">to {project.name}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               <FiX className="w-5 h-5" />
             </button>
@@ -1528,16 +1528,16 @@ const AssignmentModal = ({
             {availableUsers.length === 0 ? (
               <div className="text-center py-12">
                 <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Available Users</h3>
-                <p className="text-gray-500">All users are already assigned to this project</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Available Users</h3>
+                <p className="text-gray-500 dark:text-gray-400">All users are already assigned to this project</p>
               </div>
             ) : (
               availableUsers.map((user) => (
                 <motion.div
                   key={user.id}
                   className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedUserId === user.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800'
                     }`}
                   onClick={() => setSelectedUserId(user.id)}
                   whileHover={{ scale: 1.01 }}
@@ -1546,12 +1546,12 @@ const AssignmentModal = ({
                   <div className="flex items-center gap-3">
                     <Avatar user={user} size="md" />
                     <div>
-                      <p className="font-semibold text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                    <span className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
                       {user.role}
                     </span>
                     {selectedUserId === user.id && (
@@ -1572,7 +1572,7 @@ const AssignmentModal = ({
           <div className="flex gap-3 mt-6">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>
@@ -1620,16 +1620,16 @@ const AssignedMembersModal = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-hidden shadow-2xl"
+          className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800"
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Team Members</h2>
-              <p className="text-gray-600 mt-1">of {project.name}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Team Members</h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">of {project.name}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
             >
               <FiX className="w-5 h-5" />
             </button>
@@ -1639,8 +1639,8 @@ const AssignedMembersModal = ({
             {members.length === 0 ? (
               <div className="text-center py-12">
                 <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Members Yet</h3>
-                <p className="text-gray-500">Start by assigning users to this project</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Members Yet</h3>
+                <p className="text-gray-500 dark:text-gray-400">Start by assigning users to this project</p>
               </div>
             ) : (
               members.map((member, index) => (
@@ -1649,13 +1649,13 @@ const AssignedMembersModal = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-all"
+                  className="flex items-center justify-between p-4 border-2 border-gray-200 dark:border-slate-700 rounded-xl hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
                 >
                   <div className="flex items-center gap-3">
                     <Avatar user={member.users} size="md" />
                     <div>
-                      <p className="font-semibold text-gray-900">{member.users.name}</p>
-                      <p className="text-sm text-gray-500">{member.users.email}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{member.users.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{member.users.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -1668,7 +1668,7 @@ const AssignedMembersModal = ({
                     <button
                       onClick={() => onRemoveUser(member.user_id)}
                       disabled={loading}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
                       title="Remove from project"
                     >
                       {loading ? (
@@ -1686,7 +1686,7 @@ const AssignedMembersModal = ({
           <div className="flex gap-3 mt-6">
             <button
               onClick={onClose}
-              className="flex-auto px-4 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-auto px-4 py-3 border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
             >
               Close
             </button>
@@ -1721,7 +1721,7 @@ export default function ProjectsPage() {
   const [userProjectRoles, setUserProjectRoles] = useState({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
@@ -2326,7 +2326,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       {/* Main Layout Container */}
       <div className="flex h-screen">
         {/* Sidebar */}
@@ -2345,7 +2345,7 @@ export default function ProjectsPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header - StandupReports/LeaveCalendar Style */}
           {!activeProjectId && (
-            <div className="z-40 bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-lg p-4">
+            <div className="z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-lg p-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
                 {/* Left Section - Title */}
                 <div className="flex items-center gap-3">
@@ -2362,7 +2362,7 @@ export default function ProjectsPage() {
                     <FiFolder className="w-5 h-5" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900">
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                       Projects
                     </h1>
                   </div>
@@ -2371,24 +2371,24 @@ export default function ProjectsPage() {
                 {/* Right Section - Stats & Actions */}
                 <div className="flex items-center gap-3 md:gap-6">
                   {/* Stats with Info Icons */}
-                  <div className="hidden md:flex items-center gap-4 border-r border-gray-200 pr-4">
+                  <div className="hidden md:flex items-center gap-4 border-r border-gray-200 dark:border-slate-800 pr-4">
                     <div className="flex items-center gap-2 group cursor-help" title={`${stats.total} total projects`}>
-                      <div className="p-2 bg-slate-50 text-slate-600 rounded-full group-hover:bg-slate-100 transition-colors">
+                      <div className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full group-hover:bg-slate-100 dark:group-hover:bg-slate-700 transition-colors">
                         <FiFolder className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-800 leading-none">{stats.total}</span>
-                        <span className="text-[10px] text-gray-500 font-medium">Total</span>
+                        <span className="text-sm font-bold text-gray-800 dark:text-white leading-none">{stats.total}</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Total</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 group cursor-help" title={`${stats.active} active projects`}>
-                      <div className="p-2 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
+                      <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-full group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 transition-colors">
                         <FiTrendingUp className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-gray-800 leading-none">{stats.active}</span>
-                        <span className="text-[10px] text-gray-500 font-medium">Active</span>
+                        <span className="text-sm font-bold text-gray-800 dark:text-white leading-none">{stats.active}</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Active</span>
                       </div>
                     </div>
                   </div>
@@ -2407,7 +2407,7 @@ export default function ProjectsPage() {
 
                     <motion.button
                       onClick={fetchProjects}
-                      className="p-2.5 bg-white/50 hover:bg-white rounded-xl text-gray-600 transition-colors"
+                      className="p-2.5 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 rounded-xl text-gray-600 dark:text-gray-400 transition-colors"
                       title="Refresh"
                     >
                       <FiRefreshCw className={loading ? "animate-spin" : ""} />
@@ -2445,14 +2445,14 @@ export default function ProjectsPage() {
                   >
                     <div className="text-center max-w-md mx-auto">
                       <motion.div
-                        className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                        className="w-24 h-24 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6"
                         animate={{ scale: [1, 1.05, 1] }}
                         transition={{ duration: 3, repeat: Infinity }}
                       >
-                        <FiFolder className="w-12 h-12 text-gray-400" />
+                        <FiFolder className="w-12 h-12 text-gray-400 dark:text-gray-600" />
                       </motion.div>
-                      <h3 className="text-2xl font-bold text-gray-800 mb-3">No Projects Found</h3>
-                      <p className="text-gray-600 mb-6">
+                      <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">No Projects Found</h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-6">
                         {search ? 'Try adjusting your search terms' : 'You are not assigned to any projects yet.'}
                       </p>
                       {search && (

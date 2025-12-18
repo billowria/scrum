@@ -56,23 +56,23 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200"
+      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500/30"
     >
       {/* Compact Header */}
-      <div className="p-5 border-b border-indigo-100/50 bg-gradient-to-r from-indigo-50/30 via-white to-transparent">
+      <div className="p-5 border-b border-indigo-100/50 dark:border-slate-700 bg-gradient-to-r from-indigo-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-500/20">
               <FiBriefcase className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900 leading-tight">Projects</h3>
-              <p className="text-[11px] font-medium text-gray-500">{activeProjects.length} active</p>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Projects</h3>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{activeProjects.length} active</p>
             </div>
           </div>
           <button
             onClick={() => navigate('/projects')}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:text-indigo-600 transition-all"
           >
             <FiArrowRight className="w-4 h-4" />
           </button>
@@ -178,17 +178,18 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-200"
+      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-200 dark:hover:border-amber-500/30"
     >
       {/* Header */}
-      <div className="p-5 border-b border-amber-100/50 bg-gradient-to-r from-amber-50/30 via-white to-transparent">
+      {/* Header */}
+      <div className="p-5 border-b border-amber-100/50 dark:border-slate-700 bg-gradient-to-r from-amber-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-100 dark:border-amber-500/20">
               <FiTarget className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900 leading-tight">My Tasks</h3>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
               <p className="text-[11px] font-medium text-gray-500">
                 {incompleteTasks.length} pending
               </p>
@@ -196,7 +197,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
           </div>
           <button
             onClick={() => window.location.href = '/tasks'}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 hover:text-amber-600 transition-all"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 hover:text-amber-600 transition-all"
           >
             <FiArrowRight className="w-4 h-4" />
           </button>
@@ -310,10 +311,10 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200"
+      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-500/30"
     >
       {/* Header */}
-      <div className="p-5 border-b border-emerald-100/50 bg-gradient-to-r from-emerald-50/30 via-white to-transparent">
+      <div className="p-5 border-b border-emerald-100/50 dark:border-slate-700 bg-gradient-to-r from-emerald-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur opacity-20"></div>
@@ -322,8 +323,8 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 leading-tight">Analytics</h3>
-            <p className="text-[11px] font-medium text-gray-500">Monthly breakdown</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Analytics</h3>
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Monthly breakdown</p>
           </div>
         </div>
       </div>
@@ -520,21 +521,21 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-200"
+      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-200 dark:hover:border-purple-500/30"
     >
-      <div className="p-5 border-b border-purple-100/50 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white">
+      <div className="p-5 border-b border-purple-100/50 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white dark:from-slate-800/50 dark:to-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shadow-sm border border-purple-100">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-sm border border-purple-100 dark:border-purple-500/20">
             <FiUsers className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 leading-tight">Team Pulse</h3>
-            <p className="text-[11px] font-medium text-gray-500">{myTeamMembers.length} members</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Team Pulse</h3>
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{myTeamMembers.length} members</p>
           </div>
         </div>
         <button
           onClick={() => navigate('/team-management')}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 hover:text-purple-600 transition-all"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700 hover:text-purple-600 transition-all"
         >
           <FiArrowRight className="w-4 h-4" />
         </button>
@@ -583,7 +584,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
                     onClick={() => onAvatarClick?.(member.id)}
                   >
                     <div className="flex items-center gap-2">
-                      <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-purple-600 transition-colors">{member.name}</h4>
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{member.name}</h4>
                       {/* Missing Report Indicator - Expandable on hover */}
                       {hasMissingReport && (
                         <motion.div
@@ -992,7 +993,7 @@ const HeroActionTile = ({ action, index }) => {
       whileHover="hover"
       whileTap={{ scale: 0.98 }}
       onClick={action.onClick}
-      className={`group relative overflow-hidden p-6 rounded-3xl bg-white border border-gray-100 shadow-sm transition-all duration-300 text-left h-full flex flex-col justify-between ${style.hoverBg} ${style.hoverBorder}`}
+      className={`group relative overflow-hidden p-6 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm transition-all duration-300 text-left h-full flex flex-col justify-between ${style.hoverBg} dark:hover:bg-slate-700 ${style.hoverBorder} dark:hover:border-slate-600`}
     >
       <div className="flex justify-between items-start mb-4">
         {/* Animated Icon Container */}
@@ -1021,10 +1022,10 @@ const HeroActionTile = ({ action, index }) => {
       </div>
 
       <div className="relative z-10">
-        <h3 className={`text-lg font-bold text-gray-900 transition-colors duration-300 ${style.titleColor}`}>
+        <h3 className={`text-lg font-bold text-gray-900 dark:text-white transition-colors duration-300 ${style.titleColor}`}>
           {action.label}
         </h3>
-        <p className={`text-sm text-gray-500 mt-1 transition-colors duration-300 ${style.descColor}`}>
+        <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 transition-colors duration-300 ${style.descColor}`}>
           {action.desc}
         </p>
       </div>
@@ -1091,7 +1092,7 @@ const QuickActionsHero = ({ navigate, userRole }) => {
     }
   ];
 
-  if (userRole === 'manager') {
+  if (userRole === 'manager' || userRole === 'admin') {
     actions.splice(3, 0, {
       label: 'Manage Users',
       icon: FiUserPlus,
@@ -1457,7 +1458,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="p-8 max-w-[1800px] mx-auto min-h-screen bg-gray-50/30"
+      className="p-8 max-w-[1800px] mx-auto min-h-screen bg-gray-50/30 dark:bg-slate-900/10"
     >
       {/* Spacious Header */}
       <DashboardHeader
@@ -1479,8 +1480,8 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
       {/* Dashboard Section Header */}
       <div className="flex items-center gap-3 mb-6 px-2">
-        <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-        <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
+        <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
       </div>
 
       {/* Main Content Grid - 4 Equal Columns */}

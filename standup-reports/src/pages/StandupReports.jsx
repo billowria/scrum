@@ -152,7 +152,7 @@ function RichTextDisplay({ content, onTaskClick }) {
     );
 }
 
-export default function StandupReports() {
+export default function StandupReports({ sidebarMode }) {
     const navigate = useNavigate();
     const { currentCompany, loading: companyLoading } = useCompany();
 
@@ -489,11 +489,11 @@ export default function StandupReports() {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 relative overflow-hidden bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-pink-50/40"
+            className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 relative overflow-hidden bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-pink-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
         >
             {/* Ambient Background Orbs */}
-            <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-300/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-300/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-300/20 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-300/20 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             {/* Liquid Glass Header - Fixed Position */}
             <motion.div
@@ -503,13 +503,13 @@ export default function StandupReports() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 25 }}
                 style={{
-                    left: '80px',
-                    width: 'calc(100% - 80px)',
-                    transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+                    left: sidebarMode === 'expanded' ? '272px' : sidebarMode === 'collapsed' ? '100px' : '0px',
+                    width: sidebarMode === 'expanded' ? 'calc(100% - 272px)' : sidebarMode === 'collapsed' ? 'calc(100% - 100px)' : '100%',
+                    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
             >
                 <div
-                    className="pointer-events-auto relative overflow-hidden bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
+                    className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-slate-700/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
                     style={{
                         boxShadow: `
                             0 8px 32px 0 rgba(31, 38, 135, 0.15),
@@ -549,10 +549,10 @@ export default function StandupReports() {
                             </div>
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900 tracking-tight drop-shadow-sm">
+                            <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
                                 Standup Reports
                             </h1>
-                            <p className="text-xs font-medium text-gray-600 flex items-center gap-2">
+                            <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                                 {reportsViewMode === 'today' ? (
                                     <>
                                         <span className="relative flex h-2 w-2">
@@ -581,7 +581,7 @@ export default function StandupReports() {
                                 key={tab.id}
                                 className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${reportsViewMode === tab.id
                                     ? 'text-white shadow-lg'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/50'
                                     }`}
                                 onClick={() => setReportsViewMode(tab.id)}
                                 whileHover={{
@@ -641,7 +641,7 @@ export default function StandupReports() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleRefresh}
-                            className="p-2.5 text-gray-600 hover:text-indigo-600 hover:bg-white/50 rounded-xl transition-colors relative group"
+                            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl transition-colors relative group"
                         >
                             <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
                         </motion.button>
@@ -670,19 +670,19 @@ export default function StandupReports() {
                     {/* Navigation & Filters Bar */}
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         {reportsViewMode === 'history' && (
-                            <div className="flex items-center gap-3 bg-white/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/40 shadow-sm">
+                            <div className="flex items-center gap-3 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/40 dark:border-slate-700/50 shadow-sm">
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
                                     onClick={goToPreviousDay}
-                                    className="p-2 hover:bg-white/60 rounded-xl transition-colors text-indigo-600"
+                                    className="p-2 hover:bg-white/60 dark:hover:bg-slate-700/50 rounded-xl transition-colors text-indigo-600 dark:text-indigo-400"
                                 >
                                     <FiChevronLeft className="w-5 h-5" />
                                 </motion.button>
 
                                 <div className="px-4 flex flex-col items-center">
-                                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider opacity-60">Viewing</span>
-                                    <span className="font-bold text-gray-800">{format(new Date(date), 'MMM d, yyyy')}</span>
+                                    <span className="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-wider opacity-60">Viewing</span>
+                                    <span className="font-bold text-gray-800 dark:text-gray-200">{format(new Date(date), 'MMM d, yyyy')}</span>
                                 </div>
 
                                 <motion.button
@@ -690,7 +690,7 @@ export default function StandupReports() {
                                     whileTap={{ scale: 0.9 }}
                                     onClick={goToNextDay}
                                     disabled={isToday(new Date(date))}
-                                    className={`p-2 rounded-xl transition-colors ${isToday(new Date(date)) ? 'text-gray-400 cursor-not-allowed' : 'text-indigo-600 hover:bg-white/60'}`}
+                                    className={`p-2 rounded-xl transition-colors ${isToday(new Date(date)) ? 'text-gray-400 dark:text-slate-600 cursor-not-allowed' : 'text-indigo-600 dark:text-indigo-400 hover:bg-white/60 dark:hover:bg-slate-700/50'}`}
                                 >
                                     <FiChevronRight className="w-5 h-5" />
                                 </motion.button>
@@ -737,25 +737,25 @@ export default function StandupReports() {
                     {reportsViewMode === 'today' && stats && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
-                                { label: 'Reports', value: stats.totalReports, icon: FiFileText, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                                { label: 'Completion', value: `${stats.completionRate}%`, icon: FiCheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                                { label: 'Missing', value: stats.missingReports, icon: FiAlertCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
-                                { label: 'Active', value: stats.uniqueUsers, icon: FiUsers, color: 'text-amber-600', bg: 'bg-amber-50' },
+                                { label: 'Reports', value: stats.totalReports, icon: FiFileText, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+                                { label: 'Completion', value: `${stats.completionRate}%`, icon: FiCheckCircle, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                                { label: 'Missing', value: stats.missingReports, icon: FiAlertCircle, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+                                { label: 'Active', value: stats.uniqueUsers, icon: FiUsers, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
                             ].map((stat, i) => (
                                 <motion.div
                                     key={i}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.1 }}
-                                    className="bg-white/60 backdrop-blur-xl border border-white/60 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all"
+                                    className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all"
                                 >
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className={`p-2 rounded-xl ${stat.bg} ${stat.color}`}>
                                             <stat.icon className="w-4 h-4" />
                                         </div>
-                                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{stat.label}</span>
+                                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{stat.label}</span>
                                     </div>
-                                    <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                                    <div className="text-2xl font-black text-gray-900 dark:text-white">{stat.value}</div>
                                 </motion.div>
                             ))}
                         </div>
@@ -773,11 +773,11 @@ export default function StandupReports() {
                         </div>
                     ) : filteredReports.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-24 h-24 bg-gradient-to-tr from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                                <FiFileText className="w-10 h-10 text-gray-400" />
+                            <div className="w-24 h-24 bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                                <FiFileText className="w-10 h-10 text-gray-400 dark:text-gray-500" />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No Reports Found</h3>
-                            <p className="text-gray-500 max-w-md mx-auto">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Reports Found</h3>
+                            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
                                 It seems quiet here. {reportsViewMode === 'today' ? "Wait for the team to submit their updates." : "Try adjusting your filters."}
                             </p>
                         </div>
@@ -788,7 +788,7 @@ export default function StandupReports() {
                                     key={report.id}
                                     variants={itemVariants}
                                     whileHover={{ y: -5, scale: 1.01 }}
-                                    className="group relative bg-white/70 backdrop-blur-2xl rounded-[2rem] border border-white/50 shadow-lg overflow-hidden transition-all duration-300"
+                                    className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl rounded-[2rem] border border-white/50 dark:border-slate-700/50 shadow-lg overflow-hidden transition-all duration-300"
                                 >
                                     {/* Status Strip */}
                                     <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${report.blockers ? 'bg-gradient-to-b from-rose-500 to-red-600' :
@@ -811,9 +811,9 @@ export default function StandupReports() {
                                                     {isToday(new Date(report.created_at)) && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>}
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900 text-lg">{report.users?.name}</h3>
-                                                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 mt-1">
-                                                        <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-lg border border-indigo-100">
+                                                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">{report.users?.name}</h3>
+                                                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">
+                                                        <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
                                                             {report.users?.teams?.name || 'No Team'}
                                                         </span>
                                                         <span>•</span>
@@ -824,12 +824,11 @@ export default function StandupReports() {
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <motion.button
                                                 whileHover={{ scale: 1.1 }}
                                                 whileTap={{ scale: 0.9 }}
                                                 onClick={() => openFullscreenModal(index)}
-                                                className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-colors"
+                                                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700/50 rounded-xl transition-colors"
                                             >
                                                 <FiMaximize className="w-5 h-5" />
                                             </motion.button>
@@ -838,35 +837,35 @@ export default function StandupReports() {
                                         {/* Card Content Grid */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Yesterday */}
-                                            <div className="bg-white/50 rounded-2xl p-4 border border-white/60">
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                                            <div className="bg-white/50 dark:bg-slate-700/40 rounded-2xl p-4 border border-white/60 dark:border-slate-600/30">
+                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
                                                     Yesterday
                                                 </div>
-                                                <div className="prose prose-sm prose-indigo leading-snug text-gray-600 max-h-40 overflow-y-auto custom-scrollbar">
+                                                <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-600 dark:text-gray-300 max-h-40 overflow-y-auto custom-scrollbar">
                                                     <RichTextDisplay content={report.yesterday} />
                                                 </div>
                                             </div>
 
                                             {/* Today */}
-                                            <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-indigo-400 uppercase tracking-wider">
+                                            <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-4 border border-indigo-100/50 dark:border-indigo-500/20">
+                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                                                     Today
                                                 </div>
-                                                <div className="prose prose-sm prose-indigo leading-snug text-gray-700 max-h-40 overflow-y-auto custom-scrollbar">
+                                                <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
                                                     <RichTextDisplay content={report.today} />
                                                 </div>
                                             </div>
 
                                             {/* Blockers Row (Full Width if exists) */}
                                             {report.blockers && (
-                                                <div className="md:col-span-2 bg-rose-50/50 rounded-2xl p-4 border border-rose-100/50">
-                                                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-rose-500 uppercase tracking-wider">
+                                                <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-4 border border-rose-100/50 dark:border-rose-500/20">
+                                                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">
                                                         <FiAlertCircle className="w-3 h-3" />
                                                         Blockers
                                                     </div>
-                                                    <div className="prose prose-sm prose-rose leading-snug text-gray-700 max-h-40 overflow-y-auto custom-scrollbar">
+                                                    <div className="prose prose-sm prose-rose dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
                                                         <RichTextDisplay content={report.blockers} />
                                                     </div>
                                                 </div>
@@ -877,108 +876,106 @@ export default function StandupReports() {
                                     {/* Footer Gradient overlay on hover */}
                                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                                 </motion.div>
-                            ))}
+                            ))
+                            }
                         </div>
                     )}
                 </div>
+            </div>
 
-                {/* Fullscreen Modal Logic kept from original but wrapped in Portal if needed - simplified here to reuse existing state */}
+            {/* Fullscreen Modal Logic kept from original but wrapped in Portal if needed - simplified here to reuse existing state */}
 
-                {/* Fullscreen Modal - Re-implemented with Dark Glass */}
-                <AnimatePresence>
-                    {showFullscreenModal && filteredReports.length > 0 && (
+            {/* Fullscreen Modal - Re-implemented with Dark Glass */}
+            <AnimatePresence>
+                {showFullscreenModal && filteredReports.length > 0 && (
+                    <motion.div
+                        className="fixed inset-0 bg-gray-900/80 backdrop-blur-md z-[60] p-4 md:p-8 flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={closeFullscreenModal}
+                    >
                         <motion.div
-                            className="fixed inset-0 bg-gray-900/80 backdrop-blur-md z-[60] p-4 md:p-8 flex items-center justify-center"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={closeFullscreenModal}
+                            className="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl relative"
+                            onClick={e => e.stopPropagation()}
+                            layoutId={`report-${currentReportIndex}`}
                         >
-                            <motion.div
-                                className="w-full max-w-5xl bg-white rounded-3xl overflow-hidden shadow-2xl relative"
-                                onClick={e => e.stopPropagation()}
-                                layoutId={`report-${currentReportIndex}`}
-                            >
-                                {/* Modal Header */}
-                                <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                            {/* Modal Header */}
+                            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
 
-                                <div className="relative pt-12 px-8 pb-8">
-                                    <button
-                                        onClick={closeFullscreenModal}
-                                        className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors z-10"
-                                    >
-                                        <FiX className="w-6 h-6" />
-                                    </button>
+                            <div className="relative pt-12 px-8 pb-8">
+                                <button
+                                    onClick={closeFullscreenModal}
+                                    className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors z-10"
+                                >
+                                    <FiX className="w-6 h-6" />
+                                </button>
 
-                                    {/* User Avatar Badge */}
-                                    <div className="flex flex-col items-center mb-8">
-                                        <div className="w-24 h-24 rounded-3xl bg-white p-1 shadow-xl mb-4 transform -rotate-3">
-                                            {filteredReports[currentReportIndex].users?.avatar_url ? (
-                                                <img src={filteredReports[currentReportIndex].users.avatar_url} alt="" className="w-full h-full rounded-2xl object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl font-bold text-indigo-500">
-                                                    {filteredReports[currentReportIndex].users?.name?.[0]}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <h2 className="text-3xl font-black text-gray-900">{filteredReports[currentReportIndex].users?.name}</h2>
-                                        <p className="text-indigo-500 font-medium">{filteredReports[currentReportIndex].users?.teams?.name}</p>
-                                    </div>
-
-                                    {/* Content Grid */}
-                                    <div className="grid md:grid-cols-2 gap-8">
-                                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Yesterday</h3>
-                                            <div className="prose prose-indigo max-w-none text-gray-600">
-                                                <RichTextDisplay content={filteredReports[currentReportIndex].yesterday} />
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-indigo-50/50 rounded-2xl p-6 border border-indigo-100">
-                                            <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-4">Today</h3>
-                                            <div className="prose prose-indigo max-w-none text-gray-800">
-                                                <RichTextDisplay content={filteredReports[currentReportIndex].today} />
-                                            </div>
-                                        </div>
-                                        {filteredReports[currentReportIndex].blockers && (
-                                            <div className="md:col-span-2 bg-rose-50/50 rounded-2xl p-6 border border-rose-100">
-                                                <h3 className="text-sm font-bold text-rose-500 uppercase tracking-widest mb-4">Blockers</h3>
-                                                <div className="prose prose-rose max-w-none text-gray-800">
-                                                    <RichTextDisplay content={filteredReports[currentReportIndex].blockers} />
-                                                </div>
+                                {/* User Avatar Badge */}
+                                <div className="flex flex-col items-center mb-8">
+                                    <div className="w-24 h-24 rounded-3xl bg-white dark:bg-slate-800 p-1 shadow-xl mb-4 transform -rotate-3">
+                                        {filteredReports[currentReportIndex].users?.avatar_url ? (
+                                            <img src={filteredReports[currentReportIndex].users.avatar_url} alt="" className="w-full h-full rounded-2xl object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl font-bold text-indigo-500">
+                                                {filteredReports[currentReportIndex].users?.name?.[0]}
                                             </div>
                                         )}
                                     </div>
-
-                                    {/* Navigation */}
-                                    <div className="flex justify-between mt-8">
-                                        <button
-                                            onClick={prevReport}
-                                            disabled={currentReportIndex === 0}
-                                            className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold disabled:opacity-50 hover:bg-gray-200 transition-colors"
-                                        >
-                                            Previous
-                                        </button>
-                                        <span className="flex items-center text-sm font-mono text-gray-400">
-                                            {currentReportIndex + 1} / {filteredReports.length}
-                                        </span>
-                                        <button
-                                            onClick={nextReport}
-                                            disabled={currentReportIndex === filteredReports.length - 1}
-                                            className="px-6 py-3 rounded-xl bg-gray-900 text-white font-bold disabled:opacity-50 hover:bg-black transition-colors"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
+                                    <h2 className="text-3xl font-black text-gray-900 dark:text-white">{filteredReports[currentReportIndex].users?.name}</h2>
+                                    <p className="text-indigo-500 dark:text-indigo-400 font-medium">{filteredReports[currentReportIndex].users?.teams?.name}</p>
                                 </div>
-                            </motion.div>
+
+                                {/* Content Grid */}
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-gray-100 dark:border-slate-700/50">
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Yesterday</h3>
+                                        <div className="prose prose-indigo dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
+                                            <RichTextDisplay content={filteredReports[currentReportIndex].yesterday} />
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-500/20">
+                                        <h3 className="text-sm font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-widest mb-4">Today</h3>
+                                        <div className="prose prose-indigo dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
+                                            <RichTextDisplay content={filteredReports[currentReportIndex].today} />
+                                        </div>
+                                    </div>
+                                    {filteredReports[currentReportIndex].blockers && (
+                                        <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-6 border border-rose-100 dark:border-rose-500/20">
+                                            <h3 className="text-sm font-bold text-rose-500 dark:text-rose-400 uppercase tracking-widest mb-4">Blockers</h3>
+                                            <div className="prose prose-rose dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
+                                                <RichTextDisplay content={filteredReports[currentReportIndex].blockers} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Navigation */}
+                                <div className="flex justify-between mt-8">
+                                    <button
+                                        onClick={prevReport}
+                                        disabled={currentReportIndex === 0}
+                                        className="px-6 py-3 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 font-bold disabled:opacity-50 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        Previous
+                                    </button>
+                                    <span className="flex items-center text-sm font-mono text-gray-400">
+                                        {currentReportIndex + 1} / {filteredReports.length}
+                                    </span>
+                                    <button
+                                        onClick={nextReport}
+                                        disabled={currentReportIndex === filteredReports.length - 1}
+                                        className="px-6 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold disabled:opacity-50 hover:bg-black dark:hover:bg-gray-100 transition-colors"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
                         </motion.div>
-                    )}
-                </AnimatePresence>
-
-            </div>
-
-
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* User Profile Modal */}
             <UserProfileInfoModal
@@ -986,7 +983,7 @@ export default function StandupReports() {
                 onClose={() => setSelectedUserProfileId(null)}
                 userId={selectedUserProfileId}
             />
-        </motion.div >
+        </motion.div>
 
     );
 }

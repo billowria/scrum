@@ -36,32 +36,32 @@ const ProjectHeader = ({
     };
 
     return (
-        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-30 flex items-center justify-between px-4 transition-all duration-200 shadow-sm">
+        <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/10 sticky top-0 z-30 flex items-center justify-between px-4 transition-all duration-200 shadow-sm">
             {/* Left: Sidebar Toggle and Back Link */}
             <div className="flex items-center gap-3 w-1/3">
                 <button
                     onClick={onToggleSidebar}
-                    className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100/50 rounded-lg transition-colors"
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                     title={sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
                 >
                     <FiSidebar className="w-5 h-5" />
                 </button>
 
-                <div className="h-4 w-px bg-gray-200 mx-1" />
+                <div className="h-4 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
 
                 <button
                     onClick={goBackToProjectList}
-                    className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all flex items-center gap-2"
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all flex items-center gap-2"
                     title="Back to Projects"
                 >
                     <FiArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline text-sm text-gray-500">Projects</span>
+                    <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">Projects</span>
                 </button>
             </div>
 
             {/* Center: Project Name */}
             <div className="flex items-center justify-center w-1/3">
-                <h1 className="text-lg md:text-xl font-bold text-gray-800 truncate max-w-[200px] md:max-w-md text-center tracking-tight">
+                <h1 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white truncate max-w-[200px] md:max-w-md text-center tracking-tight">
                     {projectName}
                 </h1>
             </div>
@@ -72,7 +72,7 @@ const ProjectHeader = ({
                     onClick={toggleEditMode}
                     className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${editMode
                         ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800'
                         }`}
                 >
                     {editMode ? (
@@ -88,11 +88,11 @@ const ProjectHeader = ({
                     )}
                 </button>
 
-                <div className="h-4 w-px bg-gray-200 mx-1" />
+                <div className="h-4 w-px bg-gray-200 dark:bg-slate-700 mx-1" />
 
                 <button
                     onClick={onToggleActivity}
-                    className="relative p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all group"
+                    className="relative p-2.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-all group"
                     title="Activity Feed"
                 >
                     <FiActivity className="w-5 h-5" />
@@ -104,7 +104,7 @@ const ProjectHeader = ({
                 </button>
 
                 {currentUser && (
-                    <div className="ml-2 pl-2 border-l border-gray-200">
+                    <div className="ml-2 pl-2 border-l border-gray-200 dark:border-slate-700">
                         <Avatar user={currentUser} size="xs" />
                     </div>
                 )}

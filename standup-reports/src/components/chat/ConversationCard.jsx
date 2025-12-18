@@ -194,8 +194,8 @@ const ConversationCard = ({
         className={`
           relative p-3 rounded-2xl cursor-pointer transition-all duration-300
           ${isActive
-            ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-black/5'
-            : 'bg-white/40 hover:bg-white hover:shadow-lg backdrop-blur-sm hover:ring-1 hover:ring-black/5 border border-transparent hover:border-white/50'
+            ? 'bg-white dark:bg-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-slate-900/50 ring-1 ring-black/5 dark:ring-slate-700'
+            : 'bg-white/40 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:shadow-lg backdrop-blur-sm hover:ring-1 hover:ring-black/5 dark:hover:ring-slate-700 border border-transparent hover:border-white/50 dark:hover:border-slate-700'
           }
         `}
       >
@@ -233,7 +233,7 @@ const ConversationCard = ({
           {/* Content Area */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-0.5">
-              <h3 className={`font-bold truncate text-sm flex items-center gap-1.5 ${isActive ? 'text-gray-900' : 'text-gray-700'}`}>
+              <h3 className={`font-bold truncate text-sm flex items-center gap-1.5 ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                 {getConversationName()}
                 {isPinned && <FiBookmark className="w-3 h-3 text-indigo-500 fill-current" />}
                 {isMuted && <FiVolumeX className="w-3 h-3 text-gray-400" />}
@@ -244,7 +244,7 @@ const ConversationCard = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <p className={`text-xs truncate max-w-[140px] ${isActive ? 'text-gray-600' : 'text-gray-500'}`}>
+              <p className={`text-xs truncate max-w-[140px] ${isActive ? 'text-gray-600 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 {conversation.isTyping ? (
                   <span className="text-indigo-500 font-medium animate-pulse">Typing...</span>
                 ) : (
@@ -264,7 +264,7 @@ const ConversationCard = ({
             e.stopPropagation();
             setShowDropdown(!showDropdown);
           }}
-          className={`p-1.5 rounded-full shadow-sm backdrop-blur-md border border-white/50 transition-colors ${showDropdown ? 'bg-gray-100 text-gray-900 opacity-100' : 'bg-white/80 text-gray-500 hover:text-indigo-600 hover:bg-white'
+          className={`p-1.5 rounded-full shadow-sm backdrop-blur-md border border-white/50 dark:border-slate-700 transition-colors ${showDropdown ? 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white opacity-100' : 'bg-white/80 dark:bg-slate-800/80 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700'
             }`}
         >
           <FiMoreVertical className="w-3.5 h-3.5" />
@@ -278,17 +278,17 @@ const ConversationCard = ({
               animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 top-8 w-40 bg-white/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/50 z-50 overflow-hidden"
+              className="absolute right-0 top-8 w-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/50 dark:border-slate-700 z-50 overflow-hidden"
             >
               <div className="p-1">
-                <button onClick={() => handleAction('pin')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors">
+                <button onClick={() => handleAction('pin')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors">
                   <FiBookmark className="w-3.5 h-3.5" /> {isPinned ? 'Unpin' : 'Pin'}
                 </button>
-                <button onClick={() => handleAction('mute')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors">
+                <button onClick={() => handleAction('mute')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors">
                   {isMuted ? <FiVolume2 className="w-3.5 h-3.5" /> : <FiVolumeX className="w-3.5 h-3.5" />} {isMuted ? 'Unmute' : 'Mute'}
                 </button>
-                <div className="h-px bg-gray-200/50 my-1" />
-                <button onClick={() => handleAction('archive')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <div className="h-px bg-gray-200/50 dark:bg-slate-700 my-1" />
+                <button onClick={() => handleAction('archive')} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
                   <FiArchive className="w-3.5 h-3.5" /> Archive
                 </button>
               </div>

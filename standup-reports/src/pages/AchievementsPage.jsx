@@ -379,7 +379,7 @@ const AchievementsPage = () => {
           <h1 className="text-3xl font-bold text-center sm:text-left font-display bg-gradient-to-r from-primary-700 to-primary-500 bg-clip-text text-transparent mb-2">
             Achievement Tracking
           </h1>
-          <p className="text-gray-600 text-center sm:text-left">
+          <p className="text-gray-600 dark:text-gray-400 text-center sm:text-left">
             Celebrating our team's successes and milestones
           </p>
         </div>
@@ -399,7 +399,7 @@ const AchievementsPage = () => {
       </motion.div>
 
       <motion.div
-        className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8"
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 overflow-hidden mb-8"
         initial={{ opacity: 0, y: 30 }}
         animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
         transition={{ duration: 0.5 }}
@@ -474,14 +474,14 @@ const AchievementsPage = () => {
         </div>
 
         {/* Search and filter toolbar */}
-        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-3 items-center justify-between">
+        <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex flex-wrap gap-3 items-center justify-between">
           <div className="relative flex-grow max-w-md">
             <input
               type="text"
               placeholder="Search achievements..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-purple-500 focus:border-purple-500"
             />
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
@@ -490,7 +490,7 @@ const AchievementsPage = () => {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg py-2 pl-10 pr-8 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+              className="appearance-none bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-lg py-2 pl-10 pr-8 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
             >
               {awardTypeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -637,26 +637,26 @@ const AchievementsPage = () => {
                     <div className="flex h-full">
                       {/* Left colored bar */}
                       <div className={`w-2 ${achievement.award_type === 'recognition' ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
-                          achievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
-                            achievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
-                              achievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
-                                achievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
-                                  achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
-                                    achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
-                                      'bg-gradient-to-br from-primary-500 to-primary-600'
+                        achievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
+                          achievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
+                            achievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                              achievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
+                                achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
+                                  achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
+                                    'bg-gradient-to-br from-primary-500 to-primary-600'
                         }`} />
                       {/* Main content */}
                       <div className="p-4 flex-1 flex flex-col justify-between overflow-hidden">
                         <div className="flex items-start">
                           {/* Icon */}
                           <div className={`h-10 w-10 shrink-0 rounded-full ${achievement.award_type === 'recognition' ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
-                              achievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
-                                achievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
-                                  achievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
-                                    achievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
-                                      achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
-                                        achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
-                                          'bg-gradient-to-br from-primary-500 to-primary-600'
+                            achievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
+                              achievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
+                                achievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                                  achievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
+                                    achievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
+                                      achievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
+                                        'bg-gradient-to-br from-primary-500 to-primary-600'
                             } text-white flex items-center justify-center mr-3 relative`}>
                             {achievement.award_type === 'recognition' ? <FiStar /> :
                               achievement.award_type === 'performance' ? <FiTrendingUp /> :
@@ -767,25 +767,25 @@ const AchievementsPage = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className={`h-2 w-full ${expandedAchievement.award_type === 'recognition' ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
-                  expandedAchievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
-                    expandedAchievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
-                      expandedAchievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
-                        expandedAchievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
-                          expandedAchievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
-                            expandedAchievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
-                              'bg-gradient-to-br from-primary-500 to-primary-600'
+                expandedAchievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
+                  expandedAchievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
+                    expandedAchievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                      expandedAchievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
+                        expandedAchievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
+                          expandedAchievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
+                            'bg-gradient-to-br from-primary-500 to-primary-600'
                 }`}></div>
 
               <div className="p-6">
                 <div className="flex mb-4">
                   <div className={`h-12 w-12 rounded-full ${expandedAchievement.award_type === 'recognition' ? 'bg-gradient-to-br from-purple-500 to-purple-600' :
-                      expandedAchievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
-                        expandedAchievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
-                          expandedAchievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
-                            expandedAchievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
-                              expandedAchievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
-                                expandedAchievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
-                                  'bg-gradient-to-br from-primary-500 to-primary-600'
+                    expandedAchievement.award_type === 'performance' ? 'bg-gradient-to-br from-indigo-500 to-indigo-600' :
+                      expandedAchievement.award_type === 'milestone' ? 'bg-gradient-to-br from-amber-500 to-amber-600' :
+                        expandedAchievement.award_type === 'teamwork' ? 'bg-gradient-to-br from-blue-500 to-blue-600' :
+                          expandedAchievement.award_type === 'technical' ? 'bg-gradient-to-br from-gray-700 to-gray-800' :
+                            expandedAchievement.award_type === 'certificate' ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' :
+                              expandedAchievement.award_type === 'special' ? 'bg-gradient-to-br from-pink-500 to-pink-600' :
+                                'bg-gradient-to-br from-primary-500 to-primary-600'
                     } text-white flex items-center justify-center mr-4 shrink-0`}>
                     {expandedAchievement.award_type === 'recognition' ? <FiStar /> :
                       expandedAchievement.award_type === 'performance' ? <FiTrendingUp /> :

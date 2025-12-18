@@ -9,12 +9,12 @@ import NotificationDetailModal from './notifications/NotificationDetailModal';
 
 // Enhanced animation variants
 const bellVariants = {
-  idle: { 
-    rotate: 0 
+  idle: {
+    rotate: 0
   },
-  hover: { 
+  hover: {
     rotate: [0, -10, 10, -5, 5, 0],
-    transition: { 
+    transition: {
       duration: 0.6,
       ease: "easeInOut"
     }
@@ -22,7 +22,7 @@ const bellVariants = {
   ring: {
     rotate: [0, -15, 15, -10, 10, -5, 5, 0],
     scale: [1, 1.1, 1],
-    transition: { 
+    transition: {
       duration: 0.8,
       ease: "easeInOut",
       times: [0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 1]
@@ -32,9 +32,9 @@ const bellVariants = {
 
 const dotVariants = {
   hidden: { scale: 0 },
-  visible: { 
+  visible: {
     scale: 1,
-    transition: { 
+    transition: {
       type: "spring",
       stiffness: 500,
       damping: 30
@@ -51,50 +51,50 @@ const dotVariants = {
 };
 
 const dropdownVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: -20, 
+  hidden: {
+    opacity: 0,
+    y: -20,
     scale: 0.95,
-    transformOrigin: "top right" 
+    transformOrigin: "top right"
   },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     scale: 1,
-    transition: { 
-      type: "spring", 
-      stiffness: 400, 
-      damping: 25 
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25
     }
   },
-  exit: { 
-    opacity: 0, 
-    y: -10, 
+  exit: {
+    opacity: 0,
+    y: -10,
     scale: 0.95,
-    transition: { 
+    transition: {
       duration: 0.2,
       ease: "easeInOut"
-    } 
+    }
   }
 };
 
 const notificationItemVariants = {
-  hidden: { 
-    opacity: 0, 
-    x: -20 
+  hidden: {
+    opacity: 0,
+    x: -20
   },
-  visible: (i) => ({ 
-    opacity: 1, 
+  visible: (i) => ({
+    opacity: 1,
     x: 0,
-    transition: { 
+    transition: {
       delay: i * 0.1,
       type: "spring",
       stiffness: 400,
       damping: 25
     }
   }),
-  exit: { 
-    opacity: 0, 
+  exit: {
+    opacity: 0,
     x: 20,
     transition: {
       duration: 0.2
@@ -102,6 +102,15 @@ const notificationItemVariants = {
   },
   hover: {
     backgroundColor: "rgba(243, 244, 246, 0.8)",
+    y: -2,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25
+    }
+  },
+  darkHover: {
+    backgroundColor: "rgba(30, 41, 59, 0.8)",
     y: -2,
     transition: {
       type: "spring",
@@ -154,26 +163,26 @@ const NotificationBell = ({ userRole }) => {
         setCurrentUserId(data.user.id);
       }
     };
-    
+
     getCurrentUser();
     fetchNotifications();
-    
+
     // Subscribe to new leave requests
     const leaveRequestsSubscription = supabase
       .channel('leave_requests_changes')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'leave_plans' 
-        }, 
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leave_plans'
+        },
         (payload) => {
           console.log('New leave request received!', payload);
           fetchNotifications();
         }
       )
       .subscribe();
-      
+
     // Subscribe to new announcements
     const announcementsSubscription = supabase
       .channel('announcements_changes')
@@ -465,7 +474,7 @@ const NotificationBell = ({ userRole }) => {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
   };
-  
+
   const handleLeaveAction = async (leaveId, action) => {
     setProcessingLeaveRequest(leaveId);
     try {
@@ -474,12 +483,12 @@ const NotificationBell = ({ userRole }) => {
         .from('leave_plans')
         .update({ status: action })
         .eq('id', leaveId);
-        
+
       if (error) throw error;
-      
+
       // Remove from notifications
       handleDismiss(`leave-${leaveId}`);
-      
+
       // Show toast or other feedback (you could add this)
       console.log(`Leave request ${action}`);
     } catch (error) {
@@ -492,7 +501,7 @@ const NotificationBell = ({ userRole }) => {
   return (
     <div className="relative">
       <motion.button
-        className="relative p-2 text-gray-600 hover:text-primary-600 transition-colors"
+        className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors bg-gray-100 dark:bg-slate-800 rounded-full"
         onClick={() => setShowDropdown(!showDropdown)}
         whileHover="hover"
         whileTap="tap"
@@ -522,20 +531,20 @@ const NotificationBell = ({ userRole }) => {
               exit={{ opacity: 0 }}
               onClick={() => setShowDropdown(false)}
             />
-            
+
             <motion.div
-              className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl dark:shadow-slate-950/80 border border-gray-200 dark:border-slate-800 z-50 overflow-hidden"
               variants={dropdownVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               ref={dropdownRef}
             >
-              <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-primary-50 to-white flex justify-between items-center">
-                <h3 className="font-semibold text-gray-800">Notifications</h3>
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-gradient-to-r from-primary-50 to-white dark:from-slate-800 dark:to-slate-900 flex justify-between items-center">
+                <h3 className="font-semibold text-gray-800 dark:text-white">Notifications</h3>
                 {notifications.length > 0 && (
                   <button
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
                     onClick={() => {
                       setNotifications([]);
                       setUnreadCount(0);
@@ -548,12 +557,12 @@ const NotificationBell = ({ userRole }) => {
 
               <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
                 {notifications.filter(n => !n.read).length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    <FiBell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    <p>No new notifications</p>
+                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                    <FiBell className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-slate-700" />
+                    <p className="text-sm">No new notifications</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-slate-800">
                     {notifications.filter(n => !n.read).map((notification, index) => (
                       <motion.div
                         key={notification.id}
@@ -569,16 +578,16 @@ const NotificationBell = ({ userRole }) => {
                           <div className="p-4">
                             <div className="flex items-start gap-3">
                               <div className="mt-1">
-                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center">
+                                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
                                   <FiCalendar className="w-5 h-5" />
                                 </div>
                               </div>
 
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between">
-                                  <p className="font-medium text-gray-900">{notification.title}</p>
+                                  <p className="font-medium text-gray-900 dark:text-white">{notification.title}</p>
                                   <button
-                                    className="p-1 text-gray-400 hover:text-gray-600"
+                                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDismiss(notification.id);
@@ -588,15 +597,15 @@ const NotificationBell = ({ userRole }) => {
                                   </button>
                                 </div>
 
-                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
 
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                   {notification.data.users?.teams?.name && (
-                                    <span className="px-2 py-0.5 bg-gray-100 text-xs font-medium rounded-full text-gray-600">
+                                    <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-xs font-medium rounded-full text-gray-600 dark:text-gray-400">
                                       {notification.data.users.teams.name}
                                     </span>
                                   )}
-                                  <span className="text-xs text-gray-400">
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">
                                     {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
                                   </span>
                                 </div>
@@ -604,7 +613,7 @@ const NotificationBell = ({ userRole }) => {
                                 {/* Quick actions for leave requests */}
                                 <div className="flex gap-2 mt-3">
                                   <motion.button
-                                    className="px-3 py-1.5 rounded-md bg-green-100 text-green-700 text-xs font-medium flex items-center gap-1 hover:bg-green-200 transition-colors disabled:opacity-50"
+                                    className="px-3 py-1.5 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium flex items-center gap-1 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:opacity-50"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={(e) => {
@@ -622,7 +631,7 @@ const NotificationBell = ({ userRole }) => {
                                   </motion.button>
 
                                   <motion.button
-                                    className="px-3 py-1.5 rounded-md bg-red-100 text-red-700 text-xs font-medium flex items-center gap-1 hover:bg-red-200 transition-colors disabled:opacity-50"
+                                    className="px-3 py-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={(e) => {
@@ -640,7 +649,7 @@ const NotificationBell = ({ userRole }) => {
                                   </motion.button>
 
                                   <motion.button
-                                    className="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 text-xs font-medium flex items-center gap-1 hover:bg-gray-200 transition-colors ml-auto"
+                                    className="px-3 py-1.5 rounded-md bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs font-medium flex items-center gap-1 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ml-auto"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={() => handleNotificationClick(notification)}
@@ -652,24 +661,24 @@ const NotificationBell = ({ userRole }) => {
                             </div>
                           </div>
                         ) : (
-                          <div 
-                            className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                          <div
+                            className="p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                             onClick={() => handleNotificationClick(notification)}
                           >
                             <div className="flex items-start gap-3">
                               <div className="mt-1">
                                 {notification.type === 'announcement' ? (
-                                  <FiMessageCircle className="w-5 h-5 text-primary-500" />
+                                  <FiMessageCircle className="w-5 h-5 text-primary-500 dark:text-primary-400" />
                                 ) : (
-                                  <FiBell className="w-5 h-5 text-primary-500" />
+                                  <FiBell className="w-5 h-5 text-primary-500 dark:text-primary-400" />
                                 )}
                               </div>
-                              
+
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between">
-                                  <p className="font-medium text-gray-900">{notification.title}</p>
+                                  <p className="font-medium text-gray-900 dark:text-white">{notification.title}</p>
                                   <button
-                                    className="p-1 text-gray-400 hover:text-gray-600"
+                                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleDismiss(notification.id);
@@ -678,8 +687,8 @@ const NotificationBell = ({ userRole }) => {
                                     <FiX className="w-4 h-4" />
                                   </button>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                                <p className="text-xs text-gray-400 mt-1">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                                   {format(parseISO(notification.created_at), 'MMM dd, h:mm a')}
                                 </p>
                               </div>
@@ -693,9 +702,9 @@ const NotificationBell = ({ userRole }) => {
               </div>
 
               {/* Footer link to full page */}
-              <div className="border-t border-gray-200">
+              <div className="border-t border-gray-200 dark:border-slate-800">
                 <button
-                  className="w-full text-center px-4 py-3 text-primary-600 font-semibold hover:bg-gray-50 transition-colors"
+                  className="w-full text-center px-4 py-3 text-primary-600 dark:text-primary-400 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                   onClick={() => { navigate('/notifications'); setShowDropdown(false); }}
                 >
                   Go to Notification Page

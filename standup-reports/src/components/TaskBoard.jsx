@@ -50,49 +50,49 @@ const statusColumns = [
     id: 'To Do',
     label: 'To Do',
     color: 'gray',
-    bgColor: 'bg-gradient-to-br from-gray-50/80 to-gray-100/80',
-    borderColor: 'border-gray-200/60',
-    textColor: 'text-gray-700',
+    bgColor: 'bg-gradient-to-br from-gray-50/80 to-gray-100/80 dark:from-slate-900/80 dark:to-slate-950/80',
+    borderColor: 'border-gray-200/60 dark:border-slate-800/60',
+    textColor: 'text-gray-700 dark:text-gray-300',
     icon: FiClock,
     gradient: 'from-gray-400 to-gray-600',
-    glassColor: 'bg-gray-500/10',
-    accentColor: 'bg-gray-500/20'
+    glassColor: 'bg-gray-500/10 dark:bg-slate-400/5',
+    accentColor: 'bg-gray-500/20 dark:bg-slate-400/10'
   },
   {
     id: 'In Progress',
     label: 'In Progress',
     color: 'blue',
-    bgColor: 'bg-gradient-to-br from-blue-50/80 to-indigo-100/80',
-    borderColor: 'border-blue-200/60',
-    textColor: 'text-blue-700',
+    bgColor: 'bg-gradient-to-br from-blue-50/80 to-indigo-100/80 dark:from-blue-900/20 dark:to-indigo-900/20',
+    borderColor: 'border-blue-200/60 dark:border-blue-800/60',
+    textColor: 'text-blue-700 dark:text-blue-300',
     icon: FiTrendingUp,
     gradient: 'from-blue-400 to-indigo-600',
-    glassColor: 'bg-blue-500/10',
-    accentColor: 'bg-blue-500/20'
+    glassColor: 'bg-blue-500/10 dark:bg-blue-400/5',
+    accentColor: 'bg-blue-500/20 dark:bg-blue-400/10'
   },
   {
     id: 'Review',
     label: 'Review',
     color: 'amber',
-    bgColor: 'bg-gradient-to-br from-amber-50/80 to-orange-100/80',
-    borderColor: 'border-amber-200/60',
-    textColor: 'text-amber-700',
+    bgColor: 'bg-gradient-to-br from-amber-50/80 to-orange-100/80 dark:from-amber-900/20 dark:to-orange-900/20',
+    borderColor: 'border-amber-200/60 dark:border-amber-800/60',
+    textColor: 'text-amber-700 dark:text-amber-300',
     icon: FiAlertCircle,
     gradient: 'from-amber-400 to-orange-600',
-    glassColor: 'bg-amber-500/10',
-    accentColor: 'bg-amber-500/20'
+    glassColor: 'bg-amber-500/10 dark:bg-amber-400/5',
+    accentColor: 'bg-amber-500/20 dark:bg-amber-400/10'
   },
   {
     id: 'Completed',
     label: 'Completed',
     color: 'green',
-    bgColor: 'bg-gradient-to-br from-green-50/80 to-emerald-100/80',
-    borderColor: 'border-green-200/60',
-    textColor: 'text-green-700',
+    bgColor: 'bg-gradient-to-br from-green-50/80 to-emerald-100/80 dark:from-green-900/20 dark:to-emerald-900/20',
+    borderColor: 'border-green-200/60 dark:border-green-800/60',
+    textColor: 'text-green-700 dark:text-green-300',
     icon: FiCheckCircle,
     gradient: 'from-green-400 to-emerald-600',
-    glassColor: 'bg-green-500/10',
-    accentColor: 'bg-green-500/20'
+    glassColor: 'bg-green-500/10 dark:bg-green-400/5',
+    accentColor: 'bg-green-500/20 dark:bg-green-400/10'
   }
 ];
 
@@ -143,7 +143,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
           background: column.bgColor,
           boxShadow: isOver
             ? `0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px ${column.glassColor}`
-            : '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.1)'
+            : '0 8px 32px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.05)'
         }}
         whileHover={{
           y: -4,
@@ -161,7 +161,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
                 <h3 className={`font-bold text-lg ${column.textColor}`}>
                   {column.label}
                 </h3>
-                <p className="text-xs text-gray-500 font-medium">
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                   {columnTasks.length} task{columnTasks.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -175,7 +175,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="px-2 py-1 bg-red-100/80 text-red-700 rounded-full text-xs font-medium backdrop-blur-sm"
+                  className="px-2 py-1 bg-red-100/80 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-xs font-medium backdrop-blur-sm"
                 >
                   {overdueTasks.length} overdue
                 </motion.div>
@@ -195,10 +195,10 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
 
           {/* Column Stats */}
           <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-600 font-medium">{columnProgress.toFixed(0)}% of total</span>
+            <span className="text-gray-600 dark:text-gray-400 font-medium">{columnProgress.toFixed(0)}% of total</span>
             <div className="flex items-center space-x-2">
               <FiTrendingUp className="w-3 h-3 text-gray-400" />
-              <span className="text-gray-500 font-medium">
+              <span className="text-gray-500 dark:text-gray-400 font-medium">
                 {columnTasks.length} / {totalTasks}
               </span>
             </div>
@@ -241,12 +241,12 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center py-8 px-4 mx-2 my-4 rounded-xl bg-gradient-to-br from-gray-50/50 to-gray-100/50 border border-gray-200/50"
+              className="flex flex-col items-center justify-center py-8 px-4 mx-2 my-4 rounded-xl bg-gradient-to-br from-gray-50/50 to-gray-100/50 dark:from-slate-800/20 dark:to-slate-900/20 border border-gray-200/50 dark:border-slate-700/30"
             >
               <div className={`w-16 h-16 ${column.glassColor} rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm shadow-lg`}>
-                <ColumnIcon className="w-8 h-8" />
+                <ColumnIcon className="w-8 h-8 dark:text-gray-300" />
               </div>
-              <p className="text-sm font-medium mb-2 text-gray-700">No tasks in {column.label}</p>
+              <p className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">No tasks in {column.label}</p>
               {tasks.length > 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -254,10 +254,10 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
                   transition={{ delay: 0.2 }}
                   className="text-center"
                 >
-                  <p className="text-xs text-gray-500 mb-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     Tasks are available but none match the current filters
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     Try adjusting your filters or drag tasks here
                   </p>
                 </motion.div>
@@ -303,9 +303,17 @@ function TaskBoard({
   projects = [],
   getStatusConfig = () => ({}),
   onClearAllFilters = null,
-  onOpenSprintManagement = () => { }
+  onOpenSprintManagement = () => { },
+  displayMode: externalDisplayMode,
+  setDisplayMode: setExternalDisplayMode,
+  hideInternalControls = false
 }) {
-  const [displayMode, setDisplayMode] = useState('board'); // 'board' or 'list'
+  const [internalDisplayMode, setInternalDisplayMode] = useState('board'); // 'board' or 'list'
+
+  // Use external display mode if provided, otherwise fallback to local
+  const displayMode = externalDisplayMode || internalDisplayMode;
+  const setDisplayMode = setExternalDisplayMode || setInternalDisplayMode;
+
   const [activeId, setActiveId] = useState(null);
   const [showStats, setShowStats] = useState(true);
   const [showFilters, setShowFilters] = useState(true); // Filter visibility state
@@ -554,565 +562,569 @@ function TaskBoard({
   return (
     <div className="mt-8 space-y-4">
       {/* FILTERS SECTION - Hideable */}
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ height: 0, opacity: 0, marginBottom: 0 }}
-            animate={{ height: 'auto', opacity: 1, marginBottom: '1rem' }}
-            exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="relative z-20"
-          >
-            <div className="bg-gradient-to-r from-white via-blue-50/20 to-purple-50/20 backdrop-blur-md rounded-2xl border border-gray-200/60 shadow-md hover:shadow-lg transition-all duration-300">
-              <div className="p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Filter Label */}
-                  <div className="flex items-center gap-2 mr-2">
-                    <FiFilter className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-semibold text-gray-700">Filters:</span>
-                  </div>
+      {!hideInternalControls && (
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginBottom: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginBottom: '1rem' }}
+              exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="relative z-20"
+            >
+              <div className="bg-gradient-to-r from-white via-blue-50/20 to-purple-50/20 dark:from-slate-900/50 dark:via-slate-800/20 dark:to-slate-900/50 backdrop-blur-md rounded-2xl border border-gray-200/60 dark:border-slate-700/50 shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Filter Label */}
+                    <div className="flex items-center gap-2 mr-2">
+                      <FiFilter className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filters:</span>
+                    </div>
 
-                  {/* Project Filter Dropdown */}
-                  <div className="relative" ref={projectDropdownRef}>
-                    <motion.button
-                      onClick={() => {
-                        setShowProjectDropdown(!showProjectDropdown);
-                        setShowStatusDropdown(false);
-                        setShowSprintDropdown(false);
-                        setShowAssigneeDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${selectedProjectId !== 'all'
-                        ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 border-2 border-indigo-200 shadow-indigo-100'
-                        : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-indigo-50 hover:to-indigo-100 hover:border-indigo-200'
-                        }`}
-                    >
-                      <FiFolder className="w-4 h-4" />
-                      <span>
-                        {selectedProjectId === 'all'
-                          ? 'Project'
-                          : projects.find(p => p.id === selectedProjectId)?.name || 'Project'
-                        }
-                      </span>
-                      <motion.div
-                        animate={{ rotate: showProjectDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
+                    {/* Project Filter Dropdown */}
+                    <div className="relative" ref={projectDropdownRef}>
+                      <motion.button
+                        onClick={() => {
+                          setShowProjectDropdown(!showProjectDropdown);
+                          setShowStatusDropdown(false);
+                          setShowSprintDropdown(false);
+                          setShowAssigneeDropdown(false);
+                        }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${selectedProjectId !== 'all'
+                          ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/40 dark:to-indigo-800/40 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-200 dark:border-indigo-800/50 shadow-indigo-100 dark:shadow-indigo-950/20'
+                          : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800/50 dark:to-slate-800/80 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-slate-700/50 hover:from-indigo-50 hover:to-indigo-100 dark:hover:from-indigo-900/30 dark:hover:to-indigo-900/50 hover:border-indigo-200 dark:hover:border-indigo-800/50'
+                          }`}
                       >
-                        <FiChevronDown className="w-3.5 h-3.5" />
-                      </motion.div>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showProjectDropdown && (
+                        <FiFolder className="w-4 h-4" />
+                        <span>
+                          {selectedProjectId === 'all'
+                            ? 'Project'
+                            : projects.find(p => p.id === selectedProjectId)?.name || 'Project'
+                          }
+                        </span>
                         <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                          className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-indigo-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
-                          style={{ boxShadow: '0 20px 60px rgba(99, 102, 241, 0.2)' }}
+                          animate={{ rotate: showProjectDropdown ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <motion.button
-                            onClick={() => {
-                              setSelectedProjectId('all');
-                              setShowProjectDropdown(false);
-                            }}
-                            whileHover={{ x: 4, backgroundColor: 'rgba(238, 242, 255, 1)' }}
-                            className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedProjectId === 'all'
-                              ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-500'
-                              : 'text-gray-700 font-medium hover:font-semibold'
-                              }`}
+                          <FiChevronDown className="w-3.5 h-3.5" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showProjectDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                            className="absolute z-[90] mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border-2 border-indigo-100 dark:border-slate-800 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                            style={{ boxShadow: '0 20px 60px rgba(99, 102, 241, 0.2)' }}
                           >
-                            <FiGrid className="w-4 h-4" />
-                            All Projects
-                          </motion.button>
-                          {projects.length === 0 ? (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                              <div className="flex flex-col items-center gap-2 py-2">
-                                <FiFolder className="w-8 h-8 text-gray-400" />
-                                <p>No projects available</p>
-                              </div>
-                            </div>
-                          ) : projects.map((project, index) => (
                             <motion.button
-                              key={project.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
                               onClick={() => {
-                                setSelectedProjectId(project.id);
+                                setSelectedProjectId('all');
                                 setShowProjectDropdown(false);
                               }}
                               whileHover={{ x: 4, backgroundColor: 'rgba(238, 242, 255, 1)' }}
-                              className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedProjectId === project.id
-                                ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-500'
-                                : 'text-gray-700 font-medium hover:font-semibold'
+                              className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedProjectId === 'all'
+                                ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/30 dark:to-indigo-800/30 text-indigo-700 dark:text-indigo-300 font-bold border-l-4 border-indigo-500'
+                                : 'text-gray-700 dark:text-gray-300 font-medium hover:font-semibold'
                                 }`}
                             >
-                              <FiFolder className="w-4 h-4" />
-                              {project.name}
+                              <FiGrid className="w-4 h-4" />
+                              All Projects
                             </motion.button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Status Filter Dropdown */}
-                  <div className="relative" ref={statusDropdownRef}>
-                    <motion.button
-                      onClick={() => {
-                        setShowStatusDropdown(!showStatusDropdown);
-                        setShowProjectDropdown(false);
-                        setShowSprintDropdown(false);
-                        setShowAssigneeDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${filters.status !== 'all'
-                        ? 'bg-gradient-to-r from-amber-50 to-orange-100 text-amber-700 border-2 border-amber-200 shadow-amber-100'
-                        : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-amber-50 hover:to-orange-50 hover:border-amber-200'
-                        }`}
-                    >
-                      <FiFilter className="w-4 h-4" />
-                      <span>{filters.status === 'all' ? 'Status' : filters.status}</span>
-                      <motion.div
-                        animate={{ rotate: showStatusDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <FiChevronDown className="w-3.5 h-3.5" />
-                      </motion.div>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showStatusDropdown && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                          className="absolute z-[90] mt-2 w-56 bg-white rounded-2xl shadow-2xl border-2 border-amber-100 py-2 backdrop-blur-xl"
-                          style={{ boxShadow: '0 20px 60px rgba(245, 158, 11, 0.2)' }}
-                        >
-                          {['all', 'To Do', 'In Progress', 'Review', 'Completed'].map((status, index) => {
-                            const config = getStatusConfig(status);
-                            const Icon = config.icon;
-                            return (
+                            {projects.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                <div className="flex flex-col items-center gap-2 py-2">
+                                  <FiFolder className="w-8 h-8 text-gray-400" />
+                                  <p>No projects available</p>
+                                </div>
+                              </div>
+                            ) : projects.map((project, index) => (
                               <motion.button
-                                key={status}
+                                key={project.id}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}
                                 onClick={() => {
-                                  setFilters({ ...filters, status });
-                                  setShowStatusDropdown(false);
+                                  setSelectedProjectId(project.id);
+                                  setShowProjectDropdown(false);
                                 }}
-                                whileHover={{ x: 4, backgroundColor: 'rgba(254, 243, 199, 1)' }}
-                                className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${filters.status === status
-                                  ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-bold border-l-4 border-amber-500'
+                                whileHover={{ x: 4, backgroundColor: 'rgba(238, 242, 255, 1)' }}
+                                className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedProjectId === project.id
+                                  ? 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 font-bold border-l-4 border-indigo-500'
                                   : 'text-gray-700 font-medium hover:font-semibold'
                                   }`}
                               >
-                                {Icon && <Icon className="w-4 h-4" />}
-                                <span>{status === 'all' ? 'All Statuses' : status}</span>
+                                <FiFolder className="w-4 h-4" />
+                                {project.name}
                               </motion.button>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
 
-                  {/* Sprint Filter Dropdown */}
-                  <div className="relative" ref={sprintDropdownRef}>
-                    <motion.button
-                      onClick={() => {
-                        setShowSprintDropdown(!showSprintDropdown);
-                        setShowProjectDropdown(false);
-                        setShowStatusDropdown(false);
-                        setShowAssigneeDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${selectedSprintId !== 'all'
-                        ? 'bg-gradient-to-r from-fuchsia-50 to-pink-100 text-fuchsia-700 border-2 border-fuchsia-200 shadow-fuchsia-100'
-                        : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-fuchsia-50 hover:to-pink-50 hover:border-fuchsia-200'
-                        }`}
-                    >
-                      <FiTarget className="w-4 h-4" />
-                      <span>
-                        {selectedSprintId === 'all'
-                          ? 'Sprint'
-                          : sprints.find(s => s.id === selectedSprintId)?.name || 'Sprint'
-                        }
-                      </span>
-                      <motion.div
-                        animate={{ rotate: showSprintDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
+                    {/* Status Filter Dropdown */}
+                    <div className="relative" ref={statusDropdownRef}>
+                      <motion.button
+                        onClick={() => {
+                          setShowStatusDropdown(!showStatusDropdown);
+                          setShowProjectDropdown(false);
+                          setShowSprintDropdown(false);
+                          setShowAssigneeDropdown(false);
+                        }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${filters.status !== 'all'
+                          ? 'bg-gradient-to-r from-amber-50 to-orange-100 dark:from-amber-900/40 dark:to-orange-800/40 text-amber-700 dark:text-amber-300 border-2 border-amber-200 dark:border-amber-800/50 shadow-amber-100 dark:shadow-amber-950/20'
+                          : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800/50 dark:to-slate-800/80 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-slate-700/50 hover:from-amber-50 hover:to-orange-50 dark:hover:from-amber-900/30 dark:hover:to-orange-900/30 hover:border-amber-200'
+                          }`}
                       >
-                        <FiChevronDown className="w-3.5 h-3.5" />
-                      </motion.div>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showSprintDropdown && (
+                        <FiFilter className="w-4 h-4" />
+                        <span>{filters.status === 'all' ? 'Status' : filters.status}</span>
                         <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                          className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-fuchsia-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
-                          style={{ boxShadow: '0 20px 60px rgba(217, 70, 239, 0.2)' }}
+                          animate={{ rotate: showStatusDropdown ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <motion.button
-                            onClick={() => {
-                              setSelectedSprintId('all');
-                              setShowSprintDropdown(false);
-                            }}
-                            whileHover={{ x: 4, backgroundColor: 'rgba(250, 232, 255, 1)' }}
-                            className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedSprintId === 'all'
-                              ? 'bg-gradient-to-r from-fuchsia-50 to-pink-50 text-fuchsia-700 font-bold border-l-4 border-fuchsia-500'
-                              : 'text-gray-700 font-medium hover:font-semibold'
-                              }`}
+                          <FiChevronDown className="w-3.5 h-3.5" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showStatusDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                            className="absolute z-[90] mt-2 w-56 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border-2 border-amber-100 dark:border-slate-800 py-2 backdrop-blur-xl"
+                            style={{ boxShadow: '0 20px 60px rgba(245, 158, 11, 0.2)' }}
                           >
-                            <FiZap className="w-4 h-4" />
-                            All Sprints
-                          </motion.button>
-                          {sprints.length === 0 ? (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                              <div className="flex flex-col items-center gap-2 py-2">
-                                <FiTarget className="w-8 h-8 text-gray-400" />
-                                <p>No sprints available</p>
-                              </div>
-                            </div>
-                          ) : sprints.map((sprint, index) => (
+                            {['all', 'To Do', 'In Progress', 'Review', 'Completed'].map((status, index) => {
+                              const config = getStatusConfig(status);
+                              const Icon = config.icon;
+                              return (
+                                <motion.button
+                                  key={status}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  onClick={() => {
+                                    setFilters({ ...filters, status });
+                                    setShowStatusDropdown(false);
+                                  }}
+                                  whileHover={{ x: 4, backgroundColor: 'rgba(254, 243, 199, 1)' }}
+                                  className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${filters.status === status
+                                    ? 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 font-bold border-l-4 border-amber-500'
+                                    : 'text-gray-700 font-medium hover:font-semibold'
+                                    }`}
+                                >
+                                  {Icon && <Icon className="w-4 h-4" />}
+                                  <span>{status === 'all' ? 'All Statuses' : status}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Sprint Filter Dropdown */}
+                    <div className="relative" ref={sprintDropdownRef}>
+                      <motion.button
+                        onClick={() => {
+                          setShowSprintDropdown(!showSprintDropdown);
+                          setShowProjectDropdown(false);
+                          setShowStatusDropdown(false);
+                          setShowAssigneeDropdown(false);
+                        }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${selectedSprintId !== 'all'
+                          ? 'bg-gradient-to-r from-fuchsia-50 to-pink-100 dark:from-fuchsia-900/40 dark:to-pink-800/40 text-fuchsia-700 dark:text-fuchsia-300 border-2 border-fuchsia-200 dark:border-fuchsia-800/50 shadow-fuchsia-100 dark:shadow-fuchsia-950/20'
+                          : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800/50 dark:to-slate-800/80 text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-slate-700/50 hover:from-fuchsia-50 hover:to-pink-50 dark:hover:from-fuchsia-900/30 dark:hover:to-pink-900/30 hover:border-fuchsia-200'
+                          }`}
+                      >
+                        <FiTarget className="w-4 h-4" />
+                        <span>
+                          {selectedSprintId === 'all'
+                            ? 'Sprint'
+                            : sprints.find(s => s.id === selectedSprintId)?.name || 'Sprint'
+                          }
+                        </span>
+                        <motion.div
+                          animate={{ rotate: showSprintDropdown ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <FiChevronDown className="w-3.5 h-3.5" />
+                        </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showSprintDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                            className="absolute z-[90] mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border-2 border-fuchsia-100 dark:border-slate-800 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                            style={{ boxShadow: '0 20px 60px rgba(217, 70, 239, 0.2)' }}
+                          >
                             <motion.button
-                              key={sprint.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
                               onClick={() => {
-                                setSelectedSprintId(sprint.id);
+                                setSelectedSprintId('all');
                                 setShowSprintDropdown(false);
                               }}
                               whileHover={{ x: 4, backgroundColor: 'rgba(250, 232, 255, 1)' }}
-                              className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedSprintId === sprint.id
+                              className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedSprintId === 'all'
                                 ? 'bg-gradient-to-r from-fuchsia-50 to-pink-50 text-fuchsia-700 font-bold border-l-4 border-fuchsia-500'
                                 : 'text-gray-700 font-medium hover:font-semibold'
                                 }`}
                             >
-                              <FiTarget className="w-4 h-4" />
-                              <span>{sprint.name}</span>
-                              {sprint.status === 'Active' && (
-                                <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-bold">Active</span>
-                              )}
+                              <FiZap className="w-4 h-4" />
+                              All Sprints
                             </motion.button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Assignee Filter Dropdown */}
-                  <div className="relative" ref={assigneeDropdownRef}>
-                    <motion.button
-                      onClick={() => {
-                        setShowAssigneeDropdown(!showAssigneeDropdown);
-                        setShowProjectDropdown(false);
-                        setShowStatusDropdown(false);
-                        setShowSprintDropdown(false);
-                      }}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${(Array.isArray(filters.assignee) ? filters.assignee.length > 0 : filters.assignee !== 'all')
-                        ? 'bg-gradient-to-r from-emerald-50 to-teal-100 text-emerald-700 border-2 border-emerald-200 shadow-emerald-100'
-                        : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-200'
-                        }`}
-                    >
-                      {(() => {
-                        const selectedIds = Array.isArray(filters.assignee)
-                          ? filters.assignee
-                          : (filters.assignee === 'all' ? [] : [filters.assignee]);
-
-                        const selectedEmployees = employees.filter(e => selectedIds.includes(e.id));
-                        const isActive = selectedEmployees.length > 0;
-
-                        if (!isActive) {
-                          return (
-                            <>
-                              <FiUsers className="w-4 h-4" />
-                              <span>Assignee</span>
-                            </>
-                          );
-                        }
-
-                        if (selectedEmployees.length === 1) {
-                          const emp = selectedEmployees[0];
-                          return (
-                            <div className="flex items-center gap-2">
-                              {emp.avatar_url ? (
-                                <img src={emp.avatar_url} alt={emp.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white/30" />
-                              ) : (
-                                <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold ring-2 ring-white/30">
-                                  {emp.name?.charAt(0)?.toUpperCase()}
+                            {sprints.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                <div className="flex flex-col items-center gap-2 py-2">
+                                  <FiTarget className="w-8 h-8 text-gray-400" />
+                                  <p>No sprints available</p>
                                 </div>
-                              )}
-                              <span>{emp.name}</span>
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div className="flex items-center gap-2">
-                            <div className="flex -space-x-2">
-                              {selectedEmployees.slice(0, 3).map(emp => (
-                                <div key={emp.id} className="relative">
-                                  {emp.avatar_url ? (
-                                    <img src={emp.avatar_url} alt={emp.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white/30" />
-                                  ) : (
-                                    <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold ring-2 ring-white/30">
-                                      {emp.name?.charAt(0)?.toUpperCase()}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                            <span>{selectedEmployees.length} Selected</span>
-                          </div>
-                        );
-                      })()}
-                      <motion.div
-                        animate={{ rotate: showAssigneeDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <FiChevronDown className="w-3.5 h-3.5" />
-                      </motion.div>
-                    </motion.button>
-                    <AnimatePresence>
-                      {showAssigneeDropdown && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                          transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                          className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-emerald-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
-                          style={{ boxShadow: '0 20px 60px rgba(16, 185, 129, 0.2)' }}
-                        >
-                          <motion.button
-                            onClick={() => {
-                              setFilters({ ...filters, assignee: 'all' });
-                              setShowAssigneeDropdown(false);
-                            }}
-                            whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
-                            className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${filters.assignee === 'all' || (Array.isArray(filters.assignee) && filters.assignee.length === 0)
-                              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500'
-                              : 'text-gray-700 font-medium hover:font-semibold'
-                              }`}
-                          >
-                            <FiUsers className="w-4 h-4" />
-                            All Assignees
-                          </motion.button>
-                          {employees.length === 0 ? (
-                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                              <div className="flex flex-col items-center gap-2 py-2">
-                                <FiUsers className="w-8 h-8 text-gray-400" />
-                                <p>No team members available</p>
                               </div>
-                            </div>
-                          ) : employees.map((emp, index) => {
-                            const isSelected = Array.isArray(filters.assignee)
-                              ? filters.assignee.includes(emp.id)
-                              : filters.assignee === emp.id;
-
-                            return (
+                            ) : sprints.map((sprint, index) => (
                               <motion.button
-                                key={emp.id}
+                                key={sprint.id}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  let newAssignees = [];
-                                  if (Array.isArray(filters.assignee)) {
-                                    newAssignees = [...filters.assignee];
-                                  } else if (filters.assignee !== 'all') {
-                                    newAssignees = [filters.assignee];
-                                  }
-
-                                  if (newAssignees.includes(emp.id)) {
-                                    newAssignees = newAssignees.filter(id => id !== emp.id);
-                                  } else {
-                                    newAssignees.push(emp.id);
-                                  }
-
-                                  // If empty, revert to 'all' or keep empty array? 
-                                  // Keeping as array allows "None" selection technically, but usually we want "All" if empty.
-                                  // But for multi-select, empty usually means "All" anyway in filter logic if handled.
-                                  // Let's set to array.
-                                  setFilters({ ...filters, assignee: newAssignees });
+                                onClick={() => {
+                                  setSelectedSprintId(sprint.id);
+                                  setShowSprintDropdown(false);
                                 }}
-                                whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
-                                className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center justify-between group ${isSelected
-                                  ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500'
+                                whileHover={{ x: 4, backgroundColor: 'rgba(250, 232, 255, 1)' }}
+                                className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${selectedSprintId === sprint.id
+                                  ? 'bg-gradient-to-r from-fuchsia-50 to-pink-50 text-fuchsia-700 font-bold border-l-4 border-fuchsia-500'
                                   : 'text-gray-700 font-medium hover:font-semibold'
                                   }`}
                               >
-                                <div className="flex items-center gap-2">
-                                  {emp.avatar_url ? (
-                                    <img src={emp.avatar_url} alt={emp.name} className="w-6 h-6 rounded-full ring-2 ring-emerald-100 object-cover" />
-                                  ) : (
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
-                                      {emp.name?.charAt(0)?.toUpperCase()}
-                                    </div>
-                                  )}
-                                  <span>{emp.name}</span>
-                                </div>
-                                {isSelected && <FiCheck className="w-4 h-4 text-emerald-600" />}
+                                <FiTarget className="w-4 h-4" />
+                                <span>{sprint.name}</span>
+                                {sprint.status === 'Active' && (
+                                  <span className="ml-auto px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-bold">Active</span>
+                                )}
                               </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Assignee Filter Dropdown */}
+                    <div className="relative" ref={assigneeDropdownRef}>
+                      <motion.button
+                        onClick={() => {
+                          setShowAssigneeDropdown(!showAssigneeDropdown);
+                          setShowProjectDropdown(false);
+                          setShowStatusDropdown(false);
+                          setShowSprintDropdown(false);
+                        }}
+                        whileHover={{ scale: 1.05, y: -2 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg ${(Array.isArray(filters.assignee) ? filters.assignee.length > 0 : filters.assignee !== 'all')
+                          ? 'bg-gradient-to-r from-emerald-50 to-teal-100 text-emerald-700 border-2 border-emerald-200 shadow-emerald-100'
+                          : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-200'
+                          }`}
+                      >
+                        {(() => {
+                          const selectedIds = Array.isArray(filters.assignee)
+                            ? filters.assignee
+                            : (filters.assignee === 'all' ? [] : [filters.assignee]);
+
+                          const selectedEmployees = employees.filter(e => selectedIds.includes(e.id));
+                          const isActive = selectedEmployees.length > 0;
+
+                          if (!isActive) {
+                            return (
+                              <>
+                                <FiUsers className="w-4 h-4" />
+                                <span>Assignee</span>
+                              </>
                             );
-                          })}
+                          }
+
+                          if (selectedEmployees.length === 1) {
+                            const emp = selectedEmployees[0];
+                            return (
+                              <div className="flex items-center gap-2">
+                                {emp.avatar_url ? (
+                                  <img src={emp.avatar_url} alt={emp.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white/30" />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold ring-2 ring-white/30">
+                                    {emp.name?.charAt(0)?.toUpperCase()}
+                                  </div>
+                                )}
+                                <span>{emp.name}</span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="flex items-center gap-2">
+                              <div className="flex -space-x-2">
+                                {selectedEmployees.slice(0, 3).map(emp => (
+                                  <div key={emp.id} className="relative">
+                                    {emp.avatar_url ? (
+                                      <img src={emp.avatar_url} alt={emp.name} className="w-5 h-5 rounded-full object-cover ring-2 ring-white/30" />
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold ring-2 ring-white/30">
+                                        {emp.name?.charAt(0)?.toUpperCase()}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              <span>{selectedEmployees.length} Selected</span>
+                            </div>
+                          );
+                        })()}
+                        <motion.div
+                          animate={{ rotate: showAssigneeDropdown ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <FiChevronDown className="w-3.5 h-3.5" />
                         </motion.div>
+                      </motion.button>
+                      <AnimatePresence>
+                        {showAssigneeDropdown && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
+                            className="absolute z-[90] mt-2 w-64 bg-white rounded-2xl shadow-2xl border-2 border-emerald-100 py-2 max-h-80 overflow-y-auto backdrop-blur-xl"
+                            style={{ boxShadow: '0 20px 60px rgba(16, 185, 129, 0.2)' }}
+                          >
+                            <motion.button
+                              onClick={() => {
+                                setFilters({ ...filters, assignee: 'all' });
+                                setShowAssigneeDropdown(false);
+                              }}
+                              whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
+                              className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center gap-2 ${filters.assignee === 'all' || (Array.isArray(filters.assignee) && filters.assignee.length === 0)
+                                ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500'
+                                : 'text-gray-700 font-medium hover:font-semibold'
+                                }`}
+                            >
+                              <FiUsers className="w-4 h-4" />
+                              All Assignees
+                            </motion.button>
+                            {employees.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                <div className="flex flex-col items-center gap-2 py-2">
+                                  <FiUsers className="w-8 h-8 text-gray-400" />
+                                  <p>No team members available</p>
+                                </div>
+                              </div>
+                            ) : employees.map((emp, index) => {
+                              const isSelected = Array.isArray(filters.assignee)
+                                ? filters.assignee.includes(emp.id)
+                                : filters.assignee === emp.id;
+
+                              return (
+                                <motion.button
+                                  key={emp.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    let newAssignees = [];
+                                    if (Array.isArray(filters.assignee)) {
+                                      newAssignees = [...filters.assignee];
+                                    } else if (filters.assignee !== 'all') {
+                                      newAssignees = [filters.assignee];
+                                    }
+
+                                    if (newAssignees.includes(emp.id)) {
+                                      newAssignees = newAssignees.filter(id => id !== emp.id);
+                                    } else {
+                                      newAssignees.push(emp.id);
+                                    }
+
+                                    // If empty, revert to 'all' or keep empty array? 
+                                    // Keeping as array allows "None" selection technically, but usually we want "All" if empty.
+                                    // But for multi-select, empty usually means "All" anyway in filter logic if handled.
+                                    // Let's set to array.
+                                    setFilters({ ...filters, assignee: newAssignees });
+                                  }}
+                                  whileHover={{ x: 4, backgroundColor: 'rgba(209, 250, 229, 1)' }}
+                                  className={`w-full px-4 py-3 text-left text-sm transition-all rounded-lg mx-1 flex items-center justify-between group ${isSelected
+                                    ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 font-bold border-l-4 border-emerald-500'
+                                    : 'text-gray-700 font-medium hover:font-semibold'
+                                    }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {emp.avatar_url ? (
+                                      <img src={emp.avatar_url} alt={emp.name} className="w-6 h-6 rounded-full ring-2 ring-emerald-100 object-cover" />
+                                    ) : (
+                                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold shadow-md">
+                                        {emp.name?.charAt(0)?.toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span>{emp.name}</span>
+                                  </div>
+                                  {isSelected && <FiCheck className="w-4 h-4 text-emerald-600" />}
+                                </motion.button>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Spacer */}
+                    <div className="flex-1"></div>
+
+                    {/* Clear Filters Button */}
+                    <AnimatePresence>
+                      {(selectedProjectId !== 'all' || filters.status !== 'all' || selectedSprintId !== 'all' || (Array.isArray(filters.assignee) ? filters.assignee.length > 0 : filters.assignee !== 'all')) && (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            if (onClearAllFilters && typeof onClearAllFilters === 'function') {
+                              onClearAllFilters();
+                            } else {
+                              try {
+                                setFilters(prevFilters => ({
+                                  ...prevFilters,
+                                  status: 'all',
+                                  assignee: 'all',
+                                  team: 'all',
+                                  dueDate: 'all',
+                                  sprint: 'all',
+                                  search: ''
+                                }));
+                                setSelectedProjectId('all');
+                                setSelectedSprintId('all');
+                                setSearch('');
+                              } catch (err) {
+                                console.error('Error clearing filters:', err);
+                              }
+                            }
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-red-50 to-rose-50 text-red-600 border-2 border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300 transition-all shadow-md hover:shadow-lg"
+                        >
+                          <FiX className="w-4 h-4" />
+                          <span>Clear All</span>
+                        </motion.button>
                       )}
                     </AnimatePresence>
                   </div>
-
-                  {/* Spacer */}
-                  <div className="flex-1"></div>
-
-                  {/* Clear Filters Button */}
-                  <AnimatePresence>
-                    {(selectedProjectId !== 'all' || filters.status !== 'all' || selectedSprintId !== 'all' || (Array.isArray(filters.assignee) ? filters.assignee.length > 0 : filters.assignee !== 'all')) && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          if (onClearAllFilters && typeof onClearAllFilters === 'function') {
-                            onClearAllFilters();
-                          } else {
-                            try {
-                              setFilters(prevFilters => ({
-                                ...prevFilters,
-                                status: 'all',
-                                assignee: 'all',
-                                team: 'all',
-                                dueDate: 'all',
-                                sprint: 'all',
-                                search: ''
-                              }));
-                              setSelectedProjectId('all');
-                              setSelectedSprintId('all');
-                              setSearch('');
-                            } catch (err) {
-                              console.error('Error clearing filters:', err);
-                            }
-                          }
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-red-50 to-rose-50 text-red-600 border-2 border-red-200 hover:from-red-100 hover:to-rose-100 hover:border-red-300 transition-all shadow-md hover:shadow-lg"
-                      >
-                        <FiX className="w-4 h-4" />
-                        <span>Clear All</span>
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* BOARD CONTROLS - Search and Toggle */}
-      <div className="relative z-10">
-        <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200/60">
-          <div className="flex items-center justify-between gap-4">
-            {/* Left Side - Filter Toggle and Board/List Toggle */}
-            <div className="flex items-center gap-3">
-              {/* Filter Toggle Button */}
-              <motion.button
-                onClick={() => setShowFilters(!showFilters)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-200 transition-all shadow-sm hover:shadow-md"
-              >
-                {showFilters ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
-                <FiFilter className="w-4 h-4" />
-                <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
-                {activeFilterCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="ml-1 px-2 py-0.5 bg-indigo-500 text-white text-xs rounded-full font-bold"
-                  >
-                    {activeFilterCount}
-                  </motion.span>
-                )}
-              </motion.button>
-
-              {/* Board/List Toggle */}
-              <div className="bg-gray-100/50 p-1 rounded-xl border border-gray-200">
-                <div className="flex items-center gap-1">
-                  {[
-                    { id: 'board', icon: FiGrid, label: 'Board' },
-                    { id: 'list', icon: FiList, label: 'List' }
-                  ].map((mode) => (
-                    <motion.button
-                      key={mode.id}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setDisplayMode(mode.id)}
-                      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${displayMode === mode.id
-                        ? 'bg-white text-indigo-600 shadow-md'
-                        : 'text-gray-600 hover:text-gray-800'
-                        }`}
+      {!hideInternalControls && (
+        <div className="relative z-10">
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-200/60">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left Side - Filter Toggle and Board/List Toggle */}
+              <div className="flex items-center gap-3">
+                {/* Filter Toggle Button */}
+                <motion.button
+                  onClick={() => setShowFilters(!showFilters)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-2 border-gray-200 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-200 transition-all shadow-sm hover:shadow-md"
+                >
+                  {showFilters ? <FiChevronDown className="w-4 h-4" /> : <FiChevronRight className="w-4 h-4" />}
+                  <FiFilter className="w-4 h-4" />
+                  <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
+                  {activeFilterCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="ml-1 px-2 py-0.5 bg-indigo-500 text-white text-xs rounded-full font-bold"
                     >
-                      <mode.icon className="w-4 h-4" />
-                      <span className="hidden sm:inline">{mode.label}</span>
-                      {displayMode === mode.id && (
-                        <motion.div
-                          layoutId="activeMode"
-                          className="absolute inset-0 bg-white rounded-lg shadow-md"
-                          style={{ zIndex: -1 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        />
-                      )}
-                    </motion.button>
-                  ))}
+                      {activeFilterCount}
+                    </motion.span>
+                  )}
+                </motion.button>
+
+                {/* Board/List Toggle */}
+                <div className="bg-gray-100/50 p-1 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-1">
+                    {[
+                      { id: 'board', icon: FiGrid, label: 'Board' },
+                      { id: 'list', icon: FiList, label: 'List' }
+                    ].map((mode) => (
+                      <motion.button
+                        key={mode.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setDisplayMode(mode.id)}
+                        className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center gap-2 ${displayMode === mode.id
+                          ? 'bg-white text-indigo-600 shadow-md'
+                          : 'text-gray-600 hover:text-gray-800'
+                          }`}
+                      >
+                        <mode.icon className="w-4 h-4" />
+                        <span className="hidden sm:inline">{mode.label}</span>
+                        {displayMode === mode.id && (
+                          <motion.div
+                            layoutId="activeMode"
+                            className="absolute inset-0 bg-white rounded-lg shadow-md"
+                            style={{ zIndex: -1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          />
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right Side - Search Bar */}
-            <motion.div
-              className="relative flex-1 max-w-md"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.2 }}
-            >
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search tasks... (Press / to focus)"
-                className="w-full pl-10 pr-10 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-blue-300 shadow-sm"
-              />
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              {search && (
-                <motion.button
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 90 }}
-                  whileHover={{ scale: 1.2 }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
-                  onClick={() => setSearch('')}
-                >
-                  <FiX className="w-4 h-4" />
-                </motion.button>
-              )}
-            </motion.div>
+              {/* Right Side - Search Bar */}
+              <motion.div
+                className="relative flex-1 max-w-md"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
+              >
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search tasks... (Press / to focus)"
+                  className="w-full pl-10 pr-10 py-2.5 text-sm border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-blue-300 shadow-sm"
+                />
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                {search && (
+                  <motion.button
+                    initial={{ opacity: 0, rotate: -90 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 90 }}
+                    whileHover={{ scale: 1.2 }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                    onClick={() => setSearch('')}
+                  >
+                    <FiX className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </motion.div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* BOARD/LIST CONTENT */}
       <div className="relative z-0">

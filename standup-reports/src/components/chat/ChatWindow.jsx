@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   FiArrowDown, FiUsers, FiInfo, FiMoreVertical, FiPhone, FiVideo,
   FiSearch, FiFilter, FiCheckCircle, FiCircle, FiX, FiCornerUpLeft, FiEdit2,
-  FiChevronLeft, FiSettings, FiMic, FiUser
+  FiChevronLeft, FiSettings, FiMic, FiUser, FiMessageSquare
 } from 'react-icons/fi';
 
 import ChatHeader from './ChatHeader';
@@ -138,8 +138,8 @@ const ChatWindow = ({
   // Render date separator
   const renderDateSeparator = (date) => (
     <div className="flex items-center justify-center py-4">
-      <div className="px-4 py-2 bg-gray-100 rounded-full">
-        <span className="text-xs font-medium text-gray-600">
+      <div className="px-4 py-2 bg-gray-100 dark:bg-slate-800 rounded-full">
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
           {formatDistanceToNow(new Date(date), { addSuffix: true })}
         </span>
       </div>
@@ -156,11 +156,11 @@ const ChatWindow = ({
       : `${names} is typing...`;
 
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 italic">
+      <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 italic">
         <div className="flex gap-0.5">
-          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-slate-500 rounded-full animate-bounce"></div>
+          <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
         </div>
         <span>{text}</span>
       </div>
@@ -169,17 +169,17 @@ const ChatWindow = ({
 
   if (!conversation) {
     return (
-      <div className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}>
+      <div className={`flex-1 flex items-center justify-center bg-gray-50 dark:bg-slate-950/40 ${className}`}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
         >
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl flex items-center justify-center">
-            <FiMessageSquare className="w-12 h-12 text-blue-500" />
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-3xl flex items-center justify-center">
+            <FiMessageSquare className="w-12 h-12 text-blue-500 dark:text-blue-400" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">Select a conversation</h3>
-          <p className="text-gray-500">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Select a conversation</h3>
+          <p className="text-gray-500 dark:text-gray-400">
             Choose a conversation from the sidebar to start chatting
           </p>
         </motion.div>
@@ -188,7 +188,8 @@ const ChatWindow = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col min-h-0 bg-white/60 backdrop-blur-sm ${className}`}>
+    <div className={`flex-1 flex flex-col min-h-0 bg-white/60 dark:bg-slate-950/60 backdrop-blur-sm ${className}`}>
+
 
       {/* Search Bar */}
       <AnimatePresence>
@@ -197,17 +198,17 @@ const ChatWindow = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="flex-shrink-0 border-b border-gray-200"
+            className="flex-shrink-0 border-b border-gray-200 dark:border-white/10"
           >
             <div className="px-4 py-3">
               <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search in conversation..."
-                  className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-white dark:placeholder-gray-500"
                 />
                 {searchQuery && (
                   <button
@@ -224,7 +225,7 @@ const ChatWindow = ({
       </AnimatePresence>
 
       {/* Enhanced Compact Modern Header */}
-      <div className="flex-shrink-0 px-6 py-4 bg-white/80 border-b border-gray-200/50 backdrop-blur-md shadow-sm z-10">
+      <div className="flex-shrink-0 px-6 py-4 bg-white/80 dark:bg-slate-900/80 border-b border-gray-200/50 dark:border-white/10 backdrop-blur-md shadow-sm z-10">
         <div className="flex items-center justify-between">
           {/* Left Section - Back Button, Avatar, and Title */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -234,7 +235,7 @@ const ChatWindow = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onBack}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors md:hidden"
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors md:hidden"
                 title="Back to conversations"
               >
                 <FiChevronLeft className="w-5 h-5" />
@@ -257,21 +258,21 @@ const ChatWindow = ({
                   <img
                     src={conversation.otherUser.avatar_url}
                     alt={conversation.otherUser.name}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-slate-700"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full border-2 border-white flex items-center justify-center text-white font-semibold shadow-sm">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white font-semibold shadow-sm">
                     {conversation.otherUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 )
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full border-2 border-white flex items-center justify-center text-white font-semibold shadow-sm">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white font-semibold shadow-sm">
                   <FiUsers className="w-5 h-5" />
                 </div>
               )}
 
               {/* Online Status Indicator */}
-              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${conversation.type === 'direct'
+              <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white dark:border-slate-900 rounded-full ${conversation.type === 'direct'
                 ? isOnline ? 'bg-green-500' : 'bg-gray-400'
                 : 'bg-blue-500'
                 }`} />
@@ -279,13 +280,13 @@ const ChatWindow = ({
 
             {/* Conversation Title and Status */}
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-gray-900 truncate">
+              <h2 className="font-semibold text-gray-900 dark:text-white truncate">
                 {conversation.type === 'direct'
                   ? conversation.otherUser?.name || 'Unknown User'
                   : conversation.name || 'Unnamed Group'
                 }
               </h2>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 {conversation.type === 'direct' ? (
                   <>
                     <span className={`text-xs font-medium ${isOnline ? 'text-green-600' : 'text-gray-500'
@@ -313,7 +314,7 @@ const ChatWindow = ({
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
-                className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full"
+                className="flex items-center gap-2 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full"
               >
                 <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
@@ -332,7 +333,7 @@ const ChatWindow = ({
                     />
                   ))}
                 </div>
-                <span className="text-xs text-blue-600 font-medium truncate">
+                <span className="text-xs text-blue-600 dark:text-blue-400 font-medium truncate">
                   {typingUsers.length === 1
                     ? `${typingUsers[0]} is typing...`
                     : `${typingUsers.length} people are typing...`
@@ -350,8 +351,8 @@ const ChatWindow = ({
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowSearch(!showSearch)}
               className={`p-2 rounded-lg transition-colors ${showSearch
-                ? 'bg-blue-50 text-blue-600'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
                 }`}
               title="Search messages"
             >
@@ -362,7 +363,7 @@ const ChatWindow = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
               title="Start voice call"
             >
               <FiPhone className="w-4 h-4" />
@@ -372,7 +373,7 @@ const ChatWindow = ({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
               title="Start video call"
             >
               <FiVideo className="w-4 h-4" />
@@ -384,7 +385,7 @@ const ChatWindow = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onToggleProfile}
-              className="p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors ml-1"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors ml-1"
               title="Conversation Info"
             >
               <FiInfo className="w-5 h-5" />
@@ -397,8 +398,8 @@ const ChatWindow = ({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowMoreOptions(!showMoreOptions)}
                 className={`p-2 rounded-lg transition-colors ${showMoreOptions
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  ? 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
                   }`}
                 title="More options"
               >
@@ -420,7 +421,7 @@ const ChatWindow = ({
                           setShowUserList(true);
                           setShowMoreOptions(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                       >
                         <FiUsers className="w-4 h-4 text-purple-500" />
                         <span>Team members</span>
@@ -429,7 +430,7 @@ const ChatWindow = ({
 
                     {/* Settings */}
                     <button
-                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       <FiSettings className="w-4 h-4 text-gray-500" />
                       <span>Settings</span>
@@ -467,7 +468,7 @@ const ChatWindow = ({
               <div className="flex justify-center py-2">
                 <button
                   onClick={onLoadMore}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Load earlier messages
                 </button>
@@ -478,7 +479,7 @@ const ChatWindow = ({
             {searchQuery ? (
               <>
                 <div className="text-center py-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Found {searchResults.length} messages matching "{searchQuery}"
                   </p>
                 </div>
@@ -536,27 +537,27 @@ const ChatWindow = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="border-t border-gray-200 bg-gray-50"
+            className="border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-slate-900"
           >
             <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 {editingMessage ? (
                   <>
-                    <FiEdit2 className="w-4 h-4 text-yellow-600" />
-                    <span className="text-yellow-700">Editing message</span>
+                    <FiEdit2 className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
+                    <span className="text-yellow-700 dark:text-yellow-400">Editing message</span>
                   </>
                 ) : (
                   <>
-                    <FiCornerUpLeft className="w-4 h-4 text-blue-600" />
-                    <span className="text-blue-700">Replying to {replyingTo.user_name}</span>
+                    <FiCornerUpLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-blue-700 dark:text-blue-300">Replying to {replyingTo.user_name}</span>
                   </>
                 )}
               </div>
               <button
                 onClick={editingMessage ? handleCancelEdit : handleCancelReply}
-                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-800 rounded transition-colors"
               >
-                <FiX className="w-4 h-4 text-gray-600" />
+                <FiX className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
           </motion.div>
@@ -613,27 +614,27 @@ const ChatWindow = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+              className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full mx-4 border border-white/20 dark:border-slate-800"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Conversation Info</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Conversation Info</h3>
                   <button
                     onClick={() => setShowConversationInfo(false)}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded transition-colors"
                   >
-                    <FiX className="w-4 h-4 text-gray-600" />
+                    <FiX className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   {/* Conversation details */}
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       {conversation.type === 'direct' ? 'Direct Message' : 'Team Chat'}
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Created {formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })}
                     </p>
                   </div>
@@ -641,7 +642,7 @@ const ChatWindow = ({
                   {/* Participants (for team chats) */}
                   {conversation.type === 'team' && (
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Participants</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Participants</h4>
                       <UserPresence
                         users={onlineUsers}
                         currentUser={currentUser}

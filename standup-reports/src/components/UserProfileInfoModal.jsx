@@ -4,39 +4,74 @@ import {
     FiMail, FiPhone, FiLinkedin, FiSlack, FiCalendar,
     FiEdit2, FiSave, FiX, FiCamera, FiBriefcase, FiUser,
     FiUsers, FiFolder, FiClock, FiMessageSquare, FiCheckCircle,
-    FiAlertCircle, FiExternalLink
+    FiAlertCircle, FiExternalLink, FiGithub, FiMapPin
 } from 'react-icons/fi';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../supabaseClient';
+import LoadingSpinner from './shared/LoadingSpinner';
 
 // --- Animation Variants ---
 const modalVariants = {
-    hidden: { opacity: 0, scale: 0.95, y: 10 },
+    hidden: { opacity: 0, scale: 0.9, rotateX: 10 },
     visible: {
         opacity: 1,
         scale: 1,
-        y: 0,
-        transition: { type: "spring", stiffness: 350, damping: 25 }
+        rotateX: 0,
+        transition: { type: "spring", stiffness: 300, damping: 25, mass: 0.8 }
     },
     exit: {
         opacity: 0,
-        scale: 0.95,
-        y: 10,
+        scale: 0.9,
         transition: { duration: 0.2 }
     }
 };
 
 const backdropVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.3 } },
-    exit: { opacity: 0, transition: { duration: 0.2 } }
+    visible: { opacity: 1, transition: { duration: 0.4 } },
+    exit: { opacity: 0, transition: { duration: 0.3 } }
 };
 
-const tabVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-    exit: { opacity: 0, y: -10, transition: { duration: 0.2 } }
+const tabContentVariants = {
+    hidden: { opacity: 0, y: 20, filter: 'blur(10px)' },
+    visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: "easeOut" } },
+    exit: { opacity: 0, y: -20, filter: 'blur(10px)', transition: { duration: 0.2 } }
 };
+
+// --- Liquid Background Component ---
+const LiquidBackground = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
+        <motion.div
+            animate={{
+                scale: [1, 1.2, 1],
+                rotate: [0, 90, 0],
+                x: [0, 50, 0],
+                y: [0, -30, 0],
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-[20%] -left-[20%] w-[70%] h-[70%] bg-indigo-500/30 rounded-full blur-[100px]"
+        />
+        <motion.div
+            animate={{
+                scale: [1, 1.3, 1],
+                rotate: [0, -60, 0],
+                x: [0, -40, 0],
+                y: [0, 40, 0],
+            }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[20%] -right-[20%] w-[60%] h-[60%] bg-purple-500/30 rounded-full blur-[100px]"
+        />
+        <motion.div
+            animate={{
+                scale: [1, 1.4, 1],
+                x: [0, 30, 0],
+                y: [0, 30, 0],
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] bg-cyan-500/20 rounded-full blur-[100px]"
+        />
+    </div>
+);
 
 const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
     const { profile, loading, saving, error, isOwnProfile, updateProfile } = useUserProfile(userId);
@@ -146,9 +181,9 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
     return (
         <AnimatePresence mode="wait">
             {isOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 font-sans">
                     <motion.div
-                        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
                         variants={backdropVariants}
                         initial="hidden"
                         animate="visible"
@@ -157,277 +192,299 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
                     />
 
                     <motion.div
-                        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+                        className="relative w-full max-w-2xl min-h-[600px] flex flex-col rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-white/10 backdrop-filter backdrop-blur-xl"
                         variants={modalVariants}
                         initial="hidden"
                         animate="visible"
                         exit="exit"
                         onClick={(e) => e.stopPropagation()}
+                        style={{
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                        }}
                     >
+                        <LiquidBackground />
+
                         {loading ? (
-                            <div className="flex items-center justify-center h-96">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                            <div className="flex-1 flex items-center justify-center z-10">
+                                <LoadingSpinner />
                             </div>
                         ) : error ? (
-                            <div className="p-8 text-center text-red-500">Error: {error}</div>
+                            <div className="flex-1 flex items-center justify-center z-10 p-8 text-center text-red-200">
+                                <div className="bg-red-500/20 px-6 py-4 rounded-xl border border-red-500/30 backdrop-blur-md">
+                                    Error: {error}
+                                </div>
+                            </div>
                         ) : profile ? (
-                            <>
-                                {/* --- Header Banner --- */}
-                                <div className="h-32 bg-gradient-to-r from-slate-100 to-slate-200 relative">
-                                    <div className="absolute top-4 right-4 flex gap-2">
+                            <div className="relative z-10 flex flex-col h-full">
+                                {/* --- Glass Header --- */}
+                                <div className="flex justify-between items-start p-6 pb-2">
+                                    <div className="flex gap-2">
                                         <button
-                                            onClick={() => {
-                                                onClose();
-                                                window.location.href = `/profile/${profile.id}`;
-                                            }}
-                                            className="px-3 py-1.5 bg-white/90 backdrop-blur rounded-lg text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 transition-colors shadow-sm flex items-center gap-1.5"
+                                            onClick={onClose}
+                                            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white/80 transition-colors backdrop-blur-md"
                                         >
-                                            <FiExternalLink className="w-3.5 h-3.5" /> View Profile
+                                            <FiX className="w-5 h-5" />
                                         </button>
+                                    </div>
+                                    <div className="flex gap-2">
                                         {!isOwnProfile && (
                                             <button
                                                 onClick={() => {
                                                     onClose();
-                                                    // Navigate to chat with state to open conversation
-                                                    // Assuming onStartChat handles navigation or we use window.location/navigate
-                                                    if (onStartChat) {
-                                                        onStartChat(profile);
-                                                    } else {
-                                                        // Fallback if onStartChat isn't provided (though it should be)
-                                                        window.location.href = '/chat';
-                                                    }
+                                                    if (onStartChat) onStartChat(profile);
+                                                    else window.location.href = '/chat';
                                                 }}
-                                                className="px-3 py-1.5 bg-white/90 backdrop-blur rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors shadow-sm flex items-center gap-1.5"
+                                                className="px-4 py-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-100 border border-indigo-500/30 backdrop-blur-md transition-all flex items-center gap-2 text-sm font-medium"
                                             >
-                                                <FiMessageSquare className="w-3.5 h-3.5" /> Message
+                                                <FiMessageSquare className="w-4 h-4" /> Message
                                             </button>
                                         )}
                                         {isOwnProfile && !isEditing && (
                                             <button
                                                 onClick={() => setIsEditing(true)}
-                                                className="px-3 py-1.5 bg-white/90 backdrop-blur rounded-lg text-xs font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors shadow-sm flex items-center gap-1.5"
+                                                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 backdrop-blur-md transition-all flex items-center gap-2 text-sm font-medium"
                                             >
-                                                <FiEdit2 className="w-3.5 h-3.5" /> Edit
+                                                <FiEdit2 className="w-4 h-4" /> Edit
                                             </button>
                                         )}
                                         <button
-                                            onClick={onClose}
-                                            className="p-1.5 bg-white/90 backdrop-blur rounded-lg text-gray-700 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm ml-1"
+                                            onClick={() => {
+                                                onClose();
+                                                window.location.href = `/profile/${profile.id}`;
+                                            }}
+                                            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-white/70 backdrop-blur-md transition-colors border border-white/10"
+                                            title="View Full Profile"
                                         >
-                                            <FiX className="w-4 h-4" />
+                                            <FiExternalLink className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* --- Profile Header Info --- */}
-                                <div className="px-8 pb-6 -mt-12 relative z-10 border-b border-gray-100">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6">
-                                        {/* Avatar */}
-                                        <div className="relative group">
-                                            <div className="w-24 h-24 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-white">
+                                {/* --- Profile Hero --- */}
+                                <div className="px-8 pt-4 pb-8 flex flex-col items-center sm:flex-row sm:items-end gap-6">
+                                    <div className="relative group">
+                                        <div className="w-32 h-32 rounded-[2rem] p-1 bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md shadow-2xl">
+                                            <div className="w-full h-full rounded-[1.8rem] overflow-hidden relative">
                                                 {formData.avatar_url ? (
                                                     <img src={formData.avatar_url} alt={formData.name} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                                        <FiUser className="w-10 h-10" />
+                                                    <div className="w-full h-full flex items-center justify-center bg-indigo-900/40 text-indigo-200">
+                                                        <FiUser className="w-12 h-12" />
                                                     </div>
                                                 )}
                                                 {isEditing && (
                                                     <div
-                                                        className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
                                                         onClick={() => fileInputRef.current?.click()}
                                                     >
-                                                        <FiCamera className="w-8 h-8 text-white" />
+                                                        <FiCamera className="w-8 h-8 text-white/90" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
-
-                                            {/* Status Badge */}
-                                            <div className={`absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full text-xs font-bold border-2 border-white shadow-sm flex items-center gap-1 ${leaveStatus ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full ${leaveStatus ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                                                {leaveStatus ? 'On Leave' : 'Available'}
-                                            </div>
                                         </div>
+                                        <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} className="hidden" accept="image/*" />
 
-                                        {/* Name & Role */}
-                                        <div className="flex-1 mb-1">
-                                            {isEditing ? (
-                                                <div className="space-y-2">
-                                                    <input
-                                                        name="name"
-                                                        value={formData.name || ''}
-                                                        onChange={handleInputChange}
-                                                        className="text-2xl font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded px-2 py-1 w-full"
-                                                        placeholder="Full Name"
-                                                    />
-                                                    <input
-                                                        name="job_title"
-                                                        value={formData.job_title || ''}
-                                                        onChange={handleInputChange}
-                                                        className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 w-full"
-                                                        placeholder="Job Title"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
-                                                    <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                                                        <FiBriefcase className="w-4 h-4" />
+                                        {/* Status Pill */}
+                                        <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 sm:translate-x-0 sm:left-auto sm:-right-2 px-3 py-1 rounded-full text-xs font-bold border border-white/20 shadow-lg backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap ${leaveStatus ? 'bg-amber-500/20 text-amber-200' : 'bg-emerald-500/20 text-emerald-200'}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${leaveStatus ? 'bg-amber-400' : 'bg-emerald-400'} shadow-[0_0_8px_currentColor]`} />
+                                            {leaveStatus ? 'On Leave' : 'Available'}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 text-center sm:text-left space-y-2 w-full">
+                                        {isEditing ? (
+                                            <div className="space-y-3">
+                                                <input
+                                                    name="name"
+                                                    value={formData.name || ''}
+                                                    onChange={handleInputChange}
+                                                    className="text-3xl font-bold text-white bg-white/10 border border-white/20 rounded-xl px-4 py-2 w-full focus:bg-white/20 outline-none backdrop-blur-sm placeholder-white/30"
+                                                    placeholder="Full Name"
+                                                />
+                                                <input
+                                                    name="job_title"
+                                                    value={formData.job_title || ''}
+                                                    onChange={handleInputChange}
+                                                    className="text-lg text-indigo-200 bg-white/10 border border-white/20 rounded-xl px-4 py-2 w-full focus:bg-white/20 outline-none backdrop-blur-sm placeholder-white/30"
+                                                    placeholder="Job Title"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <h2 className="text-4xl font-bold text-white drop-shadow-md tracking-tight">{profile.name}</h2>
+                                                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 text-indigo-200/80 font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        <FiBriefcase className="w-4 h-4 text-indigo-400" />
                                                         <span>{profile.job_title || 'Team Member'}</span>
-                                                        {team && (
-                                                            <>
-                                                                <span className="text-gray-300">•</span>
-                                                                <span className="text-indigo-600 font-medium">{team.name}</span>
-                                                            </>
-                                                        )}
                                                     </div>
+                                                    {team && (
+                                                        <>
+                                                            <span className="hidden sm:inline text-white/20">•</span>
+                                                            <span className="text-white/60 bg-white/10 px-2 py-0.5 rounded-md text-xs">{team.name}</span>
+                                                        </>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-
-                                        {/* Edit Actions */}
-                                        {isEditing && (
-                                            <div className="flex gap-2 mb-1">
-                                                <button
-                                                    onClick={() => { setIsEditing(false); setFormData(profile); }}
-                                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    onClick={handleSave}
-                                                    disabled={saving}
-                                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm disabled:opacity-50"
-                                                >
-                                                    {saving ? 'Saving...' : 'Save Changes'}
-                                                </button>
-                                            </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* --- Content Tabs --- */}
-                                <div className="flex border-b border-gray-100 px-8">
-                                    {['about', 'projects', 'team'].map((tab) => (
-                                        <button
-                                            key={tab}
-                                            onClick={() => setActiveTab(tab)}
-                                            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === tab
-                                                ? 'border-blue-600 text-blue-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700'
-                                                }`}
-                                        >
-                                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                        </button>
-                                    ))}
+                                {/* --- Tabs --- */}
+                                <div className="px-8 mt-2">
+                                    <div className="flex p-1 bg-black/20 rounded-2xl backdrop-blur-sm overflow-x-auto">
+                                        {['about', 'projects', 'team'].map((tab) => (
+                                            <button
+                                                key={tab}
+                                                onClick={() => setActiveTab(tab)}
+                                                className="relative flex-1 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all z-0"
+                                            >
+                                                {activeTab === tab && (
+                                                    <motion.div
+                                                        layoutId="activeTab"
+                                                        className="absolute inset-0 bg-white/15 rounded-xl shadow-inner border border-white/10 backdrop-blur-md"
+                                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                                    />
+                                                )}
+                                                <span className={`relative z-10 ${activeTab === tab ? 'text-white' : 'text-white/60 hover:text-white/80'}`}>
+                                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* --- Tab Content --- */}
-                                <div className="flex-1 overflow-y-auto p-8 bg-gray-50/50">
+                                {/* --- Scrolling Content Area --- */}
+                                <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
                                     <AnimatePresence mode="wait">
                                         {activeTab === 'about' && (
-                                            <motion.div key="about" variants={tabVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
-                                                {/* Bio */}
-                                                <section>
-                                                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">About</h3>
+                                            <motion.div key="about" variants={tabContentVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
+                                                {/* Bio Card */}
+                                                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-sm shadow-sm relative overflow-hidden group hover:bg-white/10 transition-colors">
+                                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                                        <FiUser className="w-16 h-16" />
+                                                    </div>
+                                                    <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_8px_currentColor]"></span>
+                                                        Biography
+                                                    </h3>
                                                     {isEditing ? (
                                                         <textarea
                                                             name="bio"
                                                             value={formData.bio || ''}
                                                             onChange={handleInputChange}
-                                                            rows={3}
-                                                            className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                                            rows={4}
+                                                            className="w-full p-4 bg-black/20 border border-white/10 rounded-xl text-white/90 focus:bg-black/30 outline-none backdrop-blur-md placeholder-white/20 resize-none"
                                                             placeholder="Write a short bio..."
                                                         />
                                                     ) : (
-                                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                                        <p className="text-white/80 leading-relaxed font-light text-sm">
                                                             {profile.bio || "No bio information provided."}
                                                         </p>
                                                     )}
-                                                </section>
+                                                </div>
 
                                                 {/* Contact Grid */}
-                                                <section>
-                                                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Contact Information</h3>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                        <ContactItem icon={FiMail} label="Email" value={profile.email} />
-                                                        <ContactItem icon={FiPhone} label="Phone" value={formData.phone} isEditing={isEditing} name="phone" onChange={handleInputChange} placeholder="+1 (555) 000-0000" />
-                                                        <ContactItem icon={FiSlack} label="Slack" value={formData.slack_handle} isEditing={isEditing} name="slack_handle" onChange={handleInputChange} placeholder="@username" />
-                                                        <ContactItem icon={FiLinkedin} label="LinkedIn" value={formData.linkedin_url} isEditing={isEditing} name="linkedin_url" onChange={handleInputChange} placeholder="Profile URL" isLink />
-                                                        <ContactItem icon={FiCalendar} label="Joined" value={formData.start_date} isEditing={isEditing} name="start_date" onChange={handleInputChange} type="date" />
-                                                    </div>
-                                                </section>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <ContactGlassItem icon={FiMail} label="Email" value={profile.email} />
+                                                    <ContactGlassItem icon={FiPhone} label="Phone" value={formData.phone} isEditing={isEditing} name="phone" onChange={handleInputChange} placeholder="+1..." />
+                                                    <ContactGlassItem icon={FiSlack} label="Slack" value={formData.slack_handle} isEditing={isEditing} name="slack_handle" onChange={handleInputChange} placeholder="@username" />
+                                                    <ContactGlassItem icon={FiLinkedin} label="LinkedIn" value={formData.linkedin_url} isEditing={isEditing} name="linkedin_url" onChange={handleInputChange} placeholder="URL" isLink />
+                                                    <ContactGlassItem icon={FiCalendar} label="Joined" value={formData.start_date} isEditing={isEditing} name="start_date" onChange={handleInputChange} type="date" />
+                                                </div>
 
-                                                {/* Manager Info */}
+                                                {/* Manager Card */}
                                                 {manager && (
-                                                    <section>
-                                                        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Reporting To</h3>
-                                                        <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                                            <img src={manager.avatar_url} alt={manager.name} className="w-10 h-10 rounded-full object-cover bg-gray-100" />
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm shadow-sm hover:bg-white/10 transition-colors">
+                                                        <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                            <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_currentColor]"></span>
+                                                            Reporting To
+                                                        </h3>
+                                                        <div className="flex items-center gap-4">
+                                                            <img src={manager.avatar_url} alt={manager.name} className="w-12 h-12 rounded-xl object-cover bg-white/10 border border-white/20" />
                                                             <div>
-                                                                <div className="text-sm font-semibold text-gray-900">{manager.name}</div>
-                                                                <div className="text-xs text-gray-500">{manager.job_title || 'Manager'}</div>
+                                                                <div className="text-white font-bold">{manager.name}</div>
+                                                                <div className="text-sm text-white/50">{manager.job_title || 'Manager'}</div>
                                                             </div>
                                                         </div>
-                                                    </section>
+                                                    </div>
                                                 )}
                                             </motion.div>
                                         )}
 
                                         {activeTab === 'projects' && (
-                                            <motion.div key="projects" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
-                                                <div className="space-y-3">
-                                                    {projects.length > 0 ? (
-                                                        projects.map((project) => (
-                                                            <div key={project.id} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                                                                <div className="flex justify-between items-start">
-                                                                    <div>
-                                                                        <h4 className="text-sm font-bold text-gray-900">{project.name}</h4>
-                                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">{project.description || 'No description'}</p>
-                                                                    </div>
-                                                                    <span className={`px-2 py-1 text-[10px] font-semibold rounded-full ${project.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'
-                                                                        }`}>
-                                                                        {project.status.toUpperCase()}
-                                                                    </span>
+                                            <motion.div key="projects" variants={tabContentVariants} initial="hidden" animate="visible" exit="exit" className="space-y-3">
+                                                {projects.length > 0 ? (
+                                                    projects.map((project, i) => (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: 10 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: i * 0.05 }}
+                                                            key={project.id}
+                                                            className="p-5 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-all group"
+                                                        >
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors">{project.name}</h4>
+                                                                    <p className="text-xs text-white/50 mt-1 line-clamp-1">{project.description || 'No description'}</p>
                                                                 </div>
-                                                                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-                                                                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">
-                                                                        {project.role || 'Member'}
-                                                                    </span>
+                                                                <span className={`px-2 py-1 text-[10px] font-bold rounded-lg border backdrop-blur-md ${project.status === 'active' ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/30' : 'bg-gray-500/20 text-gray-300 border-gray-500/30'}`}>
+                                                                    {project.status.toUpperCase()}
+                                                                </span>
+                                                            </div>
+                                                            <div className="mt-4 flex items-center gap-2 text-xs">
+                                                                <div className="bg-white/10 text-indigo-200 px-3 py-1 rounded-lg border border-white/10 font-medium">
+                                                                    {project.role || 'Member'}
                                                                 </div>
                                                             </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="text-center py-10 text-gray-400">
-                                                            <FiFolder className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                                            <p className="text-sm">No active projects</p>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                        </motion.div>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                                                        <FiFolder className="w-12 h-12 mx-auto mb-3 text-white/20" />
+                                                        <p className="text-white/40 font-medium">No active projects</p>
+                                                    </div>
+                                                )}
                                             </motion.div>
                                         )}
 
                                         {activeTab === 'team' && (
-                                            <motion.div key="team" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
+                                            <motion.div key="team" variants={tabContentVariants} initial="hidden" animate="visible" exit="exit">
                                                 {team ? (
-                                                    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
-                                                        <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                                            <FiUsers className="w-8 h-8" />
+                                                    <div className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 p-8 rounded-3xl border border-white/10 text-center backdrop-blur-md relative overflow-hidden">
+                                                        <div className="absolute inset-0 bg-white/5 opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none mix-blend-overlay"></div>
+                                                        <div className="w-20 h-20 bg-white/10 text-indigo-300 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-lg">
+                                                            <FiUsers className="w-10 h-10" />
                                                         </div>
-                                                        <h3 className="text-lg font-bold text-gray-900">{team.name}</h3>
-                                                        <p className="text-sm text-gray-500 mt-2">{team.description || 'No team description available.'}</p>
+                                                        <h3 className="text-2xl font-bold text-white mb-2">{team.name}</h3>
+                                                        <p className="text-white/60 max-w-sm mx-auto leading-relaxed">{team.description || 'No team description available.'}</p>
                                                     </div>
                                                 ) : (
-                                                    <div className="text-center py-10 text-gray-400">
-                                                        <p className="text-sm">No team assigned</p>
+                                                    <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                                                        <p className="text-white/40 font-medium">No team assigned</p>
                                                     </div>
                                                 )}
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </div>
-                            </>
+                                {isEditing && (
+                                    <div className="p-6 border-t border-white/10 flex justify-end gap-3 bg-black/20 backdrop-blur-md">
+                                        <button
+                                            onClick={() => { setIsEditing(false); setFormData(profile); }}
+                                            className="px-5 py-2.5 text-sm font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-colors border border-white/10"
+                                        >
+                                            Discard Changes
+                                        </button>
+                                        <button
+                                            onClick={handleSave}
+                                            disabled={saving}
+                                            className="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 flex items-center gap-2"
+                                        >
+                                            {saving ? 'Saving...' : 'Save Changes'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         ) : null}
                     </motion.div>
                 </div>
@@ -436,31 +493,31 @@ const UserProfileInfoModal = ({ isOpen, onClose, userId, onStartChat }) => {
     );
 };
 
-// --- Helper Components ---
-const ContactItem = ({ icon: Icon, label, value, isEditing, onChange, name, placeholder, type = "text", isLink }) => (
-    <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg">
-        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-            <Icon className="w-4 h-4" />
+// --- Glass Helper Components ---
+const ContactGlassItem = ({ icon: Icon, label, value, isEditing, onChange, name, placeholder, type = "text", isLink }) => (
+    <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:bg-white/10 transition-colors group">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center text-indigo-300 border border-white/10 shadow-inner">
+            <Icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
         </div>
         <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</div>
+            <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-0.5">{label}</div>
             {isEditing && name ? (
                 <input
                     type={type}
                     name={name}
                     value={value || ''}
                     onChange={onChange}
-                    className="w-full text-sm border-b border-gray-200 focus:border-blue-500 outline-none py-0.5"
+                    className="w-full text-sm bg-black/20 border-b border-white/20 focus:border-indigo-400 outline-none py-1 text-white placeholder-white/20 transition-colors"
                     placeholder={placeholder}
                 />
             ) : (
-                <div className="text-sm font-medium text-gray-900 truncate">
+                <div className="text-sm font-medium text-white/90 truncate">
                     {isLink && value ? (
-                        <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        <a href={value} target="_blank" rel="noopener noreferrer" className="text-indigo-300 hover:text-white transition-colors underline decoration-indigo-300/30 underline-offset-4">
                             {value.replace(/^https?:\/\/(www\.)?/, '')}
                         </a>
                     ) : (
-                        value || <span className="text-gray-300 italic">Not set</span>
+                        value || <span className="text-white/20 italic">Not set</span>
                     )}
                 </div>
             )}

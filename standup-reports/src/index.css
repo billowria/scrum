@@ -55,7 +55,37 @@
   --confluence-purple-700: #a21caf;
   --confluence-purple-800: #86198f;
   --confluence-purple-900: #701a75;
+  --confluence-purple-700: #a21caf;
+  --confluence-purple-800: #86198f;
+  --confluence-purple-900: #701a75;
 }
+
+:root.dark {
+  /* Dark Mode Colors - Slate based */
+  --bg-primary: #0f172a;
+  /* slate-900 */
+  --bg-secondary: #1e293b;
+  /* slate-800 */
+  --bg-tertiary: #334155;
+  /* slate-700 */
+
+  --text-primary: #f8fafc;
+  /* slate-50 */
+  --text-secondary: #cbd5e1;
+  /* slate-300 */
+  --text-tertiary: #94a3b8;
+  /* slate-400 */
+
+  --border-color: #334155;
+  /* slate-700 */
+}
+
+body {
+  @apply transition-colors duration-300;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 
 /* Responsive breakpoints utilities */
 @layer utilities {
@@ -301,6 +331,18 @@
       0 0 5px rgba(0, 0, 0, 0.15);
   }
 }
+
+/* Dark mode glass effect overrides */
+:root.dark .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:root.dark .glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
 
 /* Special light grey glassmorphic effect for specific containers */
 .light-grey-glass-scrollbar::-webkit-scrollbar-thumb {

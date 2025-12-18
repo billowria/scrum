@@ -1,105 +1,47 @@
-/* Custom DNA Loader */
-/* Indigo & White Theme */
-
-.loader {
+/* From Uiverse.io by milley69 */
+.loading-spinner-wrapper {
     position: relative;
-    width: 100%;
-    height: 60px;
-    /* Reduced specific height for component containment */
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    min-height: 80px;
 }
 
-.loader .dot {
-    animation-name: movement;
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-in-out;
-    height: 10px;
-    position: absolute;
-    top: 50%;
-    /* Center vertically */
-    transform: translate3d(0, -25px, 0) scale(1);
-    width: 10px;
-    margin-top: -5px;
-    /* Half of height to center */
-    animation-delay: var(--delay);
+/* Ensure SVG content doesn't get clipped by glow */
+.loading svg {
+    overflow: visible;
 }
 
-.loader .dot::before {
-    animation-name: size-opacity;
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease;
-    background: #06b6d4;
-    /* Cyan-500 */
-    box-shadow: 0 0 6px rgba(6, 182, 212, 0.6);
-    /* Cyan Glow */
-    border-radius: 50%;
-    content: '';
-    display: block;
-    height: 100%;
-    width: 100%;
-    animation-delay: var(--delay);
+.loading svg polyline {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.loader .dot:nth-of-type(even)::before {
-    background-color: #8b5cf6;
-    /* Violet-500 */
-    box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
-    /* Violet Glow */
+.loading svg polyline#back {
+    fill: none;
+    stroke: rgba(79, 70, 229, 0.2);
+    /* Fainter dark indigo skeleton */
 }
 
-/* Optional: Dark mode adjustments if needed */
-.dark-mode .loader .dot::before {
-    background: #ffffff;
+.loading svg polyline#front {
+    fill: none;
+    /* Dark Saturated Indigo Core */
+    stroke: #4f46e5;
+    stroke-dasharray: 48, 144;
+    stroke-dashoffset: 192;
+    animation: dash_682 1.4s linear infinite;
+    /* Intense Glow from the dark source */
+    filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.8)) drop-shadow(0 0 6px rgba(129, 140, 248, 0.6)) drop-shadow(0 0 12px rgba(165, 180, 252, 0.4));
 }
 
-.dark-mode .loader .dot:nth-of-type(even)::before {
-    background-color: #818cf8;
-    /* Indigo-400 */
-    box-shadow: inset 0 0 4px #4f46e5;
-}
-
-@keyframes movement {
-    0% {
-        transform: translate3d(0, -25px, 0);
-        z-index: 0;
+@keyframes dash_682 {
+    72.5% {
+        opacity: 0;
     }
 
-    50% {
-        transform: translate3d(0, 25px, 0);
-        z-index: 10;
-    }
-
-    100% {
-        transform: translate3d(0, -25px, 0);
-        z-index: -5;
-    }
-}
-
-@keyframes size-opacity {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    25% {
-        transform: scale(1.5);
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    75% {
-        opacity: .35;
-        transform: scale(.5);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
+    to {
+        stroke-dashoffset: 0;
     }
 }

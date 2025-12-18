@@ -376,7 +376,7 @@ const NotesPage = ({ sidebarOpen }) => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden">
+    <div className="h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden">
       {/* Toast Notification */}
       <ToastNotification
         toast={toast}
@@ -401,7 +401,7 @@ const NotesPage = ({ sidebarOpen }) => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex h-[calc(100vh-64px)]">
+      <div className="flex-1 flex h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-950">
         {/* Notes Sidebar */}
         <NotesSidebar
           favoriteNotes={favoriteNotes}

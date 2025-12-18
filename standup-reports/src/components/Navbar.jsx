@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiMenu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiSun, FiMenu, FiMoon, FiCpu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -12,6 +13,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   const buttonRef = useRef(null);
   const navigate = useNavigate();
   const { currentCompany } = useCompany();
+  const { theme, themeMode, setThemeMode } = useTheme();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -44,7 +46,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
       className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 pointer-events-none"
     >
       <div
-        className="pointer-events-auto relative bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between px-3 sm:px-4 md:px-6 h-16 w-full group"
+        className="pointer-events-auto relative bg-white/10 dark:bg-slate-900/70 backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/20 dark:border-white/5 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between px-3 sm:px-4 md:px-6 h-16 w-full group transition-colors duration-300"
         style={{
           boxShadow: `
                 0 4px 30px rgba(0, 0, 0, 0.1),
@@ -66,7 +68,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
           style={{
             background: `radial-gradient(
                     600px circle at var(--mouse-x) var(--mouse-y), 
-                    rgba(255, 160, 90, 0.25), 
+                    ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 160, 90, 0.25)'}, 
                     transparent 40%
                 )`
           }}
@@ -82,7 +84,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
               <motion.button
                 key="show-sidebar"
                 onClick={() => setSidebarMode('expanded')}
-                className="relative p-2 sm:p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200 shadow-sm group"
+                className="relative p-2 sm:p-3 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/50 dark:border-white/5 text-slate-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-all duration-200 shadow-sm group"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -98,7 +100,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
             ) : (
               <motion.div
                 key="sidebar-controls"
-                className="flex items-center bg-white/50 backdrop-blur-sm border border-slate-200/50 rounded-xl p-1 shadow-sm"
+                className="flex items-center bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/50 dark:border-white/5 rounded-xl p-1 shadow-sm"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
@@ -107,8 +109,8 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 <motion.button
                   onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
                   className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                    : 'text-slate-600 hover:text-slate-800 hover:bg-slate-100'
+                    ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/40 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50'
                     }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -123,7 +125,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 {/* Hide Button */}
                 <motion.button
                   onClick={() => setSidebarMode('hidden')}
-                  className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                  className="p-2 rounded-lg text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-200"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   title="Hide Sidebar"
@@ -226,7 +228,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
             {/* Animated Brand Name */}
             <div className="relative overflow-hidden">
               <motion.h1
-                className="text-xl font-bold bg-gradient-to-r from-gray-800 via-blue-600 to-purple-700 bg-clip-text text-transparent"
+                className="text-xl font-bold bg-gradient-to-r from-gray-800 dark:from-white via-blue-600 dark:via-blue-400 to-purple-700 dark:to-purple-400 bg-clip-text text-transparent"
                 animate={{
                   backgroundPosition: ["0%", "100%", "0%"],
                 }}
@@ -269,7 +271,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
           <motion.button
             ref={buttonRef}
             onClick={() => setDropdownOpen(v => !v)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 backdrop-blur-sm border border-slate-200/50 text-slate-700 hover:text-slate-800 hover:bg-white/70 transition-all duration-200 shadow-sm"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200/50 dark:border-white/5 text-slate-700 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white hover:bg-white/70 dark:hover:bg-slate-700/50 transition-all duration-200 shadow-sm"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 400 }}
@@ -306,14 +308,14 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                   stiffness: 300,
                   damping: 25
                 }}
-                className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 overflow-hidden z-50 origin-top"
+                className="absolute right-0 top-full mt-2 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 overflow-hidden z-50 origin-top"
                 style={{
                   transformOrigin: 'top right',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.2)'
+                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
                 }}
               >
                 {/* User Info Header with Gradient */}
-                <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50">
+                <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50 dark:border-white/5">
                   <div className="flex items-center gap-3">
                     {avatarUrl ? (
                       <motion.img
@@ -336,7 +338,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     )}
                     <div>
                       <motion.div
-                        className="font-bold text-slate-800 text-base"
+                        className="font-bold text-slate-800 dark:text-white text-base"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
@@ -344,7 +346,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                         {user.name}
                       </motion.div>
                       <motion.div
-                        className="text-slate-500 text-sm capitalize"
+                        className="text-slate-500 dark:text-gray-400 text-sm capitalize"
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
@@ -363,7 +365,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                       setDropdownOpen(false);
                       navigate('/profile');
                     }}
-                    className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
+                    className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-3 group"
                     whileHover={{ x: 5 }}
                     transition={{ type: 'spring', stiffness: 400 }}
                   >
@@ -373,25 +375,50 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     <span>My Profile</span>
                   </motion.button>
 
-                  {/* Settings Menu Item */}
-                  <motion.button
-                    className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50/80 transition-colors flex items-center gap-3 group"
-                    whileHover={{ x: 5 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 group-hover:bg-purple-200 transition-colors">
-                      <FiSettings size={16} />
+                  {/* Theme Switcher Section */}
+                  <div className="px-4 py-3 border-b border-slate-100/50 dark:border-white/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">Appearance</span>
                     </div>
-                    <span>Settings</span>
-                  </motion.button>
+
+                    <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 relative">
+                      {[
+                        { id: 'light', icon: <FiSun size={14} />, label: 'Light' },
+                        { id: 'dark', icon: <FiMoon size={14} />, label: 'Dark' },
+                        { id: 'system', icon: <FiCpu size={14} />, label: 'Auto' }
+                      ].map((mode) => (
+                        <button
+                          key={mode.id}
+                          onClick={() => setThemeMode(mode.id)}
+                          className={`
+                            relative flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold z-10 transition-all duration-300
+                            ${themeMode === mode.id
+                              ? 'text-blue-600 dark:text-blue-400'
+                              : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
+                            }
+                          `}
+                        >
+                          {themeMode === mode.id && (
+                            <motion.div
+                              layoutId="activeTheme"
+                              className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-lg"
+                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative z-10">{mode.icon}</span>
+                          <span className="relative z-10">{mode.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-100/50 my-2 mx-4"></div>
+                  <div className="border-t border-slate-100/50 dark:border-white/5 my-2 mx-4"></div>
 
                   {/* Sign Out Menu Item */}
                   <motion.button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50/80 transition-colors flex items-center gap-3 group"
+                    className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-900/30 transition-colors flex items-center gap-3 group"
                     whileHover={{ x: 5 }}
                     transition={{ type: 'spring', stiffness: 400 }}
                   >
@@ -403,13 +430,13 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 </div>
 
                 {/* Footer with Status */}
-                <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100/50">
+                <div className="px-4 py-3 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100/50 dark:border-white/5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-slate-500">Online</span>
+                      <span className="text-xs text-slate-500 dark:text-gray-400">Online</span>
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-400 dark:text-gray-500">
                       {currentCompany?.name || 'v2.1.0'}
                     </div>
                   </div>

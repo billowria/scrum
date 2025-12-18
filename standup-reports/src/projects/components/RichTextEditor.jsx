@@ -107,46 +107,43 @@ const RichTextEditor = ({
 
   if (!editor) {
     return (
-      <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+      <div className="border border-gray-300 dark:border-slate-700 rounded-lg p-4 bg-gray-50 dark:bg-slate-900">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-300 rounded mb-2 w-3/4"></div>
-          <div className="h-4 bg-gray-300 rounded mb-2 w-1/2"></div>
-          <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded mb-2 w-1/2"></div>
+          <div className="h-4 bg-gray-300 dark:bg-slate-700 rounded w-2/3"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+    <div className="border border-gray-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
       {/* Toolbar */}
       {showToolbar && editable && (
-        <div className="border-b border-gray-200 bg-gray-50 p-2 flex items-center gap-1 flex-wrap">
+        <div className="border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 p-2 flex items-center gap-1 flex-wrap">
           {/* Text Formatting */}
-          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+          <div className="flex items-center gap-1 border-r border-gray-300 dark:border-slate-600 pr-2">
             <button
               onClick={toggleBold}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('bold') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('bold') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Bold"
             >
               <FiBold className="w-4 h-4" />
             </button>
             <button
               onClick={toggleItalic}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('italic') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('italic') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Italic"
             >
               <FiItalic className="w-4 h-4" />
             </button>
             <button
               onClick={toggleUnderline}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('underline') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('underline') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Underline"
             >
               <FiUnderline className="w-4 h-4" />
@@ -156,21 +153,19 @@ const RichTextEditor = ({
           {/* Text Alignment removed - TextAlign extension not available */}
 
           {/* Lists */}
-          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+          <div className="flex items-center gap-1 border-r border-gray-300 dark:border-slate-600 pr-2">
             <button
               onClick={toggleBulletList}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('bulletList') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('bulletList') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Bullet List"
             >
               <FiList className="w-4 h-4" />
             </button>
             <button
               onClick={toggleOrderedList}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('orderedList') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('orderedList') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Numbered List"
             >
               <FiChevronDown className="w-4 h-4" />
@@ -178,12 +173,11 @@ const RichTextEditor = ({
           </div>
 
           {/* Code */}
-          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+          <div className="flex items-center gap-1 border-r border-gray-300 dark:border-slate-600 pr-2">
             <button
               onClick={toggleCodeBlock}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isActive('codeBlock') ? 'bg-gray-200 text-gray-900' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isActive('codeBlock') ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title="Code Block"
             >
               <FiCode className="w-4 h-4" />
@@ -191,11 +185,11 @@ const RichTextEditor = ({
           </div>
 
           {/* Link */}
-          <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+          <div className="flex items-center gap-1 border-r border-gray-300 dark:border-slate-600 pr-2">
             {isLinkActive() ? (
               <button
                 onClick={removeLink}
-                className="p-2 rounded hover:bg-gray-200 transition-colors text-blue-600"
+                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors text-blue-600 dark:text-blue-400"
                 title="Remove Link"
               >
                 <FiX className="w-4 h-4" />
@@ -203,7 +197,7 @@ const RichTextEditor = ({
             ) : (
               <button
                 onClick={() => setShowLinkDialog(!showLinkDialog)}
-                className="p-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
+                className="p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors text-gray-700 dark:text-gray-400"
                 title="Add Link"
               >
                 <FiLink className="w-4 h-4" />
@@ -215,7 +209,7 @@ const RichTextEditor = ({
           <div className="flex items-center gap-1">
             <button
               onClick={insertImage}
-              className="p-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
+              className="p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors text-gray-700 dark:text-gray-400"
               title="Insert Image"
             >
               <FiImage className="w-4 h-4" />
@@ -226,9 +220,8 @@ const RichTextEditor = ({
           <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => setIsPreviewMode(!isPreviewMode)}
-              className={`p-2 rounded hover:bg-gray-200 transition-colors ${
-                isPreviewMode ? 'bg-blue-100 text-blue-600' : 'text-gray-700'
-              }`}
+              className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors ${isPreviewMode ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-400'
+                }`}
               title={isPreviewMode ? 'Edit Mode' : 'Preview Mode'}
             >
               {isPreviewMode ? <FiEdit3 className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
@@ -239,14 +232,14 @@ const RichTextEditor = ({
 
       {/* Link Dialog */}
       {showLinkDialog && (
-        <div className="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg p-4 mt-2">
+        <div className="absolute z-10 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg shadow-lg p-4 mt-2">
           <div className="flex items-center gap-2">
             <input
               type="url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
               placeholder="Enter URL..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
             <button
@@ -257,7 +250,7 @@ const RichTextEditor = ({
             </button>
             <button
               onClick={() => setShowLinkDialog(false)}
-              className="p-2 text-gray-500 hover:text-gray-700"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -267,22 +260,20 @@ const RichTextEditor = ({
 
       {/* Editor Content */}
       <div
-        className={`border border-t-0 border-gray-200 rounded-b-lg overflow-hidden ${
-          !editable || isPreviewMode ? 'rounded-t-lg' : ''
-        }`}
+        className={`border border-t-0 border-gray-200 dark:border-slate-700 rounded-b-lg overflow-hidden ${!editable || isPreviewMode ? 'rounded-t-lg' : ''
+          }`}
         style={{ minHeight, maxHeight }}
       >
         <EditorContent
           editor={editor}
-          className={`prose prose-sm max-w-none focus:outline-none ${
-            isPreviewMode ? 'pointer-events-none' : ''
-          }`}
+          className={`prose prose-sm dark:prose-invert max-w-none focus:outline-none ${isPreviewMode ? 'pointer-events-none' : ''
+            }`}
         />
       </div>
 
       {/* Character Count */}
       {editable && (
-        <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-500 text-right">
+        <div className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-xs text-gray-500 dark:text-gray-400 text-right">
           {editor?.storage.characterCount?.characters() || 0} characters
         </div>
       )}

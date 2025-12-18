@@ -39,7 +39,7 @@ const statusOptions = [
 export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, currentUser, userRole, task = null }) {
   const { currentCompany } = useCompany();
   const titleInputRef = useRef(null);
-  
+
   const [formData, setFormData] = useState({
     title: task?.title || '',
     description: task?.description || '',
@@ -51,6 +51,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
     project_id: task?.project_id || '',
     sprint_id: task?.sprint_id || '',
     due_date: task?.due_date || '',
+    efforts_in_days: task?.efforts_in_days || '',
     parent_task_id: task?.parent_task_id || '',
     depends_on_task_id: task?.depends_on_task_id || '',
   });
@@ -63,7 +64,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
   const [assigneeSearch, setAssigneeSearch] = useState('');
   const [parentTaskSearch, setParentTaskSearch] = useState('');
   const [dependencySearch, setDependencySearch] = useState('');
-  
+
   // Classification dropdowns state
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
@@ -78,25 +79,25 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
 
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const fetchOptions = async () => {
       try {
         const { data: { user: currentUserData }, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
         if (!currentUserData) throw new Error('User not authenticated');
-        
+
         const [{ data: usersData }, { data: teamsData }, { data: projectsData }, { data: tasksData }] = await Promise.all([
           supabase.from('users').select('id, name, avatar_url, email, team_id').eq('company_id', currentCompany?.id).order('name'),
           supabase.from('teams').select('id, name').eq('company_id', currentCompany?.id).order('name'),
           supabase.from('projects').select('id, name').eq('company_id', currentCompany?.id).order('name'),
           supabase.from('tasks').select('id, title, type, status, priority').eq('company_id', currentCompany?.id).order('created_at', { ascending: false }).limit(100),
         ]);
-        
+
         setUsers(usersData || []);
         setTeams(teamsData || []);
         setAllProjects(projectsData || []);
         setTasks(tasksData || []);
-        
+
         if (!task && currentUser) {
           setFormData(prev => ({
             ...prev,
@@ -127,7 +128,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
             .eq('project_id', projectId)
             .order('start_date', { ascending: false });
           setSprints(data || []);
-          
+
           // Auto-select active sprint if no sprint is currently selected
           if (data && data.length > 0 && !formData.sprint_id && !task) {
             const activeSprint = data.find(sprint => sprint.status === 'active') || data[0];
@@ -153,7 +154,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(null);
-    
+
     if (field === 'assignee_id') {
       const selectedUser = users.find(u => u.id === value);
       if (selectedUser?.team_id) {
@@ -168,7 +169,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
       setActiveTab('essentials');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
 
@@ -188,11 +189,12 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
         project_id: formData.project_id || null,
         sprint_id: formData.sprint_id || null,
         due_date: formData.due_date || null,
+        efforts_in_days: formData.efforts_in_days ? parseFloat(formData.efforts_in_days) : null,
         parent_task_id: formData.parent_task_id || null,
       };
 
       let result;
-      
+
       if (task) {
         result = await supabase.from('tasks').update(payload).eq('id', task.id).select().single();
         if (result.error) throw result.error;
@@ -243,7 +245,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
     setFormData({
       title: '', description: '', type: 'Task', priority: 'Medium', status: 'To Do',
       assignee_id: '', team_id: '', project_id: '', sprint_id: '', due_date: '',
-      parent_task_id: '', depends_on_task_id: '',
+      parent_task_id: '', efforts_in_days: '', depends_on_task_id: '',
     });
     setError(null);
     setSuccess(false);
@@ -268,7 +270,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, loading, formData]);
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(assigneeSearch.toLowerCase()) ||
     u.email.toLowerCase().includes(assigneeSearch.toLowerCase())
   );
@@ -308,7 +310,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
           onClick={closeAndReset}
         >
           <motion.div
-            className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+            className="w-full max-w-6xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/20 dark:border-slate-800"
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -316,7 +318,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative bg-gradient-to-r from-slate-900 via-gray-900 to-slate-800 p-6 text-white flex-shrink-0">
+            <div className="relative bg-gradient-to-r from-slate-900 via-gray-900 to-slate-800 dark:from-slate-950 dark:via-gray-950 dark:to-slate-900 p-6 text-white flex-shrink-0 border-b border-white/10">
               <button
                 onClick={closeAndReset}
                 className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/20 transition-colors"
@@ -324,7 +326,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
               >
                 <FiX className="w-5 h-5" />
               </button>
-              
+
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
                   <FiEdit3 className="w-7 h-7" />
@@ -343,20 +345,18 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                     <motion.button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
-                        activeTab === tab.id
-                          ? 'bg-white text-gray-800 shadow-lg'
-                          : 'bg-white/20 hover:bg-white/30 text-white'
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeTab === tab.id
+                        ? 'bg-white dark:bg-slate-900 text-gray-800 dark:text-white shadow-lg'
+                        : 'bg-white/20 hover:bg-white/30 text-white'
+                        }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Icon className="w-4 h-4" />
                       {tab.label}
                       {tab.count > 0 && (
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                          activeTab === tab.id ? 'bg-gray-100 text-gray-700' : 'bg-white/30'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.id ? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300' : 'bg-white/30'
+                          }`}>
                           {tab.count}
                         </span>
                       )}
@@ -373,13 +373,13 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-b border-red-200 bg-red-50"
+                  className="border-b border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30"
                 >
                   <div className="p-4 flex items-start gap-3">
                     <FiAlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <p className="text-red-800 font-medium">Error</p>
-                      <p className="text-red-700 text-sm">{error}</p>
+                      <p className="text-red-800 dark:text-red-400 font-medium">Error</p>
+                      <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -390,18 +390,18 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-b border-green-200 bg-green-50"
+                  className="border-b border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/30"
                 >
                   <div className="p-4 flex items-center gap-3">
-                    <FiCheck className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <p className="text-green-800 font-medium">Task {task ? 'updated' : 'created'} successfully!</p>
+                    <FiCheck className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <p className="text-green-800 dark:text-green-400 font-medium">Task {task ? 'updated' : 'created'} successfully!</p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-slate-900">
               <AnimatePresence mode="wait">
                 {/* Essentials Tab */}
                 {activeTab === 'essentials' && (
@@ -414,7 +414,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                   >
                     {/* Title */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                         Task Title <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -423,7 +423,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                         value={formData.title}
                         onChange={(e) => handleChange('title', e.target.value)}
                         placeholder="What needs to be done?"
-                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all"
+                        className="w-full px-4 py-3 text-lg border-2 border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600"
                       />
                     </div>
 
@@ -431,22 +431,22 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Assignee */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <FiUser className="inline w-4 h-4 mr-1" />
                           Assignee
                         </label>
                         <div className="relative">
                           <button
                             onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
-                            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all text-left flex items-center justify-between"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all text-left flex items-center justify-between"
                           >
                             {selectedAssignee ? (
                               <div className="flex items-center gap-2">
                                 <Avatar user={selectedAssignee} size="xs" />
-                                <span className="text-sm font-medium truncate">{selectedAssignee.name}</span>
+                                <span className="text-sm font-medium truncate text-gray-900 dark:text-white">{selectedAssignee.name}</span>
                               </div>
                             ) : (
-                              <span className="text-gray-500 text-sm">Select assignee...</span>
+                              <span className="text-gray-500 dark:text-gray-400 text-sm">Select assignee...</span>
                             )}
                             <FiChevronDown className="w-4 h-4 text-gray-400" />
                           </button>
@@ -519,7 +519,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                         <select
                           value={formData.project_id}
                           onChange={(e) => handleChange('project_id', e.target.value)}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all"
                         >
                           <option value="">No project</option>
                           {filteredProjects.map(project => (
@@ -530,7 +530,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
 
                       {/* Sprint */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <FiClock className="inline w-4 h-4 mr-1" />
                           Sprint
                         </label>
@@ -539,7 +539,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                             <select
                               value={formData.sprint_id}
                               onChange={(e) => handleChange('sprint_id', e.target.value)}
-                              className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all"
+                              className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all"
                             >
                               <option value="">No sprint</option>
                               {sprints.map(sprint => {
@@ -554,30 +554,30 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                               })}
                             </select>
                           ) : (
-                            <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-500 text-sm">
+                            <div className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400 text-sm">
                               No sprints available for this project
                             </div>
                           )
                         ) : (
-                          <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-500 text-sm">
+                          <div className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 rounded-xl text-gray-500 dark:text-gray-400 text-sm">
                             Select a project to view sprints
                           </div>
                         )}
-                        
+
                         {/* Sprint Status Indicator */}
                         {formData.sprint_id && (() => {
                           const selectedSprint = sprints.find(s => s.id === formData.sprint_id);
                           if (!selectedSprint) return null;
-                          
+
                           const getSprintStatusColor = (status) => {
                             switch (status) {
-                              case 'active': return 'bg-green-100 text-green-800 border-green-300';
-                              case 'planning': return 'bg-blue-100 text-blue-800 border-blue-300';
-                              case 'completed': return 'bg-gray-100 text-gray-800 border-gray-300';
-                              default: return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                              case 'active': return 'bg-green-100 dark:bg-green-950/30 text-green-800 dark:text-green-400 border-green-300 dark:border-green-800';
+                              case 'planning': return 'bg-blue-100 dark:bg-blue-950/30 text-blue-800 dark:text-blue-400 border-blue-300 dark:border-blue-800';
+                              case 'completed': return 'bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-300 border-gray-300 dark:border-slate-700';
+                              default: return 'bg-yellow-100 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-400 border-yellow-300 dark:border-yellow-800';
                             }
                           };
-                          
+
                           return (
                             <motion.div
                               initial={{ opacity: 0, y: -10 }}
@@ -611,7 +611,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           <button
                             type="button"
                             onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all text-left flex items-center justify-between"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all text-left flex items-center justify-between"
                           >
                             {formData.type && (() => {
                               const typeOption = typeOptions.find(t => t.value === formData.type);
@@ -621,13 +621,13 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                   <div className={`p-1.5 rounded-lg bg-gradient-to-br ${typeOption?.gradient || 'from-gray-500 to-gray-600'}`}>
                                     <Icon className="w-3.5 h-3.5 text-white" />
                                   </div>
-                                  <span className="text-sm font-medium">{formData.type}</span>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{formData.type}</span>
                                 </div>
                               );
                             })()}
                             {showTypeDropdown ? <FiChevronUp className="w-4 h-4 text-gray-400" /> : <FiChevronDown className="w-4 h-4 text-gray-400" />}
                           </button>
-                          
+
                           <AnimatePresence>
                             {showTypeDropdown && (
                               <motion.div
@@ -648,15 +648,14 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                           handleChange('type', type.value);
                                           setShowTypeDropdown(false);
                                         }}
-                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${
-                                          isSelected ? `${type.bg} ${type.text} border-l-4 ${type.border}` : 'hover:bg-gray-50'
-                                        }`}
+                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${isSelected ? `${type.bg} ${type.text} border-l-4 ${type.border} dark:bg-opacity-20` : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                                          }`}
                                         whileHover={{ x: 2 }}
                                       >
                                         <div className={`p-2 rounded-lg bg-gradient-to-br ${type.gradient}`}>
                                           <Icon className="w-4 h-4 text-white" />
                                         </div>
-                                        <span className="font-medium">{type.value}</span>
+                                        <span className="font-medium dark:text-white">{type.value}</span>
                                         {isSelected && <FiCheck className="w-4 h-4 text-slate-600 ml-auto" />}
                                       </motion.button>
                                     );
@@ -678,7 +677,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           <button
                             type="button"
                             onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
-                            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all text-left flex items-center justify-between"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all text-left flex items-center justify-between"
                           >
                             {formData.priority && (() => {
                               const priorityOption = priorityOptions.find(p => p.value === formData.priority);
@@ -688,13 +687,13 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                   <div className={`p-1.5 rounded-lg bg-gradient-to-br ${priorityOption?.color || 'from-gray-500 to-gray-600'}`}>
                                     <Icon className="w-3.5 h-3.5 text-white" />
                                   </div>
-                                  <span className="text-sm font-medium">{formData.priority}</span>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{formData.priority}</span>
                                 </div>
                               );
                             })()}
                             {showPriorityDropdown ? <FiChevronUp className="w-4 h-4 text-gray-400" /> : <FiChevronDown className="w-4 h-4 text-gray-400" />}
                           </button>
-                          
+
                           <AnimatePresence>
                             {showPriorityDropdown && (
                               <motion.div
@@ -715,15 +714,14 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                           handleChange('priority', priority.value);
                                           setShowPriorityDropdown(false);
                                         }}
-                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${
-                                          isSelected ? `${priority.bg} ${priority.text} border-l-4 ${priority.border}` : 'hover:bg-gray-50'
-                                        }`}
+                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${isSelected ? `${priority.bg} ${priority.text} border-l-4 ${priority.border} dark:bg-opacity-20` : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                                          }`}
                                         whileHover={{ x: 2 }}
                                       >
                                         <div className={`p-2 rounded-lg bg-gradient-to-br ${priority.color}`}>
                                           <Icon className="w-4 h-4 text-white" />
                                         </div>
-                                        <span className="font-medium">{priority.value}</span>
+                                        <span className="font-medium dark:text-white">{priority.value}</span>
                                         {isSelected && <FiCheck className="w-4 h-4 text-slate-600 ml-auto" />}
                                       </motion.button>
                                     );
@@ -745,7 +743,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           <button
                             type="button"
                             onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                            className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all text-left flex items-center justify-between"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all text-left flex items-center justify-between"
                           >
                             {formData.status && (() => {
                               const statusOption = statusOptions.find(s => s.value === formData.status);
@@ -755,13 +753,13 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                   <div className={`p-1.5 rounded-lg bg-gradient-to-br ${statusOption?.color || 'from-gray-500 to-gray-600'}`}>
                                     <Icon className="w-3.5 h-3.5 text-white" />
                                   </div>
-                                  <span className="text-sm font-medium">{formData.status}</span>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{formData.status}</span>
                                 </div>
                               );
                             })()}
                             {showStatusDropdown ? <FiChevronUp className="w-4 h-4 text-gray-400" /> : <FiChevronDown className="w-4 h-4 text-gray-400" />}
                           </button>
-                          
+
                           <AnimatePresence>
                             {showStatusDropdown && (
                               <motion.div
@@ -782,15 +780,14 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                           handleChange('status', status.value);
                                           setShowStatusDropdown(false);
                                         }}
-                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${
-                                          isSelected ? `${status.bg} ${status.text} border-l-4 ${status.border}` : 'hover:bg-gray-50'
-                                        }`}
+                                        className={`w-full px-4 py-3 text-left transition-colors flex items-center gap-3 ${isSelected ? `${status.bg} ${status.text} border-l-4 ${status.border} dark:bg-opacity-20` : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'
+                                          }`}
                                         whileHover={{ x: 2 }}
                                       >
                                         <div className={`p-2 rounded-lg bg-gradient-to-br ${status.color}`}>
                                           <Icon className="w-4 h-4 text-white" />
                                         </div>
-                                        <span className="font-medium">{status.value}</span>
+                                        <span className="font-medium dark:text-white">{status.value}</span>
                                         {isSelected && <FiCheck className="w-4 h-4 text-slate-600 ml-auto" />}
                                       </motion.button>
                                     );
@@ -805,7 +802,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
 
                     {/* Description */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <FiAlignLeft className="inline w-4 h-4 mr-1" />
                         Description
                       </label>
@@ -814,7 +811,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                         onChange={(e) => handleChange('description', e.target.value)}
                         placeholder="Add details about the task..."
                         rows={4}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none resize-none transition-all"
+                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none resize-none transition-all placeholder-gray-400"
                       />
                     </div>
                   </motion.div>
@@ -832,26 +829,26 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                   >
                     {/* Parent Task */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         <FiLayers className="inline w-4 h-4 mr-1" />
                         Parent Task
                       </label>
-                      
+
                       {selectedParentTask && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="mb-3 p-4 bg-indigo-50 border-2 border-indigo-300 rounded-xl flex items-center justify-between"
+                          className="mb-3 p-4 bg-indigo-50 dark:bg-indigo-950/30 border-2 border-indigo-300 dark:border-indigo-800 rounded-xl flex items-center justify-between"
                         >
                           <div className="flex items-center gap-3">
                             <Badge type="type" value={selectedParentTask.type} size="sm" />
-                            <span className="font-medium text-gray-900">{selectedParentTask.title}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{selectedParentTask.title}</span>
                           </div>
                           <button
                             onClick={() => handleChange('parent_task_id', '')}
-                            className="p-1 hover:bg-indigo-100 rounded-lg transition-colors"
+                            className="p-1 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors"
                           >
-                            <FiX className="w-4 h-4 text-indigo-600" />
+                            <FiX className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                           </button>
                         </motion.div>
                       )}
@@ -863,7 +860,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           placeholder="Search parent tasks..."
                           value={parentTaskSearch}
                           onChange={(e) => setParentTaskSearch(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-lg focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none"
+                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none"
                         />
                       </div>
 
@@ -871,9 +868,9 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                         {!formData.parent_task_id && (
                           <button
                             onClick={() => handleChange('parent_task_id', '')}
-                            className="w-full p-3 bg-gray-50 border-2 border-gray-300 rounded-lg hover:bg-gray-100 text-left transition-colors"
+                            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-left transition-colors"
                           >
-                            <span className="text-gray-600">No parent task</span>
+                            <span className="text-gray-600 dark:text-gray-400">No parent task</span>
                           </button>
                         )}
                         {filteredParentTasks.slice(0, 5).map(t => {
@@ -883,7 +880,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                             <motion.button
                               key={t.id}
                               onClick={() => handleChange('parent_task_id', t.id)}
-                              className="w-full p-3 bg-white border-2 border-gray-300 rounded-lg hover:border-slate-400 hover:bg-slate-50 text-left transition-all flex items-center gap-3"
+                              className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-left transition-all flex items-center gap-3"
                               whileHover={{ x: 4 }}
                               whileTap={{ scale: 0.98 }}
                             >
@@ -891,7 +888,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                 <Icon className="w-4 h-4 text-white" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{t.title}</div>
+                                <div className="font-medium text-sm truncate dark:text-white">{t.title}</div>
                                 <Badge type="status" value={t.status} size="xs" />
                               </div>
                             </motion.button>
@@ -902,26 +899,26 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
 
                     {/* Dependencies */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                         <FiGitBranch className="inline w-4 h-4 mr-1" />
                         Depends On
                       </label>
-                      
+
                       {selectedDependency && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="mb-3 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl flex items-center justify-between"
+                          className="mb-3 p-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-800 rounded-xl flex items-center justify-between"
                         >
                           <div className="flex items-center gap-3">
                             <Badge type="type" value={selectedDependency.type} size="sm" />
-                            <span className="font-medium text-gray-900">{selectedDependency.title}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{selectedDependency.title}</span>
                           </div>
                           <button
                             onClick={() => handleChange('depends_on_task_id', '')}
-                            className="p-1 hover:bg-amber-100 rounded-lg transition-colors"
+                            className="p-1 hover:bg-amber-100 dark:hover:bg-amber-900/50 rounded-lg transition-colors"
                           >
-                            <FiX className="w-4 h-4 text-amber-600" />
+                            <FiX className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                           </button>
                         </motion.div>
                       )}
@@ -933,7 +930,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           placeholder="Search dependencies..."
                           value={dependencySearch}
                           onChange={(e) => setDependencySearch(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-lg focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none"
+                          className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none"
                         />
                       </div>
 
@@ -941,9 +938,9 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                         {!formData.depends_on_task_id && (
                           <button
                             onClick={() => handleChange('depends_on_task_id', '')}
-                            className="w-full p-3 bg-gray-50 border-2 border-gray-300 rounded-lg hover:bg-gray-100 text-left transition-colors"
+                            className="w-full p-3 bg-gray-50 dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-left transition-colors"
                           >
-                            <span className="text-gray-600">No dependencies</span>
+                            <span className="text-gray-600 dark:text-gray-400">No dependencies</span>
                           </button>
                         )}
                         {filteredDependencyTasks.slice(0, 5).map(t => {
@@ -953,7 +950,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                             <motion.button
                               key={t.id}
                               onClick={() => handleChange('depends_on_task_id', t.id)}
-                              className="w-full p-3 bg-white border-2 border-gray-300 rounded-lg hover:border-slate-400 hover:bg-slate-50 text-left transition-all flex items-center gap-3"
+                              className="w-full p-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-left transition-all flex items-center gap-3"
                               whileHover={{ x: 4 }}
                               whileTap={{ scale: 0.98 }}
                             >
@@ -961,7 +958,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                                 <Icon className="w-4 h-4 text-white" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm truncate">{t.title}</div>
+                                <div className="font-medium text-sm truncate dark:text-white">{t.title}</div>
                                 <Badge type="status" value={t.status} size="xs" />
                               </div>
                             </motion.button>
@@ -984,7 +981,7 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Due Date */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           <FiCalendar className="inline w-4 h-4 mr-1" />
                           Due Date
                         </label>
@@ -992,7 +989,24 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                           type="date"
                           value={formData.due_date}
                           onChange={(e) => handleChange('due_date', e.target.value)}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl hover:border-slate-400 focus:border-slate-500 focus:ring-4 focus:ring-slate-100 outline-none transition-all"
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all"
+                        />
+                      </div>
+
+                      {/* Efforts in Days */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <FiClock className="inline w-4 h-4 mr-1" />
+                          Effort (Days)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          placeholder="e.g. 3.5"
+                          value={formData.efforts_in_days}
+                          onChange={(e) => handleChange('efforts_in_days', e.target.value)}
+                          className="w-full px-4 py-3 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-white rounded-xl hover:border-slate-400 dark:hover:border-slate-600 focus:border-slate-500 dark:focus:border-slate-600 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-800 outline-none transition-all"
                         />
                       </div>
 
@@ -1000,33 +1014,31 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
                       {formData.project_id && formData.sprint_id && (() => {
                         const selectedSprint = sprints.find(s => s.id === formData.sprint_id);
                         if (!selectedSprint) return null;
-                        
+
                         return (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                               <FiClock className="inline w-4 h-4 mr-1" />
                               Sprint Information
                             </label>
-                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl">
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    selectedSprint.status === 'active' ? 'bg-green-500' :
+                                  <div className={`w-3 h-3 rounded-full ${selectedSprint.status === 'active' ? 'bg-green-500' :
                                     selectedSprint.status === 'completed' ? 'bg-gray-500' :
-                                    'bg-blue-500'
-                                  }`}></div>
-                                  <span className="font-semibold text-gray-900">{selectedSprint.name}</span>
+                                      'bg-blue-500'
+                                    }`}></div>
+                                  <span className="font-semibold text-gray-900 dark:text-white">{selectedSprint.name}</span>
                                 </div>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                                  selectedSprint.status === 'active' ? 'bg-green-100 text-green-800' :
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${selectedSprint.status === 'active' ? 'bg-green-100 text-green-800' :
                                   selectedSprint.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                                  'bg-blue-100 text-blue-800'
-                                }`}>
+                                    'bg-blue-100 text-blue-800'
+                                  }`}>
                                   {selectedSprint.status}
                                 </span>
                               </div>
                               {selectedSprint.start_date && selectedSprint.end_date && (
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
                                   <FiCalendar className="inline w-4 h-4 mr-1" />
                                   {new Date(selectedSprint.start_date).toLocaleDateString()} - {new Date(selectedSprint.end_date).toLocaleDateString()}
                                 </div>
@@ -1039,8 +1051,8 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
 
                     {/* Team Info */}
                     {formData.team_id && (
-                      <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-                        <div className="flex items-center gap-2 text-blue-700">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
+                        <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                           <FiUsers className="w-5 h-5" />
                           <span className="font-medium">Team: {teams.find(t => t.id === formData.team_id)?.name}</span>
                         </div>
@@ -1052,33 +1064,32 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
             </div>
 
             {/* Footer */}
-            <div className="border-t-2 border-gray-200 p-6 bg-slate-50 flex items-center justify-between flex-shrink-0">
+            <div className="border-t-2 border-gray-200 dark:border-slate-800 p-6 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <Avatar user={currentUser} size="sm" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{currentUser?.name}</p>
-                  <p className="text-xs text-gray-500">Reporter</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{currentUser?.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Reporter</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={closeAndReset}
-                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-200 rounded-xl transition-colors font-medium"
+                  className="px-5 py-2.5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-xl transition-colors font-medium"
                 >
                   Cancel
                 </button>
-                
+
                 <motion.button
                   onClick={handleSubmit}
                   disabled={loading || !formData.title.trim()}
                   whileHover={{ scale: loading ? 1 : 1.02 }}
                   whileTap={{ scale: loading ? 1 : 0.98 }}
-                  className={`px-6 py-2.5 rounded-xl text-white flex items-center gap-2 font-medium shadow-lg transition-all ${
-                    loading || !formData.title.trim()
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black hover:shadow-xl'
-                  }`}
+                  className={`px-6 py-2.5 rounded-xl text-white flex items-center gap-2 font-medium shadow-lg transition-all ${loading || !formData.title.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-black hover:shadow-xl'
+                    }`}
                 >
                   {loading ? (
                     <>
@@ -1096,9 +1107,9 @@ export default function CreateTaskModalNew({ isOpen, onClose, onSuccess, current
             </div>
 
             {/* Keyboard shortcuts hint */}
-            <div className="px-6 pb-3 text-center text-xs text-gray-500 flex-shrink-0">
-              <kbd className="px-2 py-1 bg-gray-200 rounded font-mono">Esc</kbd> to close •{' '}
-              <kbd className="px-2 py-1 bg-gray-200 rounded font-mono">⌘ Enter</kbd> to save
+            <div className="px-6 pb-3 text-center text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+              <kbd className="px-2 py-1 bg-gray-200 dark:bg-slate-800 rounded font-mono">Esc</kbd> to close •{' '}
+              <kbd className="px-2 py-1 bg-gray-200 dark:bg-slate-800 rounded font-mono">⌘ Enter</kbd> to save
             </div>
           </motion.div>
         </motion.div>

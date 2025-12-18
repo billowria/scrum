@@ -11,6 +11,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { supabase } from '../supabaseClient';
+import ThemeToggle from './shared/ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
 
 
 
@@ -25,11 +27,11 @@ const createNavLinks = (counts, user) => {
       badge: null,
       colors: {
         gradient: 'from-blue-400 to-blue-600',
-        hoverBg: 'hover:bg-blue-50',
-        activeBg: 'bg-blue-100',
-        activeText: 'text-blue-700',
+        hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-900/20',
+        activeBg: 'bg-blue-100 dark:bg-blue-900/40',
+        activeText: 'text-blue-700 dark:text-blue-400',
         activeBorder: 'border-blue-500',
-        iconBg: 'bg-blue-500',
+        iconBg: 'bg-blue-500 dark:bg-blue-600',
         iconText: 'text-white'
       }
     },
@@ -41,11 +43,11 @@ const createNavLinks = (counts, user) => {
       badge: null,
       colors: {
         gradient: 'from-indigo-400 to-indigo-600',
-        hoverBg: 'hover:bg-indigo-50',
-        activeBg: 'bg-indigo-100',
-        activeText: 'text-indigo-700',
+        hoverBg: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
+        activeBg: 'bg-indigo-100 dark:bg-indigo-900/40',
+        activeText: 'text-indigo-700 dark:text-indigo-400',
         activeBorder: 'border-indigo-500',
-        iconBg: 'bg-indigo-500',
+        iconBg: 'bg-indigo-500 dark:bg-indigo-600',
         iconText: 'text-white'
       }
     },
@@ -57,11 +59,11 @@ const createNavLinks = (counts, user) => {
       badge: counts.tasks,
       colors: {
         gradient: 'from-purple-400 to-purple-600',
-        hoverBg: 'hover:bg-purple-50',
-        activeBg: 'bg-purple-100',
-        activeText: 'text-purple-700',
+        hoverBg: 'hover:bg-purple-50 dark:hover:bg-purple-900/20',
+        activeBg: 'bg-purple-100 dark:bg-purple-900/40',
+        activeText: 'text-purple-700 dark:text-purple-400',
         activeBorder: 'border-purple-500',
-        iconBg: 'bg-purple-500',
+        iconBg: 'bg-purple-500 dark:bg-purple-600',
         iconText: 'text-white'
       }
     },
@@ -73,11 +75,11 @@ const createNavLinks = (counts, user) => {
       badge: counts.projects,
       colors: {
         gradient: 'from-orange-400 to-orange-600',
-        hoverBg: 'hover:bg-orange-50',
-        activeBg: 'bg-orange-100',
-        activeText: 'text-orange-700',
+        hoverBg: 'hover:bg-orange-50 dark:hover:bg-white/10',
+        activeBg: 'bg-orange-100 dark:bg-orange-900/40',
+        activeText: 'text-orange-700 dark:text-orange-400',
         activeBorder: 'border-orange-500',
-        iconBg: 'bg-orange-500',
+        iconBg: 'bg-orange-500 dark:bg-orange-600',
         iconText: 'text-white'
       }
     },
@@ -89,30 +91,15 @@ const createNavLinks = (counts, user) => {
       badge: counts.leaveRequests > 0 ? counts.leaveRequests : null,
       colors: {
         gradient: 'from-green-400 to-green-600',
-        hoverBg: 'hover:bg-green-50',
-        activeBg: 'bg-green-100',
-        activeText: 'text-green-700',
+        hoverBg: 'hover:bg-green-50 dark:hover:bg-green-900/20',
+        activeBg: 'bg-green-100 dark:bg-green-900/40',
+        activeText: 'text-green-700 dark:text-green-400',
         activeBorder: 'border-green-500',
-        iconBg: 'bg-green-500',
+        iconBg: 'bg-green-500 dark:bg-green-600',
         iconText: 'text-white'
       }
     },
-    {
-      to: '/team-management',
-      icon: <FiUsers />,
-      label: 'Manage Users',
-      description: 'Team & User Management',
-      badge: null,
-      colors: {
-        gradient: 'from-slate-400 to-slate-600',
-        hoverBg: 'hover:bg-slate-50',
-        activeBg: 'bg-slate-100',
-        activeText: 'text-slate-700',
-        activeBorder: 'border-slate-500',
-        iconBg: 'bg-slate-500',
-        iconText: 'text-white'
-      }
-    },
+
     {
       to: '/notifications',
       icon: <FiBell />,
@@ -121,11 +108,11 @@ const createNavLinks = (counts, user) => {
       badge: counts.notifications,
       colors: {
         gradient: 'from-red-400 to-red-600',
-        hoverBg: 'hover:bg-red-50',
-        activeBg: 'bg-red-100',
-        activeText: 'text-red-700',
+        hoverBg: 'hover:bg-red-50 dark:hover:bg-red-900/20',
+        activeBg: 'bg-red-100 dark:bg-red-900/40',
+        activeText: 'text-red-700 dark:text-red-400',
         activeBorder: 'border-red-500',
-        iconBg: 'bg-red-500',
+        iconBg: 'bg-red-500 dark:bg-red-600',
         iconText: 'text-white'
       }
     },
@@ -137,11 +124,11 @@ const createNavLinks = (counts, user) => {
       badge: null,
       colors: {
         gradient: 'from-pink-400 to-pink-600',
-        hoverBg: 'hover:bg-pink-50',
-        activeBg: 'bg-pink-100',
-        activeText: 'text-pink-700',
+        hoverBg: 'hover:bg-pink-50 dark:hover:bg-pink-900/20',
+        activeBg: 'bg-pink-100 dark:bg-pink-900/40',
+        activeText: 'text-pink-700 dark:text-pink-400',
         activeBorder: 'border-pink-500',
-        iconBg: 'bg-pink-500',
+        iconBg: 'bg-pink-500 dark:bg-pink-600',
         iconText: 'text-white'
       }
     },
@@ -153,11 +140,11 @@ const createNavLinks = (counts, user) => {
       badge: counts.achievements > 0 ? 'new' : null,
       colors: {
         gradient: 'from-yellow-400 to-yellow-600',
-        hoverBg: 'hover:bg-yellow-50',
-        activeBg: 'bg-yellow-100',
-        activeText: 'text-yellow-700',
+        hoverBg: 'hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
+        activeBg: 'bg-yellow-100 dark:bg-yellow-900/40',
+        activeText: 'text-yellow-700 dark:text-yellow-400',
         activeBorder: 'border-yellow-500',
-        iconBg: 'bg-yellow-500',
+        iconBg: 'bg-yellow-500 dark:bg-yellow-600',
         iconText: 'text-white'
       }
     },
@@ -174,11 +161,11 @@ const createNavLinks = (counts, user) => {
       isManager: true,
       colors: {
         gradient: 'from-indigo-400 to-indigo-600',
-        hoverBg: 'hover:bg-indigo-50',
-        activeBg: 'bg-indigo-100',
-        activeText: 'text-indigo-700',
+        hoverBg: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20',
+        activeBg: 'bg-indigo-100 dark:bg-indigo-900/40',
+        activeText: 'text-indigo-700 dark:text-indigo-400',
         activeBorder: 'border-indigo-500',
-        iconBg: 'bg-indigo-500',
+        iconBg: 'bg-indigo-500 dark:bg-indigo-600',
         iconText: 'text-white'
       }
     };
@@ -300,9 +287,12 @@ const Tooltip = ({ show, label, colors, elementRef }) => {
 
 // Modern simplified sidebar component
 export default function Sidebar({ mode, setMode, user }) {
+  const { theme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState(null);
+
+  const isDark = theme === 'dark';
 
   const open = mode === 'expanded';
 
@@ -432,7 +422,7 @@ export default function Sidebar({ mode, setMode, user }) {
   };
 
   return (
-    <aside className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out"
+    <aside className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-r-0"
       style={{
         width: getSidebarWidth(),
         transform: mode === 'hidden' ? 'translateX(-100%)' : 'translateX(0)',
@@ -440,17 +430,18 @@ export default function Sidebar({ mode, setMode, user }) {
       }}>
 
       {/* Glassmorphism background */}
-      <div className="absolute inset-0 bg-white/30 backdrop-blur-xl border-r border-white/20" />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10" />
+      <div className="absolute inset-0 bg-white/30 dark:bg-slate-950/40 backdrop-blur-xl border-r border-white/20 dark:border-white/5" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10 dark:from-slate-800/10 dark:to-slate-900/10" />
 
       {/* Animated glass reflection */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent transform skew-y-12" />
+      <div className="absolute inset-0 opacity-30 dark:opacity-10">
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 dark:via-slate-700/10 to-transparent transform skew-y-12" />
       </div>
 
 
-      {/* Main navigation container */}
-      <nav className="relative flex-1 px-4 py-6 space-y-3 overflow-y-auto">
+
+
+      <nav className="relative flex-1 px-4 py-2 space-y-3 overflow-y-auto custom-scrollbar">
         {navLinks.map((link, index) => {
           if (link.isDivider) {
             return (
@@ -469,18 +460,18 @@ export default function Sidebar({ mode, setMode, user }) {
                 onClick={() => link.to && navigate(link.to)}
                 className={`
                   w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
-                  backdrop-blur-sm border border-white/20
+                  backdrop-blur-md border border-white/20 dark:border-white/5
                   ${isActiveLink
-                    ? `${link.colors.activeBg} ${link.colors.activeText} border-l-4 ${link.colors.activeBorder} shadow-lg`
-                    : `${link.colors.hoverBg} text-slate-700 hover:scale-105 hover:shadow-md`
+                    ? `${link.colors.activeBg} ${link.colors.activeText} border-l-4 ${link.colors.activeBorder} shadow-lg dark:shadow-blue-900/20`
+                    : `${link.colors.hoverBg} text-slate-700 dark:text-slate-400 hover:scale-105 hover:shadow-md dark:hover:text-white`
                   }
                 `}
                 onMouseEnter={() => setHoveredItem(link.to || index)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
                   background: isActiveLink
-                    ? `linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))`
-                    : `linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))`
+                    ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))' : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))')
+                    : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.5))' : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))')
                 }}
               >
                 {/* Enhanced icon container */}
@@ -488,7 +479,7 @@ export default function Sidebar({ mode, setMode, user }) {
                   flex items-center justify-center ${open ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl transition-all duration-300
                   ${isActiveLink
                     ? `${link.colors.iconBg} ${link.colors.iconText} shadow-lg scale-110`
-                    : `bg-white/80 text-slate-600 group-hover:scale-105 group-hover:shadow-md`
+                    : `bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:scale-105 group-hover:shadow-md`
                   }
                 `}>
                   <span className={`${open ? 'text-lg' : 'text-xl'} relative transition-all duration-300`}>
@@ -507,11 +498,11 @@ export default function Sidebar({ mode, setMode, user }) {
                       exit="hidden"
                       className="ml-4 flex-1 text-left"
                     >
-                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${isActiveLink ? link.colors.activeText : 'text-slate-800'
+                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${isActiveLink ? link.colors.activeText : 'text-slate-800 dark:text-slate-200'
                         }`}>
                         {link.label}
                       </div>
-                      <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>
+                      <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400 mt-1 leading-none opacity-80 transition-all duration-300`}>
                         {link.description}
                       </div>
                     </motion.div>
@@ -550,18 +541,18 @@ export default function Sidebar({ mode, setMode, user }) {
             onClick={() => navigate('/chat')}
             className={`
               w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
-              backdrop-blur-sm border border-white/20
+              backdrop-blur-md border border-white/20 dark:border-white/5
               ${location.pathname === '/chat'
-                ? 'bg-cyan-100 text-cyan-700 border-l-4 border-cyan-500 shadow-lg'
-                : 'hover:bg-cyan-50 text-slate-700 hover:scale-105 hover:shadow-md'
+                ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 border-l-4 border-cyan-500 shadow-lg dark:shadow-cyan-900/20'
+                : 'hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-gray-400 hover:scale-105 hover:shadow-md dark:hover:text-cyan-400'
               }
             `}
             onMouseEnter={() => setHoveredItem('chat')}
             onMouseLeave={() => setHoveredItem(null)}
             style={{
               background: location.pathname === '/chat'
-                ? 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-                : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))'
+                ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))' : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))')
+                : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.5))' : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))')
             }}
           >
             <div className={`

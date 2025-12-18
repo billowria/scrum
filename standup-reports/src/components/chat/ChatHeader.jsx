@@ -33,7 +33,7 @@ const ChatHeader = ({
   };
 
   return (
-    <header className={`bg-white border-b border-gray-200 px-4 py-3 ${className}`}>
+    <header className={`bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 py-3 transition-colors duration-300 ${className}`}>
       <div className="flex items-center justify-between">
         {/* Left Side - Search and Filters */}
         <div className="flex items-center gap-3 flex-1 max-w-2xl min-w-0">
@@ -45,7 +45,7 @@ const ChatHeader = ({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-950/50 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-900/50 focus:border-transparent min-w-0 dark:text-white transition-all"
             />
             {searchQuery && (
               <button
@@ -61,7 +61,7 @@ const ChatHeader = ({
           <div className="relative hidden sm:block">
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors dark:text-gray-300 shadow-sm"
             >
               {(() => {
                 const Icon = getCurrentFilter().icon;
@@ -79,7 +79,7 @@ const ChatHeader = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[200px]"
+                  className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-lg dark:shadow-slate-950/80 z-50 min-w-[200px]"
                 >
                   {filterOptions.map((option) => (
                     <button
@@ -88,7 +88,7 @@ const ChatHeader = ({
                         onFilterChange(option.value);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${conversationFilter === option.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                      className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${conversationFilter === option.value ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
                         }`}
                     >
                       {option.icon && <option.icon className="w-4 h-4" />}
@@ -103,7 +103,7 @@ const ChatHeader = ({
 
         {/* Center - App Title (Desktop) */}
         <div className="hidden md:flex items-center">
-          <h1 className="text-lg font-semibold text-gray-900">Sync Chat</h1>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Sync Chat</h1>
         </div>
 
         {/* Right Side - Actions */}
@@ -111,7 +111,7 @@ const ChatHeader = ({
           {/* New Direct Message */}
           <button
             onClick={onStartDirectMessage}
-            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
             title="Start Direct Message"
           >
             <FiPlus className="w-5 h-5" />
@@ -122,8 +122,8 @@ const ChatHeader = ({
             <button
               onClick={onToggleNotifications}
               className={`p-2 rounded-lg transition-colors relative ${showNotifications
-                  ? 'text-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/40'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800'
                 }`}
             >
               <FiBell className="w-5 h-5" />
@@ -139,7 +139,7 @@ const ChatHeader = ({
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-1 sm:gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors min-w-0"
+              className="flex items-center gap-1 sm:gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors min-w-0"
             >
               {currentUser?.avatar_url ? (
                 <img
@@ -152,10 +152,10 @@ const ChatHeader = ({
                   {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
               )}
-              <span className="hidden sm:block text-sm font-medium text-gray-700 truncate max-w-[80px]">
+              <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-[80px]">
                 {currentUser?.name?.split(' ')[0] || 'User'}
               </span>
-              <FiChevronDown className="w-3.5 h-3.5 text-gray-500 hidden sm:block" />
+              <FiChevronDown className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 hidden sm:block" />
             </button>
 
             <AnimatePresence>
@@ -165,7 +165,7 @@ const ChatHeader = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]"
+                  className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg shadow-lg dark:shadow-slate-950/80 z-50 min-w-[180px]"
                 >
                   <div className="py-1">
                     <button
@@ -173,7 +173,7 @@ const ChatHeader = ({
                         onOpenSettings();
                         setShowUserMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       <FiSettings className="w-4 h-4" />
                       Settings
@@ -184,7 +184,7 @@ const ChatHeader = ({
                         // Handle logout
                         setShowUserMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                     >
                       <FiMessageSquare className="w-4 h-4" />
                       Sign Out

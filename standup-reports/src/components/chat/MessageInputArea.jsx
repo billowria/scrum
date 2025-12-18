@@ -47,10 +47,10 @@ const MessageInputArea = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled || isRecording}
-        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl resize-none
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                   focus:bg-white transition-all duration-200 disabled:opacity-50
-                   placeholder-gray-400 text-gray-900"
+        className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-700 rounded-xl resize-none
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-900/50 focus:border-transparent
+                   focus:bg-white dark:focus:bg-slate-900 transition-all duration-200 disabled:opacity-50
+                   placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-white"
         rows={1}
         style={{ minHeight: '44px', maxHeight: '120px' }}
         autoComplete="off"
@@ -66,14 +66,14 @@ const MessageInputArea = ({
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl
-                       border border-gray-200 p-2 max-h-48 overflow-y-auto z-50"
+            className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-900 rounded-xl shadow-2xl
+                       border border-gray-200 dark:border-slate-800 p-2 max-h-48 overflow-y-auto z-50"
           >
             {mentions.map((user) => (
               <button
                 key={user.id}
                 onClick={() => onMentionSelect(user)}
-                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-800
                          rounded-lg transition-colors group"
               >
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600
@@ -82,8 +82,8 @@ const MessageInputArea = ({
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left">
-                  <span className="text-sm font-medium text-gray-900">{user.name}</span>
-                  <span className="text-xs text-gray-500 block">{user.email || 'Team member'}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-200">{user.name}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block">{user.email || 'Team member'}</span>
                 </div>
               </button>
             ))}

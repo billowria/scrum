@@ -32,7 +32,13 @@ import {
   FiBarChart2,
   FiLayers,
   FiX,
-  FiPlay
+  FiPlay,
+  FiCircle,
+  FiChevronDown,
+  FiChevronsDown,
+  FiChevronsUp,
+  FiCheck,
+  FiChevronLeft
 } from 'react-icons/fi';
 import { createTaskNotification } from '../utils/notificationHelper';
 import { getSprintStatus } from '../utils/sprintUtils';
@@ -162,7 +168,7 @@ const FilterButton = ({ icon: Icon, label, color, isActive, expandedContent, onC
 
   const buttonClass = `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 ${isActive
     ? `${color} text-white shadow-lg`
-    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm'
+    : 'bg-gray-100 dark:bg-slate-800/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 shadow-sm'
     }`;
 
   return (
@@ -214,7 +220,11 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [displayMode, setDisplayMode] = useState('board'); // 'board' or 'list' for TaskBoard
   const [editingTask, setEditingTask] = useState(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef(null);
   const [updatingTask, setUpdatingTask] = useState(null);
   const [viewingTask, setViewingTask] = useState(null);
   const [showStats, setShowStats] = useState(true);
@@ -232,7 +242,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const [search, setSearch] = useState('');
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState('all');
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [showHeader, setShowHeader] = useState(true);
   const headerRef = useRef(null);
 
@@ -473,7 +483,14 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
         search: '',
         sprint: 'all'
       });
-      setSelectedProjectId('all');
+
+      // Reset to the first project if available
+      if (projects.length > 0) {
+        setSelectedProjectId(projects[0].id);
+      } else {
+        setSelectedProjectId(null);
+      }
+
       setSelectedSprintId('all');
       setSearch('');
 
@@ -525,6 +542,17 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
     }).length
   };
 
+  // Calculate active filter count for header badge
+  const activeFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (selectedProjectId && selectedProjectId !== 'all') count++;
+    if (filters.status !== 'all') count++;
+    if (selectedSprintId !== 'all') count++;
+    const assigneeActive = Array.isArray(filters.assignee) ? filters.assignee.length > 0 : (filters.assignee !== 'all' && filters.assignee);
+    if (assigneeActive) count++;
+    return count;
+  }, [selectedProjectId, filters.status, selectedSprintId, filters.assignee]);
+
   // Fetch current user and role
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -574,6 +602,19 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
     fetchEmployees();
   }, [currentUser, userRole]);
 
+  // Handle CMD+/ for search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        setSearchFocused(true);
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Fetch tasks with enhanced validation and error handling
   const fetchTasks = async () => {
     try {
@@ -589,7 +630,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       let query = supabase
         .from('tasks')
         .select(`
-          id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id,
+          id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id, efforts_in_days,
           assignee:users!assignee_id(
             id,
             name,
@@ -671,8 +712,15 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       // Apply search filter with validation
       if (currentSearch && typeof currentSearch === 'string' && currentSearch.trim() !== '') {
         const searchTerm = currentSearch.trim();
-        if (searchTerm.length >= 1) { // Minimum search length
-          query = query.ilike('title', `%${searchTerm}%`);
+        if (searchTerm.length >= 1) {
+          // Check if search looks like a task short ID (e.g., first 4-8 chars of UUID)
+          if (isShortId(searchTerm)) {
+            const idPrefix = shortIdToUuidPrefix(searchTerm);
+            // Search title or ID prefix
+            query = query.or(`title.ilike.%${searchTerm}%,id.ilike.${idPrefix}%`);
+          } else {
+            query = query.ilike('title', `%${searchTerm}%`);
+          }
         }
       }
 
@@ -894,6 +942,11 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       // De-duplicate by id
       const uniqueById = Array.from(new Map(filtered.map(p => [p.id, { id: p.id, name: p.name }])).values());
       setProjects(uniqueById);
+
+      // Select first project by default if none selected
+      if (uniqueById.length > 0) {
+        setSelectedProjectId(prev => prev && prev !== 'all' ? prev : uniqueById[0].id);
+      }
     } catch (err) {
       console.error('Error fetching projects:', err);
       setProjects([]);
@@ -1038,23 +1091,23 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const StatCard = ({ icon: Icon, label, value, color, trend }) => (
     <motion.div
       variants={statVariants}
-      className={`bg-white rounded-xl p-4 shadow-sm border-l-4 ${color} hover:shadow-md transition-all duration-200 cursor-pointer`}
+      className={`bg-white dark:bg-slate-900/50 rounded-xl p-4 shadow-sm border-l-4 ${color} hover:shadow-md transition-all duration-200 cursor-pointer backdrop-blur-sm dark:border-opacity-50`}
       whileHover={{ y: -2, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
         </div>
-        <div className={`p-3 rounded-lg ${color.replace('border-', 'bg-').replace('-500', '-50')}`}>
+        <div className={`p-3 rounded-lg ${color.replace('border-', 'bg-').replace('-500', '-50')} dark:bg-slate-800/50`}>
           <Icon className={`w-6 h-6 ${color.replace('border-', 'text-')}`} />
         </div>
       </div>
       {trend && (
         <div className="flex items-center mt-2 text-xs">
           <FiTrendingUp className="w-3 h-3 text-green-500 mr-1" />
-          <span className="text-green-600">{trend}</span>
+          <span className="text-green-600 dark:text-green-400">{trend}</span>
         </div>
       )}
     </motion.div>
@@ -1076,15 +1129,32 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
   return (
     <motion.div
-      className="h-full flex flex-col relative"
+      className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 relative overflow-hidden"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
     >
+      <SideFilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        projects={projects}
+        selectedProjectId={selectedProjectId}
+        setSelectedProjectId={setSelectedProjectId}
+        sprints={sprints}
+        selectedSprintId={selectedSprintId}
+        setSelectedSprintId={setSelectedSprintId}
+        filters={filters}
+        setFilters={setFilters}
+        employees={employees}
+        onClearAllFilters={handleClearAllFilters}
+        activeFilterCount={activeFilterCount}
+      />
+
+
       {/* Creative Modern Tasks Header */}
       {showHeader && (
         <motion.div
-          className="fixed top-16 right-0 z-[35]"
+          className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
           id="tasks-header"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1099,7 +1169,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
           {/* Liquid Glass Header */}
           <div
             ref={headerRef}
-            className="mx-6 mt-4 pointer-events-auto relative overflow-hidden bg-white/10 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
+            className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-slate-700/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group min-h-[70px]"
             style={{
               boxShadow: `
                 0 8px 32px 0 rgba(31, 38, 135, 0.15),
@@ -1139,10 +1209,10 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight drop-shadow-sm">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
                   {view === 'sprint' ? 'Sprint Management' : 'Tasks'}
                 </h1>
-                <p className="text-xs font-medium text-gray-600 flex items-center gap-2">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   {view === 'sprint' ? 'Plan, track, and deliver' : 'Manage your workflow'}
                 </p>
               </div>
@@ -1158,7 +1228,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                   key={tab.id}
                   className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${view === tab.id
                     ? 'text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/40'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-600/40'
                     }`}
                   onClick={() => setView(tab.id)}
                   whileHover={{
@@ -1180,7 +1250,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                           ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' // Sprint -> Pink/Purple
                           : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500' // Tasks -> Blue/Cyan
                           }`}
-                        layoutId="activeTabReport"
+                        layoutId="activeTabTasks"
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       />
 
@@ -1214,63 +1284,132 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
             {/* Right: Actions */}
             <div className="flex items-center gap-2 px-2 relative z-10">
 
-              {/* Glowing Stats Pills - CSS-based Text Reveal */}
-              <div className="hidden xl:flex items-center gap-1.5 mr-1">
-                {(view === 'sprint' ? [
-                  { value: sprints.filter(s => getSprintStatus(s) === 'Active').length, label: 'Active', colors: ['from-emerald-400', 'to-green-500'], icon: FiPlay },
-                  { value: projects.length, label: 'Projects', colors: ['from-purple-400', 'to-pink-500'], icon: FiFolder },
-                  { value: sprints.filter(s => getSprintStatus(s) === 'Completed').length, label: 'Done', colors: ['from-blue-400', 'to-cyan-500'], icon: FiCheckCircle }
-                ] : [
-                  { value: taskStats.inProgress, label: 'Active', colors: ['from-blue-400', 'to-indigo-500'], icon: FiTrendingUp },
-                  { value: taskStats.completed, label: 'Done', colors: ['from-emerald-400', 'to-green-500'], icon: FiCheckCircle },
-                  { value: taskStats.overdue, label: 'Overdue', colors: ['from-amber-400', 'to-orange-500'], icon: FiCalendar }
-                ]).map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    className={`relative bg-gradient-to-r ${stat.colors[0]} ${stat.colors[1]} px-2.5 py-1 rounded-full text-white shadow-md cursor-pointer overflow-hidden group/stat`}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.1, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
-                    transition={{ delay: 0.05 + index * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                  >
-                    <div className="relative flex items-center gap-1">
-                      <stat.icon className="w-3.5 h-3.5 flex-shrink-0 group-hover/stat:rotate-12 transition-transform duration-300" />
-                      <span className="text-[11px] font-bold">{stat.value}</span>
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold opacity-0 group-hover/stat:max-w-[80px] group-hover/stat:opacity-100 group-hover/stat:ml-1 transition-all duration-300 ease-out">
-                        {stat.label}
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
+              {/* Professional Search Bar */}
+              <div className="relative flex items-center group/search">
+                <motion.div
+                  initial={false}
+                  animate={{
+                    width: searchFocused || search ? (window.innerWidth < 1280 ? 160 : 220) : 42,
+                    backgroundColor: searchFocused ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+                    boxShadow: searchFocused ? '0 0 20px rgba(99, 102, 241, 0.2)' : 'none'
+                  }}
+                  className={`relative flex items-center bg-white/10 dark:bg-slate-800/40 backdrop-blur-md border ${searchFocused ? 'border-indigo-500/50' : 'border-white/20 dark:border-slate-700/50'} rounded-xl transition-all duration-500 overflow-hidden min-h-[42px]`}
+                >
+                  <FiSearch className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchFocused ? 'text-indigo-400' : 'text-gray-400'} w-4 h-4 pointer-events-none`} />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    placeholder="Search tasks or ID..."
+                    className={`w-full bg-transparent border-none focus:ring-0 text-sm py-2 pl-10 pr-10 text-gray-900 dark:text-white transition-opacity duration-300 ${searchFocused || search ? 'opacity-100' : 'opacity-0'}`}
+                  />
+
+                  {/* Clear Button */}
+                  <AnimatePresence>
+                    {search && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={() => setSearch('')}
+                        className="absolute right-2 px-2 py-1 text-gray-400 hover:text-rose-500 transition-colors"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Search Shortcut Hint */}
+                {!searchFocused && !search && (
+                  <div className="absolute right-3 pointer-events-none hidden lg:flex items-center gap-0.5 opacity-40 group-hover/search:opacity-10 transition-opacity">
+                    <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">⌘</kbd>
+                    <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">/</kbd>
+                  </div>
+                )}
               </div>
 
-              {/* Refresh Button - Icon Only */}
+              {/* Compact View Toggle - repositioned to header */}
+              {view === 'tasks' && (
+                <div className="flex bg-white/10 dark:bg-slate-800/40 backdrop-blur-md rounded-xl p-1 border border-white/20 dark:border-slate-700/50 h-[42px] items-center">
+                  {[
+                    { id: 'board', icon: FiGrid, label: 'Kanban' },
+                    { id: 'list', icon: FiList, label: 'List' }
+                  ].map((mode) => (
+                    <motion.button
+                      key={mode.id}
+                      onClick={() => setDisplayMode(mode.id)}
+                      whileHover={{ backgroundColor: displayMode === mode.id ? '' : 'rgba(255,255,255,0.05)' }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 ${displayMode === mode.id ? 'text-white' : 'text-gray-500'}`}
+                      title={`${mode.label} View`}
+                    >
+                      {displayMode === mode.id && (
+                        <motion.div
+                          layoutId="headerViewToggle"
+                          className="absolute inset-0 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20"
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                      <mode.icon className="w-3.5 h-3.5 relative z-10" />
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+
+              {/* Advanced Filter Button with Active Badge */}
               <motion.button
-                className="p-2 bg-white/50 backdrop-blur-sm border border-white/40 text-gray-600 rounded-lg hover:bg-white/70 hover:text-gray-800 transition-all"
+                onClick={() => setIsFilterDrawerOpen(true)}
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative p-2.5 rounded-xl border border-white/20 dark:border-slate-700/50 transition-all flex items-center justify-center min-w-[42px] min-h-[42px] ${activeFilterCount > 0
+                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border-indigo-400'
+                  : 'bg-white/10 dark:bg-slate-700/40 text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-slate-600/60'}`}
+              >
+                <FiFilter className="w-5 h-5" />
+                {activeFilterCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white dark:ring-slate-900"
+                  >
+                    {activeFilterCount}
+                  </motion.span>
+                )}
+              </motion.button>
+
+              <div className="w-px h-6 bg-white/20 dark:bg-slate-700/50 mx-1 hidden sm:block" />
+
+              {/* Refresh Button */}
+              <motion.button
+                className="p-2.5 bg-white/10 dark:bg-slate-700/40 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-white/30 dark:hover:bg-slate-600/60 transition-all min-w-[42px] min-h-[42px]"
                 onClick={view === 'sprint' ? fetchSprints : fetchTasks}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 title={view === 'sprint' ? 'Refresh Sprints' : 'Refresh Tasks'}
               >
-                <FiRefreshCw className={`w-4 h-4 ${loading || sprintLoading ? 'animate-spin' : ''}`} />
+                <FiRefreshCw className={`w-5 h-5 ${loading || sprintLoading ? 'animate-spin' : ''}`} />
               </motion.button>
 
               {/* Professional Create Button */}
               {userRole === 'manager' && (
                 <motion.button
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 border border-gray-700 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl hover:shadow-indigo-500/20 border border-white/10 hover:border-white/30 transition-all ml-1 min-h-[42px]"
                   onClick={() => view === 'sprint' ? setShowSprintModal(true) : setShowCreateModal(true)}
-                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <FiPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">{view === 'sprint' ? 'New Sprint' : 'New Task'}</span>
+                  <span className="hidden lg:inline">{view === 'sprint' ? 'New Sprint' : 'New Task'}</span>
                 </motion.button>
               )}
 
-              {/* Hide Header Button - Icon Only */}
+              {/* Hide Header Button */}
               <motion.button
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white/40 rounded-lg transition-all"
+                className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 bg-white/5 dark:bg-slate-800/20 rounded-xl transition-all hover:bg-white/20"
                 onClick={() => setShowHeader(false)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1284,91 +1423,93 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       )}
 
       {/* Main Content */}
-      <div className="pt-6 sm:pt-10 md:pt-12">
-        {/* Show Header Button - Icon Only, Clean Design */}
-        {!showHeader && (
-          <motion.button
-            className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 backdrop-blur-xl border border-gray-200 text-gray-700 rounded-xl shadow-lg hover:shadow-xl hover:bg-white transition-all"
-            onClick={() => setShowHeader(true)}
-            initial={{ opacity: 0, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            title="Show Header"
-          >
-            <FiEye className="w-5 h-5" />
-          </motion.button>
-        )}
-
-
-
-        {/* Content */}
-        <motion.div
-          variants={itemVariants}
-          className="bg-transparent overflow-hidden"
-        >
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <LoadingSpinner />
-            </div>
-          ) : error ? (
-            <div className="p-12 text-center text-red-500 bg-white rounded-xl">
-              <FiAlertCircle className="w-12 h-12 mx-auto mb-4" />
-              {error}
-            </div>
-          ) : (
-            <div className="p-0">
-              {view === 'tasks' ? (
-                <TaskBoard
-                  tasks={tasks}
-                  onTaskUpdate={handleDirectTaskUpdate}
-                  onTaskEdit={handleTaskEdit}
-                  onTaskDelete={handleTaskDelete}
-                  onTaskView={handleTaskView}
-                  search={search}
-                  setSearch={setSearch}
-                  filters={filters}
-                  setFilters={setFilters}
-                  employees={employees}
-                  sprints={sprints}
-                  selectedSprintId={selectedSprintId}
-                  setSelectedSprintId={setSelectedSprintId}
-                  selectedProjectId={selectedProjectId}
-                  setSelectedProjectId={setSelectedProjectId}
-                  projects={projects}
-                  teams={[]} // TODO: Add teams data fetching if needed
-                  getStatusConfig={getStatusConfig}
-                  onClearAllFilters={handleClearAllFilters}
-                  onOpenSprintManagement={() => setView('sprint')}
-                  currentUser={currentUser}
-                  userRole={userRole}
-                />
-              ) : (
-                <SprintManagement
-                  sprints={sprints}
-                  tasks={tasks}
-                  onCreateSprint={() => {
-                    setEditingSprint(null);
-                    setShowSprintModal(true);
-                  }}
-                  onEditSprint={(sprint) => {
-                    setEditingSprint(sprint);
-                    setShowSprintModal(true);
-                  }}
-                  onDeleteSprint={deleteSprint}
-                  onSelectSprint={handleSprintSelect}
-                  onStartSprint={startSprint}
-                  onCompleteSprint={completeSprint}
-                  selectedSprintId={selectedSprintForDetail?.id}
-                  userRole={userRole}
-                  projects={projects}
-                  selectedProjectId={selectedProjectId}
-                  setSelectedProjectId={setSelectedProjectId}
-                />)}
-            </div>
+      <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth">
+        <div className="w-full space-y-8 pt-32 px-4">
+          {/* Show Header Button - Icon Only, Clean Design */}
+          {!showHeader && (
+            <motion.button
+              className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all"
+              onClick={() => setShowHeader(true)}
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              title="Show Header"
+            >
+              <FiEye className="w-5 h-5" />
+            </motion.button>
           )}
-        </motion.div>
+          {/* Content */}
+          <motion.div
+            variants={itemVariants}
+            className="bg-transparent overflow-hidden"
+          >
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <LoadingSpinner />
+              </div>
+            ) : error ? (
+              <div className="p-12 text-center text-red-500 dark:text-red-400 bg-white dark:bg-slate-900 rounded-xl">
+                <FiAlertCircle className="w-12 h-12 mx-auto mb-4" />
+                {error}
+              </div>
+            ) : (
+              <div className="p-0">
+                {view === 'tasks' ? (
+                  <TaskBoard
+                    tasks={tasks}
+                    onTaskUpdate={handleDirectTaskUpdate}
+                    onTaskEdit={handleTaskEdit}
+                    onTaskDelete={handleTaskDelete}
+                    onTaskView={handleTaskView}
+                    search={search}
+                    setSearch={setSearch}
+                    filters={filters}
+                    setFilters={setFilters}
+                    employees={employees}
+                    sprints={sprints}
+                    selectedSprintId={selectedSprintId}
+                    setSelectedSprintId={setSelectedSprintId}
+                    selectedProjectId={selectedProjectId}
+                    setSelectedProjectId={setSelectedProjectId}
+                    projects={projects}
+                    teams={[]} // TODO: Add teams data fetching if needed
+                    getStatusConfig={getStatusConfig}
+                    onClearAllFilters={handleClearAllFilters}
+                    onOpenSprintManagement={() => setView('sprint')}
+                    currentUser={currentUser}
+                    userRole={userRole}
+                    displayMode={displayMode}
+                    setDisplayMode={setDisplayMode}
+                    hideInternalControls={true} // New prop to hide old controls
+                  />
+                ) : (
+                  <SprintManagement
+                    sprints={sprints}
+                    tasks={tasks}
+                    onCreateSprint={() => {
+                      setEditingSprint(null);
+                      setShowSprintModal(true);
+                    }}
+                    onEditSprint={(sprint) => {
+                      setEditingSprint(sprint);
+                      setShowSprintModal(true);
+                    }}
+                    onDeleteSprint={deleteSprint}
+                    onSelectSprint={handleSprintSelect}
+                    onStartSprint={startSprint}
+                    onCompleteSprint={completeSprint}
+                    selectedSprintId={selectedSprintForDetail?.id}
+                    userRole={userRole}
+                    projects={projects}
+                    selectedProjectId={selectedProjectId}
+                    setSelectedProjectId={setSelectedProjectId}
+                  />)}
+              </div>
+            )}
+          </motion.div>
+        </div>
       </div>
 
       {/* Modals */}
@@ -1462,13 +1603,13 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
+              className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-lg overflow-hidden border dark:border-slate-800"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
             >
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4">Assign Tasks to Sprint</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Assign Tasks to Sprint</h2>
                 <form onSubmit={(e) => {
                   e.preventDefault();
                   const formData = new FormData(e.target);
@@ -1485,10 +1626,10 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                   assignTasksToSprint(selectedTaskIds, sprintId);
                 }}>
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sprint</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sprint</label>
                     <select
                       name="sprint_id"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       required
                     >
                       <option value="">Select a sprint</option>
@@ -1504,15 +1645,15 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                   </div>
 
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Selected Tasks</label>
-                    <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selected Tasks</label>
+                    <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-md p-2">
                       {tasks.filter(task => task.selected).length > 0 ? (
                         <ul className="space-y-1">
                           {tasks
                             .filter(task => task.selected)
                             .map(task => (
-                              <li key={task.id} className="text-sm py-1 px-2 bg-gray-50 rounded flex justify-between">
-                                <span className="truncate">{task.title}</span>
+                              <li key={task.id} className="text-sm py-1 px-2 bg-gray-50 dark:bg-slate-800/50 rounded flex justify-between">
+                                <span className="truncate text-gray-700 dark:text-gray-300">{task.title}</span>
                                 <span className="text-xs text-gray-500">{task.status}</span>
                               </li>
                             ))
@@ -1586,4 +1727,315 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       />
     </motion.div>
   );
+
 }
+
+
+// --- ADVANCED SIDE FILTER DRAWER ---
+const SideFilterDrawer = ({
+  isOpen,
+  onClose,
+  projects,
+  selectedProjectId,
+  setSelectedProjectId,
+  sprints,
+  selectedSprintId,
+  setSelectedSprintId,
+  filters,
+  setFilters,
+  employees,
+  onClearAllFilters,
+  activeFilterCount
+}) => {
+  const [expandedSections, setExpandedSections] = useState({
+    project: false,
+    status: false,
+    sprint: false,
+    assignee: false
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const allExpanded = Object.values(expandedSections).every(v => v);
+
+  const toggleAllSections = () => {
+    const newState = !allExpanded;
+    setExpandedSections({
+      project: newState,
+      status: newState,
+      sprint: newState,
+      assignee: newState
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[9999]"
+          />
+
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 h-full w-full max-w-[400px] bg-white/90 dark:bg-slate-950/90 backdrop-blur-3xl border-l border-white/20 dark:border-slate-800/60 z-[10000] shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
+          >
+            {/* Liquid Edge Refraction (Design Detail) */}
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500/20 via-pink-500/20 to-purple-500/20" />
+
+            {/* Header */}
+            <div className="p-8 border-b border-gray-100 dark:border-slate-800/60 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Filters</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest">
+                    {activeFilterCount} Active Filters
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={toggleAllSections}
+                  className="p-3 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-indigo-500 hover:text-white transition-colors"
+                  title={allExpanded ? "Collapse All" : "Expand All"}
+                >
+                  {allExpanded ? <FiChevronsUp className="w-5 h-5" /> : <FiChevronsDown className="w-5 h-5" />}
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ rotate: 90, scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={onClose}
+                  className="p-3 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-rose-500 hover:text-white transition-colors"
+                >
+                  <FiX className="w-5 h-5" />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
+              {/* Reset All (Float Top Right) */}
+              {activeFilterCount > 0 && (
+                <div className="flex justify-end">
+                  <motion.button
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => {
+                      onClearAllFilters();
+                      // We don't close the drawer so they can start over
+                    }}
+                    className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest hover:text-rose-600 transition-colors"
+                  >
+                    <FiRefreshCw className="w-3.5 h-3.5" />
+                    Reset All Filters
+                  </motion.button>
+                </div>
+              )}
+
+              {/* Project Selection */}
+              <CollapsibleSection
+                label="Project Context"
+                icon={FiFolder}
+                isOpen={expandedSections.project}
+                onToggle={() => toggleSection('project')}
+              >
+                <div className="grid grid-cols-1 gap-2 mt-4">
+                  {projects.map(p => (
+                    <DrawerFilterItem
+                      key={p.id}
+                      label={p.name}
+                      isActive={selectedProjectId === p.id}
+                      onClick={() => setSelectedProjectId(p.id)}
+                    />
+                  ))}
+                </div>
+              </CollapsibleSection>
+
+              {/* Status Selection */}
+              <CollapsibleSection
+                label="Task Status"
+                icon={FiCircle}
+                isOpen={expandedSections.status}
+                onToggle={() => toggleSection('status')}
+              >
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {['all', 'To Do', 'In Progress', 'Review', 'Completed'].map(s => (
+                    <DrawerPillItem
+                      key={s}
+                      label={s === 'all' ? 'All Statuses' : s}
+                      isActive={filters.status === s}
+                      onClick={() => setFilters({ ...filters, status: s })}
+                    />
+                  ))}
+                </div>
+              </CollapsibleSection>
+
+              {/* Sprint Selection */}
+              <CollapsibleSection
+                label="Sprint Cycle"
+                icon={FiTarget}
+                isOpen={expandedSections.sprint}
+                onToggle={() => toggleSection('sprint')}
+              >
+                <div className="grid grid-cols-1 gap-2 mt-4">
+                  <DrawerFilterItem
+                    label="All Sprints"
+                    isActive={selectedSprintId === 'all'}
+                    onClick={() => setSelectedSprintId('all')}
+                  />
+                  {sprints.map(s => (
+                    <DrawerFilterItem
+                      key={s.id}
+                      label={s.name}
+                      isActive={selectedSprintId === s.id}
+                      onClick={() => setSelectedSprintId(s.id)}
+                      badge={s.status === 'Active' ? 'Active' : null}
+                    />
+                  ))}
+                </div>
+              </CollapsibleSection>
+
+              {/* Assignee Selection */}
+              <CollapsibleSection
+                label="Assignee"
+                icon={FiUsers}
+                isOpen={expandedSections.assignee}
+                onToggle={() => toggleSection('assignee')}
+              >
+                <div className="grid grid-cols-1 gap-2 mt-4">
+                  <DrawerFilterItem
+                    label="All Team Members"
+                    isActive={filters.assignee === 'all'}
+                    onClick={() => setFilters({ ...filters, assignee: 'all' })}
+                  />
+                  {employees.map(e => (
+                    <DrawerFilterItem
+                      key={e.id}
+                      label={e.name}
+                      isActive={Array.isArray(filters.assignee) ? filters.assignee.includes(e.id) : filters.assignee === e.id}
+                      onClick={() => {
+                        const current = Array.isArray(filters.assignee) ? filters.assignee : (filters.assignee === 'all' ? [] : [filters.assignee]);
+                        const next = current.includes(e.id) ? current.filter(id => id !== e.id) : [...current, e.id];
+                        setFilters({ ...filters, assignee: next.length === 0 ? 'all' : next });
+                      }}
+                      image={e.avatar_url}
+                    />
+                  ))}
+                </div>
+              </CollapsibleSection>
+            </div>
+
+            {/* Footer */}
+            <div className="p-8 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800/60">
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onClose}
+                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.25rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-500/30 transition-all border border-indigo-400/30"
+              >
+                Apply Filters
+              </motion.button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence >
+  );
+};
+
+// --- SUB-COMPONENTS FOR DRAWER ---
+const CollapsibleSection = ({ label, icon: Icon, children, isOpen, onToggle }) => (
+  <div className="bg-white/5 dark:bg-slate-900/40 rounded-3xl border border-white/10 dark:border-slate-800/60 overflow-hidden shadow-sm">
+    <button
+      onClick={onToggle}
+      className={`w-full flex items-center justify-between p-5 transition-all duration-300 ${isOpen ? 'bg-indigo-500/5' : 'hover:bg-white/5'}`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-xl transition-colors duration-300 ${isOpen ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-100 dark:bg-slate-800 text-gray-500'}`}>
+          <Icon className="w-4 h-4" />
+        </div>
+        <span className={`text-xs font-black uppercase tracking-widest transition-colors duration-300 ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'}`}>{label}</span>
+      </div>
+      <motion.div
+        animate={{ rotate: isOpen ? 180 : 0 }}
+        className={`${isOpen ? 'text-indigo-500' : 'text-gray-400'} transition-colors duration-300`}
+      >
+        <FiChevronDown className="w-5 h-5" />
+      </motion.div>
+    </button>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+        >
+          <div className="border-t border-white/5 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20">
+            <div className="max-h-[280px] overflow-y-auto custom-scrollbar p-5 space-y-1">
+              {children}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
+
+const FilterSectionLabel = ({ label, icon: Icon }) => (
+  <div className="flex items-center gap-3 border-l-4 border-indigo-500 pl-4 py-1">
+    <Icon className="w-4 h-4 text-indigo-500" />
+    <span className="text-xs font-black text-gray-500 dark:text-slate-500 uppercase tracking-[0.2em]">{label}</span>
+  </div>
+);
+
+const DrawerFilterItem = ({ label, isActive, onClick, image, badge }) => (
+  <motion.button
+    whileHover={{ x: 8 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-300 border ${isActive
+      ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+      : 'bg-white dark:bg-slate-900/40 text-gray-700 dark:text-slate-300 border-gray-100 dark:border-slate-800/60 hover:bg-gray-50 dark:hover:bg-slate-800'
+      }`}
+  >
+    <div className="flex items-center gap-3">
+      {image && <img src={image} alt="" className="w-6 h-6 rounded-full ring-2 ring-white/20" />}
+      <span className="text-sm font-bold">{label}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      {badge && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-md border border-green-500/30">{badge}</span>}
+      {isActive && <FiCheck className="w-4 h-4" />}
+    </div>
+  </motion.button>
+);
+
+const DrawerPillItem = ({ label, isActive, onClick }) => (
+  <motion.button
+    whileHover={{ scale: 1.05, y: -2 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={onClick}
+    className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border ${isActive
+      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white/20 shadow-lg shadow-indigo-500/20'
+      : 'bg-gray-100 dark:bg-slate-800/60 text-gray-600 dark:text-slate-400 border-gray-100 dark:border-slate-800/60 hover:bg-gray-200 dark:hover:bg-slate-700'
+      }`}
+  >
+    {label}
+  </motion.button>
+);

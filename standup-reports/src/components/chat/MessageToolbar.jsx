@@ -43,7 +43,7 @@ const MessageToolbar = ({
             setShowFormatting(false);
           }}
           disabled={disabled}
-          className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100
+          className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800
                    rounded-xl transition-all duration-200 disabled:opacity-50"
           title="Add attachment"
         >
@@ -56,8 +56,8 @@ const MessageToolbar = ({
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl
-                         border border-gray-200 p-2 z-50"
+              className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-900 rounded-xl shadow-2xl
+                         border border-gray-200 dark:border-slate-800 p-2 z-50"
             >
               <div className="flex flex-col gap-1">
                 <button
@@ -65,22 +65,22 @@ const MessageToolbar = ({
                     onFileUpload();
                     setShowAttachmentMenu(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800
                            rounded-lg transition-colors group"
                 >
-                  <FiFile className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
-                  <span className="text-gray-700 group-hover:text-gray-900">Upload File</span>
+                  <FiFile className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Upload File</span>
                 </button>
                 <button
                   onClick={() => {
                     onImageUpload();
                     setShowAttachmentMenu(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800
                            rounded-lg transition-colors group"
                 >
-                  <FiImage className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
-                  <span className="text-gray-700 group-hover:text-gray-900">Upload Image</span>
+                  <FiImage className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                  <span className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">Upload Image</span>
                 </button>
               </div>
             </motion.div>
@@ -99,7 +99,7 @@ const MessageToolbar = ({
             setShowAttachmentMenu(false);
           }}
           disabled={disabled}
-          className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100
+          className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800
                    rounded-xl transition-all duration-200 disabled:opacity-50"
           title="Formatting"
         >
@@ -112,8 +112,8 @@ const MessageToolbar = ({
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl
-                         border border-gray-200 p-2 z-50"
+              className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-900 rounded-xl shadow-2xl
+                         border border-gray-200 dark:border-slate-800 p-2 z-50"
             >
               <div className="flex items-center gap-1">
                 <motion.button
@@ -123,7 +123,7 @@ const MessageToolbar = ({
                     onFormattingApply('bold');
                     setShowFormatting(false);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                   title="Bold"
                 >
                   <FiBold className="w-4 h-4" />
@@ -135,7 +135,7 @@ const MessageToolbar = ({
                     onFormattingApply('italic');
                     setShowFormatting(false);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                   title="Italic"
                 >
                   <FiItalic className="w-4 h-4" />
@@ -147,7 +147,7 @@ const MessageToolbar = ({
                     onFormattingApply('code');
                     setShowFormatting(false);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                   title="Inline code"
                 >
                   <FiCode className="w-4 h-4" />
@@ -169,7 +169,7 @@ const MessageToolbar = ({
             setShowAttachmentMenu(false);
           }}
           disabled={disabled}
-          className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100
+          className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800
                    rounded-xl transition-all duration-200 disabled:opacity-50"
           title="Add emoji"
         >
@@ -182,8 +182,8 @@ const MessageToolbar = ({
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl
-                         border border-gray-200 p-3 z-50"
+              className="absolute bottom-full left-0 mb-2 bg-white dark:bg-slate-900 rounded-xl shadow-2xl
+                         border border-gray-200 dark:border-slate-800 p-3 z-50"
             >
               <div className="grid grid-cols-8 gap-1">
                 {emojis.map((emoji) => (
@@ -195,7 +195,7 @@ const MessageToolbar = ({
                       onEmojiSelect(emoji);
                       setShowEmojiPicker(false);
                     }}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-lg"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-lg"
                   >
                     {emoji}
                   </motion.button>
@@ -227,11 +227,10 @@ const MessageToolbar = ({
           whileTap={{ scale: canSend ? 0.95 : 1 }}
           onClick={canSend ? onSend : undefined}
           disabled={disabled || !canSend}
-          className={`p-2.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 px-3 ${
-            canSend
+          className={`p-2.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 px-3 ${canSend
               ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          } disabled:opacity-50`}
+              : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+            } disabled:opacity-50`}
           title={canSend ? 'Send message' : 'Type a message first'}
         >
           <FiSend className="w-4 h-4" />

@@ -191,7 +191,7 @@ export default function NotificationCenterV2() {
 
   if (loading && !notifications.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -199,21 +199,21 @@ export default function NotificationCenterV2() {
 
   const GroupHeader = ({ label, count }) => (
     <div className="flex items-center gap-3 mt-8 mb-4">
-      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">{label}</h3>
-      <div className="h-px bg-gray-200 flex-1" />
-      <span className="text-xs text-gray-400 font-medium">{count}</span>
+      <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</h3>
+      <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1" />
+      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{count}</span>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Notification Center</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Center</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               You have {stats.unread} unread notifications
             </p>
           </div>
@@ -227,13 +227,13 @@ export default function NotificationCenterV2() {
                 placeholder="Search by text or sender..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all"
+                className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all backdrop-blur-sm"
               />
             </div>
 
             <button
               onClick={() => setShowCreator(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 flex items-center gap-2"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 dark:shadow-indigo-950/50 flex items-center gap-2"
             >
               <FiPlus className="w-4 h-4" />
               <span className="hidden sm:inline">New Notification</span>
@@ -241,7 +241,7 @@ export default function NotificationCenterV2() {
 
             <button
               onClick={handleMarkAllRead}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
               title="Mark all as read"
             >
               <FiCheck className="w-5 h-5" />
@@ -339,15 +339,15 @@ export default function NotificationCenterV2() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-dashed border-gray-200"
+                  className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 backdrop-blur-sm"
                 >
-                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                    <FiBell className="w-8 h-8 text-blue-300" />
+                  <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+                    <FiBell className="w-8 h-8 text-blue-300 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
                     No notifications found
                   </h3>
-                  <p className="text-gray-500 max-w-sm">
+                  <p className="text-gray-500 dark:text-gray-400 max-w-sm">
                     {searchQuery
                       ? `No matches found for "${searchQuery}"`
                       : activeFilter === 'all'

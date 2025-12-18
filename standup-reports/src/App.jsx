@@ -208,13 +208,13 @@ function App() {
   const getMarginLeft = () => {
     switch (sidebarMode) {
       case 'expanded':
-        return 'clamp(292px, 20vw, 308px)';
+        return '272px';
       case 'collapsed':
-        return 'clamp(120px, 10vw, 116px)';
+        return '100px';
       case 'hidden':
         return '0px';
       default:
-        return 'clamp(292px, 20vw, 308px)';
+        return '272px';
     }
   };
 
@@ -237,7 +237,7 @@ function App() {
                 />
                 <div className="flex-1 flex min-h-screen">
                   <div
-                    className="flex-1 bg-gray-50 overflow-hidden relative"
+                    className="flex-1 bg-gray-50 dark:bg-slate-950 overflow-hidden relative"
                     style={{
                       marginLeft: getMarginLeft(),
                       transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
@@ -266,7 +266,7 @@ function AppContent({ session, userRole, sidebarMode }) {
   const sidebarOpen = sidebarMode === 'expanded';
 
   return (
-    <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30" : "min-h-screen"}>
+    <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950" : "min-h-screen"}>
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}
       <div>
@@ -294,17 +294,17 @@ function AppContent({ session, userRole, sidebarMode }) {
                 <Route path="/standup-reports" element={
                   <PageTransition>
                     <div className="w-full py-6">
-                      <StandupReports />
+                      <StandupReports sidebarMode={sidebarMode} />
                     </div>
                   </PageTransition>
                 } />
                 {/* Manager-specific routes */}
-                {userRole === 'manager' && (
+                {(userRole === 'manager' || userRole === 'admin') && (
                   <>
                     <Route path="/team-management" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <TeamManagement />
+                          <TeamManagement sidebarMode={sidebarMode} />
                         </div>
                       </PageTransition>
                     } />

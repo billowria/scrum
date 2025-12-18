@@ -31,17 +31,17 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
     return (
         <motion.div
             variants={itemVariants}
-            className="bg-white/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-200"
+            className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-pink-500/10 hover:border-pink-200 dark:hover:border-pink-500/30"
         >
             {/* Header */}
-            <div className="p-5 border-b border-pink-100/50 bg-gradient-to-r from-pink-50/30 via-white to-transparent">
+            <div className="p-5 border-b border-pink-100/50 dark:border-slate-700 bg-gradient-to-r from-pink-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 shadow-sm border border-pink-100">
+                    <div className="w-10 h-10 rounded-xl bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center text-pink-600 dark:text-pink-400 shadow-sm border border-pink-100 dark:border-pink-500/20">
                         <FiCalendar className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="text-base font-bold text-gray-900 leading-tight">Holidays</h3>
-                        <p className="text-[11px] font-medium text-gray-500">
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Holidays</h3>
+                        <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                             {format(today, 'MMMM yyyy')}
                         </p>
                     </div>
@@ -69,8 +69,8 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.1 }}
                                         className={`group relative p-3 rounded-xl border transition-all duration-300 ${isToday
-                                            ? 'bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200 shadow-md'
-                                            : 'bg-white/40 border-gray-100/50 hover:bg-white hover:border-pink-100 hover:shadow-sm'
+                                            ? 'bg-gradient-to-r from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border-pink-200 dark:border-pink-500/30 shadow-md'
+                                            : 'bg-white/40 dark:bg-slate-700/40 border-gray-100/50 dark:border-slate-600/50 hover:bg-white dark:hover:bg-slate-700 hover:border-pink-100 dark:hover:border-slate-600 hover:shadow-sm'
                                             } ${isPast ? 'opacity-60 grayscale-[0.5]' : ''}`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
 
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
-                                                    <h4 className={`text-sm font-bold truncate ${isToday ? 'text-pink-900' : 'text-gray-900'}`}>
+                                                    <h4 className={`text-sm font-bold truncate ${isToday ? 'text-pink-900 dark:text-pink-300' : 'text-gray-900 dark:text-white'}`}>
                                                         {holiday.name}
                                                     </h4>
                                                     {isToday && (
@@ -95,7 +95,7 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-gray-500 font-medium">
+                                                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                                                     {format(holidayDate, 'EEEE')}
                                                 </span>
                                             </div>
@@ -106,10 +106,10 @@ const HolidaysWidget = ({ holidays = [], loading, navigate }) => {
                         </div>
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-400 p-4 text-center">
-                            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-3 shadow-sm">
-                                <FiUmbrella className="w-6 h-6 text-gray-300" />
+                            <div className="w-12 h-12 bg-gray-50 dark:bg-slate-700/50 rounded-xl flex items-center justify-center mb-3 shadow-sm">
+                                <FiUmbrella className="w-6 h-6 text-gray-300 dark:text-gray-500" />
                             </div>
-                            <p className="text-sm font-bold text-gray-600">No holidays this month</p>
+                            <p className="text-sm font-bold text-gray-600 dark:text-gray-300">No holidays this month</p>
                             <p className="text-xs text-gray-400 mt-1">Business as usual!</p>
                         </div>
                     )}

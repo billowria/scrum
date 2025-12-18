@@ -372,13 +372,13 @@ const ReportEntryNew = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-slate-50 flex flex-col font-sans text-slate-800 antialiased overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-200 antialiased overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
 
       {/* Main Workspace */}
       <main className="flex-1 flex overflow-hidden">
 
         {/* Left Sidebar: Context */}
-        <aside className="w-[320px] border-r border-slate-100 bg-white flex flex-col shrink-0 z-0">
+        <aside className="w-[320px] border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col shrink-0 z-0">
           <div className="px-6 pt-6 pb-2">
             <div className="mb-6">
               <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Daily Standup</h1>
@@ -474,7 +474,7 @@ const ReportEntryNew = () => {
         </aside>
 
         {/* Center: Wizard Experience */}
-        <div className="flex-1 bg-slate-50/50 relative flex flex-col items-center justify-center p-8 overflow-hidden">
+        <div className="flex-1 bg-slate-50/50 dark:bg-slate-900/50 relative flex flex-col items-center justify-center p-8 overflow-hidden">
 
           <div className="w-full max-w-2xl">
             {/* Step Indicators */}
@@ -606,7 +606,7 @@ const ReportEntryNew = () => {
         </div>
 
         {/* Right Sidebar: Helpers */}
-        <aside className="w-[280px] bg-white border-l border-slate-100 flex flex-col shrink-0">
+        <aside className="w-[280px] bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800 flex flex-col shrink-0">
           <div className="p-6">
             <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center gap-2">
               <FiZap className="w-3.5 h-3.5" />
@@ -669,7 +669,7 @@ const PremiumEditor = ({ title, subtitle, icon, editor, isActive, accentColor, i
   return (
     <div
       className={`
-                group relative bg-white rounded-2xl border transition-all duration-300 ease-out flex flex-col min-h-[400px]
+                group relative bg-white dark:bg-slate-800 rounded-2xl border transition-all duration-300 ease-out flex flex-col min-h-[400px]
                 ${isActive
           ? `${activeStyles[accentColor]} translate-y-[-2px]`
           : 'border-slate-200 hover:border-slate-300 hover:shadow-lg'
@@ -689,8 +689,8 @@ const PremiumEditor = ({ title, subtitle, icon, editor, isActive, accentColor, i
             {icon}
           </div>
           <div>
-            <h3 className={`text-lg font-bold ${isActive ? 'text-slate-800' : 'text-slate-700'}`}>{title}</h3>
-            <p className="text-sm text-slate-400 font-medium">{subtitle}</p>
+            <h3 className={`text-lg font-bold ${isActive ? 'text-slate-800 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>{title}</h3>
+            <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">{subtitle}</p>
           </div>
         </div>
 
