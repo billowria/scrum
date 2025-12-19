@@ -72,6 +72,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
           </div>
           <button
             onClick={() => navigate('/projects')}
+            aria-label="View all projects"
             className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:text-indigo-600 transition-all"
           >
             <FiArrowRight className="w-4 h-4" />
@@ -154,7 +155,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
 };
 
 // 1A. Assigned Tasks Widget - Show user's incomplete tasks
-const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }) => {
+const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, navigate }) => {
   const incompleteTasks = tasks.filter(t => t.status !== 'Completed');
 
   const getStatusStyle = (status) => {
@@ -196,7 +197,8 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick }
             </div>
           </div>
           <button
-            onClick={() => window.location.href = '/tasks'}
+            onClick={() => navigate ? navigate('/tasks') : window.location.href = '/tasks'}
+            aria-label="View all tasks"
             className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 hover:text-amber-600 transition-all"
           >
             <FiArrowRight className="w-4 h-4" />
@@ -535,6 +537,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
         </div>
         <button
           onClick={() => navigate('/team-management')}
+          aria-label="Manage team"
           className="w-8 h-8 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700 hover:text-purple-600 transition-all"
         >
           <FiArrowRight className="w-4 h-4" />
@@ -714,6 +717,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onStartChat?.(member)}
+                    aria-label={`Start chat with ${member.name}`}
                   >
                     <FiMessageSquare className="w-4 h-4" />
                   </motion.button>
@@ -1521,6 +1525,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
             loading={loading}
             currentUserId={currentUserId}
             onTaskClick={handleTaskClick}
+            navigate={navigate}
           />
         </div>
 
