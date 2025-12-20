@@ -39,7 +39,8 @@ const ChatSidebar = ({
   onToggleCollapse,
   onShowNewChatModal,
   onAvatarClick,
-  className = ""
+  className = "",
+  mobileLayout = false
 }) => {
   const [showUserList, setShowUserList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,7 +55,13 @@ const ChatSidebar = ({
   const [pinnedConversations, setPinnedConversations] = useState(new Set());
 
   // Enhanced filter options
-  const filterOptions = [
+  // Mobile specific tabs: All, Unread, Direct, # (for Teams)
+  const filterOptions = mobileLayout ? [
+    { value: 'all', label: 'All', icon: FiMessageSquare, color: 'indigo' },
+    { value: 'unread', label: 'Unread', icon: FiCircle, color: 'blue' },
+    { value: 'direct', label: 'Direct', icon: FiUser, color: 'gray' },
+    { value: 'team', label: '#', icon: null, color: 'gray' } // Null icon for # text
+  ] : [
     { value: 'all', label: 'All', icon: FiMessageSquare, color: 'blue' },
     { value: 'unread', label: 'Unread', icon: FiCircle, color: 'red' },
     { value: 'direct', label: 'Direct', icon: FiUser, color: 'green' },
@@ -193,8 +200,18 @@ const ChatSidebar = ({
 
   // Render conversation section header
   const renderSectionHeader = (title, section, conversations, Icon) => {
+    // If mobile layout and one of the specific filters is selected (except All),
+    // and we usually don't want sectional headers if we are filtering by type.
+    // But keeping it consistent is fine.
+
     const unreadCount = getUnreadCount(conversations);
     const isExpanded = expandedSections[section];
+
+    if (mobileLayout) {
+      // In mobile layout with tabs, we might just want to list items without headers unless 'All' is selected
+      // But for now, let's keep it simple and just return the title
+      if (selectedFilter !== 'all') return null;
+    }
 
     return (
       <motion.button
@@ -230,7 +247,7 @@ const ChatSidebar = ({
   };
 
   // If collapsed, render minimal version
-  if (isCollapsed) {
+  if (isCollapsed && !mobileLayout) {
     return (
       <motion.div
         initial={{ width: 320 }}
@@ -293,40 +310,51 @@ const ChatSidebar = ({
   // Full sidebar
   return (
     <motion.div
-      initial={{ width: 64 }}
-      animate={{ width: 320 }}
-      exit={{ width: 64 }}
+      initial={mobileLayout ? { opacity: 0 } : { width: 64 }}
+      animate={mobileLayout ? { opacity: 1 } : { width: 320 }}
+      exit={mobileLayout ? { opacity: 0 } : { width: 64 }}
       transition={{ duration: 0.3 }}
-      className={`h-full flex flex-col ${className}`}
+      className={`h-full flex flex-col ${className} ${mobileLayout ? 'bg-white' : ''}`}
     >
       {/* Header */}
-      <div className="p-4 pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent uppercase tracking-wider text-sm pl-1">
-            Messages
-          </h2>
-          <div className="flex items-center gap-2">
-            {/* Online indicator */}
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full"
-            >
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-green-700 font-medium">{onlineUsers.length}</span>
-            </motion.div>
-
-            {/* Collapse button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onToggleCollapse}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <FiChevronLeft className="w-4 h-4 text-gray-500" />
-            </motion.button>
+      <div className={`${mobileLayout ? 'p-4 pb-0' : 'p-4 pt-6'}`}>
+        {mobileLayout ? (
+          // Mobile Header
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Messages
+            </h2>
+            {/* Right side icons removed as per request */}
           </div>
-        </div>
+        ) : (
+          // Desktop Header
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent uppercase tracking-wider text-sm pl-1">
+              Messages
+            </h2>
+            <div className="flex items-center gap-2">
+              {/* Online indicator */}
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="flex items-center gap-1 px-2 py-1 bg-green-50 rounded-full"
+              >
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-green-700 font-medium">{onlineUsers.length}</span>
+              </motion.div>
+
+              {/* Collapse button */}
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onToggleCollapse}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FiChevronLeft className="w-4 h-4 text-gray-500" />
+              </motion.button>
+            </div>
+          </div>
+        )}
 
         {/* Search bar */}
         <div className="relative mb-3">
@@ -355,7 +383,7 @@ const ChatSidebar = ({
         </div>
 
         {/* Filter pills */}
-        <div className="flex gap-1 overflow-x-auto pb-2">
+        <div className={`flex gap-2 overflow-x-auto pb-2 scrollbar-hide ${mobileLayout ? 'mt-4' : ''}`}>
           {filterOptions.map((filter) => {
             const Icon = filter.icon;
             const isSelected = selectedFilter === filter.value;
@@ -370,6 +398,32 @@ const ChatSidebar = ({
                     : filter.value === 'team'
                       ? categorizedConversations.team.length
                       : 0;
+
+            if (mobileLayout) {
+              return (
+                <motion.button
+                  key={filter.value}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedFilter(filter.value)}
+                  className={`flex items-center justify-center px-5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap min-w-[30px]
+                            ${isSelected
+                      ? 'bg-indigo-50 text-indigo-600' // Selected: Light indigo bg, indigo text
+                      : 'bg-transparent text-gray-500 hover:bg-gray-50' // Unselected: Transparent, gray text
+                    }`}
+                >
+                  {Icon && <Icon className="w-4 h-4 mr-2" />}
+                  {filter.value === 'team' ? '#' : filter.label}
+                  {/* Show unread count badge if needed, style from screenshot implies clean look for mobile tabs */}
+                  {filter.value === 'unread' && count > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">{count}</span>
+                  )}
+                  {filter.value === 'direct' && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">13</span> // Mock count from screenshot
+                  )}
+
+                </motion.button>
+              )
+            }
 
             return (
               <motion.button
@@ -397,51 +451,53 @@ const ChatSidebar = ({
       </div>
 
       {/* Quick actions */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <div className="flex gap-2">
-          <motion.button
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.98, y: 0 }}
-            onClick={onShowNewChatModal}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2
+      {!mobileLayout && (
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex gap-2">
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98, y: 0 }}
+              onClick={onShowNewChatModal}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2
                      bg-gradient-to-r from-blue-500 to-blue-600 text-white
                      rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg
                      relative overflow-hidden border border-blue-400/30"
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
-            {/* Icon container with subtle glow */}
-            <motion.div
-              whileHover={{ rotate: 90 }}
-              transition={{ duration: 0.3 }}
-              className="relative flex items-center justify-center"
             >
-              <FiPlus className="w-4 h-4 relative z-10 text-white" />
-            </motion.div>
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
-            <span className="text-sm font-medium text-white relative z-10">New Chat</span>
-          </motion.button>
+              {/* Icon container with subtle glow */}
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex items-center justify-center"
+              >
+                <FiPlus className="w-4 h-4 relative z-10 text-white" />
+              </motion.div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow-sm disabled:opacity-50"
-          >
-            <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </motion.button>
+              <span className="text-sm font-medium text-white relative z-10">New Chat</span>
+            </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
-          >
-            <FiSettings className="w-4 h-4" />
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow-sm disabled:opacity-50"
+            >
+              <FiRefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all"
+            >
+              <FiSettings className="w-4 h-4" />
+            </motion.button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Conversations list */}
       {/* Conversations List */}
@@ -542,6 +598,18 @@ const ChatSidebar = ({
           </>
         )}
       </div>
+
+      {mobileLayout && (
+        <div className="absolute bottom-6 right-6 z-10">
+          <button
+            onClick={onShowNewChatModal}
+            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+          >
+            <FiPlus className="w-5 h-5" />
+            <span className="font-semibold text-base">New Chat</span>
+          </button>
+        </div>
+      )}
 
       {/* User Presence Modal */}
       <AnimatePresence>

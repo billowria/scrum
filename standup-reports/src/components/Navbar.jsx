@@ -20,10 +20,8 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
     window.location.href = '/login';
   };
 
-  // Use avatar_url if present, fallback to avatar, then fallback to initial
   const avatarUrl = user.avatar_url || user.avatar;
   const userInitial = user.name?.charAt(0)?.toUpperCase() || 'U';
-
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -42,17 +40,11 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   }, [dropdownOpen]);
 
   return (
-    <nav
-      className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 pointer-events-none"
-    >
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 pointer-events-none">
       <div
-        className="pointer-events-auto relative bg-white/10 dark:bg-slate-900/70 backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/20 dark:border-white/5 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between px-3 sm:px-4 md:px-6 h-16 w-full group transition-colors duration-300"
+        className="pointer-events-auto relative bg-white/10 dark:bg-slate-900/70 backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/20 dark:border-white/5 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between px-3 sm:px-4 md:px-6 h-14 md:h-16 w-full group transition-colors duration-300"
         style={{
-          boxShadow: `
-                0 4px 30px rgba(0, 0, 0, 0.1),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-                inset 0 0 20px rgba(255, 255, 255, 0.05)
-            `
+          boxShadow: `0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.05)`
         }}
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
@@ -66,18 +58,14 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
         <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none mix-blend-screen"
           style={{
-            background: `radial-gradient(
-                    600px circle at var(--mouse-x) var(--mouse-y), 
-                    ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 160, 90, 0.25)'}, 
-                    transparent 40%
-                )`
+            background: `radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), ${theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 160, 90, 0.25)'}, transparent 40%)`
           }}
         />
 
-        {/* Chromatic Edge Simulation (Fake Refraction) */}
+        {/* Chromatic Edge Simulation */}
         <div className="absolute inset-0 pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
 
-        {/* Left side - Sidebar Control (Wonder Design) */}
+        {/* Left side - Sidebar Control */}
         <div className="flex items-center relative z-10 w-1/3">
           <AnimatePresence mode="wait">
             {sidebarMode === 'hidden' ? (
@@ -92,7 +80,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 whileTap={{ scale: 0.95 }}
                 title="Show Sidebar"
               >
-                <FiSidebar size={20} />
+                <FiMenu size={24} />
                 <span className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Show Sidebar
                 </span>
@@ -105,7 +93,6 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
               >
-                {/* Expand/Collapse Toggle */}
                 <motion.button
                   onClick={() => setSidebarMode(sidebarMode === 'expanded' ? 'collapsed' : 'expanded')}
                   className={`p-2 rounded-lg transition-all duration-200 ${sidebarMode === 'expanded'
@@ -118,11 +105,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 >
                   {sidebarMode === 'expanded' ? <FiChevronLeft size={18} /> : <FiMenu size={18} />}
                 </motion.button>
-
-                {/* Divider */}
                 <div className="w-px h-4 bg-slate-300/50 mx-1" />
-
-                {/* Hide Button */}
                 <motion.button
                   onClick={() => setSidebarMode('hidden')}
                   className="p-2 rounded-lg text-slate-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-all duration-200"
@@ -137,126 +120,88 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
           </AnimatePresence>
         </div>
 
-        {/* Brand - Centered */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.location.href = '/'}>
-          {/* Cool Animated Logo */}
+        {/* Brand - Absolutely Centered */}
+        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer group/brand z-10" onClick={() => window.location.href = '/'}>
           <div className="flex items-center gap-3">
-            {/* Dynamic Animated Logo */}
+            {/* Unique Animated Icon - "Double Arrow Sync" */}
             <motion.div
-              className="w-10 h-10 relative"
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: 'spring', stiffness: 400 }}
+              className="relative w-10 h-10 flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 300 }}
             >
-              {/* Outer Ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-blue-500"
-                animate={{
-                  rotate: 360,
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  rotate: {
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "linear"
-                  },
-                  scale: {
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut"
-                  }
-                }}
-              />
-
-              {/* Middle Ring */}
-              <motion.div
-                className="absolute inset-1 rounded-full border border-purple-400"
-                animate={{
-                  rotate: -360,
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              />
-
-              {/* Inner Element */}
-              <motion.div
-                className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-500 to-purple-600"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 180, 360],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-
-              {/* Pulsing Center Dot */}
-              <motion.div
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.7, 1, 0.7],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-
               {/* Glow Effect */}
-              <motion.div
-                className="absolute inset-0 rounded-full bg-blue-500 opacity-20 blur-md"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.2, 0.4, 0.2],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
+              <div className="absolute inset-0 bg-indigo-500/15 rounded-xl blur-xl group-hover/brand:bg-indigo-500/25 transition-colors duration-500" />
+
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <defs>
+                  <linearGradient id="arrow-gradient-1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                  </linearGradient>
+                  <linearGradient id="arrow-gradient-2" x1="40" y1="40" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#4f46e5" />
+                    <stop offset="100%" stopColor="#a5b4fc" />
+                  </linearGradient>
+                  <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Top-Right Arrow */}
+                <motion.path
+                  d="M28 8L32 12L28 16M32 12H22C17.5817 12 14 15.5817 14 20"
+                  stroke="url(#arrow-gradient-1)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#arrow-glow)"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 1, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+
+                {/* Bottom-Left Arrow */}
+                <motion.path
+                  d="M12 32L8 28L12 24M8 28H18C22.4183 28 26 24.4183 26 20"
+                  stroke="url(#arrow-gradient-2)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#arrow-glow)"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: [0, 1, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                />
+
+                {/* Central Pulsing Dot */}
+                <motion.circle
+                  cx="20" cy="20" r="3"
+                  fill="url(#arrow-gradient-1)"
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </svg>
             </motion.div>
 
-            {/* Animated Brand Name */}
-            <div className="relative overflow-hidden">
+            {/* Brand Name with DM Sans Font & Animated Underline */}
+            <div className="relative hidden md:block">
               <motion.h1
-                className="text-xl font-bold bg-gradient-to-r from-gray-800 dark:from-white via-blue-600 dark:via-blue-400 to-purple-700 dark:to-purple-400 bg-clip-text text-transparent"
-                animate={{
-                  backgroundPosition: ["0%", "100%", "0%"],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                style={{
-                  backgroundSize: "200% auto",
-                  backgroundImage: "linear-gradient(90deg, #1e293b, #2563eb, #7c3aed, #1e293b)"
-                }}
+                className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 bg-clip-text text-transparent"
+                style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.02em' }}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
                 Sync
               </motion.h1>
-
-              {/* Subtle underline animation */}
+              {/* Underline - Only on Hover */}
               <motion.div
-                className="h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                animate={{
-                  width: ["0%", "100%", "0%"],
-                  opacity: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                className="absolute -bottom-1 left-0 h-[2px] w-0 bg-gradient-to-r from-indigo-600 via-indigo-400 to-indigo-600 rounded-full group-hover/brand:w-full transition-all duration-300 ease-out"
               />
             </div>
           </div>
@@ -264,10 +209,8 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
         {/* Right Side - Actions & User */}
         <div className="relative flex items-center gap-3">
-          {/* Notification Bell */}
           <NotificationBell userRole={user.role} />
 
-          {/* User Profile */}
           <motion.button
             ref={buttonRef}
             onClick={() => setDropdownOpen(v => !v)}
@@ -292,7 +235,6 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
             </motion.div>
           </motion.button>
 
-          {/* Enhanced Cool Dropdown */}
           <AnimatePresence>
             {dropdownOpen && (
               <motion.div
@@ -301,86 +243,43 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{
-                  duration: 0.25,
-                  ease: "easeOut",
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 25
-                }}
+                transition={{ duration: 0.25, ease: "easeOut", type: 'spring', stiffness: 300, damping: 25 }}
                 className="absolute right-0 top-full mt-2 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 overflow-hidden z-50 origin-top"
-                style={{
-                  transformOrigin: 'top right',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-                }}
+                style={{ transformOrigin: 'top right', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)' }}
               >
-                {/* User Info Header with Gradient */}
-                <div className="px-4 py-4 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-b border-slate-100/50 dark:border-white/5">
+                <div className="px-4 py-4 bg-gradient-to-r from-indigo-500/10 to-indigo-500/10 border-b border-slate-100/50 dark:border-white/5">
                   <div className="flex items-center gap-3">
                     {avatarUrl ? (
-                      <motion.img
-                        src={avatarUrl}
-                        alt={user.name}
-                        className="w-12 h-12 rounded-xl object-cover shadow-md border-2 border-white"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-                      />
+                      <motion.img src={avatarUrl} alt={user.name} className="w-12 h-12 rounded-xl object-cover shadow-md border-2 border-white" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring', stiffness: 300 }} />
                     ) : (
-                      <motion.div
-                        className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}
-                      >
+                      <motion.div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring', stiffness: 300 }}>
                         {userInitial}
                       </motion.div>
                     )}
                     <div>
-                      <motion.div
-                        className="font-bold text-slate-800 dark:text-white text-base"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                      >
-                        {user.name}
-                      </motion.div>
-                      <motion.div
-                        className="text-slate-500 dark:text-gray-400 text-sm capitalize"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {user.role}
-                      </motion.div>
+                      <motion.div className="font-bold text-slate-800 dark:text-white text-base" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>{user.name}</motion.div>
+                      <motion.div className="text-slate-500 dark:text-gray-400 text-sm capitalize" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>{user.role}</motion.div>
                     </div>
                   </div>
                 </div>
 
-                {/* Menu Items with Cool Design */}
                 <div className="py-2">
-                  {/* Profile Menu Item */}
                   <motion.button
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      navigate('/profile');
-                    }}
+                    onClick={() => { setDropdownOpen(false); navigate('/profile'); }}
                     className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-3 group"
                     whileHover={{ x: 5 }}
                     transition={{ type: 'spring', stiffness: 400 }}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-200 transition-colors">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-200 transition-colors">
                       <FiUser size={16} />
                     </div>
                     <span>My Profile</span>
                   </motion.button>
 
-                  {/* Theme Switcher Section */}
                   <div className="px-4 py-3 border-b border-slate-100/50 dark:border-white/5">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">Appearance</span>
                     </div>
-
                     <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 relative">
                       {[
                         { id: 'light', icon: <FiSun size={14} />, label: 'Light' },
@@ -390,20 +289,10 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                         <button
                           key={mode.id}
                           onClick={() => setThemeMode(mode.id)}
-                          className={`
-                            relative flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold z-10 transition-all duration-300
-                            ${themeMode === mode.id
-                              ? 'text-blue-600 dark:text-blue-400'
-                              : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
-                            }
-                          `}
+                          className={`relative flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold z-10 transition-all duration-300 ${themeMode === mode.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
                         >
                           {themeMode === mode.id && (
-                            <motion.div
-                              layoutId="activeTheme"
-                              className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-lg"
-                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                            />
+                            <motion.div layoutId="activeTheme" className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-lg" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
                           )}
                           <span className="relative z-10">{mode.icon}</span>
                           <span className="relative z-10">{mode.label}</span>
@@ -412,10 +301,8 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     </div>
                   </div>
 
-                  {/* Divider */}
                   <div className="border-t border-slate-100/50 dark:border-white/5 my-2 mx-4"></div>
 
-                  {/* Sign Out Menu Item */}
                   <motion.button
                     onClick={handleSignOut}
                     className="w-full text-left px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50/80 dark:hover:bg-red-900/30 transition-colors flex items-center gap-3 group"
@@ -429,7 +316,6 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                   </motion.button>
                 </div>
 
-                {/* Footer with Status */}
                 <div className="px-4 py-3 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-100/50 dark:border-white/5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

@@ -44,19 +44,25 @@ const NoteCard = ({
     return colorMap[category] || colorMap.general;
   };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      {...(!isMobile ? {
+        initial: { opacity: 0, y: 10 },
+        animate: { opacity: 1, y: 0 },
+        whileHover: { y: -2 }
+      } : {
+        animate: { opacity: 1, y: 0 }
+      })}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -2 }}
       className={`border cursor-pointer transition-all duration-300 relative overflow-hidden group rounded-xl ${isSelected
-          ? 'border-blue-500 shadow-md bg-white ring-1 ring-blue-500/20'
-          : 'border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 bg-white'
-        }`}
+        ? 'border-blue-500 shadow-md bg-white ring-1 ring-blue-500/20'
+        : 'border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 bg-white'
+        } ${isMobile ? 'active:bg-gray-50' : ''}`}
       style={{
-        height: '80px',
+        height: isMobile ? '90px' : '80px',
         marginBottom: '8px',
       }}
       onClick={() => onSelectNote(note)}
@@ -67,23 +73,23 @@ const NoteCard = ({
         style={{ backgroundColor: note.background_color !== '#ffffff' ? note.background_color : (isSelected ? '#3b82f6' : 'transparent') }}
       />
 
-      <div className="flex items-center h-full px-4 py-3 pl-5">
+      <div className={`flex items-center h-full ${isMobile ? 'px-4 gap-3' : 'px-4 py-3 pl-5'}`}>
         {/* Left side - Icon and title */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
 
           {/* File icon with status dot */}
           <div className="relative flex-shrink-0">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'}`}>
-              <FiFileText className="w-4 h-4" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'}`}>
+              <FiFileText className="w-5 h-5" />
             </div>
 
             {/* Status Dot Overlay */}
             {(isOpenInTab || note.is_favorite || note.is_shared) && (
-              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white flex items-center justify-center ${isOpenInTab ? 'bg-green-500' :
-                  note.is_favorite ? 'bg-amber-500' :
-                    'bg-purple-500'
+              <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${isOpenInTab ? 'bg-green-500' :
+                note.is_favorite ? 'bg-amber-500' :
+                  'bg-purple-500'
                 }`}>
-                {note.is_favorite && <FiStar className="w-1.5 h-1.5 text-white fill-current" />}
+                {note.is_favorite && <FiStar className="w-2 h-2 text-white fill-current" />}
               </div>
             )}
           </div>
@@ -91,13 +97,13 @@ const NoteCard = ({
           {/* Title and content */}
           <div className="flex-1 min-w-0 flex flex-col justify-center">
             <div className="flex items-center gap-2">
-              <h3 className={`text-sm font-semibold truncate transition-colors ${isSelected ? 'text-gray-900' : 'text-gray-700'
+              <h3 className={`text-sm font-bold truncate transition-colors ${isSelected ? 'text-gray-900' : 'text-gray-700'
                 }`}>
                 {note.title || 'Untitled'}
               </h3>
 
-              {/* Category badge */}
-              {note.category && note.category !== 'general' && (
+              {/* Category badge - Hide on mobile if too narrow, or use tiny icon */}
+              {note.category && note.category !== 'general' && !isMobile && (
                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium tracking-wide uppercase ${getCategoryColor(note.category)}`}>
                   {note.category}
                 </span>
@@ -107,35 +113,35 @@ const NoteCard = ({
               {note.is_pinned && <FiTarget className="w-3 h-3 text-red-500" />}
             </div>
 
-            <p className="text-xs text-gray-400 truncate mt-0.5 leading-relaxed font-medium">
+            <p className={`text-xs text-gray-400 truncate mt-0.5 leading-relaxed font-medium ${isMobile ? 'max-w-[180px]' : ''}`}>
               {plainTextContent || 'No content'}
             </p>
           </div>
         </div>
 
         {/* Right side - Stats and actions */}
-        <div className="flex flex-col items-end gap-1 ml-3">
+        <div className="flex flex-col items-end gap-1.5 ml-2">
           {/* Time */}
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-bold whitespace-nowrap">
             {new Date(note.updated_at || note.created_at).toLocaleDateString(undefined, {
               month: 'short',
               day: 'numeric'
             })}
           </span>
 
-          {/* Action buttons (Visible on hover) */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-4 group-hover:translate-x-0 duration-200">
+          {/* Action buttons */}
+          <div className={`flex items-center gap-2 transition-all duration-300 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0'}`}>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(note.id);
               }}
-              className={`p-1.5 rounded-md transition-colors ${note.is_favorite
-                  ? 'text-amber-500 bg-amber-50'
-                  : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50'
+              className={`p-1.5 rounded-lg transition-colors ${note.is_favorite
+                ? 'text-amber-500 bg-amber-50'
+                : 'text-gray-400 active:bg-amber-50 active:text-amber-500'
                 }`}
             >
-              <FiStar className={`w-3.5 h-3.5 ${note.is_favorite ? 'fill-current' : ''}`} />
+              <FiStar className={`w-4 h-4 ${note.is_favorite ? 'fill-current' : ''}`} />
             </button>
 
             <button
@@ -143,13 +149,14 @@ const NoteCard = ({
                 e.stopPropagation();
                 onDeleteNote(note.id);
               }}
-              className="p-1.5 rounded-md transition-colors text-gray-400 hover:text-red-500 hover:bg-red-50"
+              className="p-1.5 rounded-lg transition-colors text-gray-400 active:bg-red-50 active:text-red-500"
             >
-              <FiTrash2 className="w-3.5 h-3.5" />
+              <FiTrash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+
     </motion.div>
   );
 };

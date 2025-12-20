@@ -369,6 +369,7 @@ const ChatPage = () => {
               setSelectedUserId(userId);
               setShowProfileModal(true);
             }}
+            mobileLayout={isMobile}
           />
         </div>
 
@@ -406,6 +407,7 @@ const ChatPage = () => {
                   setShowUserPresence(true);
                 }}
                 onToggleProfile={() => setShowUserPresence(!showUserPresence)}
+                mobileLayout={isMobile}
               />
 
               {/* Right Context Sidebar */}

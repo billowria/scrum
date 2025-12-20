@@ -43,6 +43,27 @@ const NotesPage = ({ sidebarOpen }) => {
   // Editor reference
   const editorRef = useRef(null);
 
+  // Mobile & View State
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [mobileView, setMobileView] = useState('list'); // 'list' or 'editor'
+
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Effect to switch to editor view when a note is selected on mobile
+  useEffect(() => {
+    if (isMobile && selectedNote) {
+      setMobileView('editor');
+    }
+  }, [selectedNote, isMobile]);
+
   // Utility functions
   const getTextStats = (html) => {
     if (!html) return { characters: 0, words: 0, lines: 1 };
@@ -376,73 +397,89 @@ const NotesPage = ({ sidebarOpen }) => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-slate-950 overflow-hidden">
+    <div className={`h-screen ${isMobile ? 'bg-white dark:bg-slate-950' : 'bg-gray-50 dark:bg-slate-950'} overflow-hidden flex flex-col`}>
       {/* Toast Notification */}
       <ToastNotification
         toast={toast}
         onClose={() => setToast(null)}
       />
 
-      {/* Enhanced Header */}
-      <NotesHeader
-        notes={notes}
-        favoriteNotes={favoriteNotes}
-        sharedNotes={sharedNotes}
-        selectedNote={selectedNote}
-        isDirty={isDirty}
-        stats={stats}
-        searchQuery={searchQuery}
-        viewMode={viewMode}
-        sortBy={sortBy}
-        onSearchChange={setSearchQuery}
-        onViewModeChange={setViewMode}
-        onSortChange={setSortBy}
-        onNewNote={createNewNote}
-      />
+      {/* Enhanced Header - Hidden on mobile editor view */}
+      {(!isMobile || mobileView === 'list') && (
+        <NotesHeader
+          notes={notes}
+          favoriteNotes={favoriteNotes}
+          sharedNotes={sharedNotes}
+          selectedNote={selectedNote}
+          isDirty={isDirty}
+          stats={stats}
+          searchQuery={searchQuery}
+          viewMode={viewMode}
+          sortBy={sortBy}
+          onSearchChange={setSearchQuery}
+          onViewModeChange={setViewMode}
+          onSortChange={setSortBy}
+          onNewNote={createNewNote}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-950">
-        {/* Notes Sidebar */}
-        <NotesSidebar
-          favoriteNotes={favoriteNotes}
-          allNotes={allNotes}
-          sharedNotes={sharedNotes}
-          favoritesCollapsed={favoritesCollapsed}
-          allNotesCollapsed={allNotesCollapsed}
-          sharedCollapsed={sharedCollapsed}
-          onToggleFavorites={() => setFavoritesCollapsed(!favoritesCollapsed)}
-          onToggleAllNotes={() => setAllNotesCollapsed(!allNotesCollapsed)}
-          onToggleShared={() => setSharedCollapsed(!sharedCollapsed)}
-          onSelectNote={switchTab}
-          onShareNote={handleShareNote}
-          onToggleFavorite={toggleFavorite}
-          onDeleteNote={deleteNote}
-          selectedNote={selectedNote}
-          openTabs={openTabs}
-        />
+      <div className={`flex-1 flex ${isMobile ? 'h-full' : 'h-[calc(100vh-64px)]'} bg-gray-50 dark:bg-slate-950`}>
+        {/* Notes Sidebar - List View on Mobile */}
+        {(!isMobile || mobileView === 'list') && (
+          <NotesSidebar
+            favoriteNotes={favoriteNotes}
+            allNotes={allNotes}
+            sharedNotes={sharedNotes}
+            favoritesCollapsed={favoritesCollapsed}
+            allNotesCollapsed={allNotesCollapsed}
+            sharedCollapsed={sharedCollapsed}
+            onToggleFavorites={() => setFavoritesCollapsed(!favoritesCollapsed)}
+            onToggleAllNotes={() => setAllNotesCollapsed(!allNotesCollapsed)}
+            onToggleShared={() => setSharedCollapsed(!sharedCollapsed)}
+            onSelectNote={(note) => {
+              switchTab(note);
+              if (isMobile) setMobileView('editor');
+            }}
+            onShareNote={handleShareNote}
+            onToggleFavorite={toggleFavorite}
+            onDeleteNote={deleteNote}
+            selectedNote={selectedNote}
+            openTabs={openTabs}
+            isMobile={isMobile}
+          />
+        )}
 
-        {/* Notes Editor */}
-        <NotesEditor
-          selectedNote={selectedNote}
-          openTabs={openTabs}
-          activeTabId={activeTabId}
-          isDirty={isDirty}
-          wordWrap={wordWrap}
-          cursorPosition={cursorPosition}
-          stats={stats}
-          onTabClose={closeTab}
-          onNewTab={createNewNote}
-          onTabSwitch={switchTab}
-          onUpdateNote={updateNote}
-          onSaveNote={saveNote}
-          onShareNote={handleShareNote}
-          onToggleFavorite={toggleFavorite}
-          onTogglePin={togglePin}
-          onDeleteNote={deleteNote}
-          onKeyDown={handleKeyDown}
-          onCursorMove={handleCursorMove}
-          onToggleWordWrap={() => setWordWrap(!wordWrap)}
-        />
+        {/* Notes Editor - Editor View on Mobile */}
+        {(!isMobile || mobileView === 'editor') && (
+          <NotesEditor
+            selectedNote={selectedNote}
+            openTabs={openTabs}
+            activeTabId={activeTabId}
+            isDirty={isDirty}
+            wordWrap={wordWrap}
+            cursorPosition={cursorPosition}
+            stats={stats}
+            onTabClose={(id) => {
+              closeTab(id);
+              if (isMobile && openTabs.length <= 1) setMobileView('list');
+            }}
+            onNewTab={createNewNote}
+            onTabSwitch={switchTab}
+            onUpdateNote={updateNote}
+            onSaveNote={saveNote}
+            onShareNote={handleShareNote}
+            onToggleFavorite={toggleFavorite}
+            onTogglePin={togglePin}
+            onDeleteNote={deleteNote}
+            onKeyDown={handleKeyDown}
+            onCursorMove={handleCursorMove}
+            onToggleWordWrap={() => setWordWrap(!wordWrap)}
+            isMobile={isMobile}
+            onBack={() => setMobileView('list')}
+          />
+        )}
       </div>
 
       {/* Share Modal */}

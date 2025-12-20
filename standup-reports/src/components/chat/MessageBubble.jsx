@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiCheck, FiCheckCircle, FiClock, FiMoreVertical, FiEdit2, FiTrash2,
-  FiCornerUpLeft, FiSmile, FiPaperclip, FiEye, FiDownload, FiCopy
+  FiCornerUpLeft, FiSmile, FiPaperclip, FiEye, FiDownload, FiCopy, FiArrowRight
 } from 'react-icons/fi';
 import { useTaskModal } from '../../contexts/TaskModalContext';
 
@@ -88,70 +88,80 @@ const MessageBubble = ({
     if (!taskData) return message.content;
 
     return (
-      <div className={`rounded-xl overflow-hidden border-2 ${isOwnMessage ? 'bg-indigo-600 border-indigo-400' : 'bg-white border-indigo-100'} text-left shadow-sm`}>
-        {/* Header */}
-        <div className={`px-4 py-3 ${isOwnMessage ? 'bg-indigo-700/50' : 'bg-indigo-50/80'} border-b ${isOwnMessage ? 'border-indigo-500' : 'border-indigo-100'}`}>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className={`font-bold text-base ${isOwnMessage ? 'text-white' : 'text-gray-900'} leading-tight mb-1`}>
-                {taskData.title}
-              </h3>
-              <div className={`text-xs font-mono opacity-80 ${isOwnMessage ? 'text-indigo-200' : 'text-indigo-600'}`}>
-                ID: #{taskData.shortId}
-              </div>
-            </div>
-            <div className={`p-2 rounded-lg ${isOwnMessage ? 'bg-white/10' : 'bg-white shadow-sm border border-indigo-100'}`}>
-              <FiCheckCircle className={`w-5 h-5 ${isOwnMessage ? 'text-white' : 'text-indigo-500'}`} />
-            </div>
-          </div>
-        </div>
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-2 w-full max-w-sm rounded-[24px] overflow-hidden shadow-lg relative cursor-pointer group"
+        onClick={() => {
+          if (taskData.shortId) {
+            const userRole = currentUser?.role || 'member';
+            openTask(taskData.shortId, { currentUser, userRole });
+          } else if (taskData.url) {
+            window.location.href = taskData.url;
+          }
+        }}
+      >
+        {/* Background - Deep Blue Gradient/Solid */}
+        <div className="absolute inset-0 bg-blue-600"></div>
 
-        {/* Content */}
-        <div className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className={`${isOwnMessage ? 'bg-white/10' : 'bg-gray-50'} rounded px-2 py-1.5`}>
-              <span className={`text-xs opacity-70 block mb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-500'}`}>Status</span>
-              <span className={`font-medium ${isOwnMessage ? 'text-white' : 'text-gray-800'}`}>{taskData.status}</span>
+        <div className="relative p-5 text-white">
+          {/* Header: Title and ID */}
+          <div className="mb-4">
+            <h3 className="text-xl font-bold leading-tight mb-1 line-clamp-2">{taskData.title}</h3>
+            <span className="text-blue-200 text-sm font-medium">#{taskData.shortId || 'Unknown'}</span>
+          </div>
+
+          {/* Details Grid */}
+          <div className="space-y-2 mb-6">
+            <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
+              <span className="text-blue-200 text-sm">Status</span>
+              <span className={`font-semibold text-sm ${taskData.status?.toLowerCase() === 'done' ? 'text-green-300' :
+                  taskData.status?.toLowerCase() === 'in progress' ? 'text-yellow-300' : 'text-white'
+                }`}>
+                {taskData.status}
+              </span>
             </div>
-            <div className={`${isOwnMessage ? 'bg-white/10' : 'bg-gray-50'} rounded px-2 py-1.5`}>
-              <span className={`text-xs opacity-70 block mb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-500'}`}>Priority</span>
-              <span className={`font-medium ${isOwnMessage ? 'text-white' : 'text-gray-800'}`}>{taskData.priority}</span>
+            <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
+              <span className="text-blue-200 text-sm">Priority</span>
+              <span className={`font-semibold text-sm ${taskData.priority?.toLowerCase() === 'high' ? 'text-red-300' :
+                  taskData.priority?.toLowerCase() === 'medium' ? 'text-orange-300' : 'text-blue-300'
+                }`}>
+                {taskData.priority}
+              </span>
             </div>
-            {taskData.project && (
-              <div className={`col-span-2 ${isOwnMessage ? 'bg-white/10' : 'bg-gray-50'} rounded px-2 py-1.5`}>
-                <span className={`text-xs opacity-70 block mb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-500'}`}>Project</span>
-                <span className={`font-medium ${isOwnMessage ? 'text-white' : 'text-gray-800'}`}>{taskData.project}</span>
-              </div>
-            )}
+            <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
+              <span className="text-blue-200 text-sm">Project</span>
+              <span className="font-semibold text-sm text-white">{taskData.project || 'General'}</span>
+            </div>
             {taskData.dueDate && (
-              <div className={`col-span-2 ${isOwnMessage ? 'bg-white/10' : 'bg-gray-50'} rounded px-2 py-1.5`}>
-                <span className={`text-xs opacity-70 block mb-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-500'}`}>Due Date</span>
-                <span className={`font-medium ${isOwnMessage ? 'text-white' : 'text-gray-800'}`}>{taskData.dueDate}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-blue-200 text-sm">Due Date</span>
+                <span className="font-semibold text-sm text-white">
+                  {taskData.dueDate}
+                </span>
               </div>
             )}
           </div>
 
+          {/* Action Button */}
           <button
             onClick={(e) => {
-              e.preventDefault();
+              e.stopPropagation();
               if (taskData.shortId) {
                 const userRole = currentUser?.role || 'member';
                 openTask(taskData.shortId, { currentUser, userRole });
               } else if (taskData.url) {
-                // Fallback to URL if no ID
                 window.location.href = taskData.url;
               }
             }}
-            className={`w-full mt-2 py-2 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2
-              ${isOwnMessage
-                ? 'bg-white text-indigo-600 hover:bg-gray-100 shadow-sm'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg'}`}
+            className="w-full py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
           >
-            <span>View Task</span>
-            <FiCornerUpLeft className="w-4 h-4 transform rotate-180" />
+            View Task
+            <FiArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   };
 

@@ -462,6 +462,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                 onToggle={() => setSidebarOpen(!sidebarOpen)}
                 className={isMobile ? 'fixed inset-y-0 left-0 z-50 shadow-2xl' : ''}
                 editMode={editMode}
+                isMobile={isMobile}
             />
 
             {/* Mobile Overlay */}
@@ -565,7 +566,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                                 'Rename Topic'
                 }
             >
-                <div className="space-y-4">
+                <div className={`space-y-4 ${isMobile ? 'px-1' : ''}`}>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
                         <input

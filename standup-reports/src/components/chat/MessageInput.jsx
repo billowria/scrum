@@ -20,15 +20,20 @@ const MessageInput = ({
   mentions = [],
   onMentionSelect,
   currentUser = null,
-  conversation = null
+  conversation = null,
+  mobileLayout = false
 }) => {
   const [attachments, setAttachments] = useState([]);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [localMentions, setLocalMentions] = useState([]);
   const [showMentions, setShowMentions] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // Local state for mobile emoji picker
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  // Mobile specific: Toggle attachment menu from Plus button
+  const [showMobileAttachments, setShowMobileAttachments] = useState(false);
 
   // Handle mention functionality
   const handleTextChange = useCallback((newValue) => {
@@ -191,8 +196,11 @@ const MessageInput = ({
 
   const canSend = (value.trim() || attachments.length > 0) && !disabled;
 
+  // Mobile Emojis
+  const emojis = ['😀', '😊', '😍', '🤔', '😂', '👍', '❤️', '🎉', '😎', '🤗', '😢', '😡', '👎', '🤝', '✨', '🔥'];
+
   return (
-    <div className={`bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-colors duration-300 ${className}`}>
+    <div className={`bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-colors duration-300 ${className} ${mobileLayout ? 'bg-gray-50' : ''}`}>
       {/* Typing Indicator */}
       <AnimatePresence>
         {showTypingIndicator && (
@@ -230,56 +238,158 @@ const MessageInput = ({
         )}
       </AnimatePresence>
 
-      {/* Main Input Area */}
-      <div className="p-4">
-        <div className="flex items-end gap-3">
-          {/* Left Side - Message Input */}
-          <MessageInputArea
-            value={value}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled}
-            isRecording={false}
-            mentions={localMentions}
-            showMentions={showMentions}
-            onMentionSelect={handleMentionSelect}
-            showFormatting={false}
-            onFormattingApply={handleFormattingApply}
-          />
+      {mobileLayout ? (
+        // Mobile Layout
+        <div className="p-3 bg-white">
+          {/* Emoji Picker for Mobile */}
+          <AnimatePresence>
+            {showEmojiPicker && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="border-b border-gray-100 mb-2 overflow-hidden"
+              >
+                <div className="grid grid-cols-8 gap-2 p-2 bg-gray-50 rounded-lg">
+                  {emojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        handleEmojiSelect(emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      className="text-xl hover:bg-gray-200 rounded p-1"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Right Side - Toolbar */}
-          <MessageToolbar
-            onFileUpload={handleFileUpload}
-            onImageUpload={handleImageUpload}
-            onEmojiSelect={handleEmojiSelect}
-            onFormattingApply={handleFormattingApply}
-            onVoiceRecord={() => setShowVoiceRecorder(!showVoiceRecorder)}
-            isRecording={false}
-            recordingTime={0}
-            disabled={disabled}
-            canSend={canSend}
-            onSend={handleSend}
-          />
+          <div className="flex items-end gap-2">
+            {/* Plus Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowMobileAttachments(!showMobileAttachments)}
+                className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-full transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </button>
+              {/* Mobile Attachment Popup */}
+              <AnimatePresence>
+                {showMobileAttachments && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                    className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-100 p-2 z-50 min-w-[150px]"
+                  >
+                    <button onClick={handleFileUpload} className="flex items-center gap-3 w-full px-4 py-2 hover:bg-gray-50 rounded-lg text-sm text-gray-700">
+                      <span>Document</span>
+                    </button>
+                    <button onClick={handleImageUpload} className="flex items-center gap-3 w-full px-4 py-2 hover:bg-gray-50 rounded-lg text-sm text-gray-700">
+                      <span>Gallery</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Input Area */}
+            <div className="flex-1 bg-gray-100 rounded-2xl flex items-center pr-2 relative">
+              <MessageInputArea
+                value={value}
+                onChange={handleTextChange}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                disabled={disabled}
+                isRecording={false}
+                mentions={localMentions}
+                showMentions={showMentions}
+                onMentionSelect={handleMentionSelect}
+                showFormatting={false}
+                onFormattingApply={handleFormattingApply}
+                className="!bg-transparent !border-0 flex-1"
+              />
+              {/* Smiley Button inside input */}
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-full transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-smile"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+              </button>
+            </div>
+
+            {/* Send Button */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={canSend ? handleSend : undefined}
+              disabled={disabled || !canSend}
+              className={`p-3 rounded-full flex items-center justify-center transition-all shadow-md
+                     ${canSend
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-300 text-white'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </motion.button>
+          </div>
         </div>
-      </div>
+      ) : (
+        // Desktop Layout (Existing)
+        <div className="p-4">
+          <div className="flex items-end gap-3">
+            {/* Left Side - Message Input */}
+            <MessageInputArea
+              value={value}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              isRecording={false}
+              mentions={localMentions}
+              showMentions={showMentions}
+              onMentionSelect={handleMentionSelect}
+              showFormatting={false}
+              onFormattingApply={handleFormattingApply}
+            />
 
-      {/* Quick Voice Recorder Button (Mobile) */}
-      <div className="md:hidden px-4 pb-4">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
-          disabled={disabled}
-          className="w-full p-3 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20
+            {/* Right Side - Toolbar */}
+            <MessageToolbar
+              onFileUpload={handleFileUpload}
+              onImageUpload={handleImageUpload}
+              onEmojiSelect={handleEmojiSelect}
+              onFormattingApply={handleFormattingApply}
+              onVoiceRecord={() => setShowVoiceRecorder(!showVoiceRecorder)}
+              isRecording={false}
+              recordingTime={0}
+              disabled={disabled}
+              canSend={canSend}
+              onSend={handleSend}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Quick Voice Recorder Button (Mobile) - Keep existing if not mobileLayout ? or Maybe redundant now */}
+      {!mobileLayout && (
+        <div className="md:hidden px-4 pb-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+            disabled={disabled}
+            className="w-full p-3 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20
                    border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium
                    hover:from-red-100 hover:to-pink-100 dark:hover:from-red-900/30 dark:hover:to-pink-900/30 transition-colors
                    flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
-        >
-          <FiMic className="w-5 h-5" />
-          {showVoiceRecorder ? 'Close Voice Recorder' : 'Voice Message'}
-        </motion.button>
-      </div>
+          >
+            <FiMic className="w-5 h-5" />
+            {showVoiceRecorder ? 'Close Voice Recorder' : 'Voice Message'}
+          </motion.button>
+        </div>
+      )}
 
       {/* Hidden File Inputs */}
       <input

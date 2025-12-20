@@ -144,6 +144,14 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     }
   }, [currentUser, currentCompany?.id]);
 
+  // Mobile Check
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     if (currentUser && currentCompany?.id) {
       if (viewMode === 'leaves') {
@@ -556,21 +564,21 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       {/* ================= LIQUID GLASS HEADER ================= */}
       {showHeader && (
         <motion.div
-          className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
+          className="fixed top-16 right-0 z-20 px-6 py-4 pointer-events-none"
           id="leave-calendar-header"
           initial={{ y: -30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -30, opacity: 0 }}
           transition={{ type: "spring", stiffness: 260, damping: 25 }}
           style={{
-            left: sidebarOpen ? '280px' : '80px',
-            width: sidebarOpen ? 'calc(100% - 280px)' : 'calc(100% - 80px)',
+            left: isMobile ? '0px' : (sidebarOpen ? '280px' : '80px'),
+            width: isMobile ? '100%' : (sidebarOpen ? 'calc(100% - 280px)' : 'calc(100% - 80px)'),
             transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
           {/* Liquid Glass Header */}
           <div
-            className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group min-h-[70px]"
+            className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col md:flex-row items-center justify-between group min-h-[70px] gap-2 md:gap-0"
             style={{
               boxShadow: `
                 0 8px 32px 0 rgba(31, 38, 135, 0.15),
@@ -629,8 +637,8 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               </div>
             </div>
 
-            {/* Center: Futuristic Toggle - Fixed at Center */}
-            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-gray-100/30 backdrop-blur-xl p-1.5 rounded-2xl z-20 border border-white/40 shadow-inner overflow-hidden">
+            {/* Center: Futuristic Toggle - Responsive */}
+            <div className="flex w-full md:w-auto overflow-x-auto md:overflow-visible md:absolute md:left-1/2 md:-translate-x-1/2 bg-transparent md:bg-gray-100/30 md:backdrop-blur-xl p-1.5 rounded-2xl z-20 md:border md:border-white/40 md:shadow-inner no-scrollbar justify-center">
               {[
                 { id: 'leaves', icon: FiCalendar, label: 'Leaves' },
                 { id: 'timesheets', icon: FiClock, label: 'Timesheet' },
@@ -638,7 +646,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               ].map((tab) => (
                 <motion.button
                   key={tab.id}
-                  className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${viewMode === tab.id
+                  className={`relative px-3 py-1.5 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-[11px] md:text-sm font-bold transition-all duration-300 flex items-center gap-1.5 md:gap-2 z-10 whitespace-nowrap ${viewMode === tab.id
                     ? 'text-white shadow-lg'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/40'
                     }`}
@@ -661,37 +669,18 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 >
                   {/* Active Indicator Background */}
                   {viewMode === tab.id && (
-                    <>
-                      <motion.div
-                        className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'leaves' ? 'bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500' :
-                          tab.id === 'timesheets' ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' :
-                            'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'
-                          }`}
-                        layoutId="activeTabCalendar"
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      />
-
-                      {/* Inner Pulse/Glow */}
-                      <motion.div
-                        className={`absolute inset-0.5 rounded-xl opacity-50 ${tab.id === 'leaves' ? 'bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400' :
-                          tab.id === 'timesheets' ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400' :
-                            'bg-gradient-to-r from-amber-400 via-orange-400 to-red-400'
-                          }`}
-                        animate={{ opacity: [0.3, 0.6, 0.3] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-
-                      {/* Diagonal Surface Shine */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent rounded-xl"
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                      />
-                    </>
+                    <motion.div
+                      className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'leaves' ? 'bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500' :
+                        tab.id === 'timesheets' ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' :
+                          'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'
+                        }`}
+                      layoutId="activeTabCalendar"
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    />
                   )}
 
-                  <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
-                    <tab.icon className={`w-4 h-4 ${viewMode === tab.id ? 'text-white' : ''}`} />
+                  <span className="relative z-10 flex items-center gap-1.5 md:gap-2 drop-shadow-sm">
+                    <tab.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === tab.id ? 'text-white' : ''}`} />
                     {tab.label}
                   </span>
                 </motion.button>
@@ -817,7 +806,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       {/* Show Header Button - Icon Only, Clean Design */}
       {!showHeader && (
         <motion.button
-          className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-800 transition-all"
+          className="fixed top-20 right-6 z-30 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-800 transition-all"
           onClick={() => setShowHeader(true)}
           initial={{ opacity: 0, y: -20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -831,7 +820,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
       )}
 
       {/* ================= SCROLLABLE CONTENT AREA (flows under header) ================= */}
-      <div className={`flex-1 overflow-y-auto relative z-10 ${showHeader ? 'pt-32' : 'pt-0'}`}>
+      <div className={`flex-1 overflow-y-auto relative z-10 ${showHeader ? (isMobile ? 'pt-48' : 'pt-32') : 'pt-0'}`}>
         {/* Control Bar */}
         <div className="px-4 md:px-8 py-4 w-full max-w-[1600px] mx-auto">
           <div className="flex items-center justify-between bg-white/60 dark:bg-slate-900/40 p-2 rounded-2xl border border-white/60 dark:border-white/5 shadow-sm backdrop-blur-sm">
@@ -876,7 +865,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
 
 
           {/* --- Calendar Grid --- */}
-          <div className="grid grid-cols-7 gap-4 mb-4">
+          <div className="hidden md:grid grid-cols-7 gap-4 mb-4">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
               <div key={day} className="text-center font-bold text-gray-400 dark:text-gray-500 uppercase text-xs tracking-wider">
                 {day}
@@ -886,7 +875,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
 
           <motion.div
             layout
-            className="grid grid-cols-7 gap-3 pb-24" // Added padding bottom for floating buttons
+            className="grid grid-cols-5 md:grid-cols-7 gap-2 md:gap-3 pb-24" // Added padding bottom for floating buttons
           >
             {daysInMonth.map((day) => {
               const dateStr = format(day, 'yyyy-MM-dd');
@@ -915,7 +904,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                   whileHover={{ y: -4, boxShadow: "0 10px 25px -5px rgba(0,0,0,0.2)" }}
                   whileTap={{ scale: 0.98 }}
                   className={`
-                        relative min-h-[140px] p-3 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
+                        relative min-h-[80px] md:min-h-[140px] p-1.5 md:p-3 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
                         ${isSelected
                       ? 'ring-2 ring-blue-500 dark:ring-blue-600 shadow-md bg-blue-50/30 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
                       : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800'
@@ -950,7 +939,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                   {/* Bottom: Team Availability Bar - Only in Leaves Mode */}
                   {viewMode === 'leaves' && (
                     <div
-                      className="mt-2 group/bar relative cursor-pointer"
+                      className="mt-2 group/bar relative cursor-pointer hidden md:block"
                       title={`${availPercent}% Team Available • ${onLeaveCount} On Leave`}
                       onClick={(e) => {
                         e.stopPropagation();

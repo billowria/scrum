@@ -225,6 +225,9 @@ const Badge = ({ count, className = "" }) => {
 
 // Enhanced Tooltip Component for collapsed sidebar - Portal-based
 const Tooltip = ({ show, label, colors, elementRef }) => {
+  // Disable tooltips on mobile
+  if (typeof window !== 'undefined' && window.innerWidth < 1024) return null;
+
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
   // Calculate position based on element reference
@@ -457,7 +460,10 @@ export default function Sidebar({ mode, setMode, user }) {
             <div key={link.to || index} className="relative">
               <button
                 ref={(el) => { navItemRefs.current[link.to || index] = el; }}
-                onClick={() => link.to && navigate(link.to)}
+                onClick={() => {
+                  link.to && navigate(link.to);
+                  if (window.innerWidth < 1024) setMode('hidden');
+                }}
                 className={`
                   w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
                   backdrop-blur-md border border-white/20 dark:border-white/5
@@ -538,7 +544,10 @@ export default function Sidebar({ mode, setMode, user }) {
         <div className="relative">
           <button
             ref={(el) => { navItemRefs.current['chat'] = el; }}
-            onClick={() => navigate('/chat')}
+            onClick={() => {
+              navigate('/chat');
+              if (window.innerWidth < 1024) setMode('hidden');
+            }}
             className={`
               w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
               backdrop-blur-md border border-white/20 dark:border-white/5

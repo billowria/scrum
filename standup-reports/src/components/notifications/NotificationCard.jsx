@@ -81,6 +81,7 @@ const NotificationCard = ({
   };
 
   const styles = getStyles();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
 
   // Specific actions for Leave Requests and Timesheets
   const isActionable = type === 'leave_request' || type === 'timesheet';
@@ -91,18 +92,19 @@ const NotificationCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      whileHover={{ scale: 1.01 }}
+      whileHover={!isMobile ? { scale: 1.01 } : {}}
       className={`
-        relative p-4 mb-3 rounded-xl border transition-all duration-200 cursor-pointer group
+        relative p-4 mb-2 rounded-xl border transition-all duration-200 cursor-pointer group
         ${read
-          ? 'bg-white/60 dark:bg-slate-800/60 border-gray-100 dark:border-slate-700'
-          : 'bg-white dark:bg-slate-800 border-blue-100 dark:border-blue-900 shadow-sm shadow-blue-50 dark:shadow-blue-950'
+          ? 'bg-white/60 dark:bg-slate-800/60 border-gray-50 dark:border-slate-800'
+          : 'bg-white dark:bg-slate-800 border-blue-100 dark:border-blue-900 shadow-sm'
         }
         ${priority === 'Critical' ? 'border-l-4 border-l-red-500' : ''}
+        ${isMobile ? 'active:bg-gray-50 dark:active:bg-slate-700/50' : ''}
       `}
       onClick={() => onClick && onClick(notification)}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         {/* Icon */}
         <div className={`
           flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center
@@ -113,17 +115,16 @@ const NotificationCard = ({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1 pr-4">
+          <div className="flex items-center justify-between mb-1">
             <h3 className={`text-sm font-semibold truncate ${read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
               {title}
             </h3>
-            <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 flex items-center gap-1">
-              <FiClock className="w-3 h-3" />
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 flex items-center gap-1">
               {created_at && formatDistanceToNow(new Date(created_at), { addSuffix: true })}
             </span>
           </div>
 
-          <p className={`text-sm line-clamp-2 mb-2 ${read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
+          <p className={`text-sm line-clamp-2 leading-tight ${read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
             {message}
           </p>
 
@@ -135,29 +136,29 @@ const NotificationCard = ({
                   e.stopPropagation();
                   onAction && onAction(notification, 'approved');
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-green-50 text-green-700 rounded-lg hover:bg-green-100 border border-green-200 transition-colors"
+                className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg border border-green-200/50 transition-colors"
               >
-                <FiCheckCircle className="w-3 h-3" /> Approve
+                <FiCheckCircle className="w-3.5 h-3.5" /> Approve
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onAction && onAction(notification, 'rejected');
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200 transition-colors"
+                className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg border border-red-200/50 transition-colors"
               >
-                <FiXCircle className="w-3 h-3" /> Reject
+                <FiXCircle className="w-3.5 h-3.5" /> Reject
               </button>
             </div>
           )}
 
-          {/* Standard Hover Actions */}
-          <div className="flex items-center justify-between mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${styles.bg} ${styles.color}`}>
+          {/* Standard Actions */}
+          <div className={`flex items-center justify-between mt-3 transition-opacity duration-200 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tight ${styles.bg} ${styles.color}`}>
               {priority}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               {!read && (
                 <button
                   onClick={(e) => {

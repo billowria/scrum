@@ -508,10 +508,10 @@ const NotificationBell = ({ userRole }) => {
         variants={bellVariants}
         animate={unreadCount > 0 ? "ring" : "idle"}
       >
-        <FiBell className="w-6 h-6" />
+        <FiBell className="w-5 h-5" />
         {unreadCount > 0 && (
           <motion.div
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+            className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center"
             initial="hidden"
             animate={unreadCount > 0 ? "pulse" : "hidden"}
             variants={dotVariants}
@@ -533,7 +533,7 @@ const NotificationBell = ({ userRole }) => {
             />
 
             <motion.div
-              className="absolute right-0 mt-2 w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl dark:shadow-slate-950/80 border border-gray-200 dark:border-slate-800 z-50 overflow-hidden"
+              className="fixed inset-x-4 top-[70px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl dark:shadow-slate-950/80 border border-gray-200 dark:border-slate-800 z-50 overflow-hidden"
               variants={dropdownVariants}
               initial="hidden"
               animate="visible"

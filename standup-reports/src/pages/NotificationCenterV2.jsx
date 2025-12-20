@@ -12,7 +12,7 @@ import NotificationCreator from '../components/notifications/NotificationCreator
 import NotificationSettingsModal from '../components/notifications/NotificationSettingsModal';
 
 // Icons
-import { FiCheck, FiRefreshCw, FiBell, FiPlus, FiSearch } from 'react-icons/fi';
+import { FiCheck, FiRefreshCw, FiBell, FiPlus, FiSearch, FiArrowLeft, FiFilter, FiChevronLeft } from 'react-icons/fi';
 
 export default function NotificationCenterV2() {
   // State
@@ -26,6 +26,18 @@ export default function NotificationCenterV2() {
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (mobile) setIsSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch User
   useEffect(() => {
@@ -206,67 +218,154 @@ export default function NotificationCenterV2() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-slate-950">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={`min-h-screen ${isMobile ? 'bg-white dark:bg-slate-950' : 'bg-gray-50/50 dark:bg-slate-950'}`}>
+      <div className={`w-full max-w-[1920px] mx-auto ${isMobile ? 'px-0' : 'px-4 sm:px-6 lg:px-8 py-8'}`}>
 
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Center</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              You have {stats.unread} unread notifications
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Search Bar */}
-            <div className="relative group">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search by text or sender..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all backdrop-blur-sm"
-              />
+        {/* Mobile Header */}
+        {isMobile ? (
+          <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 px-4 py-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => window.history.back()}
+                  className="p-2 -ml-2 text-gray-600 dark:text-gray-400"
+                >
+                  <FiArrowLeft className="w-6 h-6" />
+                </button>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMarkAllRead}
+                  className="p-2 text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800 rounded-full transition-colors"
+                >
+                  <FiCheck className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-2 text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800 rounded-full transition-colors"
+                >
+                  <FiFilter className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={() => setShowCreator(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 dark:shadow-indigo-950/50 flex items-center gap-2"
-            >
-              <FiPlus className="w-4 h-4" />
-              <span className="hidden sm:inline">New Notification</span>
-            </button>
-
-            <button
-              onClick={handleMarkAllRead}
-              className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-              title="Mark all as read"
-            >
-              <FiCheck className="w-5 h-5" />
-            </button>
+            {/* Mobile Search */}
+            <div className="relative group">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full transition-all"
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Desktop Header Section */
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Center</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                You have {stats.unread} unread notifications
+              </p>
+            </div>
 
-        <div className="flex gap-8 relative">
+            <div className="flex items-center gap-3">
+              {/* Search Bar */}
+              <div className="relative group">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search by text or sender..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all backdrop-blur-sm"
+                />
+              </div>
+
+              <button
+                onClick={() => setShowCreator(true)}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 dark:shadow-indigo-950/50 flex items-center gap-2"
+              >
+                <FiPlus className="w-4 h-4" />
+                <span className="hidden sm:inline">New Notification</span>
+              </button>
+
+              <button
+                onClick={handleMarkAllRead}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                title="Mark all as read"
+              >
+                <FiCheck className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className={`flex ${isMobile ? 'flex-col' : 'gap-8'} relative`}>
           {/* Sidebar Navigation */}
-          <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'} shrink-0`}>
-            <NotificationSidebar
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              counts={stats}
-              onOpenSettings={() => setShowSettings(true)}
-              isOpen={isSidebarOpen}
-              onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-            />
-          </div>
+          {isMobile ? (
+            <AnimatePresence>
+              {isSidebarOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                  />
+                  <motion.div
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '100%' }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    className="fixed inset-y-0 right-0 z-50 w-72 bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto"
+                  >
+                    <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                      <h2 className="font-bold text-gray-900 dark:text-white">Filters</h2>
+                      <button
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="p-2 text-gray-500"
+                      >
+                        <FiCheck className="w-5 h-5 rotate-45" /> {/* Just using an icon for close for now or FiPlus rotate */}
+                      </button>
+                    </div>
+                    <div className="p-2">
+                      <NotificationSidebar
+                        activeFilter={activeFilter}
+                        onFilterChange={(f) => { setActiveFilter(f); setIsSidebarOpen(false); }}
+                        counts={stats}
+                        onOpenSettings={() => { setShowSettings(true); setIsSidebarOpen(false); }}
+                        isOpen={true}
+                        onToggle={() => { }}
+                        hideToggle={true}
+                      />
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          ) : (
+            <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-20'} shrink-0`}>
+              <NotificationSidebar
+                activeFilter={activeFilter}
+                onFilterChange={setActiveFilter}
+                counts={stats}
+                onOpenSettings={() => setShowSettings(true)}
+                isOpen={isSidebarOpen}
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+              />
+            </div>
+          )}
 
           {/* Main Feed */}
-          <div className="flex-1 min-w-0">
+          <div className={`${isMobile ? 'px-4' : 'flex-1 min-w-0'}`}>
             <AnimatePresence mode="popLayout">
               {filteredNotifications.length > 0 ? (
-                <div className="space-y-1 pb-20">
+                <div className={`space-y-1 ${isMobile ? 'pb-24 pt-4' : 'pb-20'}`}>
                   {/* Today */}
                   {groupedNotifications.today.length > 0 && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -283,6 +382,7 @@ export default function NotificationCenterV2() {
                       ))}
                     </motion.div>
                   )}
+
 
                   {/* Yesterday */}
                   {groupedNotifications.yesterday.length > 0 && (

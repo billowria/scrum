@@ -107,8 +107,17 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
-  const [sidebarMode, setSidebarMode] = useState('collapsed'); // 'expanded', 'collapsed', 'hidden'
+  const [sidebarMode, setSidebarMode] = useState(window.innerWidth < 1024 ? 'hidden' : 'collapsed'); // 'expanded', 'collapsed', 'hidden'
   const [userProfile, setUserProfile] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     // Check for active session on load with robust validation
@@ -205,7 +214,10 @@ function App() {
     return <AppLoader />;
   }
 
+
+
   const getMarginLeft = () => {
+    if (isMobile) return '0px';
     switch (sidebarMode) {
       case 'expanded':
         return '272px';
@@ -229,7 +241,7 @@ function App() {
                 sidebarMode={sidebarMode}
                 setSidebarMode={setSidebarMode}
               />
-              <div className="flex pt-16">
+              <div className="flex pt-16 bg-gray-50 dark:bg-slate-950 min-h-screen">
                 <Sidebar
                   mode={sidebarMode}
                   setMode={setSidebarMode}

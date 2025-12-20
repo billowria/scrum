@@ -18,9 +18,12 @@
   }
 }
 
-/* Confluence-inspired design system colors */
 :root {
-  /* Primary Blue */
+  /* Default Theme Variables (Light) */
+  --bg-primary: #f8fafc;
+  --text-primary: #0f172a;
+
+  /* Confluence-inspired design system colors */
   --confluence-blue-50: #f0f9ff;
   --confluence-blue-100: #e0f2fe;
   --confluence-blue-200: #bae6fd;
@@ -32,7 +35,6 @@
   --confluence-blue-800: #075985;
   --confluence-blue-900: #0c4a6e;
 
-  /* Neutral Grays */
   --confluence-gray-50: #f8fafc;
   --confluence-gray-100: #f1f5f9;
   --confluence-gray-200: #e2e8f0;
@@ -44,7 +46,6 @@
   --confluence-gray-800: #1e293b;
   --confluence-gray-900: #0f172a;
 
-  /* Accent Purple */
   --confluence-purple-50: #fdf4ff;
   --confluence-purple-100: #fae8ff;
   --confluence-purple-200: #f5d0fe;
@@ -52,9 +53,6 @@
   --confluence-purple-400: #e879f9;
   --confluence-purple-500: #d946ef;
   --confluence-purple-600: #c026d3;
-  --confluence-purple-700: #a21caf;
-  --confluence-purple-800: #86198f;
-  --confluence-purple-900: #701a75;
   --confluence-purple-700: #a21caf;
   --confluence-purple-800: #86198f;
   --confluence-purple-900: #701a75;

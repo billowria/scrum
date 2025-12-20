@@ -12,7 +12,8 @@ const NotificationSidebar = ({
     counts = {},
     onOpenSettings,
     isOpen,
-    onToggle
+    onToggle,
+    hideToggle = false
 }) => {
     const menuItems = [
         { id: 'all', label: 'Inbox', icon: FiInbox, count: counts.unread },
@@ -26,22 +27,24 @@ const NotificationSidebar = ({
     ];
 
     return (
-        <div className="w-full bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-8rem)] sticky top-24 transition-all duration-300">
+        <div className={`w-full bg-white dark:bg-slate-900 ${hideToggle ? '' : 'rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm h-[calc(100vh-8rem)] sticky top-24'} overflow-hidden flex flex-col transition-all duration-300`}>
             {/* Header */}
-            <div className={`p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex items-center ${isOpen ? 'justify-between' : 'justify-center'}`}>
-                {isOpen && (
-                    <h2 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                        Folders
-                    </h2>
-                )}
-                <button
-                    onClick={onToggle}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"
-                    title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-                >
-                    {isOpen ? <FiChevronLeft className="w-4 h-4" /> : <FiMenu className="w-5 h-5" />}
-                </button>
-            </div>
+            {!hideToggle && (
+                <div className={`p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex items-center ${isOpen ? 'justify-between' : 'justify-center'}`}>
+                    {isOpen && (
+                        <h2 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                            Folders
+                        </h2>
+                    )}
+                    <button
+                        onClick={onToggle}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-gray-500 dark:text-gray-400 transition-colors"
+                        title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+                    >
+                        {isOpen ? <FiChevronLeft className="w-4 h-4" /> : <FiMenu className="w-5 h-5" />}
+                    </button>
+                </div>
+            )}
 
             {/* Menu */}
             <div className="flex-1 overflow-y-auto py-2 px-2 scrollbar-hide">

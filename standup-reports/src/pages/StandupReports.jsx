@@ -4,15 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { format, isToday, parseISO } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
-import {
-    FiFilter, FiInfo, FiClock, FiUser, FiUsers, FiCheckCircle,
-    FiAlertCircle, FiCalendar, FiRefreshCw, FiChevronLeft, FiChevronRight,
-    FiPlus, FiList, FiGrid, FiMaximize, FiX, FiFileText, FiSearch, FiEye, FiEyeOff
-} from 'react-icons/fi';
+import { FiFileText, FiSearch, FiFilter, FiChevronLeft, FiChevronRight, FiCalendar, FiClock, FiRefreshCw, FiPlus, FiEdit2, FiCheckCircle, FiAlertCircle, FiUsers, FiMaximize, FiX, FiChevronDown } from 'react-icons/fi';
 
 // Import FilterPanel from History
 import FilterPanel from '../components/history/FilterPanel';
 import MissingReports from '../components/MissingReports';
+import ReportContentParser from '../components/reports/ReportContentParser';
 import UserProfileInfoModal from '../components/UserProfileInfoModal';
 
 // Animation variants
@@ -541,15 +538,15 @@ export default function StandupReports({ sidebarMode }) {
                     <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
 
                     {/* Left: Title & Context */}
-                    <div className="flex items-center gap-4 px-4 relative z-10">
+                    <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4 relative z-10">
                         <div className="relative group/icon cursor-pointer">
                             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-60 transition-opacity"></div>
-                            <div className="relative p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300">
-                                <FiFileText className="w-5 h-5" />
+                            <div className="relative p-2 sm:p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300">
+                                <FiFileText className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                         </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
+                        <div className="hidden sm:block">
+                            <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
                                 Standup Reports
                             </h1>
                             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -572,14 +569,14 @@ export default function StandupReports({ sidebarMode }) {
                     </div>
 
                     {/* Center: Futuristic Toggle */}
-                    <div className="hidden md:flex bg-gray-100/30 backdrop-blur-xl p-1.5 rounded-2xl relative z-10 border border-white/40 shadow-inner overflow-hidden">
+                    <div className="flex bg-gray-100/30 backdrop-blur-xl p-1 sm:p-1.5 rounded-xl sm:rounded-2xl relative z-10 border border-white/40 shadow-inner overflow-hidden">
                         {[
                             { id: 'today', icon: FiCalendar, label: 'Active Sprint' },
                             { id: 'history', icon: FiClock, label: 'Past Reports' }
                         ].map((tab) => (
                             <motion.button
                                 key={tab.id}
-                                className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${reportsViewMode === tab.id
+                                className={`relative px-2 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center gap-1 sm:gap-2 z-10 ${reportsViewMode === tab.id
                                     ? 'text-white shadow-lg'
                                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/50'
                                     }`}
@@ -626,39 +623,58 @@ export default function StandupReports({ sidebarMode }) {
                                     </>
                                 )}
 
-                                <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
-                                    <tab.icon className={`w-4 h-4 ${reportsViewMode === tab.id ? 'text-white' : ''}`} />
-                                    {tab.label}
+                                <span className="relative z-10 flex items-center gap-1 sm:gap-2 drop-shadow-sm">
+                                    <tab.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${reportsViewMode === tab.id ? 'text-white' : ''}`} />
+                                    <span className="text-[10px] sm:text-xs md:text-sm">{tab.label}</span>
                                 </span>
                             </motion.button>
                         ))}
                     </div>
 
                     {/* Right: Actions */}
-                    <div className="flex items-center gap-3 px-2 relative z-10">
+                    <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-2 relative z-10">
                         {/* Refresh */}
                         <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={handleRefresh}
-                            className="p-2.5 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-xl transition-colors relative group"
+                            className="p-2 sm:p-2.5 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg sm:rounded-xl transition-colors relative group"
                         >
-                            <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                            <FiRefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${refreshing ? 'animate-spin' : ''}`} />
                         </motion.button>
 
                         {/* New Report CTA */}
-                        <motion.button
-                            whileHover={{ scale: 1.05, y: -1 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/report')}
-                            className="relative overflow-hidden px-5 py-2.5 bg-gray-900 text-white rounded-xl font-semibold text-sm shadow-xl shadow-indigo-900/20 group border border-gray-800"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[length:200%_auto] animate-gradient" />
-                            <span className="relative z-10 flex items-center gap-2">
-                                <FiPlus className="w-4 h-4" />
-                                <span className="hidden sm:inline">New Entry</span>
-                            </span>
-                        </motion.button>
+                        {(() => {
+                            // Check if current user has already submitted today's report
+                            const hasSubmittedToday = reports.some(r =>
+                                r.users?.id === userId &&
+                                r.date === new Date().toISOString().split('T')[0]
+                            );
+
+                            return (
+                                <motion.button
+                                    whileHover={{ scale: 1.05, y: -1 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => navigate('/report')}
+                                    className={`relative overflow-hidden px-3 py-2 sm:px-5 sm:py-2.5 ${hasSubmittedToday ? 'bg-amber-600/90 border-amber-700' : 'bg-gray-900 border-gray-800'} text-white rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm shadow-xl shadow-indigo-900/20 group border`}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[length:200%_auto] animate-gradient" />
+                                    <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                                        {hasSubmittedToday ? (
+                                            <>
+                                                <FiEdit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">Update Report</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                                <span className="hidden sm:inline">New Entry</span>
+                                            </>
+                                        )}
+                                    </span>
+                                </motion.button>
+                            );
+                        })()}
                     </div>
                 </div>
             </motion.div>
@@ -732,34 +748,6 @@ export default function StandupReports({ sidebarMode }) {
                             </div>
                         )}
                     </div>
-
-                    {/* Stats Overview for Today */}
-                    {reportsViewMode === 'today' && stats && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Reports', value: stats.totalReports, icon: FiFileText, color: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-                                { label: 'Completion', value: `${stats.completionRate}%`, icon: FiCheckCircle, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                                { label: 'Missing', value: stats.missingReports, icon: FiAlertCircle, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-900/20' },
-                                { label: 'Active', value: stats.uniqueUsers, icon: FiUsers, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                            ].map((stat, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: i * 0.1 }}
-                                    className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all"
-                                >
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className={`p-2 rounded-xl ${stat.bg} ${stat.color}`}>
-                                            <stat.icon className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{stat.label}</span>
-                                    </div>
-                                    <div className="text-2xl font-black text-gray-900 dark:text-white">{stat.value}</div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    )}
 
                     {/* Content Grid */}
                     {loading ? (
@@ -843,7 +831,7 @@ export default function StandupReports({ sidebarMode }) {
                                                     Yesterday
                                                 </div>
                                                 <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-600 dark:text-gray-300 max-h-40 overflow-y-auto custom-scrollbar">
-                                                    <RichTextDisplay content={report.yesterday} />
+                                                    <ReportContentParser content={report.yesterday} mode="view" />
                                                 </div>
                                             </div>
 
@@ -854,7 +842,7 @@ export default function StandupReports({ sidebarMode }) {
                                                     Today
                                                 </div>
                                                 <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
-                                                    <RichTextDisplay content={report.today} />
+                                                    <ReportContentParser content={report.today} mode="view" />
                                                 </div>
                                             </div>
 
@@ -866,7 +854,7 @@ export default function StandupReports({ sidebarMode }) {
                                                         Blockers
                                                     </div>
                                                     <div className="prose prose-sm prose-rose dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
-                                                        <RichTextDisplay content={report.blockers} />
+                                                        <ReportContentParser content={report.blockers} mode="view" />
                                                     </div>
                                                 </div>
                                             )}
@@ -931,21 +919,21 @@ export default function StandupReports({ sidebarMode }) {
                                     <div className="bg-gray-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-gray-100 dark:border-slate-700/50">
                                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Yesterday</h3>
                                         <div className="prose prose-indigo dark:prose-invert max-w-none text-gray-600 dark:text-gray-300">
-                                            <RichTextDisplay content={filteredReports[currentReportIndex].yesterday} />
+                                            <ReportContentParser content={filteredReports[currentReportIndex].yesterday} mode="view" />
                                         </div>
                                     </div>
 
                                     <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-500/20">
                                         <h3 className="text-sm font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-widest mb-4">Today</h3>
                                         <div className="prose prose-indigo dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
-                                            <RichTextDisplay content={filteredReports[currentReportIndex].today} />
+                                            <ReportContentParser content={filteredReports[currentReportIndex].today} mode="view" />
                                         </div>
                                     </div>
                                     {filteredReports[currentReportIndex].blockers && (
                                         <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-6 border border-rose-100 dark:border-rose-500/20">
                                             <h3 className="text-sm font-bold text-rose-500 dark:text-rose-400 uppercase tracking-widest mb-4">Blockers</h3>
                                             <div className="prose prose-rose dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
-                                                <RichTextDisplay content={filteredReports[currentReportIndex].blockers} />
+                                                <ReportContentParser content={filteredReports[currentReportIndex].blockers} mode="view" />
                                             </div>
                                         </div>
                                     )}

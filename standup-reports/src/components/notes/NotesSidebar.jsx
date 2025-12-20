@@ -18,11 +18,13 @@ const NotesSidebar = ({
   onToggleFavorite,
   onDeleteNote,
   selectedNote,
-  openTabs
+  openTabs,
+  isMobile = false
 }) => {
   return (
-    <div className="w-80 border-r border-gray-100 bg-gray-50/50 backdrop-blur-xl flex flex-col h-full shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20">
+    <div className={`${isMobile ? 'w-full' : 'w-80 border-r border-gray-100'} bg-gray-50/50 backdrop-blur-xl flex flex-col h-full shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] z-20`}>
       {/* Sidebar Header */}
+
       <div className="p-6 border-b border-gray-100 bg-white/50 backdrop-blur-sm flex-shrink-0 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-800 tracking-tight">My Notes</h2>

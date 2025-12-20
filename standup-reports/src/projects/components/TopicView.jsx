@@ -16,12 +16,12 @@ const ContentCard = ({ item, onUpdate, canEdit }) => {
 
     if (isEditing) {
         return (
-            <div className="bg-gradient-to-br from-white to-indigo-50/30 dark:from-slate-900 dark:to-indigo-900/10 rounded-2xl shadow-md border-2 border-indigo-200 dark:border-indigo-500/30 p-8 ring-4 ring-indigo-50 dark:ring-indigo-900/20">
+            <div className="bg-gradient-to-br from-white to-indigo-50/30 dark:from-slate-900 dark:to-indigo-900/10 rounded-2xl shadow-md border-2 border-indigo-200 dark:border-indigo-500/30 p-4 sm:p-8 ring-4 ring-indigo-50 dark:ring-indigo-900/20">
                 <input
                     type="text"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b-2 border-indigo-200 dark:border-indigo-500/30 pb-3 focus:border-indigo-500 outline-none bg-transparent"
+                    className="w-full text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 border-b-2 border-indigo-200 dark:border-indigo-500/30 pb-3 focus:border-indigo-500 outline-none bg-transparent"
                     placeholder="Entry Title"
                 />
                 <RichTextEditor
@@ -52,13 +52,13 @@ const ContentCard = ({ item, onUpdate, canEdit }) => {
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border-2 border-gray-100 dark:border-slate-800 p-8 hover:shadow-lg hover:border-gray-200 dark:hover:border-slate-700 transition-all group"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border-2 border-gray-100 dark:border-slate-800 p-4 sm:p-8 hover:shadow-lg hover:border-gray-200 dark:hover:border-slate-700 transition-all group"
         >
             <div className="flex items-start justify-between mb-6">
                 <div className="flex items-start gap-4 flex-1">
                     <Avatar user={item.created_by} size="md" />
                     <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
+                        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                             <span className="flex items-center gap-1.5">
                                 <FiUser className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ const TopicView = ({
 
     if (loading) {
         return (
-            <div className="max-w-5xl mx-auto p-8 space-y-6">
+            <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-6">
                 <div className="h-8 bg-gray-100 dark:bg-slate-800 rounded w-1/3 animate-pulse" />
                 <div className="space-y-4">
                     {[1, 2].map(i => (
@@ -146,7 +146,7 @@ const TopicView = ({
     // Single Content View
     if (selectedContent) {
         return (
-            <div className="max-w-5xl mx-auto px-8 py-12">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
                     <span className="hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">{topic.name}</span>
@@ -172,23 +172,23 @@ const TopicView = ({
                 <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
                     <span className="bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full">Topic</span>
                 </div>
-                <h1 className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight mb-4">{topic.name}</h1>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white tracking-tight mb-4">{topic.name}</h1>
                 {topic.description && (
-                    <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed max-w-3xl">{topic.description}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed max-w-3xl">{topic.description}</p>
                 )}
             </div>
 
             {/* Content List Preview */}
             {content.length > 0 && (
                 <div className="space-y-6 mb-12">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Content</h2>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Content</h2>
                     <div className="grid gap-4">
                         {content.map(item => (
                             <div
                                 key={item.id}
-                                className="p-6 bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-800 rounded-xl hover:border-indigo-200 dark:hover:border-indigo-800/50 hover:shadow-md transition-all cursor-pointer group"
+                                className="p-4 sm:p-6 bg-white dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-800 rounded-xl hover:border-indigo-200 dark:hover:border-indigo-800/50 hover:shadow-md transition-all cursor-pointer group"
                             >
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {item.title}
                                 </h3>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
@@ -233,14 +233,14 @@ const TopicView = ({
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-indigo-100 dark:border-indigo-900/30 p-8 ring-4 ring-indigo-50/50 dark:ring-indigo-900/10"
+                            className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-indigo-100 dark:border-indigo-900/30 p-4 sm:p-8 ring-4 ring-indigo-50/50 dark:ring-indigo-900/10"
                         >
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">New Entry</h3>
+                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">New Entry</h3>
                             <input
                                 type="text"
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
-                                className="w-full text-xl font-medium text-gray-900 dark:text-white mb-6 border-b-2 border-gray-200 dark:border-slate-700 pb-3 focus:border-indigo-500 outline-none bg-transparent placeholder-gray-300 dark:placeholder-slate-600"
+                                className="w-full text-lg sm:text-xl font-medium text-gray-900 dark:text-white mb-4 sm:mb-6 border-b-2 border-gray-200 dark:border-slate-700 pb-3 focus:border-indigo-500 outline-none bg-transparent placeholder-gray-300 dark:placeholder-slate-600"
                                 placeholder="Entry Title"
                                 autoFocus
                             />

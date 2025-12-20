@@ -163,7 +163,8 @@ const ProjectSidebar = ({
     isOpen,
     onToggle,
     className = '',
-    editMode = false
+    editMode = false,
+    isMobile = false
 }) => {
     const [expandedSections, setExpandedSections] = useState({});
     const [expandedTopics, setExpandedTopics] = useState({});
@@ -237,8 +238,9 @@ const ProjectSidebar = ({
         <motion.aside
             initial={false}
             animate={{
-                width: isOpen ? 280 : 40,
-                opacity: isOpen ? 1 : 0.6
+                width: isMobile ? (isOpen ? '100vw' : 0) : (isOpen ? 280 : 40),
+                opacity: isOpen ? 1 : 0.6,
+                x: isMobile && !isOpen ? -20 : 0
             }}
             transition={{
                 type: "spring",
@@ -246,20 +248,23 @@ const ProjectSidebar = ({
                 damping: 30
             }}
             className={`h-full bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-gray-200/60 dark:border-white/10 flex flex-col overflow-hidden ${className}`}
+            style={{
+                maxWidth: isMobile && isOpen ? '100vw' : undefined
+            }}
         >
             {/* Sidebar Header */}
-            <div className="p-4 sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md z-10 space-y-3 border-b border-gray-200/50 dark:border-white/5">
+            <div className={`sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md z-10 space-y-3 border-b border-gray-200/50 dark:border-white/5 ${isOpen ? 'p-4' : 'p-2'}`}>
                 {/* Project Name */}
                 {isOpen && projectName && (
                     <div className="flex items-center gap-2 px-1 pb-2 border-b border-gray-200 dark:border-slate-800">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                            <FiFileText className="w-3.5 h-3.5 text-white" />
+                        <div className={`rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-8 h-8' : 'w-7 h-7'}`}>
+                            <FiFileText className={`text-white ${isMobile ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-800 dark:text-white truncate">{projectName}</span>
+                        <span className={`font-semibold text-gray-800 dark:text-white truncate ${isMobile ? 'text-base' : 'text-sm'}`}>{projectName}</span>
                     </div>
                 )}
 
-                {isOpen && (
+                {isOpen && !isMobile && (
                     <div className="flex items-center gap-2 text-gray-500 bg-white dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 px-3 py-2 rounded-lg shadow-sm w-full focus-within:ring-2 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/30 transition-all">
                         <FiSearch className="w-4 h-4 dark:text-gray-400" />
                         <input
@@ -275,18 +280,18 @@ const ProjectSidebar = ({
                     <div className="flex items-center gap-1">
                         <button
                             onClick={toggleAll}
-                            className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-gray-400 transition-colors"
+                            className={`hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-gray-400 transition-colors ${isMobile ? 'p-2' : 'p-1'}`}
                             title={allExpanded ? "Collapse All" : "Expand All"}
                         >
-                            {allExpanded ? <FiMinimize2 className="w-3.5 h-3.5" /> : <FiMaximize2 className="w-3.5 h-3.5" />}
+                            {allExpanded ? <FiMinimize2 className={isMobile ? "w-4 h-4" : "w-3.5 h-3.5"} /> : <FiMaximize2 className={isMobile ? "w-4 h-4" : "w-3.5 h-3.5"} />}
                         </button>
                         {editMode && (
                             <button
                                 onClick={onAddSection}
-                                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-gray-400 transition-colors"
+                                className={`hover:bg-gray-200 dark:hover:bg-slate-700 rounded text-gray-500 dark:text-gray-400 transition-colors ${isMobile ? 'p-2' : 'p-1'}`}
                                 title="Add Section"
                             >
-                                <FiPlus className="w-3.5 h-3.5" />
+                                <FiPlus className={isMobile ? "w-4 h-4" : "w-3.5 h-3.5"} />
                             </button>
                         )}
                     </div>
