@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
 import './ReportEntryNew.css'; // Create this file or add styles inline if preferred, but for now we inject style
 import { supabase } from '../supabaseClient';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, useEditor, Node, mergeAttributes } from '@tiptap/react';
+import { createPortal } from 'react-dom';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { motion, AnimatePresence } from 'framer-motion';
+import { uuidToShortId } from '../utils/taskIdUtils';
+import TaskDetailView from '../components/tasks/TaskDetailView';
+import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import {
   FiCalendar,
   FiCheckCircle,
@@ -24,6 +28,130 @@ import {
   FiPlus
 } from 'react-icons/fi';
 import { format, subDays, isToday, isYesterday } from 'date-fns';
+
+// --- Tiptap Extension: Chip ---
+// This allows Tiptap to recognize and render our custom interactive spans
+const Chip = Node.create({
+  name: 'chip',
+  group: 'inline',
+  inline: true,
+  selectable: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      'data-type': { default: null },
+      'data-id': { default: null },
+      'data-user-id': { default: null },
+      label: {
+        default: null,
+        // When parsing HTML, capture the text inside the span as the label
+        parseHTML: element => element.innerText || element.textContent,
+      },
+      class: { default: 'text-indigo-600 font-medium hover:underline cursor-pointer' },
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[data-type]',
+        getAttrs: element => ({
+          'data-type': element.getAttribute('data-type'),
+          'data-id': element.getAttribute('data-id'),
+          'data-user-id': element.getAttribute('data-user-id'),
+          class: element.getAttribute('class'),
+        }),
+      },
+    ]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    // Extract label to render it as text, not as an attribute
+    const { label, ...attributesWithoutLabel } = HTMLAttributes;
+    return ['span', mergeAttributes(this.options.HTMLAttributes, attributesWithoutLabel), label || '']
+  },
+});
+
+// --- Utility Helpers (Global Scope) ---
+const escapeHtml = (unsafe) => {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+const hydrateContent = (content, tasks, team) => {
+  if (!content) return '';
+  let hydrated = content;
+
+  // Hydrate Tasks
+  hydrated = hydrated.replace(/#TASK-([a-f0-9-]+|\d+)/g, (match, id) => {
+    const task = tasks.find(t => t.id.toString() === id.toString());
+    const shortId = id.length > 20 ? uuidToShortId(id) : id;
+    if (task) {
+      return `<span data-type="task" data-id="${id}" class="text-indigo-600 font-medium hover:underline decoration-indigo-300 underline-offset-2 cursor-pointer">#${shortId}: ${escapeHtml(task.title)}</span>`;
+    }
+    return match;
+  });
+
+  // Hydrate Mentions
+  hydrated = hydrated.replace(/@([a-f0-9-]{36})/g, (match, id) => {
+    const user = team.find(u => u.id === id);
+    if (user) {
+      return `<span data-type="mention" data-user-id="${id}" class="text-blue-600 font-medium bg-blue-50 px-1 rounded cursor-pointer">@${escapeHtml(user.name)}</span>`;
+    }
+    return match;
+  });
+
+  return hydrated;
+};
+
+const processContentForSave = (html) => {
+  if (!html) return '';
+
+  // Create a temporary div to parse HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+
+  // 1. Process Tasks
+  // Look for any span that has data-id or data-task-id or specific classes
+  const taskSpans = tempDiv.querySelectorAll('span[data-id], span[data-task-id], .task-ref');
+  taskSpans.forEach(span => {
+    const id = span.getAttribute('data-id') || span.getAttribute('data-task-id');
+    if (id) {
+      span.replaceWith(`#TASK-${id}`);
+    }
+  });
+
+  // 2. Process Mentions
+  const mentionSpans = tempDiv.querySelectorAll('span[data-user-id], .mention-ref');
+  mentionSpans.forEach(span => {
+    const id = span.getAttribute('data-user-id');
+    if (id) {
+      span.replaceWith(`@${id}`);
+    }
+  });
+
+  // 3. Fallback: Regex for any spans that might have been missed by the DOM parser
+  // (e.g. if TipTap did something weird with the structure)
+  let result = tempDiv.innerHTML;
+
+  // Clean up remaining HTML tags but keep the text
+  // We want to preserve basic structure like newlines if possible
+  // Using innerText on a temporary element is usually safer for this
+  const cleanText = tempDiv.innerText || tempDiv.textContent || '';
+
+  // Final safety check: if for some reason spans survived (e.g. if innerText didn't replace them)
+  // we do a final regex pass on the result string
+  return cleanText
+    .replace(/<span[^>]*data-id="([a-f0-9-]+|\d+)"[^>]*>.*?<\/span>/g, '#TASK-$1')
+    .replace(/<span[^>]*data-user-id="([a-f0-9-]{36})"[^>]*>.*?<\/span>/g, '@$1')
+    .trim();
+};
 
 const ReportEntryNew = () => {
   const navigate = useNavigate();
@@ -82,17 +210,45 @@ const ReportEntryNew = () => {
     ]
   };
 
+  // Modal State
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUser(user));
+  }, []);
+
   // Initialize Editors  
   const editorProps = {
     attributes: {
       class: 'prose prose-sm max-w-none focus:outline-none text-slate-600 leading-relaxed min-h-[200px]'
+    },
+    handleClick: (view, pos, event) => {
+      const target = event.target;
+      if (target.getAttribute('data-type') === 'task') {
+        const taskId = target.getAttribute('data-id');
+        if (taskId) {
+          setSelectedTaskId(taskId);
+          return true;
+        }
+      }
+      if (target.getAttribute('data-type') === 'mention') {
+        const userId = target.getAttribute('data-user-id');
+        if (userId) {
+          setSelectedUserId(userId);
+          return true;
+        }
+      }
+      return false;
     }
   };
 
   const yesterdayEditor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'What did you accomplish yesterday?' })
+      Placeholder.configure({ placeholder: 'What did you accomplish yesterday?' }),
+      Chip
     ],
     content: yesterdayContent,
     onUpdate: ({ editor }) => {
@@ -115,7 +271,8 @@ const ReportEntryNew = () => {
   const todayEditor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'What will you work on today?' })
+      Placeholder.configure({ placeholder: 'What will you work on today?' }),
+      Chip
     ],
     content: todayContent,
     onUpdate: ({ editor }) => {
@@ -138,7 +295,8 @@ const ReportEntryNew = () => {
   const blockersEditor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'Any blockers? (Optional)' })
+      Placeholder.configure({ placeholder: 'Any blockers? (Optional)' }),
+      Chip
     ],
     content: blockersContent,
     onUpdate: ({ editor }) => {
@@ -158,6 +316,25 @@ const ReportEntryNew = () => {
     }
   });
 
+  // Sync editors with content when they become available
+  useEffect(() => {
+    if (yesterdayEditor && yesterdayContent && yesterdayEditor.getHTML() === '<p></p>') {
+      yesterdayEditor.commands.setContent(yesterdayContent);
+    }
+  }, [yesterdayEditor, yesterdayContent]);
+
+  useEffect(() => {
+    if (todayEditor && todayContent && todayEditor.getHTML() === '<p></p>') {
+      todayEditor.commands.setContent(todayContent);
+    }
+  }, [todayEditor, todayContent]);
+
+  useEffect(() => {
+    if (blockersEditor && blockersContent && blockersEditor.getHTML() === '<p></p>') {
+      blockersEditor.commands.setContent(blockersContent);
+    }
+  }, [blockersEditor, blockersContent]);
+
   // Detect mobile
   useEffect(() => {
     const handleResize = () => {
@@ -170,14 +347,19 @@ const ReportEntryNew = () => {
 
   // Fetch data
   useEffect(() => {
-    if (selectedCompany) {
-      fetchTeamMembers();
-      fetchMyTasks();
-      fetchReport();
-    }
+    const init = async () => {
+      if (selectedCompany) {
+        // Fetch dependencies first
+        const team = await fetchTeamMembers();
+        const tasks = await fetchMyTasks();
+        // Then fetch report and hydrate
+        await fetchReport(tasks, team);
+      }
+    };
+    init();
   }, [selectedCompany, reportDate]);
 
-  const fetchReport = async () => {
+  const fetchReport = async (tasks = [], team = []) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -194,15 +376,17 @@ const ReportEntryNew = () => {
         console.error('Error fetching report:', error);
       }
 
-      if (data) {
-        setYesterdayContent(data.yesterday || '');
-        setTodayContent(data.today || '');
-        setBlockersContent(data.blockers || '');
+      const yesterday = hydrateContent(data?.yesterday || '', tasks, team);
+      const today = hydrateContent(data?.today || '', tasks, team);
+      const blockers = hydrateContent(data?.blockers || '', tasks, team);
 
-        yesterdayEditor?.commands.setContent(data.yesterday || '');
-        todayEditor?.commands.setContent(data.today || '');
-        blockersEditor?.commands.setContent(data.blockers || '');
-      }
+      setYesterdayContent(yesterday);
+      setTodayContent(today);
+      setBlockersContent(blockers);
+
+      yesterdayEditor?.commands.setContent(yesterday);
+      todayEditor?.commands.setContent(today);
+      blockersEditor?.commands.setContent(blockers);
     } catch (err) {
       console.error('Fetch error:', err);
     }
@@ -212,21 +396,23 @@ const ReportEntryNew = () => {
     setFetchingTasks(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return [];
 
       const { data, error } = await supabase
         .from('tasks')
-        .select('id, title, status, priority, project_id, projects(id, name)')
-        .eq('company_id', selectedCompany.id)
+        .select('*, project:projects(name)')
         .eq('assignee_id', user.id)
         .neq('status', 'Completed')
         .order('created_at', { ascending: false })
         .limit(15);
 
       if (error) throw error;
-      setMyTasks(data || []);
+      const tasks = data || [];
+      setMyTasks(tasks);
+      return tasks;
     } catch (err) {
       console.error('Error fetching tasks:', err);
+      return [];
     } finally {
       setFetchingTasks(false);
     }
@@ -235,7 +421,7 @@ const ReportEntryNew = () => {
   const fetchTeamMembers = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return [];
 
       // Get current user's team
       const { data: userData } = await supabase
@@ -244,7 +430,7 @@ const ReportEntryNew = () => {
         .eq('id', user.id)
         .single();
 
-      if (!userData?.team_id) return;
+      if (!userData?.team_id) return [];
 
       // Fetch team members from the same team
       const { data, error } = await supabase
@@ -255,9 +441,12 @@ const ReportEntryNew = () => {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      setTeamMembers(data || []);
+      const team = data || [];
+      setTeamMembers(team);
+      return team;
     } catch (err) {
       console.error('Error fetching team:', err);
+      return [];
     }
   };
 
@@ -278,9 +467,9 @@ const ReportEntryNew = () => {
         company_id: selectedCompany.id,
         user_id: user.id,
         date: reportDate,
-        yesterday: yesterdayContent,
-        today: todayContent,
-        blockers: blockersContent,
+        yesterday: processContentForSave(yesterdayContent),
+        today: processContentForSave(todayContent),
+        blockers: processContentForSave(blockersContent),
         updated_at: new Date().toISOString()
       };
 
@@ -327,8 +516,9 @@ const ReportEntryNew = () => {
     if (activeEditorKey === 'blockers') editor = blockersEditor;
 
     if (editor) {
-      const taskText = `#TASK-${task.id} `;
-      editor.chain().focus().insertContent(taskText).run();
+      const shortId = task.id.length > 20 ? uuidToShortId(task.id) : task.id;
+      const taskHtml = `<span data-type="task" data-id="${task.id}" class="text-indigo-600 font-medium hover:underline decoration-indigo-300 underline-offset-2 cursor-pointer">#${shortId}: ${escapeHtml(task.title)}</span> `;
+      editor.chain().focus().insertContent(taskHtml).run();
     }
   };
 
@@ -340,8 +530,8 @@ const ReportEntryNew = () => {
     if (activeEditorKey === 'blockers') editor = blockersEditor;
 
     if (editor) {
-      const mention = `@${member.id} `;
-      editor.chain().focus().insertContent(mention).run();
+      const mentionHtml = `<span data-type="mention" data-user-id="${member.id}" class="text-blue-600 font-medium bg-blue-50 px-1 rounded cursor-pointer">@${escapeHtml(member.name)}</span> `;
+      editor.chain().focus().insertContent(mentionHtml).run();
     }
   };
 
@@ -466,7 +656,7 @@ const ReportEntryNew = () => {
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" title="High Priority" />
                         )}
                         <span className="text-[10px] font-medium text-slate-400 truncate max-w-[120px]">
-                          {task.projects?.name}
+                          {task.project?.name}
                         </span>
                       </div>
                       <h4 className="text-sm font-medium text-slate-700 group-hover:text-indigo-700 transition-colors truncate leading-tight">
@@ -685,6 +875,25 @@ const ReportEntryNew = () => {
           </aside>
         )}
 
+        {/* Modals */}
+        {selectedTaskId && createPortal(
+          <TaskDetailView
+            taskId={selectedTaskId}
+            isOpen={!!selectedTaskId}
+            onClose={() => setSelectedTaskId(null)}
+            currentUser={currentUser}
+          />,
+          document.body
+        )}
+
+        {selectedUserId && createPortal(
+          <UserProfileInfoModal
+            isOpen={!!selectedUserId}
+            onClose={() => setSelectedUserId(null)}
+            userId={selectedUserId}
+          />,
+          document.body
+        )}
       </main>
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  FiArrowDown, FiUsers, FiInfo, FiMoreVertical, FiPhone, FiVideo,
+  FiArrowDown, FiArrowLeft, FiUsers, FiInfo, FiMoreVertical, FiPhone, FiVideo,
   FiSearch, FiFilter, FiCheckCircle, FiCircle, FiX, FiCornerUpLeft, FiEdit2,
   FiChevronLeft, FiSettings, FiMic, FiUser, FiMessageSquare
 } from 'react-icons/fi';
@@ -231,16 +231,16 @@ const ChatWindow = ({
           <div className="flex items-center justify-between">
             {/* Left Section - Back Button, Avatar, and Title */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {/* Back Button (Mobile Only) */}
+              {/* Back Button */}
               {onBack && (
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.1, x: -2 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={onBack}
-                  className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors md:hidden"
+                  className="p-2 -ml-2 mr-1 text-gray-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-800 rounded-full transition-all flex items-center justify-center border border-transparent hover:border-gray-200 dark:hover:border-slate-700 shadow-sm hover:shadow-md"
                   title="Back to conversations"
                 >
-                  <FiChevronLeft className="w-5 h-5" />
+                  <FiArrowLeft className="w-5 h-5" />
                 </motion.button>
               )}
 
@@ -452,36 +452,50 @@ const ChatWindow = ({
           </div>
         </div>
       ) : (
-        // Mobile Header
-        <div className="flex-shrink-0 px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
+        // Mobile Header (Now unified style)
+        <div className="flex-shrink-0 px-4 py-3 bg-white/90 dark:bg-slate-900/90 border-b border-gray-200/50 dark:border-white/10 backdrop-blur-md sticky top-0 z-20 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button onClick={onBack} className="p-2 -ml-2 text-gray-600">
-                <FiChevronLeft className="w-6 h-6" />
-              </button>
+              {onBack && (
+                <motion.button
+                  whileHover={{ scale: 1.1, x: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={onBack}
+                  className="p-2 -ml-2 text-gray-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-800 rounded-full transition-all border border-transparent hover:border-gray-200 dark:hover:border-slate-700 shadow-sm"
+                >
+                  <FiArrowLeft className="w-6 h-6" />
+                </motion.button>
+              )}
               <div className="flex items-center gap-3">
                 <div className="relative">
                   {conversation.otherUser?.avatar_url ? (
-                    <img src={conversation.otherUser.avatar_url} className="w-10 h-10 rounded-full object-cover" />
+                    <img src={conversation.otherUser.avatar_url} className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-sm" />
                   ) : (
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-semibold text-sm">
-                      {(conversation.otherUser?.name || conversation.name)?.substring(0, 2)?.toUpperCase()}
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm border-2 border-white dark:border-slate-800 shadow-sm">
+                      {(conversation.otherUser?.name || conversation.name)?.substring(0, 1)?.toUpperCase()}
                     </div>
+                  )}
+                  {isOnline && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-900 rounded-full shadow-sm" />
                   )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-base">
+                  <h3 className="font-bold text-gray-900 dark:text-white text-base leading-tight">
                     {conversation.type === 'direct' ? conversation.otherUser?.name : conversation.name}
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                     {isOnline ? 'Active now' : 'Offline'}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-gray-500">
-              <FiPhone className="w-5 h-5" />
-              <FiVideo className="w-6 h-6" />
+            <div className="flex items-center gap-2">
+              <motion.button whileTap={{ scale: 0.9 }} className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors">
+                <FiPhone className="w-5 h-5" />
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.9 }} className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors">
+                <FiVideo className="w-6 h-6" />
+              </motion.button>
             </div>
           </div>
         </div>

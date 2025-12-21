@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiMenu, FiActivity, FiEdit2, FiCheck, FiSidebar, FiArrowLeft } from 'react-icons/fi';
+import { FiMenu, FiActivity, FiEdit2, FiCheck, FiSidebar, FiArrowLeft, FiLayers } from 'react-icons/fi';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Avatar from '../../components/shared/Avatar';
 
@@ -7,11 +7,13 @@ const ProjectHeader = ({
     projectName,
     onToggleSidebar,
     onToggleActivity,
+    onToggleProjectsList,
     sidebarOpen,
     isMobile,
     currentUser,
     editMode,
-    onBack
+    onBack,
+    isInline
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -39,6 +41,18 @@ const ProjectHeader = ({
         <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/10 sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 transition-all duration-200 shadow-sm">
             {/* Left: Sidebar Toggle and Back Link */}
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                {/* Projects List Toggle - only on mobile and when not inline */}
+                {isMobile && !isInline && onToggleProjectsList && (
+                    <button
+                        onClick={onToggleProjectsList}
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        title="Projects List"
+                    >
+                        <FiLayers className="w-5 h-5" />
+                    </button>
+                )}
+
+                {/* Project Sections Sidebar Toggle */}
                 <button
                     onClick={onToggleSidebar}
                     className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/50 dark:hover:bg-slate-800 rounded-lg transition-colors"

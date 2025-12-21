@@ -19,6 +19,7 @@ import { useCompany } from '../contexts/CompanyContext';
 
 import ProjectDetailPage from '../projects/pages/ProjectDetailPage';
 import ProjectsListSidebar from '../components/projects/ProjectsListSidebar';
+import ProjectListView from '../components/sprint/ProjectListView';
 
 // Import design system
 import { colors, animations, shadows, breakpoints, typography } from '../config/designSystem';
@@ -1723,6 +1724,10 @@ export default function ProjectsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
+  // Sprint and Task data for ProjectListView
+  const [sprints, setSprints] = useState([]);
+  const [tasks, setTasks] = useState([]);
+
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -1737,7 +1742,9 @@ export default function ProjectsPage() {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (!mobile) {
+      // On mobile, sidebar should be closed by default
+      // On desktop, keep current state
+      if (mobile) {
         setSidebarOpen(false);
       }
     };
@@ -1883,10 +1890,41 @@ export default function ProjectsPage() {
     }
   };
 
-  // Load projects when currentUser is available
+  // Fetch sprints for ProjectListView
+  const fetchSprints = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('sprints')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSprints(data || []);
+    } catch (err) {
+      console.error('Error fetching sprints:', err);
+    }
+  };
+
+  // Fetch tasks for ProjectListView
+  const fetchTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*');
+
+      if (error) throw error;
+      setTasks(data || []);
+    } catch (err) {
+      console.error('Error fetching tasks:', err);
+    }
+  };
+
+  // Load projects, sprints, and tasks when currentUser is available
   useEffect(() => {
     if (currentUser) {
       fetchProjects();
+      fetchSprints();
+      fetchTasks();
     }
   }, [currentUser]);
 
@@ -2468,35 +2506,42 @@ export default function ProjectsPage() {
                     </div>
                   </motion.div>
                 ) : (
-                  <motion.div
-                    className={viewMode === 'grid'
-                      ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'
-                      : 'flex flex-col gap-3'
-                    }
-                    variants={pageVariants}
-                  >
-                    {filteredProjects.map((project, index) => (
-                      <motion.div
-                        key={project.id}
-                        variants={cardVariants}
-                        custom={index}
-                      >
-                        <ProjectCard
-                          project={project}
-                          onToggleFavorite={toggleFavorite}
-                          isFavorite={isProjectFavorite(project.id)}
-                          viewMode={viewMode}
-                          teamMembers={teamMembers[project.id] || []}
-                          onEditProject={handleEditProject}
-                          onDeleteProject={handleDeleteProject}
-                          onAssignUsers={handleAssignUsers}
-                          onViewMembers={handleViewMembers}
-                          canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
-                          onProjectClick={(id) => setActiveProjectId(id)}
-                        />
-                      </motion.div>
-                    ))}
-                  </motion.div>
+                  // Use ProjectListView for list mode, grid mode for card view
+                  viewMode === 'list' ? (
+                    <ProjectListView
+                      projects={filteredProjects}
+                      sprints={sprints}
+                      getSprintTasks={(sprintId) => tasks.filter(task => task.sprint_id === sprintId)}
+                      setSelectedProjectId={setActiveProjectId}
+                    />
+                  ) : (
+                    <motion.div
+                      className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-6'
+                      variants={pageVariants}
+                    >
+                      {filteredProjects.map((project, index) => (
+                        <motion.div
+                          key={project.id}
+                          variants={cardVariants}
+                          custom={index}
+                        >
+                          <ProjectCard
+                            project={project}
+                            onToggleFavorite={toggleFavorite}
+                            isFavorite={isProjectFavorite(project.id)}
+                            viewMode={viewMode}
+                            teamMembers={teamMembers[project.id] || []}
+                            onEditProject={handleEditProject}
+                            onDeleteProject={handleDeleteProject}
+                            onAssignUsers={handleAssignUsers}
+                            onViewMembers={handleViewMembers}
+                            canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
+                            onProjectClick={(id) => setActiveProjectId(id)}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )
                 )}
               </div>
             )}

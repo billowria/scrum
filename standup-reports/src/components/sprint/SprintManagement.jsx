@@ -83,7 +83,7 @@ const SprintManagement = ({
         ))}
       </div>
 
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8 relative z-10">
+      <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-8 relative z-10">
 
         {/* Enhanced Project Selection Grid */}
         {projects?.length > 0 && selectedProjectId === 'all' && (
@@ -99,30 +99,30 @@ const SprintManagement = ({
               </h2>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
+              <div className="flex items-center gap-1 sm:gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-lg sm:rounded-xl p-1 sm:p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
                 <motion.button
                   onClick={() => setViewMode('board')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'board'
+                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${viewMode === 'board'
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <FiGrid className="w-4 h-4" />
-                  <span>Board</span>
+                  <FiGrid className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">Board</span>
                 </motion.button>
                 <motion.button
                   onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${viewMode === 'list'
+                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${viewMode === 'list'
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <FiList className="w-4 h-4" />
-                  <span>List</span>
+                  <FiList className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline">List</span>
                 </motion.button>
               </div>
             </div>
@@ -154,10 +154,10 @@ const SprintManagement = ({
             className="space-y-6"
           >
             {/* Navigation Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <motion.button
                 onClick={() => setSelectedProjectId('all')}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-sm"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-xs sm:text-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -179,10 +179,10 @@ const SprintManagement = ({
             </div>
 
             {/* Filter Controls with View Toggle */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Filter Sprints</h3>
+                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">Filter Sprints</h3>
                   <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <FiFilter className="w-4 h-4" />
                     <span className="font-semibold">{filteredSprints.filter(s => s.project_id === selectedProjectId).length} sprint{filteredSprints.filter(s => s.project_id === selectedProjectId).length !== 1 ? 's' : ''}</span>
@@ -218,12 +218,12 @@ const SprintManagement = ({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {['all', 'Planning', 'Active', 'Completed'].map((status) => (
                   <motion.button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    className={`relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${filterStatus === status
+                    className={`relative px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${filterStatus === status
                       ? 'text-white shadow-lg'
                       : 'bg-gray-100 dark:bg-slate-900/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-800'
                       }`}

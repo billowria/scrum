@@ -465,11 +465,18 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                 isMobile={isMobile}
             />
 
-            {/* Mobile Overlay */}
+            {/* Mobile Overlays - separate for each sidebar */}
             {isMobile && sidebarOpen && (
                 <div
                     className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
+                />
+            )}
+
+            {!isInline && isMobile && projectsListOpen && (
+                <div
+                    className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm"
+                    onClick={() => setProjectsListOpen(false)}
                 />
             )}
 
@@ -480,11 +487,13 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                     projectName={project.name}
                     onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
                     onToggleActivity={() => setActivityFeedOpen(true)}
+                    onToggleProjectsList={() => setProjectsListOpen(!projectsListOpen)}
                     sidebarOpen={sidebarOpen}
                     isMobile={isMobile}
                     currentUser={currentUser}
                     editMode={editMode}
                     onBack={onBack}
+                    isInline={isInline}
                 />
 
                 <div className="flex-1 overflow-y-auto scroll-smooth">

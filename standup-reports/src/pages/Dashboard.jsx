@@ -843,8 +843,23 @@ const DashboardHeader = ({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-[2rem] bg-slate-900 p-6 sm:p-8 text-white shadow-xl mb-8"
+      className="sticky top-0 z-40 relative overflow-hidden bg-slate-900 p-6 sm:p-8 text-white shadow-xl -mx-8 -mt-8 mb-8"
     >
+      {/* Curved Bottom Edge */}
+      <div className="absolute -bottom-1 left-0 right-0 h-8 overflow-hidden">
+        <svg
+          viewBox="0 0 1440 120"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="absolute bottom-0 w-full h-full"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,64 C360,120 1080,0 1440,64 L1440,120 L0,120 Z"
+            className="fill-gray-50/30 dark:fill-slate-900/10"
+          />
+        </svg>
+      </div>
       {/* Abstract Background */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
