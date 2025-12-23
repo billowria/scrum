@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '../supabaseClient';
@@ -819,20 +819,9 @@ const AnimatedQuote = React.memo(({ quote }) => {
 
 AnimatedQuote.displayName = 'AnimatedQuote';
 
-const DashboardHeader = ({
-  userName,
-  teamName,
-  availableMembers = [],
-  onLeaveMembers = [],
-  onOpenUserList,
-  onCreateReport,
-  hasSubmittedToday
-}) => {
+// Isolated Clock Component - prevents parent re-renders
+const LiveClock = React.memo(() => {
   const [time, setTime] = useState(new Date());
-
-  // Quote Logic
-  const dayOfMonth = new Date().getDate();
-  const quote = QUOTES[dayOfMonth - 1] || QUOTES[0];
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -840,106 +829,249 @@ const DashboardHeader = ({
   }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-40 relative overflow-hidden bg-slate-900 p-6 sm:p-8 text-white shadow-xl -mx-8 -mt-8 mb-8"
-    >
-      {/* Curved Bottom Edge */}
-      <div className="absolute -bottom-1 left-0 right-0 h-8 overflow-hidden">
-        <svg
-          viewBox="0 0 1440 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="absolute bottom-0 w-full h-full"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M0,64 C360,120 1080,0 1440,64 L1440,120 L0,120 Z"
-            className="fill-gray-50/30 dark:fill-slate-900/10"
-          />
-        </svg>
+    <div className="text-right">
+      <div className="font-mono text-4xl sm:text-5xl font-bold tracking-tighter text-white drop-shadow-xl tabular-nums">
+        {format(time, 'HH:mm:ss')}
       </div>
-      {/* Abstract Background */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay" />
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900" />
+      <div className="text-xs text-indigo-300 font-bold uppercase tracking-widest mt-1 opacity-80">
+        {format(time, 'EEEE, MMM d')}
+      </div>
+    </div>
+  );
+});
+LiveClock.displayName = 'LiveClock';
 
-      {/* Subtle Glows */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[80px] -mr-20 -mt-20" />
-      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-600/10 rounded-full blur-[80px] -ml-10 -mb-10" />
+const DashboardHeader = ({
+  userName,
+  userAvatarUrl,
+  isUserOnLeave = false,
+  teamName,
+  availableMembers = [],
+  onLeaveMembers = [],
+  onOpenUserList,
+  onCreateReport,
+  hasSubmittedToday
+}) => {
+  // Live clock state for compact header
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-      <div className="relative z-10 flex flex-col md:flex-row items-end justify-between gap-6">
-        <div className="flex-1">
-          {/* Top Row: Team & Status */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/5 rounded-full backdrop-blur-md">
-              <FiUsers className="w-3.5 h-3.5 text-indigo-300" />
-              <span className="text-xs font-bold tracking-wide uppercase text-indigo-200">{teamName || 'No Team'}</span>
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  // Quote Logic
+  const dayOfMonth = new Date().getDate();
+  const quote = QUOTES[dayOfMonth - 1] || QUOTES[0];
+
+  const { scrollY } = useScroll();
+  // Physics-based spring for "weighty" feel
+  const springScroll = useSpring(scrollY, { stiffness: 120, damping: 25, restDelta: 0.005 });
+
+  // --- Transforms ---
+  // Reduced threshold for faster transitions
+  const range = [0, 150];
+
+  // 1. Container Geometry
+  const height = useTransform(springScroll, range, ['280px', '72px']);
+  const borderRadius = useTransform(springScroll, range, ['48px', '0px']); // Increased radius for smoother look
+  const marginBot = useTransform(springScroll, range, ['32px', '16px']);
+
+  // 2. Background Blur
+  const backdropBlur = useTransform(springScroll, range, ['0px', '16px']);
+
+  // 3. Expanded Content (Exits)
+  // Fades out deeper/faster
+  const expandedOpacity = useTransform(springScroll, [0, 60], [1, 0]);
+  const expandedY = useTransform(springScroll, [0, 60], [0, -10]);
+  const expandedScale = useTransform(springScroll, [0, 60], [1, 0.98]);
+  const expandedPointer = useTransform(springScroll, (v) => v > 50 ? 'none' : 'auto');
+
+  // 4. Compact Content (Enters)
+  const compactOpacity = useTransform(springScroll, [80, 140], [0, 1]);
+  const compactY = useTransform(springScroll, [80, 140], [10, 0]);
+  const compactPointer = useTransform(springScroll, (v) => v < 80 ? 'none' : 'auto');
+
+  return (
+    <motion.div
+      className="sticky top-0 z-30 w-full"
+      style={{
+        height,
+        marginTop: 0,
+        marginBottom: marginBot
+      }}
+    >
+      <motion.div
+        className="relative w-full h-full overflow-hidden bg-slate-900 border-b border-white/5 shadow-2xl"
+        style={{
+          borderBottomLeftRadius: borderRadius,
+          borderBottomRightRadius: borderRadius,
+          backdropFilter: useTransform(backdropBlur, v => `blur(${v})`),
+          willChange: 'height, border-radius' // Hint for browser optimization
+        }}
+      >
+        {/* Background Gradients */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 z-0" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 z-0 mix-blend-overlay"></div>
+
+        {/* Animated Glow Orbs (Subtle) */}
+        <motion.div
+          className="absolute -top-[20%] -left-[10%] w-[50%] h-[100%] bg-indigo-500/20 blur-[100px] rounded-full z-0"
+          animate={{ x: [0, 20, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-[40%] h-[80%] bg-purple-500/20 blur-[80px] rounded-full z-0"
+          animate={{ x: [0, -30, 0], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* --- EXPANDED CONTENT --- */}
+        <motion.div
+          className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end z-10"
+          style={{
+            opacity: expandedOpacity,
+            y: expandedY,
+            scale: expandedScale,
+            pointerEvents: expandedPointer
+          }}
+        >
+          <div className="flex flex-col md:flex-row items-end justify-between gap-6 pb-2">
+            <div className="flex-1 min-w-0">
+              {/* Team & Status Chips */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full backdrop-blur-md shadow-sm">
+                  <FiUsers className="w-3.5 h-3.5 text-indigo-300" />
+                  <span className="text-xs font-bold tracking-wide uppercase text-indigo-100 shadow-black drop-shadow-sm">{teamName || 'No Team'}</span>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs font-semibold text-slate-300">
+                  <button
+                    onClick={() => onOpenUserList('available')}
+                    className="group flex items-center gap-2 hover:text-emerald-300 transition-colors"
+                  >
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    {availableMembers.length} Online
+                  </button>
+                  <div className="w-[1px] h-3 bg-white/20"></div>
+                  <button
+                    onClick={() => onOpenUserList('onLeave')}
+                    className="flex items-center gap-2 hover:text-amber-300 transition-colors"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-amber-500/80 border border-amber-500/50" />
+                    {onLeaveMembers.length} Away
+                  </button>
+                </div>
+              </div>
+
+              {/* Greeting */}
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
+                Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-purple-200">{userName}</span>
+              </h1>
+
+              {/* Quote Component */}
+              <div className="max-w-2xl opacity-90">
+                <AnimatedQuote quote={quote} />
+              </div>
             </div>
 
-            {/* Clickable Status Chips */}
-            <div className="flex items-center gap-3 text-xs font-medium text-slate-300 bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5 transition-all w-fit">
-              <button
-                onClick={() => onOpenUserList('available')}
-                className="flex items-center gap-1.5 hover:text-emerald-200 transition-colors group"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
-                <span>{availableMembers.length} Online</span>
-              </button>
-              <div className="w-px h-2.5 bg-white/10" />
-              <button
-                onClick={() => onOpenUserList('onLeave')}
-                className="flex items-center gap-1.5 hover:text-amber-200 transition-colors group"
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                <span>{onLeaveMembers.length} Away</span>
-              </button>
+            {/* Right Side: Clock & Action */}
+            <div className="flex flex-col items-end gap-6 mb-1">
+              <LiveClock />
+
+              {!hasSubmittedToday && (
+                <button
+                  onClick={onCreateReport}
+                  className="group relative flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(245,158,11,0.5)] hover:-translate-y-1 transition-all duration-300 border border-white/20 overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/20 skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
+                  <FiEdit3 className="w-5 h-5" />
+                  <span>Submit Daily Report</span>
+                  <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+
+        {/* --- COMPACT CONTENT (Sticky) --- */}
+        <motion.div
+          className="absolute inset-0 flex items-center justify-between px-6 sm:px-8 z-20"
+          style={{
+            opacity: compactOpacity,
+            y: compactY,
+            pointerEvents: compactPointer
+          }}
+        >
+          {/* Left: User Avatar, Name, and Status */}
+          <div className="flex items-center gap-3">
+            {/* Avatar with status indicator */}
+            <div className="relative">
+              {userAvatarUrl ? (
+                <img
+                  src={userAvatarUrl}
+                  alt={userName}
+                  className="w-10 h-10 rounded-xl object-cover shadow-lg border-2 border-white/20"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg border border-white/10">
+                  {userName.charAt(0)}
+                </div>
+              )}
+              {/* Leave/Available indicator dot */}
+              <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-sm ${isUserOnLeave ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+            </div>
+
+            {/* User Info */}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate max-w-[120px] sm:max-w-none">
+                  {userName}
+                </h3>
+                {/* Status Badge */}
+                <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isUserOnLeave
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  }`}>
+                  {isUserOnLeave ? (
+                    <>
+                      <FiCalendar className="w-2.5 h-2.5" />
+                      On Leave
+                    </>
+                  ) : (
+                    <>
+                      <FiCheckCircle className="w-2.5 h-2.5" />
+                      Available
+                    </>
+                  )}
+                </span>
+              </div>
+              {/* Time in small text */}
+              <span className="text-[11px] text-indigo-200/80 font-medium tabular-nums">
+                {format(currentTime, 'h:mm a')} • {format(currentTime, 'EEE, MMM d')}
+              </span>
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-6 leading-tight">
-            Good Afternoon, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-purple-200">{userName}</span>
-          </h1>
-
-          {/* Animated Quote - Memoized Component */}
-          <AnimatedQuote quote={quote} />
-        </div>
-
-        <div className="flex flex-col items-end gap-5">
-          {/* Digital Clock with Seconds */}
-          <div className="text-right">
-            <div className="font-mono text-4xl sm:text-5xl font-bold tracking-tighter text-white drop-shadow-xl tabular-nums">
-              {format(time, 'HH:mm:ss')}
-            </div>
-            <div className="text-xs text-indigo-300 font-bold uppercase tracking-widest mt-1 opacity-80">
-              {format(time, 'EEEE, MMM d')}
-            </div>
-          </div>
-
-          {/* Submit Report Button (Compact) */}
-          {hasSubmittedToday === false && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          {/* Right: Actions */}
+          <div className="flex items-center gap-3">
+            <button
               onClick={onCreateReport}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-white text-sm font-bold shadow-lg shadow-amber-500/20 border border-white/10 transition-all group"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 text-white text-sm font-semibold transition-all backdrop-blur-md"
             >
               <FiEdit3 className="w-4 h-4" />
-              <span>Submit Daily Report</span>
-              <FiArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
-          )}
-        </div>
-      </div>
+              <span className="hidden sm:inline">Daily Report</span>
+            </button>
+          </div>
+        </motion.div>
+
+      </motion.div>
     </motion.div>
   );
 };
-
-// --- Quick Actions (Unchanged) ---
-// ... (Keeping HeroActionTile and QuickActionsHero code the same, but simplified in this replacement block for brevity if not changing) ...
-// Wait, I need to keep the full file content valid. Since QuickActionsHero and HeroActionTile are internal, I should include them or ensure I don't delete them if replacing a range.
-// The range starts at line 606 (DashboardHeader) and goes to end. 
-// I will include the other components as is.
 
 const HeroActionTile = ({ action, index }) => {
   // Map theme colors to specific Tailwind classes - using gradient colors for text
@@ -1151,6 +1283,8 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
+  const [userAvatarUrl, setUserAvatarUrl] = useState('');
+  const [isUserOnLeave, setIsUserOnLeave] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [userTeamId, setUserTeamId] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -1205,7 +1339,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           setCurrentUserId(user.id);
           const { data: userData } = await supabase
             .from('users')
-            .select('name, role, team_id, teams(name)')
+            .select('name, role, team_id, avatar_url, teams(name)')
             .eq('id', user.id)
             .single();
 
@@ -1213,6 +1347,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           setUserRole(userData?.role || '');
           setTeamName(userData?.teams?.name || '');
           setUserTeamId(userData?.team_id || null);
+          setUserAvatarUrl(userData?.avatar_url || '');
 
           // Check report submission
           checkTodayReport(user.id, currentCompany.id);
@@ -1264,6 +1399,11 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         setOnLeaveMembers(onLeave);
         setAvailableMembers(available);
 
+        // Check if current user is on leave
+        if (user) {
+          setIsUserOnLeave(onLeaveIds.includes(user.id));
+        }
+
         // 6. Fetch Missing Reports (For Team Pulse)
         // Only if user has a team
         if (user && teamData) {
@@ -1286,9 +1426,9 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
             const { data: userTasks, error: tasksError } = await supabase
               .from('tasks')
               .select(`
-                *,
-                project:projects(name)
-              `)
+      *,
+      project:projects(name)
+      `)
               .eq('assignee_id', user.id)
               .neq('status', 'Completed')
               .order('due_date', { ascending: true });
@@ -1477,11 +1617,13 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="p-8 max-w-[1800px] mx-auto min-h-screen bg-gray-50/30 dark:bg-slate-900/10"
+      className="-mt-14 md:-mt-16 px-0 pt-0 pb-8 max-w-[1800px] mx-auto min-h-screen bg-gradient-to-b from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
     >
       {/* Spacious Header */}
       <DashboardHeader
         userName={userName}
+        userAvatarUrl={userAvatarUrl}
+        isUserOnLeave={isUserOnLeave}
         teamName={teamName}
         navigate={navigate}
         userRole={userRole}
@@ -1494,59 +1636,61 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
 
 
-      {/* Hero Quick Actions */}
-      <QuickActionsHero navigate={navigate} userRole={userRole} />
+      <div className="px-4 sm:px-6 lg:px-8 pt-12">
+        {/* Hero Quick Actions */}
+        <QuickActionsHero navigate={navigate} userRole={userRole} />
 
-      {/* Dashboard Section Header */}
-      <div className="flex items-center gap-3 mb-6 px-2">
-        <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
-      </div>
-
-      {/* Main Content Grid - 4 Equal Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
-        {/* Column 1: Team Pulse */}
-        <div className="lg:col-span-1 h-[700px]">
-          <TeamPulseWidget
-            teamMembers={teamMembers}
-            loading={loading}
-            navigate={navigate}
-            userTeamId={userTeamId}
-            missingReportIds={missingReportIds}
-            onAvatarClick={(userId) => {
-              setSelectedUserId(userId);
-              setShowProfileModal(true);
-            }}
-            onStartChat={(member) => {
-              navigate('/chat', { state: { startChatWithUserId: member.id } });
-            }}
-          />
+        {/* Dashboard Section Header */}
+        <div className="flex items-center gap-3 mb-6 px-2">
+          <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
         </div>
 
-        {/* Column 2: Projects & Holidays */}
-        <div className="lg:col-span-1 h-[700px] flex flex-col gap-4 py-2">
-          <div className="flex-1 min-h-0">
-            <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
+        {/* Main Content Grid - 4 Equal Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-12">
+          {/* Column 1: Team Pulse */}
+          <div className="lg:col-span-1 h-[700px]">
+            <TeamPulseWidget
+              teamMembers={teamMembers}
+              loading={loading}
+              navigate={navigate}
+              userTeamId={userTeamId}
+              missingReportIds={missingReportIds}
+              onAvatarClick={(userId) => {
+                setSelectedUserId(userId);
+                setShowProfileModal(true);
+              }}
+              onStartChat={(member) => {
+                navigate('/chat', { state: { startChatWithUserId: member.id } });
+              }}
+            />
           </div>
-          <div className="flex-1 min-h-0">
-            <HolidaysWidget holidays={holidays} loading={loading} navigate={navigate} />
+
+          {/* Column 2: Projects & Holidays */}
+          <div className="lg:col-span-1 h-[700px] flex flex-col gap-4 py-2">
+            <div className="flex-1 min-h-0">
+              <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <HolidaysWidget holidays={holidays} loading={loading} navigate={navigate} />
+            </div>
           </div>
-        </div>
 
-        {/* Column 3: Assigned Tasks */}
-        <div className="lg:col-span-1 h-[700px]">
-          <AssignedTasksWidget
-            tasks={assignedTasks}
-            loading={loading}
-            currentUserId={currentUserId}
-            onTaskClick={handleTaskClick}
-            navigate={navigate}
-          />
-        </div>
+          {/* Column 3: Assigned Tasks */}
+          <div className="lg:col-span-1 h-[700px]">
+            <AssignedTasksWidget
+              tasks={assignedTasks}
+              loading={loading}
+              currentUserId={currentUserId}
+              onTaskClick={handleTaskClick}
+              navigate={navigate}
+            />
+          </div>
 
-        {/* Column 4: Task Progress */}
-        <div className="lg:col-span-1 h-[700px]">
-          <TaskAnalyticsWidget taskStats={taskStats} loading={loading} navigate={navigate} />
+          {/* Column 4: Task Progress */}
+          <div className="lg:col-span-1 h-[700px]">
+            <TaskAnalyticsWidget taskStats={taskStats} loading={loading} navigate={navigate} />
+          </div>
         </div>
       </div>
 
@@ -1576,16 +1720,18 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
       />
 
       {/* Task Detail Modal */}
-      {selectedTaskId && (
-        <TaskDetailView
-          isOpen={showTaskDetailModal}
-          onClose={handleCloseTaskModal}
-          taskId={selectedTaskId}
-          onUpdate={handleTaskUpdate}
-          currentUser={{ id: currentUserId, name: userName, role: userRole }}
-          userRole={userRole}
-        />
-      )}
+      {
+        selectedTaskId && (
+          <TaskDetailView
+            isOpen={showTaskDetailModal}
+            onClose={handleCloseTaskModal}
+            taskId={selectedTaskId}
+            onUpdate={handleTaskUpdate}
+            currentUser={{ id: currentUserId, name: userName, role: userRole }}
+            userRole={userRole}
+          />
+        )
+      }
     </motion.div >
   );
 }

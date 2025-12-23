@@ -29,6 +29,7 @@ const NotesPage = ({ sidebarOpen }) => {
   const [favoritesCollapsed, setFavoritesCollapsed] = useState(true);
   const [allNotesCollapsed, setAllNotesCollapsed] = useState(false);
   const [sharedCollapsed, setSharedCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Editor state
   const [openTabs, setOpenTabs] = useState([]);
@@ -448,6 +449,8 @@ const NotesPage = ({ sidebarOpen }) => {
             selectedNote={selectedNote}
             openTabs={openTabs}
             isMobile={isMobile}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
         )}
 

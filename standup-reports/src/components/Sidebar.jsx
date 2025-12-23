@@ -425,7 +425,7 @@ export default function Sidebar({ mode, setMode, user }) {
   };
 
   return (
-    <aside className="fixed top-16 left-0 h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-r-0"
+    <aside className="fixed top-14 md:top-16 left-0 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-r-0"
       style={{
         width: getSidebarWidth(),
         transform: mode === 'hidden' ? 'translateX(-100%)' : 'translateX(0)',

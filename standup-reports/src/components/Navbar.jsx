@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
+import squadsyncLogo from '../assets/brand/squadsync-logo.png';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -124,84 +125,17 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer group/brand z-10" onClick={() => window.location.href = '/'}>
           <div className="flex items-center gap-3">
             {/* Unique Animated Icon - "Double Arrow Sync" */}
-            <motion.div
-              className="relative w-10 h-10 flex items-center justify-center"
-              whileHover={{ scale: 1.1, rotate: 15 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            >
-              {/* Glow Effect */}
-              <div className="absolute inset-0 bg-indigo-500/15 rounded-xl blur-xl group-hover/brand:bg-indigo-500/25 transition-colors duration-500" />
 
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                <defs>
-                  <linearGradient id="arrow-gradient-1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#818cf8" />
-                  </linearGradient>
-                  <linearGradient id="arrow-gradient-2" x1="40" y1="40" x2="0" y2="0" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#4f46e5" />
-                    <stop offset="100%" stopColor="#a5b4fc" />
-                  </linearGradient>
-                  <filter id="arrow-glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="1.5" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
 
-                {/* Top-Right Arrow */}
-                <motion.path
-                  d="M28 8L32 12L28 16M32 12H22C17.5817 12 14 15.5817 14 20"
-                  stroke="url(#arrow-gradient-1)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#arrow-glow)"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: [0, 1, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-
-                {/* Bottom-Left Arrow */}
-                <motion.path
-                  d="M12 32L8 28L12 24M8 28H18C22.4183 28 26 24.4183 26 20"
-                  stroke="url(#arrow-gradient-2)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#arrow-glow)"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: [0, 1, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                />
-
-                {/* Central Pulsing Dot */}
-                <motion.circle
-                  cx="20" cy="20" r="3"
-                  fill="url(#arrow-gradient-1)"
-                  animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </svg>
-            </motion.div>
-
-            {/* Brand Name with DM Sans Font & Animated Underline */}
+            {/* Brand Name replaced with Logo */}
             <div className="relative hidden md:block">
-              <motion.h1
-                className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 via-indigo-500 to-indigo-400 bg-clip-text text-transparent"
-                style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.02em' }}
+              <motion.img
+                src={squadsyncLogo}
+                alt="SquadSync Logo"
+                className="h-20 w-auto object-contain"
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-              >
-                Sync
-              </motion.h1>
-              {/* Underline - Only on Hover */}
-              <motion.div
-                className="absolute -bottom-1 left-0 h-[2px] w-0 bg-gradient-to-r from-indigo-600 via-indigo-400 to-indigo-600 rounded-full group-hover/brand:w-full transition-all duration-300 ease-out"
               />
             </div>
           </div>

@@ -241,7 +241,7 @@ function App() {
                 sidebarMode={sidebarMode}
                 setSidebarMode={setSidebarMode}
               />
-              <div className="flex pt-16 bg-gray-50 dark:bg-slate-950 min-h-screen">
+              <div className="flex pt-14 md:pt-16 bg-gray-50 dark:bg-slate-950 min-h-screen">
                 <Sidebar
                   mode={sidebarMode}
                   setMode={setSidebarMode}
@@ -298,9 +298,7 @@ function AppContent({ session, userRole, sidebarMode }) {
                 {/* CompanyProvider needs to be handled differently */}
                 <Route path="/dashboard" element={
                   <PageTransition>
-                    <div className="w-full py-6">
-                      <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                    </div>
+                    <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                   </PageTransition>
                 } />
                 <Route path="/standup-reports" element={
