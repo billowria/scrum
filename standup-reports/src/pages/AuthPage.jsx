@@ -472,7 +472,7 @@ export default function AuthPage({ mode = "login" }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate("/dashboard");
-      } else {
+      } else if (mode === "signup") {
         if (!companyName) throw new Error("Company name is required");
         const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const { error: signUpError, data } = await supabase.auth.signUp({ email, password });
@@ -485,6 +485,17 @@ export default function AuthPage({ mode = "login" }) {
         }
         setSuccess(true);
         setTimeout(() => navigate("/dashboard"), 2200);
+      } else if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setSuccess(true);
+      } else if (mode === "reset") {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        setSuccess(true);
+        setTimeout(() => navigate("/login"), 2200);
       }
     } catch (err) {
       setError(err?.message || "Something went wrong");
@@ -724,7 +735,10 @@ export default function AuthPage({ mode = "login" }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    {mode === "login" ? "Welcome back" : "Create account"}
+                    {mode === "login" && "Welcome back"}
+                    {mode === "signup" && "Create account"}
+                    {mode === "forgot" && "Reset password"}
+                    {mode === "reset" && "Set new password"}
                   </motion.h2>
                   <motion.p
                     className="form-subtitle"
@@ -732,36 +746,41 @@ export default function AuthPage({ mode = "login" }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    {mode === "login"
-                      ? "Sign in to continue to your workspace"
-                      : "Start your 14-day free trial"}
+                    {mode === "login" && "Sign in to continue to your workspace"}
+                    {mode === "signup" && "Start your 14-day free trial"}
+                    {mode === "forgot" && "Enter your email to receive a reset link"}
+                    {mode === "reset" && "Enter a new secure password for your account"}
                   </motion.p>
                 </div>
 
                 {/* Social Buttons */}
-                <motion.div
-                  className="social-buttons"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <button className="social-btn google">
-                    <FcGoogle className="w-5 h-5" />
-                    <span>Continue with Google</span>
-                  </button>
-                  <button className="social-btn github">
-                    <FiGithub className="w-5 h-5" />
-                  </button>
-                </motion.div>
+                {(mode === "login" || mode === "signup") && (
+                  <motion.div
+                    className="social-buttons"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <button className="social-btn google">
+                      <FcGoogle className="w-5 h-5" />
+                      <span>Continue with Google</span>
+                    </button>
+                    <button className="social-btn github">
+                      <FiGithub className="w-5 h-5" />
+                    </button>
+                  </motion.div>
+                )}
 
-                <motion.div
-                  className="divider"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <span>or continue with email</span>
-                </motion.div>
+                {(mode === "login" || mode === "signup") && (
+                  <motion.div
+                    className="divider"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <span>or continue with email</span>
+                  </motion.div>
+                )}
 
                 {/* Success State */}
                 {success ? (
@@ -778,8 +797,24 @@ export default function AuthPage({ mode = "login" }) {
                     >
                       <FiCheckCircle className="w-12 h-12 text-emerald-500" />
                     </motion.div>
-                    <h3>Welcome aboard!</h3>
-                    <p>Redirecting to your dashboard...</p>
+                    <h3>
+                      {mode === "forgot" ? "Check your email" : "Success!"}
+                    </h3>
+                    <p>
+                      {mode === "forgot"
+                        ? "We've sent a reset link to your email."
+                        : mode === "reset"
+                          ? "Your password has been updated. Redirecting..."
+                          : "Welcome aboard! Redirecting..."}
+                    </p>
+                    {mode === "forgot" && (
+                      <button
+                        onClick={() => setSuccess(false)}
+                        className="switch-link mt-4"
+                      >
+                        Try another email
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   <motion.form
@@ -824,44 +859,48 @@ export default function AuthPage({ mode = "login" }) {
                       </>
                     )}
 
-                    <div className="input-group">
-                      <label>Email Address</label>
-                      <div className={`input-wrapper ${emailFocused ? 'focused' : ''}`}>
-                        <FiMail className="input-icon" />
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          onFocus={() => setEmailFocused(true)}
-                          onBlur={() => setEmailFocused(false)}
-                          placeholder="you@company.com"
-                          required
-                        />
+                    {(mode === "login" || mode === "signup" || mode === "forgot") && (
+                      <div className="input-group">
+                        <label>Email Address</label>
+                        <div className={`input-wrapper ${emailFocused ? 'focused' : ''}`}>
+                          <FiMail className="input-icon" />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onFocus={() => setEmailFocused(true)}
+                            onBlur={() => setEmailFocused(false)}
+                            placeholder="you@company.com"
+                            required
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="input-group">
-                      <label>Password</label>
-                      <div className={`input-wrapper ${passwordFocused ? 'focused' : ''}`}>
-                        <FiLock className="input-icon" />
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          onFocus={() => setPasswordFocused(true)}
-                          onBlur={() => setPasswordFocused(false)}
-                          placeholder="••••••••"
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <FiEyeOff /> : <FiEye />}
-                        </button>
+                    {(mode === "login" || mode === "signup" || mode === "reset") && (
+                      <div className="input-group">
+                        <label>{mode === "reset" ? "New Password" : "Password"}</label>
+                        <div className={`input-wrapper ${passwordFocused ? 'focused' : ''}`}>
+                          <FiLock className="input-icon" />
+                          <input
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onFocus={() => setPasswordFocused(true)}
+                            onBlur={() => setPasswordFocused(false)}
+                            placeholder="••••••••"
+                            required
+                          />
+                          <button
+                            type="button"
+                            className="password-toggle"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <FiEyeOff /> : <FiEye />}
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {error && (
                       <motion.div
@@ -901,7 +940,12 @@ export default function AuthPage({ mode = "login" }) {
                         </div>
                       ) : (
                         <>
-                          <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
+                          <span>
+                            {mode === "login" && "Sign In"}
+                            {mode === "signup" && "Create Account"}
+                            {mode === "forgot" && "Send Reset Link"}
+                            {mode === "reset" && "Update Password"}
+                          </span>
                           <FiArrowRight className="w-4 h-4" />
                         </>
                       )}
@@ -915,14 +959,21 @@ export default function AuthPage({ mode = "login" }) {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.8 }}
                 >
-                  {mode === "login" ? (
+                  {mode === "login" && (
                     <>
                       Don't have an account?{" "}
                       <Link to="/signup" className="switch-link">Sign up free</Link>
                     </>
-                  ) : (
+                  )}
+                  {mode === "signup" && (
                     <>
                       Already have an account?{" "}
+                      <Link to="/login" className="switch-link">Sign in</Link>
+                    </>
+                  )}
+                  {(mode === "forgot" || mode === "reset") && (
+                    <>
+                      Back to{" "}
                       <Link to="/login" className="switch-link">Sign in</Link>
                     </>
                   )}

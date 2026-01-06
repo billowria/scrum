@@ -290,6 +290,8 @@ function AppContent({ session, userRole, sidebarMode }) {
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/signup" element={<AuthPage mode="signup" />} />
+                <Route path="/forgot" element={<AuthPage mode="forgot" />} />
+                <Route path="/reset-password" element={<AuthPage mode="reset" />} />
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </>
             ) : (
