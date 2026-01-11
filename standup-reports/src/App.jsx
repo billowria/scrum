@@ -39,6 +39,7 @@ import NotesPage from './pages/NotesPage';
 
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import SubscriptionGuard from './components/SubscriptionGuard';
+import LandingPage from './pages/LandingPage';
 
 // Animation variants
 const pageVariants = {
@@ -289,7 +290,7 @@ function AppContent({ session, userRole, sidebarMode }) {
             {!session ? (
               // Unauthenticated routes
               <>
-                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<AuthPage mode="login" />} />
                 <Route path="/signup" element={<AuthPage mode="signup" />} />
                 <Route path="/forgot" element={<AuthPage mode="forgot" />} />
