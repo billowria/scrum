@@ -7,6 +7,7 @@ import {
 } from "framer-motion";
 import { supabase } from "../supabaseClient";
 import QuantumBackground from '../components/shared/QuantumBackground';
+import squadSyncLogo from '../assets/brand/squadsync-logo.png';
 import {
   FiMail, FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff, FiGithub, FiCheckCircle,
   FiMessageCircle, FiCheckSquare, FiCalendar, FiLayers, FiEdit3, FiZap, FiSearch,
@@ -422,32 +423,9 @@ export default function AuthPage({ mode = "login" }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              {/* Official Sync & Props Logo */}
               <div className="relative flex items-center justify-center">
-                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center shadow-lg transform rotate-[-5deg]">
-                  <div className="relative w-6 h-6">
-                    <motion.div
-                      className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-white rounded-tl-full"
-                      initial={{ opacity: 0, pathLength: 0 }}
-                      animate={{ opacity: 1, pathLength: 1 }}
-                      transition={{ duration: 1, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                      className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-white rounded-br-full"
-                      initial={{ opacity: 0, pathLength: 0 }}
-                      animate={{ opacity: 1, pathLength: 1 }}
-                      transition={{ duration: 1, ease: "easeInOut", delay: 0.3 }}
-                    />
-                    <motion.div
-                      className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
-                    />
-                  </div>
-                </div>
+                <img src={squadSyncLogo} alt="SquadSync" className="h-24 w-auto" />
               </div>
-              <span className="text-2xl font-bold text-white tracking-tight">SYNC</span>
             </motion.div>
 
             {/* Main Visualization Grid */}

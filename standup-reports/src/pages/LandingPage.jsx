@@ -1,8 +1,9 @@
 // src/pages/LandingPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import QuantumBackground from '../components/shared/QuantumBackground';
+import squadSyncLogo from '../assets/brand/squadsync-logo.png';
 import {
     FiArrowRight, FiCheck, FiMessageCircle, FiCheckSquare, FiCalendar, FiEdit3,
     FiSend, FiStar, FiMenu, FiX, FiGithub, FiTwitter, FiLinkedin, FiLayers, FiClock
@@ -108,34 +109,233 @@ const MockStats = () => (
 );
 
 // --- Section Component ---
-const Section = ({ align = 'left', title, desc, tag, children }) => (
-    <section className="py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            {/* Visual */}
-            <div className={`${align === 'right' ? 'md:order-2' : ''} relative`}>
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl rounded-full" />
-                {children}
+const MockCalendar = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-3xl rounded-full" />
+        <div className="flex justify-between items-center mb-6">
+            <div className="font-bold text-lg">October 2026</div>
+            <div className="flex gap-2">
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 cursor-pointer"><FiArrowRight className="rotate-180" /></div>
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 cursor-pointer"><FiArrowRight /></div>
             </div>
-            {/* Text */}
-            <motion.div initial={{ opacity: 0, x: align === 'left' ? 50 : -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
-                <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-indigo-400 mb-6 uppercase tracking-widest">{tag}</div>
-                <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">{title}</h2>
-                <p className="text-xl text-slate-400 leading-relaxed">{desc}</p>
-            </motion.div>
         </div>
-    </section>
+        <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d}>{d}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-2 mb-6">
+            {Array.from({ length: 31 }).map((_, i) => {
+                const isLeave = [4, 18, 19].includes(i);
+                const isHoliday = [12].includes(i);
+                const isToday = i === 14;
+                return (
+                    <motion.div key={i} initial={{ scale: 0.8, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ delay: i * 0.01 }}
+                        className={`aspect-square rounded-lg flex items-center justify-center text-xs relative cursor-pointer hover:bg-white/10 transition-colors
+                        ${isToday ? 'bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/25' :
+                                isLeave ? 'bg-blue-500/20 text-blue-300' :
+                                    isHoliday ? 'bg-rose-500/20 text-rose-300' : 'text-slate-400'}`}>
+                        {i + 1}
+                        {isLeave && <div className="absolute bottom-1 w-1 h-1 bg-blue-400 rounded-full" />}
+                        {isHoliday && <div className="absolute bottom-1 w-1 h-1 bg-rose-400 rounded-full" />}
+                    </motion.div>
+                );
+            })}
+        </div>
+        <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="bg-white/5 rounded-xl p-4 border border-white/5">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><FiClock className="text-blue-400" /></div>
+                <div>
+                    <div className="text-sm font-bold">Time Tracker</div>
+                    <div className="text-xs text-slate-400">38h 12m logged this week</div>
+                </div>
+                <div className="ml-auto text-emerald-400 font-bold text-sm">Active</div>
+            </div>
+        </motion.div>
+    </div>
 );
+
+const MockNotes = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex gap-4 h-[320px]">
+        {/* Sidebar */}
+        <div className="w-1/3 border-r border-white/5 pr-4 flex flex-col gap-3">
+            <div className="h-4 w-20 bg-emerald-500/20 rounded mb-2" />
+            {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-2 w-full bg-white/5 rounded" />
+            ))}
+            <div className="mt-auto h-20 w-full bg-gradient-to-t from-emerald-500/10 to-transparent rounded-lg" />
+        </div>
+        {/* Editor */}
+        <div className="flex-1">
+            <div className="h-8 w-3/4 bg-white/10 rounded mb-6" />
+            <div className="space-y-3">
+                <div className="h-2 w-full bg-white/5 rounded" />
+                <div className="h-2 w-full bg-white/5 rounded" />
+                <div className="h-2 w-2/3 bg-white/5 rounded" />
+            </div>
+            <div className="mt-6 flex gap-3">
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ delay: 0.3 }} className="w-24 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><FiEdit3 className="text-emerald-400 text-xl" /></motion.div>
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ delay: 0.4 }} className="flex-1 h-16 rounded-lg bg-white/5 border border-white/5" />
+            </div>
+        </div>
+    </div>
+);
+
+const MockAdmin = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+        <div className="flex justify-between items-center mb-6">
+            <div className="font-bold">Team Members</div>
+            <div className="px-3 py-1.5 rounded-full bg-violet-600/20 text-violet-300 text-xs font-bold border border-violet-600/30 flex items-center gap-2 cursor-pointer hover:bg-violet-600/30 transition-colors">
+                <FiCheckSquare className="w-3 h-3" /> Invite
+            </div>
+        </div>
+        <div className="space-y-3">
+            {[
+                { name: 'Alex Rivera', role: 'Admin', status: 'Online', color: 'bg-green-500' },
+                { name: 'Sarah Chen', role: 'Dev', status: 'In Meeting', color: 'bg-amber-500' },
+                { name: 'Mike Ross', role: 'Design', status: 'Offline', color: 'bg-slate-500' },
+                { name: 'Emma Watson', role: 'Product', status: 'Online', color: 'bg-green-500' }
+            ].map((user, i) => (
+                <motion.div key={i} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.15 }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-white/10 text-xs font-bold">
+                        {user.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="flex-1">
+                        <div className="text-sm font-bold text-white">{user.name}</div>
+                        <div className="text-xs text-slate-400">{user.role}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${user.color}`} />
+                    </div>
+                </motion.div>
+            ))}
+        </div>
+    </div>
+);
+
+// --- Feature Data ---
+const FEATURES = [
+    {
+        id: 'communication',
+        tag: 'Communication',
+        title: "Talk less, ship more.",
+        desc: "Replace daily standup meetings with asynchronous updates. Keep everyone aligned without breaking flow state.",
+        Mock: MockChat
+    },
+    {
+        id: 'analytics',
+        tag: 'Analytics',
+        title: "Clarity at scale.",
+        desc: "Visualize your team's velocity and blockers in real-time. Spot patterns before they become problems.",
+        Mock: MockStats
+    },
+    {
+        id: 'management',
+        tag: 'Management',
+        title: "Work flows freely.",
+        desc: "A modern Kanban board that links directly to your daily updates. Drag, drop, done.",
+        Mock: MockKanban
+    },
+    {
+        id: 'calendar',
+        tag: 'Calendar',
+        title: "Time is on your side.",
+        desc: "Integrated leave management and timesheets. Track holidays, time-off, and work hours in one beautiful view.",
+        Mock: MockCalendar
+    },
+    {
+        id: 'knowledge',
+        tag: 'Knowledge',
+        title: "Shared brainpower.",
+        desc: "A powerful knowledge base for your team. Create wikis, docs, and guidelines that live right next to your code.",
+        Mock: MockNotes
+    },
+    {
+        id: 'admin',
+        tag: 'Admin',
+        title: "Command center.",
+        desc: "Effortless admin tools. Manage users, projects, and permissions with granular control and total visibility.",
+        Mock: MockAdmin
+    }
+];
+
+const FeatureShowcase = () => {
+    const [activeFeature, setActiveFeature] = useState(0);
+
+    return (
+        <section className="relative z-10 py-32 px-6">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
+                {/* Sticky Visual Column */}
+                <div className="hidden lg:block relative h-screen sticky top-0 flex items-center justify-center order-2 lg:order-1">
+                    <div className="relative w-full aspect-square max-w-[600px] flex items-center justify-center">
+                        {/* Background Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl rounded-full transition-colors duration-1000" />
+
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={activeFeature}
+                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                                transition={{ duration: 0.5, ease: "easeOut" }}
+                                className="w-full"
+                            >
+                                {React.createElement(FEATURES[activeFeature].Mock)}
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+                </div>
+
+                {/* Scrolling Text Column */}
+                <div className="order-1 lg:order-2 py-[20vh] space-y-[40vh]">
+                    {FEATURES.map((feature, index) => (
+                        <motion.div
+                            key={feature.id}
+                            initial={{ opacity: 0.3 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ amount: 0.5, margin: "-10% 0px -10% 0px" }}
+                            onViewportEnter={() => setActiveFeature(index)}
+                            className="min-h-[50vh] flex flex-col justify-center"
+                        >
+                            <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-indigo-400 mb-6 uppercase tracking-widest w-fit">
+                                {feature.tag}
+                            </div>
+                            <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">{feature.title}</h2>
+                            <p className="text-xl text-slate-400 leading-relaxed max-w-lg">{feature.desc}</p>
+
+                            {/* Mobile-only visual since sticky is hidden on mobile */}
+                            <div className="lg:hidden mt-12">
+                                {React.createElement(feature.Mock)}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
 
 export default function LandingPage() {
     const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(false);
+    const [hidden, setHidden] = useState(false);
     const [activeTab, setActiveTab] = useState('chat');
+    const lastScrollY = useRef(0);
     const [menuOpen, setMenuOpen] = useState(false);
     const { scrollY } = useScroll();
 
     // AuthPage Logic for Hero Animation
+    // AuthPage Logic for Hero Animation
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50);
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+                setHidden(true);
+            } else {
+                setHidden(false);
+            }
+            setScrolled(currentScrollY > 50);
+            lastScrollY.current = currentScrollY;
+        };
         window.addEventListener('scroll', handleScroll);
         // Auto-cycle tabs for hero
         const timer = setInterval(() => {
@@ -158,11 +358,10 @@ export default function LandingPage() {
             <QuantumBackground />
 
             {/* Navbar */}
-            <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0a0b14]/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
+            <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 transform ${hidden ? '-translate-y-full' : 'translate-y-0'} ${scrolled ? 'bg-[#0a0b14]/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-3 font-bold text-xl tracking-tight">
-                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center"><FiLayers className="text-white w-4 h-4" /></div>
-                        SYNC
+                        <img src={squadSyncLogo} alt="SquadSync" className="h-24 w-auto" />
                     </div>
                     <div className="hidden md:flex gap-8 items-center text-sm font-medium">
                         <a href="#features" className="text-slate-400 hover:text-white transition-colors">Product</a>
@@ -248,18 +447,8 @@ export default function LandingPage() {
                 </div>
             </header>
 
-            {/* Features (Cardless / Z-Pattern) */}
-            <Section align="right" title="Talk less, ship more." desc="Replace daily standup meetings with asynchronous updates. Keep everyone aligned without breaking flow state." tag="Communication">
-                <MockChat />
-            </Section>
-
-            <Section align="left" title="Clarity at scale." desc="Visualize your team's velocity and blockers in real-time. Spot patterns before they become problems." tag="Analytics">
-                <MockStats />
-            </Section>
-
-            <Section align="right" title="Work flows freely." desc="A modern Kanban board that links directly to your daily updates. Drag, drop, done." tag="Management">
-                <MockKanban />
-            </Section>
+            {/* Feature Showcase (Sticky Scroll) */}
+            <FeatureShowcase />
 
             {/* Simplified Pricing */}
             <section id="pricing" className="relative z-10 py-32 px-6 border-t border-white/5">
