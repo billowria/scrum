@@ -212,107 +212,24 @@ const MockAdmin = () => (
     </div>
 );
 
-// --- Feature Data ---
-const FEATURES = [
-    {
-        id: 'communication',
-        tag: 'Communication',
-        title: "Talk less, ship more.",
-        desc: "Replace daily standup meetings with asynchronous updates. Keep everyone aligned without breaking flow state.",
-        Mock: MockChat
-    },
-    {
-        id: 'analytics',
-        tag: 'Analytics',
-        title: "Clarity at scale.",
-        desc: "Visualize your team's velocity and blockers in real-time. Spot patterns before they become problems.",
-        Mock: MockStats
-    },
-    {
-        id: 'management',
-        tag: 'Management',
-        title: "Work flows freely.",
-        desc: "A modern Kanban board that links directly to your daily updates. Drag, drop, done.",
-        Mock: MockKanban
-    },
-    {
-        id: 'calendar',
-        tag: 'Calendar',
-        title: "Time is on your side.",
-        desc: "Integrated leave management and timesheets. Track holidays, time-off, and work hours in one beautiful view.",
-        Mock: MockCalendar
-    },
-    {
-        id: 'knowledge',
-        tag: 'Knowledge',
-        title: "Shared brainpower.",
-        desc: "A powerful knowledge base for your team. Create wikis, docs, and guidelines that live right next to your code.",
-        Mock: MockNotes
-    },
-    {
-        id: 'admin',
-        tag: 'Admin',
-        title: "Command center.",
-        desc: "Effortless admin tools. Manage users, projects, and permissions with granular control and total visibility.",
-        Mock: MockAdmin
-    }
-];
-
-const FeatureShowcase = () => {
-    const [activeFeature, setActiveFeature] = useState(0);
-
-    return (
-        <section className="relative z-10 py-32 px-6">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20">
-                {/* Sticky Visual Column */}
-                <div className="hidden lg:block relative h-screen sticky top-0 flex items-center justify-center order-2 lg:order-1">
-                    <div className="relative w-full aspect-square max-w-[600px] flex items-center justify-center">
-                        {/* Background Glow */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl rounded-full transition-colors duration-1000" />
-
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={activeFeature}
-                                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                                transition={{ duration: 0.5, ease: "easeOut" }}
-                                className="w-full"
-                            >
-                                {React.createElement(FEATURES[activeFeature].Mock)}
-                            </motion.div>
-                        </AnimatePresence>
-                    </div>
-                </div>
-
-                {/* Scrolling Text Column */}
-                <div className="order-1 lg:order-2 py-[20vh] space-y-[40vh]">
-                    {FEATURES.map((feature, index) => (
-                        <motion.div
-                            key={feature.id}
-                            initial={{ opacity: 0.3 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ amount: 0.5, margin: "-10% 0px -10% 0px" }}
-                            onViewportEnter={() => setActiveFeature(index)}
-                            className="min-h-[50vh] flex flex-col justify-center"
-                        >
-                            <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-indigo-400 mb-6 uppercase tracking-widest w-fit">
-                                {feature.tag}
-                            </div>
-                            <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">{feature.title}</h2>
-                            <p className="text-xl text-slate-400 leading-relaxed max-w-lg">{feature.desc}</p>
-
-                            {/* Mobile-only visual since sticky is hidden on mobile */}
-                            <div className="lg:hidden mt-12">
-                                {React.createElement(feature.Mock)}
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
+// --- Section Component ---
+const Section = ({ align = 'left', title, desc, tag, children }) => (
+    <section className="py-32 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            {/* Visual */}
+            <div className={`${align === 'right' ? 'md:order-2' : ''} relative`}>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl rounded-full" />
+                {children}
             </div>
-        </section>
-    );
-};
+            {/* Text */}
+            <motion.div initial={{ opacity: 0, x: align === 'left' ? 50 : -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
+                <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-indigo-400 mb-6 uppercase tracking-widest">{tag}</div>
+                <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">{title}</h2>
+                <p className="text-xl text-slate-400 leading-relaxed">{desc}</p>
+            </motion.div>
+        </div>
+    </section>
+);
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -447,8 +364,30 @@ export default function LandingPage() {
                 </div>
             </header>
 
-            {/* Feature Showcase (Sticky Scroll) */}
-            <FeatureShowcase />
+            {/* Features (Cardless / Z-Pattern) */}
+            <Section align="right" title="Talk less, ship more." desc="Replace daily standup meetings with asynchronous updates. Keep everyone aligned without breaking flow state." tag="Communication">
+                <MockChat />
+            </Section>
+
+            <Section align="left" title="Clarity at scale." desc="Visualize your team's velocity and blockers in real-time. Spot patterns before they become problems." tag="Analytics">
+                <MockStats />
+            </Section>
+
+            <Section align="right" title="Work flows freely." desc="A modern Kanban board that links directly to your daily updates. Drag, drop, done." tag="Management">
+                <MockKanban />
+            </Section>
+
+            <Section align="left" title="Time is on your side." desc="Integrated leave management and timesheets. Track holidays, time-off, and work hours in one beautiful view." tag="Calendar">
+                <MockCalendar />
+            </Section>
+
+            <Section align="right" title="Shared brainpower." desc="A powerful knowledge base for your team. Create wikis, docs, and guidelines that live right next to your code." tag="Knowledge">
+                <MockNotes />
+            </Section>
+
+            <Section align="left" title="Command center." desc="Effortless admin tools. Manage users, projects, and permissions with granular control and total visibility." tag="Admin">
+                <MockAdmin />
+            </Section>
 
             {/* Simplified Pricing */}
             <section id="pricing" className="relative z-10 py-32 px-6 border-t border-white/5">
