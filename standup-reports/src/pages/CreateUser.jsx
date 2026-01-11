@@ -425,6 +425,79 @@ const CreateUser = () => {
 
   const currentStep = steps[step];
 
+  // Check Limits
+  const checkLimits = async () => {
+    if (!currentCompany?.id) return;
+
+    const { data: subData } = await supabase
+      .from('subscriptions')
+      .select('*, plan:subscription_plans(*)')
+      .eq('company_id', currentCompany.id)
+      .eq('status', 'active')
+      .single();
+
+    const { count } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', currentCompany.id);
+
+    const maxUsers = subData?.plan?.max_users;
+    // If maxUsers is null, it's unlimited. If it's a number, check count.
+    if (maxUsers && count >= maxUsers) {
+      setLimitReached(true);
+    }
+  };
+
+  useEffect(() => {
+    checkLimits();
+  }, [currentCompany]);
+
+  const [limitReached, setLimitReached] = useState(false);
+
+  // If Limit Reached, show blocking UI
+  if (limitReached) {
+    return (
+      <AnimatePresence>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <motion.div
+            className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={handleClose}
+          />
+          <motion.div
+            className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl p-8 text-center"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiShield className="w-10 h-10 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">User Limit Reached</h2>
+            <p className="text-gray-500 mb-8">
+              Your current plan has reached its maximum number of users. Upgrade your subscription to add more team members.
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={handleClose}
+                className="px-6 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => navigate('/subscription')}
+                className="px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center gap-2"
+              >
+                Upgrade Plan
+                <FiArrowRight />
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </AnimatePresence>
+    );
+  }
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">

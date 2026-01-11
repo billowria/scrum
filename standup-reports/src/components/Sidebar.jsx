@@ -5,7 +5,7 @@ import {
   FiBell, FiUserPlus, FiSettings, FiLogOut, FiSun, FiMoon,
   FiTrendingUp, FiShield, FiZap, FiHeart, FiSearch, FiStar,
   FiActivity, FiBookmark, FiCpu, FiDatabase, FiFolder, FiCheckSquare, FiX,
-  FiMessageSquare, FiFileText, FiTarget, FiGrid, FiBarChart2, FiArchive
+  FiMessageSquare, FiFileText, FiTarget, FiGrid, FiBarChart2, FiArchive, FiCreditCard
 } from 'react-icons/fi';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -152,6 +152,11 @@ const createNavLinks = (counts, user) => {
 
   // Add Manager Portal as a single tab for managers (no dropdown)
   if (['manager', 'admin'].includes(user?.role)) {
+    const extraLinks = [];
+
+    // Divider and Manager Portal for both Managers and Admins
+    extraLinks.push({ isDivider: true });
+
     const managerPortalLink = {
       to: '/manager-dashboard?tab=team-management',
       icon: <FiBriefcase />,
@@ -169,9 +174,31 @@ const createNavLinks = (counts, user) => {
         iconText: 'text-white'
       }
     };
+    extraLinks.push(managerPortalLink);
 
-    // Insert divider before manager portal
-    return [...baseLinks, { isDivider: true }, managerPortalLink];
+    // Billing ONLY for Admins
+    if (user?.role === 'admin') {
+      const subscriptionLink = {
+        to: '/subscription',
+        icon: <FiCreditCard />,
+        label: 'Billing & Plans',
+        description: 'Manage subscription',
+        badge: null,
+        isManager: true,
+        colors: {
+          gradient: 'from-emerald-400 to-teal-600',
+          hoverBg: 'hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
+          activeBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+          activeText: 'text-emerald-700 dark:text-emerald-400',
+          activeBorder: 'border-emerald-500',
+          iconBg: 'bg-emerald-500 dark:bg-emerald-600',
+          iconText: 'text-white'
+        }
+      };
+      extraLinks.push(subscriptionLink);
+    }
+
+    return [...baseLinks, ...extraLinks];
   }
 
   return baseLinks;

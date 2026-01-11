@@ -23,6 +23,7 @@ import ReportEntry from './pages/ReportEntryNew';
 import History from './pages/History';
 import LeaveCalendar from './pages/LeaveCalendar';
 import TeamManagement from './pages/TeamManagement';
+import SubscriptionPage from './pages/SubscriptionPage';
 import AchievementsPage from './pages/AchievementsPage';
 import LeaveManagement from './components/LeaveManagement';
 import ManageAnnouncements from './components/ManageAnnouncements';
@@ -37,6 +38,7 @@ import ChatPage from './pages/ChatPage';
 import NotesPage from './pages/NotesPage';
 
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import SubscriptionGuard from './components/SubscriptionGuard';
 
 // Animation variants
 const pageVariants = {
@@ -296,162 +298,173 @@ function AppContent({ session, userRole, sidebarMode }) {
               </>
             ) : (
               // Authenticated routes
-              <>
-                {/* CompanyProvider needs to be handled differently */}
-                <Route path="/dashboard" element={
-                  <PageTransition>
-                    <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                  </PageTransition>
-                } />
-                <Route path="/standup-reports" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <StandupReports sidebarMode={sidebarMode} />
-                    </div>
-                  </PageTransition>
-                } />
-                {/* Manager-specific routes */}
-                {(userRole === 'manager' || userRole === 'admin') && (
-                  <>
-                    <Route path="/team-management" element={
+              // Authenticated routes
+              <Route path="*" element={
+                <SubscriptionGuard>
+                  <Routes location={background || location}>
+                    <Route path="/dashboard" element={
+                      <PageTransition>
+                        <Dashboard sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
+                      </PageTransition>
+                    } />
+                    <Route path="/standup-reports" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <TeamManagement sidebarMode={sidebarMode} />
+                          <StandupReports sidebarMode={sidebarMode} />
                         </div>
                       </PageTransition>
                     } />
-                    <Route path="/leave-requests" element={
+                    {/* Manager-specific routes */}
+                    {(userRole === 'manager' || userRole === 'admin') && (
+                      <>
+                        <Route path="/team-management" element={
+                          <PageTransition>
+                            <div className="w-full py-6">
+                              <TeamManagement sidebarMode={sidebarMode} />
+                            </div>
+                          </PageTransition>
+                        } />
+                        <Route path="/leave-requests" element={
+                          <PageTransition>
+                            <div className="w-full py-6">
+                              <LeaveManagement />
+                            </div>
+                          </PageTransition>
+                        } />
+                        <Route path="/manager-dashboard" element={
+                          <PageTransition>
+                            <Navigate to="/team-management" replace />
+                          </PageTransition>
+                        } />
+                        <Route path="/history" element={
+                          <PageTransition>
+                            <div className="w-full py-6">
+                              <History />
+                            </div>
+                          </PageTransition>
+                        } />
+                        {/* Create User Route - accessible as standalone or modal */}
+                        <Route path="/create-user" element={
+                          <PageTransition>
+                            <CreateUser />
+                          </PageTransition>
+                        } />
+                        {/* Manager Profile Route */}
+                        <Route path="/manager/profiles" element={
+                          <PageTransition>
+                            <div className="w-full py-6">
+                              <ManagerUserProfile />
+                            </div>
+                          </PageTransition>
+                        } />
+                        <Route path="/subscription" element={
+                          <PageTransition>
+                            <div className="w-full py-6">
+                              <SubscriptionPage sidebarMode={sidebarMode} />
+                            </div>
+                          </PageTransition>
+                        } />
+                      </>
+                    )}
+                    {/* Manager and admin routes */}
+                    {(userRole === 'manager' || userRole === 'admin') && (
+                      <Route path="/leave-management" element={
+                        <PageTransition>
+                          <div className="w-full py-6">
+                            <LeaveManagement />
+                          </div>
+                        </PageTransition>
+                      } />
+                    )}
+                    <Route path="/report" element={
+                      <ReportEntry />
+                    } />
+                    <Route path="/leave-calendar" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <LeaveManagement />
+                          <LeaveCalendar sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
                         </div>
                       </PageTransition>
                     } />
-                    <Route path="/manager-dashboard" element={
-                      <PageTransition>
-                        <Navigate to="/team-management" replace />
-                      </PageTransition>
-                    } />
-                    <Route path="/history" element={
+                    <Route path="/announcements" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <History />
+                          <ManageAnnouncements />
                         </div>
                       </PageTransition>
                     } />
-                    {/* Create User Route - accessible as standalone or modal */}
-                    <Route path="/create-user" element={
-                      <PageTransition>
-                        <CreateUser />
-                      </PageTransition>
-                    } />
-                    {/* Manager Profile Route */}
-                    <Route path="/manager/profiles" element={
+                    <Route path="/achievements" element={
                       <PageTransition>
                         <div className="w-full py-6">
-                          <ManagerUserProfile />
+                          <AchievementsPage />
                         </div>
                       </PageTransition>
                     } />
-                  </>
-                )}
-                {/* Manager and admin routes */}
-                {(userRole === 'manager' || userRole === 'admin') && (
-                  <Route path="/leave-management" element={
-                    <PageTransition>
-                      <div className="w-full py-6">
-                        <LeaveManagement />
-                      </div>
-                    </PageTransition>
-                  } />
-                )}
-                <Route path="/report" element={
-                  <ReportEntry />
-                } />
-                <Route path="/leave-calendar" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <LeaveCalendar sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/announcements" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <ManageAnnouncements />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/achievements" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <AchievementsPage />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/tasks" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <TasksPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/notifications" element={
-                  <PageTransition>
-                    <div className="w-full h-full">
-                      <NotificationCenterV2 sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                    </div>
-                  </PageTransition>
-                } />
+                    <Route path="/tasks" element={
+                      <PageTransition>
+                        <div className="w-full py-6">
+                          <TasksPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
+                        </div>
+                      </PageTransition>
+                    } />
+                    <Route path="/notifications" element={
+                      <PageTransition>
+                        <div className="w-full h-full">
+                          <NotificationCenterV2 sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
+                        </div>
+                      </PageTransition>
+                    } />
 
-                <Route path="/projects" element={
-                  <PageTransition>
-                    <ProjectsPage />
-                  </PageTransition>
-                } />
-                <Route path="/projects/:projectId" element={
-                  <PageTransition>
-                    <ProjectDetailPage />
-                  </PageTransition>
-                } />
-                {/* ProjectManagement routes removed - functionality integrated into ProjectDetailPage */}
-                <Route path="/analytics-dashboard" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <AnalyticsDashboard />
-                    </div>
-                  </PageTransition>
-                } />
+                    <Route path="/projects" element={
+                      <PageTransition>
+                        <ProjectsPage />
+                      </PageTransition>
+                    } />
+                    <Route path="/projects/:projectId" element={
+                      <PageTransition>
+                        <ProjectDetailPage />
+                      </PageTransition>
+                    } />
+                    {/* ProjectManagement routes removed - functionality integrated into ProjectDetailPage */}
+                    <Route path="/analytics-dashboard" element={
+                      <PageTransition>
+                        <div className="w-full py-6">
+                          <AnalyticsDashboard />
+                        </div>
+                      </PageTransition>
+                    } />
 
-                {/* Chat Route */}
-                <Route path="/chat" element={<ChatPage />} />
+                    {/* Chat Route */}
+                    <Route path="/chat" element={<ChatPage />} />
 
-                {/* Notes Route */}
-                <Route path="/notes" element={
-                  <PageTransition>
-                    <NotesPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
-                  </PageTransition>
-                } />
+                    {/* Notes Route */}
+                    <Route path="/notes" element={
+                      <PageTransition>
+                        <NotesPage sidebarOpen={sidebarOpen} sidebarMode={sidebarMode} />
+                      </PageTransition>
+                    } />
 
-                {/* Profile Routes */}
-                <Route path="/profile" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <UserProfile />
-                    </div>
-                  </PageTransition>
-                } />
-                <Route path="/profile/:userId" element={
-                  <PageTransition>
-                    <div className="w-full py-6">
-                      <UserProfile />
-                    </div>
-                  </PageTransition>
-                } />
+                    {/* Profile Routes */}
+                    <Route path="/profile" element={
+                      <PageTransition>
+                        <div className="w-full py-6">
+                          <UserProfile />
+                        </div>
+                      </PageTransition>
+                    } />
+                    <Route path="/profile/:userId" element={
+                      <PageTransition>
+                        <div className="w-full py-6">
+                          <UserProfile />
+                        </div>
+                      </PageTransition>
+                    } />
 
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </SubscriptionGuard>
+              } />
             )}
           </Routes>
         </AnimatePresence>
@@ -465,7 +478,7 @@ function AppContent({ session, userRole, sidebarMode }) {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </div >
   );
 }
 

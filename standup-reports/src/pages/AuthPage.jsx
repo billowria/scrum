@@ -407,6 +407,27 @@ export default function AuthPage({ mode = "login" }) {
   const [nameFocused, setNameFocused] = useState(false);
   const [companyFocused, setCompanyFocused] = useState(false);
 
+  // Subscription State
+  const [signupStep, setSignupStep] = useState(1); // 1: Details, 2: Plan
+  const [plans, setPlans] = useState([]);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // Fetch Plans on Mount (if signup)
+  useEffect(() => {
+    if (mode === "signup") {
+      const fetchPlans = async () => {
+        const { data } = await supabase.from('subscription_plans').select('*').order('price_monthly');
+        if (data) {
+          setPlans(data);
+          // Default to Free
+          const freePlan = data.find(p => p.name === 'Free');
+          if (freePlan) setSelectedPlan(freePlan);
+        }
+      };
+      fetchPlans();
+    }
+  }, [mode]);
+
   // Animation State for Left Panel
   const [activeTab, setActiveTab] = useState('chat');
 
@@ -473,15 +494,35 @@ export default function AuthPage({ mode = "login" }) {
         if (error) throw error;
         navigate("/dashboard");
       } else if (mode === "signup") {
+        if (signupStep === 1) {
+          // Move to Plan Selection
+          setSignupStep(2);
+          setLoading(false);
+          return;
+        }
+
+        // Final Signup
         if (!companyName) throw new Error("Company name is required");
+        if (!selectedPlan) throw new Error("Please select a valid plan.");
+
         const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const { error: signUpError, data } = await supabase.auth.signUp({ email, password });
         if (signUpError) throw signUpError;
+
         if (data?.user) {
           const randomAvatarUrl = 'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/6ACAFD4D-DA6A-4FE8-A482-CEF6299AF104_1_105_c.jpeg';
           await supabase.from("users").insert([{ id: data.user.id, name, email, role: 'manager', avatar_url: randomAvatarUrl }]);
           const { data: company } = await supabase.from('companies').insert([{ name: companyName, slug, created_by: data.user.id }]).select().single();
           await supabase.from('users').update({ company_id: company.id }).eq('id', data.user.id);
+
+          // Create Subscription
+          await supabase.from('subscriptions').insert([{
+            company_id: company.id,
+            plan_id: selectedPlan.id,
+            status: 'active',
+            // Set mock current period end (1 month)
+            current_period_end: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
+          }]);
         }
         setSuccess(true);
         setTimeout(() => navigate("/dashboard"), 2200);
@@ -859,6 +900,30 @@ export default function AuthPage({ mode = "login" }) {
                       </>
                     )}
 
+                    {/* Step 2: Plan Selection */}
+                    {mode === "signup" && signupStep === 2 && (
+                      <div className="space-y-4">
+                        <h3 className="text-white font-bold text-center mb-2">Select Your Plan</h3>
+                        <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                          {plans.map(plan => (
+                            <div
+                              key={plan.id}
+                              onClick={() => setSelectedPlan(plan)}
+                              className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedPlan?.id === plan.id ? 'bg-indigo-600/20 border-indigo-500' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="font-bold text-white">{plan.name}</span>
+                                <span className="text-indigo-400 font-mono">${plan.price_monthly}</span>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {plan.max_users ? `Up to ${plan.max_users} users` : 'Unlimited users'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {(mode === "login" || mode === "signup" || mode === "forgot") && (
                       <div className="input-group">
                         <label>Email Address</label>
@@ -950,6 +1015,15 @@ export default function AuthPage({ mode = "login" }) {
                         </>
                       )}
                     </motion.button>
+                    {mode === "signup" && signupStep === 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setSignupStep(1)}
+                        className="w-full text-center text-gray-400 text-sm hover:text-white mt-2"
+                      >
+                        Back to Details
+                      </button>
+                    )}
                   </motion.form>
                 )}
 

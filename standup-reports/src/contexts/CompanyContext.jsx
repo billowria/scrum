@@ -13,6 +13,7 @@ export const useCompany = () => {
 
 export const CompanyProvider = ({ children }) => {
   const [currentCompany, setCurrentCompany] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,16 +24,16 @@ export const CompanyProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         setLoading(false);
         return;
       }
 
-      // Get user's company directly
+      // Get user's company and role directly
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('company_id')
+        .select('company_id, role')
         .eq('id', user.id)
         .single();
 
@@ -57,10 +58,12 @@ export const CompanyProvider = ({ children }) => {
         }
 
         setCurrentCompany(companyData);
+        setUserRole(userData.role);
         setCompanies([companyData]); // For now, just this company
       } else {
-        // User has no company assigned, which might be the case right after signup
+        // User has no company assigned
         setCurrentCompany(null);
+        setUserRole(null);
         setCompanies([]);
       }
     } catch (err) {
@@ -78,6 +81,7 @@ export const CompanyProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
         setCurrentCompany(null);
+        setUserRole(null);
         setCompanies([]);
       } else if (event === 'SIGNED_IN') {
         // Refresh company data when user signs in
@@ -92,6 +96,7 @@ export const CompanyProvider = ({ children }) => {
 
   const value = {
     currentCompany,
+    userRole,
     companies,
     loading,
     error,

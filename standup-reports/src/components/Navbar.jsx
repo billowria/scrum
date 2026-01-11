@@ -210,6 +210,18 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     <span>My Profile</span>
                   </motion.button>
 
+                  <motion.button
+                    onClick={() => { setDropdownOpen(false); navigate('/subscription'); }}
+                    className="w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-3 group"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: 'spring', stiffness: 400 }}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-200 transition-colors">
+                      <FiZap size={16} />
+                    </div>
+                    <span>Billing & Plans</span>
+                  </motion.button>
+
                   <div className="px-4 py-3 border-b border-slate-100/50 dark:border-white/5">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">Appearance</span>
