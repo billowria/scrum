@@ -346,6 +346,7 @@ const MockAdmin = () => (
 // --- Full Viewport Feature Component ---
 const FullViewportFeature = ({ feature, index }) => {
     const containerRef = useRef(null);
+    const isInView = useInView(containerRef, { amount: 0.1, once: false });
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start end", "end start"]
@@ -371,11 +372,10 @@ const FullViewportFeature = ({ feature, index }) => {
         <motion.div
             ref={containerRef}
             id={`feature-${feature.id}`}
-            className="h-screen w-full relative flex items-center justify-center px-6 overflow-hidden snap-start snap-always"
+            className="h-screen w-full relative flex items-center justify-center px-6 overflow-hidden snap-start"
             style={{ height: '100vh', minHeight: '100vh' }}
             initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: false, amount: 0.3 }}
+            animate={{ opacity: isInView ? 1 : 0 }}
             transition={{ duration: 0.5 }}
         >
             {/* Background gradient */}
