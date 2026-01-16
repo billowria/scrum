@@ -685,168 +685,70 @@ export default function LandingPage() {
             {/* Hero */}
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                    <div className="relative">
-                        {/* Floating decorative elements */}
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            hidden: { opacity: 0 },
+                            visible: {
+                                opacity: 1,
+                                transition: {
+                                    staggerChildren: 0.1,
+                                    delayChildren: 1.2 // Late appear animation
+                                }
+                            }
+                        }}
+                    >
                         <motion.div
-                            className="absolute -left-20 top-10 w-72 h-72 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-3xl"
-                            animate={{
-                                scale: [1, 1.2, 1],
-                                opacity: [0.3, 0.5, 0.3],
+                            variants={{
+                                hidden: { opacity: 0, y: 20, filter: 'blur(10px)' },
+                                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.8 } }
                             }}
-                            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                        />
-
-                        {/* Enterprise Badge */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-sm mb-6"
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-indigo-400 mb-8 uppercase tracking-widest"
                         >
-                            <motion.div
-                                className="w-2 h-2 rounded-full bg-indigo-400"
-                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            />
-                            <span className="text-sm font-semibold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                                Enterprise-Grade Team Operating System
-                            </span>
+                            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                            New Enterprise OS v2.0
                         </motion.div>
 
-                        {/* Main Headline with word-by-word reveal */}
-                        <div className="mb-6">
-                            <motion.h1
-                                className="text-6xl md:text-8xl font-black tracking-tight leading-none"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3, delay: 0.4 }}
-                            >
-                                {["One", "platform.", "Infinite", "teams."].map((word, i) => (
-                                    <motion.span
-                                        key={i}
-                                        className={i >= 2 ? "block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400" : "block"}
-                                        initial={{ opacity: 0, y: 20, rotateX: -90 }}
-                                        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                                        transition={{
-                                            duration: 0.8,
-                                            delay: 0.5 + (i * 0.15),
-                                            type: "spring",
-                                            stiffness: 100
-                                        }}
-                                    >
-                                        {word}
-                                    </motion.span>
-                                ))}
-                            </motion.h1>
-                        </div>
-
-                        {/* Enhanced Description */}
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 1.1 }}
-                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-8"
+                        <motion.h1
+                            variants={{
+                                hidden: { opacity: 0, y: 30, filter: 'blur(12px)' },
+                                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1, ease: 'easeOut' } }
+                            }}
+                            className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-8"
                         >
-                            Orchestrate entire companies with multiple teams. From async standups to sprint planning—all in one unified workspace.
+                            The Operating System for <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient bg-[length:200%_auto]">
+                                Modern Companies.
+                            </span>
+                        </motion.h1>
+
+                        <motion.p
+                            variants={{
+                                hidden: { opacity: 0, y: 20 },
+                                visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
+                            }}
+                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-12"
+                        >
+                            <span className="text-white font-medium">End-to-End Product.</span> <br />
+                            Company level segregation. Handle multiple teams, projects, and insights inside one unified platform.
                         </motion.p>
 
-                        {/* Feature Pills */}
                         <motion.div
-                            className="flex flex-wrap gap-3 mb-10"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 1.3 }}
+                            variants={{
+                                hidden: { opacity: 0 },
+                                visible: { opacity: 1, transition: { delay: 0.2, duration: 0.8 } }
+                            }}
+                            className="flex gap-4"
                         >
-                            {[
-                                { icon: FiUsers, text: "Multi-Company", color: "from-blue-500 to-cyan-500" },
-                                { icon: FiLayers, text: "Unlimited Teams", color: "from-purple-500 to-pink-500" },
-                                { icon: FiZap, text: "Real-time Sync", color: "from-amber-500 to-orange-500" }
-                            ].map((feature, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5, delay: 1.4 + (i * 0.1) }}
-                                    whileHover={{ scale: 1.05, y: -2 }}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${feature.color} bg-opacity-10 border border-white/10 backdrop-blur-sm`}
-                                >
-                                    <feature.icon className="w-4 h-4 text-white" />
-                                    <span className="text-sm font-medium text-white">{feature.text}</span>
-                                </motion.div>
-                            ))}
+                            <button onClick={() => navigate('/signup')} className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]">
+                                Start Enterprise Trial <FiArrowRight />
+                            </button>
+                            <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition-colors backdrop-blur-sm">
+                                Book Demo
+                            </button>
                         </motion.div>
-
-                        {/* CTA Buttons with enhanced effects */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 1.7 }}
-                            className="flex flex-wrap gap-4 mb-10"
-                        >
-                            <motion.button
-                                onClick={() => navigate('/signup')}
-                                className="group relative px-8 py-4 bg-white text-black rounded-full font-bold text-lg overflow-hidden"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500"
-                                    initial={{ x: "-100%" }}
-                                    whileHover={{ x: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                                <span className="relative flex items-center gap-2 group-hover:text-white transition-colors">
-                                    Start Free Trial
-                                    <motion.div
-                                        animate={{ x: [0, 5, 0] }}
-                                        transition={{ duration: 1.5, repeat: Infinity }}
-                                    >
-                                        <FiArrowRight />
-                                    </motion.div>
-                                </span>
-                            </motion.button>
-
-                            <motion.button
-                                className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 backdrop-blur-sm transition-all"
-                                whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.2)" }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                See Demo
-                            </motion.button>
-                        </motion.div>
-
-                        {/* Animated Stats Counter */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 1.9 }}
-                            className="flex items-center gap-8 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm"
-                        >
-                            {[
-                                { value: "500+", label: "Companies" },
-                                { value: "5K+", label: "Teams" },
-                                { value: "50K+", label: "Users" }
-                            ].map((stat, i) => (
-                                <motion.div
-                                    key={i}
-                                    className="flex flex-col"
-                                    initial={{ opacity: 0, scale: 0.5 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5, delay: 2.0 + (i * 0.1) }}
-                                >
-                                    <motion.div
-                                        className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        transition={{ duration: 0.5, delay: 2.1 + (i * 0.1) }}
-                                    >
-                                        {stat.value}
-                                    </motion.div>
-                                    <div className="text-xs text-slate-500 font-medium">{stat.label}</div>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    </div>
+                    </motion.div>
 
                     {/* Orbit Visualization (Synced with AuthPage) */}
                     <motion.div
