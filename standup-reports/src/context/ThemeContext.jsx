@@ -21,10 +21,15 @@ export const ThemeProvider = ({ children }) => {
             let actualTheme = mode;
             if (mode === 'system') {
                 actualTheme = mediaQuery.matches ? 'dark' : 'light';
+            } else if (mode === 'space') {
+                actualTheme = 'dark';
             }
 
-            root.classList.remove('light', 'dark');
+            root.classList.remove('light', 'dark', 'space');
             root.classList.add(actualTheme);
+            if (mode === 'space') {
+                root.classList.add('space');
+            }
             setThemeState(actualTheme);
         };
 

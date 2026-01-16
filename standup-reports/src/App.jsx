@@ -6,6 +6,8 @@ import { FiTwitter, FiGithub, FiLinkedin, FiYoutube } from 'react-icons/fi';
 import brandLogo from './assets/brand/squadsync-logo.png';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { TaskModalProvider } from './contexts/TaskModalContext';
+import { useTheme } from './context/ThemeContext';
+import QuantumBackground from './components/shared/QuantumBackground';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -280,9 +282,13 @@ function AppContent({ session, userRole, sidebarMode }) {
   const location = useLocation();
   const background = location.state && location.state.background;
   const sidebarOpen = sidebarMode === 'expanded';
+  const { themeMode } = useTheme();
 
   return (
     <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950" : "min-h-screen"}>
+      {/* Background for Space Theme */}
+      {themeMode === 'space' && <QuantumBackground />}
+
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}
       <div>

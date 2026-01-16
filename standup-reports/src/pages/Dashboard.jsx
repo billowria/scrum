@@ -850,50 +850,49 @@ const DashboardHeader = ({
   onLeaveMembers = [],
   onOpenUserList,
   onCreateReport,
-  hasSubmittedToday
+  hasSubmittedToday,
+  subscription = null,
+  navigate
 }) => {
-  // Live clock state for compact header
+  // Live clock state
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  // Quote Logic
+
   const dayOfMonth = new Date().getDate();
   const quote = QUOTES[dayOfMonth - 1] || QUOTES[0];
 
   const { scrollY } = useScroll();
-  // Physics-based spring for "weighty" feel
-  const springScroll = useSpring(scrollY, { stiffness: 120, damping: 25, restDelta: 0.005 });
+  // Using a slightly more responsive spring for tighter sync
+  const springScroll = useSpring(scrollY, { stiffness: 150, damping: 20 });
 
-  // --- Transforms ---
-  // Reduced threshold for faster transitions
-  const range = [0, 150];
+  // --- Master Transitions ---
+  const scrollThreshold = 140;
+  const range = [0, scrollThreshold];
 
-  // 1. Container Geometry
+  // Container height sync: From expanded height to compact sticky height
   const height = useTransform(springScroll, range, ['280px', '72px']);
-  const borderRadius = useTransform(springScroll, range, ['48px', '0px']); // Increased radius for smoother look
+  const borderRadius = useTransform(springScroll, range, ['48px', '0px']);
   const marginBot = useTransform(springScroll, range, ['32px', '16px']);
+  const backdropBlur = useTransform(springScroll, range, ['0px', '20px']);
 
-  // 2. Background Blur
-  const backdropBlur = useTransform(springScroll, range, ['0px', '16px']);
+  // Content Fading Sync
+  // Content fades out very quickly as you start scrolling
+  const expandedOpacity = useTransform(springScroll, [0, 50], [1, 0]);
+  const expandedY = useTransform(springScroll, [0, 50], [0, -20]);
+  const expandedPointer = useTransform(springScroll, (v) => v > 40 ? 'none' : 'auto');
 
-  // 3. Expanded Content (Exits)
-  // Fades out deeper/faster
-  const expandedOpacity = useTransform(springScroll, [0, 60], [1, 0]);
-  const expandedY = useTransform(springScroll, [0, 60], [0, -10]);
-  const expandedScale = useTransform(springScroll, [0, 60], [1, 0.98]);
-  const expandedPointer = useTransform(springScroll, (v) => v > 50 ? 'none' : 'auto');
-
-  // 4. Compact Content (Enters)
-  const compactOpacity = useTransform(springScroll, [80, 140], [0, 1]);
-  const compactY = useTransform(springScroll, [80, 140], [10, 0]);
-  const compactPointer = useTransform(springScroll, (v) => v < 80 ? 'none' : 'auto');
+  // Compact content enters later as things settle
+  const compactOpacity = useTransform(springScroll, [80, 130], [0, 1]);
+  const compactY = useTransform(springScroll, [80, 130], [10, 0]);
+  const compactPointer = useTransform(springScroll, (v) => v < 70 ? 'none' : 'auto');
 
   return (
     <motion.div
-      className="sticky top-0 z-30 w-full"
+      className="sticky top-0 z-40 w-full"
       style={{
         height,
         marginTop: 0,
@@ -906,24 +905,11 @@ const DashboardHeader = ({
           borderBottomLeftRadius: borderRadius,
           borderBottomRightRadius: borderRadius,
           backdropFilter: useTransform(backdropBlur, v => `blur(${v})`),
-          willChange: 'height, border-radius' // Hint for browser optimization
         }}
       >
         {/* Background Gradients */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 z-0" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 z-0 mix-blend-overlay"></div>
-
-        {/* Animated Glow Orbs (Subtle) */}
-        <motion.div
-          className="absolute -top-[20%] -left-[10%] w-[50%] h-[100%] bg-indigo-500/20 blur-[100px] rounded-full z-0"
-          animate={{ x: [0, 20, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-0 right-0 w-[40%] h-[80%] bg-purple-500/20 blur-[80px] rounded-full z-0"
-          animate={{ x: [0, -30, 0], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        />
 
         {/* --- EXPANDED CONTENT --- */}
         <motion.div
@@ -931,7 +917,6 @@ const DashboardHeader = ({
           style={{
             opacity: expandedOpacity,
             y: expandedY,
-            scale: expandedScale,
             pointerEvents: expandedPointer
           }}
         >
@@ -939,9 +924,9 @@ const DashboardHeader = ({
             <div className="flex-1 min-w-0">
               {/* Team & Status Chips */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full backdrop-blur-md shadow-sm">
+                <div className="flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full backdrop-blur-md">
                   <FiUsers className="w-3.5 h-3.5 text-indigo-300" />
-                  <span className="text-xs font-bold tracking-wide uppercase text-indigo-100 shadow-black drop-shadow-sm">{teamName || 'No Team'}</span>
+                  <span className="text-xs font-bold tracking-wide uppercase text-indigo-100">{teamName || 'No Team'}</span>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs font-semibold text-slate-300">
@@ -967,7 +952,7 @@ const DashboardHeader = ({
               </div>
 
               {/* Greeting */}
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight drop-shadow-lg">
+              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
                 Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-purple-200">{userName}</span>
               </h1>
 
@@ -977,19 +962,62 @@ const DashboardHeader = ({
               </div>
             </div>
 
-            {/* Right Side: Clock & Action */}
-            <div className="flex flex-col items-end gap-6 mb-1">
+            {/* Right Side: Subscription & Clock & Action */}
+            <div className="flex flex-col items-end gap-5 mb-1">
+              {/* Subscription badge (Expanded Right) */}
+              <button
+                onClick={() => navigate('/subscription')}
+                className="group flex flex-col items-end gap-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all backdrop-blur-xl"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <span className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/60">Membership</span>
+                    <span className="text-sm font-extrabold text-white tracking-wide">
+                      {subscription?.plan?.name || 'Free'} Plan
+                    </span>
+                  </div>
+                  <div className={`p-2 rounded-xl ${subscription?.plan?.name === 'Pro' ? 'bg-amber-400/20 text-amber-400' : 'bg-white/10 text-slate-400'}`}>
+                    <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Pro' ? 'fill-current animate-pulse' : ''}`} />
+                  </div>
+                </div>
+
+                {/* Space Usage Bar */}
+                <div className="flex flex-col items-end gap-1 w-full mt-1">
+                  <div className="flex items-center justify-between w-full gap-8">
+                    <span className="text-[9px] font-bold text-indigo-300/80 uppercase">Occupancy</span>
+                    <span className="text-[9px] font-black text-white">{availableMembers.length + onLeaveMembers.length}/{subscription?.plan?.max_users || 5}</span>
+                  </div>
+                  <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(((availableMembers.length + onLeaveMembers.length) / (subscription?.plan?.max_users || 5)) * 100, 100)}%` }}
+                      className={`h-full bg-gradient-to-r ${subscription?.plan?.name === 'Pro' ? 'from-amber-400 to-orange-500' : 'from-indigo-400 to-purple-500'}`}
+                    />
+                  </div>
+                </div>
+              </button>
+
               <LiveClock />
 
               {!hasSubmittedToday && (
                 <button
                   onClick={onCreateReport}
-                  className="group relative flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(245,158,11,0.5)] hover:-translate-y-1 transition-all duration-300 border border-white/20 overflow-hidden"
+                  className="group relative flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all border border-white/20 overflow-hidden"
                 >
-                  <div className="absolute inset-0 bg-white/20 skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
-                  <FiEdit3 className="w-5 h-5" />
-                  <span>Submit Daily Report</span>
-                  <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-white/10 skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
+                  <div className="relative flex items-center gap-1.5">
+                    <div className="relative">
+                      <FiEdit3 className="w-4 h-4" />
+                      <motion.div
+                        className="absolute -top-1.5 -right-1.5"
+                        animate={{ scale: [1, 1.2, 1], opacity: [1, 0.4, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >
+                        <FiAlertCircle className="w-3 h-3 text-white fill-orange-600 shadow-sm" />
+                      </motion.div>
+                    </div>
+                    <span className="text-xs uppercase tracking-widest font-black">Report</span>
+                  </div>
                 </button>
               )}
             </div>
@@ -1006,64 +1034,63 @@ const DashboardHeader = ({
             pointerEvents: compactPointer
           }}
         >
-          {/* Left: User Avatar, Name, and Status */}
-          <div className="flex items-center gap-3">
-            {/* Avatar with status indicator */}
+          {/* Left: Identity */}
+          <div className="flex items-center gap-4">
             <div className="relative">
               {userAvatarUrl ? (
-                <img
-                  src={userAvatarUrl}
-                  alt={userName}
-                  className="w-10 h-10 rounded-xl object-cover shadow-lg border-2 border-white/20"
-                />
+                <img src={userAvatarUrl} alt={userName} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {userName.charAt(0)}
                 </div>
               )}
-              {/* Leave/Available indicator dot */}
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-sm ${isUserOnLeave ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-sm ${isUserOnLeave ? 'bg-amber-500' : 'bg-emerald-500'}`} />
             </div>
 
-            {/* User Info */}
             <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate max-w-[120px] sm:max-w-none">
-                  {userName}
-                </h3>
-                {/* Status Badge */}
-                <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${isUserOnLeave
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                  : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  }`}>
-                  {isUserOnLeave ? (
-                    <>
-                      <FiCalendar className="w-2.5 h-2.5" />
-                      On Leave
-                    </>
-                  ) : (
-                    <>
-                      <FiCheckCircle className="w-2.5 h-2.5" />
-                      Available
-                    </>
-                  )}
-                </span>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-black text-white tracking-tight">{userName}</h3>
+
+                {/* Compact Tags */}
+                <div className="flex items-center gap-1.5">
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${isUserOnLeave ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                    {isUserOnLeave ? 'Away' : 'Online'}
+                  </span>
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    onClick={() => navigate('/subscription')}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/20 backdrop-blur-md ${subscription?.plan?.name === 'Pro' ? 'bg-amber-400 text-slate-900' : 'bg-white/10 text-white'}`}
+                  >
+                    <FiStar className={`w-2.5 h-2.5 ${subscription?.plan?.name === 'Pro' ? 'fill-current' : ''}`} />
+                    {subscription?.plan?.name || 'Free'}
+                  </motion.button>
+                </div>
               </div>
-              {/* Time in small text */}
-              <span className="text-[11px] text-indigo-200/80 font-medium tabular-nums">
-                {format(currentTime, 'h:mm a')} • {format(currentTime, 'EEE, MMM d')}
+              <span className="text-[10px] text-indigo-300/80 font-bold uppercase tracking-tight tabular-nums">
+                {format(currentTime, 'h:mm a')} • {format(currentTime, 'EEEE, MMM d')}
               </span>
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3">
+          {/* Right: Actions (Compact) */}
+          <div className="flex items-center gap-4">
+            {!hasSubmittedToday && (
+              <button
+                onClick={onCreateReport}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-[11px] font-black uppercase tracking-widest transition-all"
+              >
+                <FiEdit3 className="w-4 h-4" />
+                <span>Report</span>
+              </button>
+            )}
+
             <button
-              onClick={onCreateReport}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/30 text-white text-sm font-semibold transition-all backdrop-blur-md"
+              onClick={() => onOpenUserList('available')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-xs"
             >
-              <FiEdit3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Daily Report</span>
+              <FiUsers className="w-3.5 h-3.5" />
+              <span>{availableMembers.length}</span>
             </button>
           </div>
         </motion.div>
@@ -1302,6 +1329,9 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
     subtitle: ''
   });
 
+  // Subscription State
+  const [subscription, setSubscription] = useState(null);
+
   // Missing Reports Logic
   const [missingReportIds, setMissingReportIds] = useState([]);
 
@@ -1504,6 +1534,33 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
         setHolidays(holidaysData || []);
 
+        // 9. Fetch Current Subscription
+        try {
+          const { data: subData } = await supabase
+            .from('subscriptions')
+            .select('*, plan:subscription_plans(*)')
+            .eq('company_id', currentCompany.id)
+            .eq('status', 'active')
+            .maybeSingle();
+
+          if (subData) {
+            setSubscription(subData);
+          } else {
+            // Fetch free plan if no active subscription
+            const { data: freePlan } = await supabase
+              .from('subscription_plans')
+              .select('*')
+              .eq('name', 'Free')
+              .maybeSingle();
+
+            if (freePlan) {
+              setSubscription({ plan: freePlan });
+            }
+          }
+        } catch (subErr) {
+          console.error('Error fetching subscription:', subErr);
+        }
+
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -1613,13 +1670,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="-mt-14 md:-mt-16 px-0 pt-0 pb-8 max-w-[1800px] mx-auto min-h-screen bg-gradient-to-b from-slate-50 via-gray-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
-    >
-      {/* Spacious Header */}
+    <div className="w-full h-full pb-8">
       <DashboardHeader
         userName={userName}
         userAvatarUrl={userAvatarUrl}
@@ -1632,6 +1683,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         onOpenUserList={handleOpenUserList}
         onCreateReport={() => navigate('/report')}
         hasSubmittedToday={hasSubmittedToday}
+        subscription={subscription}
       />
 
 
@@ -1732,6 +1784,6 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           />
         )
       }
-    </motion.div >
+    </div>
   );
 }

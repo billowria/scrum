@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiSun, FiMenu, FiMoon, FiCpu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiSun, FiMenu, FiMoon, FiCpu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight, FiGlobe } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
 import squadsyncLogo from '../assets/brand/squadsync-logo.png';
+import CompactThemeToggle from './CompactThemeToggle';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -118,7 +119,12 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                 </motion.button>
               </motion.div>
             )}
+
           </AnimatePresence>
+
+          <div className="ml-2">
+            <CompactThemeToggle />
+          </div>
         </div>
 
         {/* Brand - Absolutely Centered */}
@@ -230,6 +236,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                       {[
                         { id: 'light', icon: <FiSun size={14} />, label: 'Light' },
                         { id: 'dark', icon: <FiMoon size={14} />, label: 'Dark' },
+                        { id: 'space', icon: <FiGlobe size={14} />, label: 'Space' },
                         { id: 'system', icon: <FiCpu size={14} />, label: 'Auto' }
                       ].map((mode) => (
                         <button

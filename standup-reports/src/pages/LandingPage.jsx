@@ -112,6 +112,152 @@ const FEATURE_SHOWCASE = [
     }
 ];
 
+// --- Testimonials Data ---
+const TESTIMONIALS = [
+    {
+        id: 1,
+        name: 'Sarah Chen',
+        role: 'Engineering Lead',
+        company: 'Vercel',
+        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        quote: 'SquadSync transformed how our distributed team stays aligned. The async standups alone saved us 10+ hours of meetings per week.',
+        rating: 5,
+        gradient: 'from-pink-500 to-rose-500'
+    },
+    {
+        id: 2,
+        name: 'Marcus Rivera',
+        role: 'Product Manager',
+        company: 'Stripe',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        quote: 'Finally, a tool that understands remote work. The dashboard gives me instant visibility into what everyone is working on.',
+        rating: 5,
+        gradient: 'from-blue-500 to-indigo-500'
+    },
+    {
+        id: 3,
+        name: 'Emily Nakamura',
+        role: 'CTO',
+        company: 'Linear',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+        quote: 'We evaluated 12 different tools. SquadSync was the only one that felt like it was designed by people who actually work in tech.',
+        rating: 5,
+        gradient: 'from-violet-500 to-purple-500'
+    },
+    {
+        id: 4,
+        name: 'David Park',
+        role: 'Head of Engineering',
+        company: 'Notion',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        quote: 'The Kanban boards and sprint planning are beautifully integrated. It is like Jira, but actually enjoyable to use.',
+        rating: 5,
+        gradient: 'from-emerald-500 to-teal-500'
+    },
+    {
+        id: 5,
+        name: 'Aisha Patel',
+        role: 'VP of Product',
+        company: 'Figma',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        quote: 'Our team happiness scores went up 40% after switching to SquadSync. Less meetings, more shipping.',
+        rating: 5,
+        gradient: 'from-amber-500 to-orange-500'
+    },
+    {
+        id: 6,
+        name: 'James Wilson',
+        role: 'Founder',
+        company: 'Arc Browser',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        quote: 'The attention to design and UX is incredible. Every interaction feels intentional and polished.',
+        rating: 5,
+        gradient: 'from-cyan-500 to-blue-500'
+    }
+];
+
+// --- Testimonial Card Component ---
+const TestimonialCard = ({ testimonial, index }) => {
+    const cardRef = useRef(null);
+    const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
+
+    const handleMouseMove = (e) => {
+        if (!cardRef.current) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        setMousePosition({
+            x: (e.clientX - rect.left) / rect.width,
+            y: (e.clientY - rect.top) / rect.height
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setMousePosition({ x: 0.5, y: 0.5 });
+    };
+
+    const rotateX = (mousePosition.y - 0.5) * -10;
+    const rotateY = (mousePosition.x - 0.5) * 10;
+
+    return (
+        <motion.div
+            ref={cardRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="relative flex-shrink-0 w-[340px] md:w-[400px] p-6 rounded-3xl bg-slate-800/40 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 group cursor-pointer"
+            style={{
+                transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+                transformStyle: 'preserve-3d'
+            }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ scale: 1.02, y: -5 }}
+        >
+            {/* Gradient Glow */}
+            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${testimonial.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+
+            {/* Quote Icon */}
+            <div className="absolute top-4 right-4 text-6xl font-serif text-white/5 select-none">"</div>
+
+            {/* Quote Text */}
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6 relative z-10">
+                "{testimonial.quote}"
+            </p>
+
+            {/* Star Rating */}
+            <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                        <FiStar className={`w-4 h-4 ${i < testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Author */}
+            <div className="flex items-center gap-4 relative z-10">
+                <div className="relative">
+                    <img
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-white/10"
+                    />
+                    <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${testimonial.gradient} opacity-30 blur-md -z-10`} />
+                </div>
+                <div>
+                    <h4 className="font-bold text-white text-sm">{testimonial.name}</h4>
+                    <p className="text-slate-400 text-xs">{testimonial.role} @ {testimonial.company}</p>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 // --- Animated Logo Component ---
 const AnimatedLogo = () => (
     <div className="relative flex items-center gap-3 group cursor-pointer">
@@ -1396,6 +1542,106 @@ export default function LandingPage() {
                         All plans include a 14-day free trial. No credit card required.
                     </p>
                 </div>
+            </section>
+
+            {/* === TESTIMONIALS SECTION === */}
+            <section className="relative z-10 py-24 overflow-hidden">
+                {/* Background Effects */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-500/5 to-transparent pointer-events-none" />
+
+                <div className="max-w-7xl mx-auto px-6 mb-12">
+                    <motion.div
+                        className="text-center mb-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4">
+                            Testimonials
+                        </span>
+                        <h2 className="text-3xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                            Voices from the Cosmos
+                        </h2>
+                        <p className="text-lg text-slate-400 max-w-xl mx-auto">
+                            Trusted by thousands of high-performing teams worldwide.
+                        </p>
+                    </motion.div>
+                </div>
+
+                {/* Infinite Scroll Carousel */}
+                <div className="relative">
+                    {/* Gradient Fade Left */}
+                    <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#0a0a12] to-transparent z-10 pointer-events-none" />
+                    {/* Gradient Fade Right */}
+                    <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#0a0a12] to-transparent z-10 pointer-events-none" />
+
+                    {/* Scrolling Row 1 (Left to Right) */}
+                    <div
+                        className="flex gap-6 mb-6"
+                        style={{
+                            animation: 'scroll-left 40s linear infinite'
+                        }}
+                    >
+                        {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                            <TestimonialCard key={`row1-${t.id}-${i}`} testimonial={t} index={i % TESTIMONIALS.length} />
+                        ))}
+                    </div>
+
+                    {/* Scrolling Row 2 (Right to Left) */}
+                    <div
+                        className="flex gap-6"
+                        style={{
+                            animation: 'scroll-right 45s linear infinite'
+                        }}
+                    >
+                        {[...TESTIMONIALS.slice().reverse(), ...TESTIMONIALS.slice().reverse()].map((t, i) => (
+                            <TestimonialCard key={`row2-${t.id}-${i}`} testimonial={t} index={i % TESTIMONIALS.length} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Bottom Stats */}
+                <div className="max-w-4xl mx-auto px-6 mt-16">
+                    <motion.div
+                        className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        {[
+                            { value: '10,000+', label: 'Teams Active' },
+                            { value: '2M+', label: 'Standups Sent' },
+                            { value: '99.9%', label: 'Uptime SLA' },
+                            { value: '4.9/5', label: 'Average Rating' }
+                        ].map((stat, i) => (
+                            <motion.div
+                                key={i}
+                                className="p-4"
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                            >
+                                <div className="text-2xl md:text-3xl font-black bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                    {stat.value}
+                                </div>
+                                <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">{stat.label}</div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+
+                {/* CSS Keyframes for scroll animation */}
+                <style>{`
+                    @keyframes scroll-left {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                    }
+                    @keyframes scroll-right {
+                        0% { transform: translateX(-50%); }
+                        100% { transform: translateX(0); }
+                    }
+                `}</style>
             </section>
 
             {/* Footer */}
