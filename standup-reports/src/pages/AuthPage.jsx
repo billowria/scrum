@@ -6,7 +6,7 @@ import {
   AnimatePresence
 } from "framer-motion";
 import { supabase } from "../supabaseClient";
-// QuantumBackground removed - now provided by PublicLayout
+import QuantumBackground from '../components/shared/QuantumBackground';
 import squadSyncLogo from '../assets/brand/squadsync-logo.png';
 import {
   FiMail, FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff, FiGithub, FiCheckCircle,
@@ -400,7 +400,9 @@ export default function AuthPage({ mode = "login" }) {
 
       <canvas ref={confettiCanvasRef} className="confetti-canvas" />
 
-      {/* Background now provided by PublicLayout */}
+      {/* Full page animated background with Advanced Stars */}
+      {/* Full page animated background with Advanced Stars */}
+      {/* Full page animated background handled by PublicLayout */}
 
       <div
         className="auth-container"
@@ -426,8 +428,12 @@ export default function AuthPage({ mode = "login" }) {
               </div>
             </motion.div>
 
-            {/* Main Visualization Grid */}
-            <div className="relative w-full max-w-[600px] aspect-square flex items-center justify-center">
+            {/* Main Visualization Grid - Shared Element Transition */}
+            <motion.div
+              layoutId="orbit-visual"
+              className="relative w-full max-w-[600px] aspect-square flex items-center justify-center"
+              transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}
+            >
 
               {/* Center Core: Interface Projection */}
               <div
@@ -529,7 +535,7 @@ export default function AuthPage({ mode = "login" }) {
               <div className="absolute inset-0 rounded-full border border-white/5 scale-[0.8] animate-[spin_60s_linear_infinite]" />
               <div className="absolute inset-0 rounded-full border border-dashed border-white/5 scale-[0.8] animate-[spin_40s_linear_infinite_reverse]" />
 
-            </div>
+            </motion.div>
 
             {/* Bottom Value Prop */}
             <motion.div

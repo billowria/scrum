@@ -1,5 +1,5 @@
 // src/pages/LandingPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,11 +16,14 @@ const APP_MODULES = [
     { id: 'projects', title: 'Ship Faster', icon: FiLayers, color: '#8b5cf6', desc: "Project Views", gradient: "from-violet-500 to-purple-600" },
 ];
 
+// --- Shared Visual Components ---
+// Shared Visual Components removed - handled by PublicLayout
+
 // --- Hero Mock Components (Exact copies from AuthPage for consistency) ---
 const HeroChat = () => (
     <div className="flex flex-col h-full p-4 gap-3">
         <div className="flex items-center gap-2 border-b border-white/10 pb-2 mb-1"><div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center"><FiMessageCircle className="text-pink-400 text-sm" /></div><div className="text-xs font-medium text-white/90">#general</div></div>
-        {[1, 2, 3].map((i) => (<motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className={`flex gap - 2 ${i === 2 ? 'flex-row-reverse' : ''} `}><div className="w-6 h-6 rounded-full bg-white/10 flex-shrink-0" /><div className={`p - 2 rounded - lg text - [10px] max - w - [80 %] ${i === 2 ? 'bg-pink-500/20 text-pink-100' : 'bg-white/5 text-slate-300'} `}><div className="h-2 w-24 bg-current opacity-20 rounded mb-1" /><div className="h-2 w-16 bg-current opacity-10 rounded" /></div></motion.div>))}
+        {[1, 2, 3].map((i) => (<motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className={`flex gap-2 ${i === 2 ? 'flex-row-reverse' : ''}`}><div className="w-6 h-6 rounded-full bg-white/10 flex-shrink-0" /><div className={`p-2 rounded-lg text-[10px] max-w-[80%] ${i === 2 ? 'bg-pink-500/20 text-pink-100' : 'bg-white/5 text-slate-300'}`}><div className="h-2 w-24 bg-current opacity-20 rounded mb-1" /><div className="h-2 w-16 bg-current opacity-10 rounded" /></div></motion.div>))}
         <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.8, duration: 0.4 }} className="mt-auto h-8 rounded-full bg-white/5 border border-white/10 flex items-center px-3"><div className="h-2 w-20 bg-white/10 rounded animate-pulse" /><FiSend className="ml-auto text-white/20 text-xs" /></motion.div>
     </div>
 );
@@ -32,47 +35,72 @@ const HeroTasks = () => (
 const HeroNotes = () => (
     <div className="h-full p-4 flex flex-col gap-3">
         <div className="flex items-center gap-2 text-emerald-400/80 mb-2"><FiEdit3 /><div className="h-2 w-32 bg-current opacity-40 rounded" /></div>
-        <div className="space-y-2 flex-1">{[1, 2, 3].map(i => <motion.div key={i} initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ delay: 0.2 + i * 0.15 }} className="h-2 bg-white/10 rounded" />)}</div>
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="flex gap-2">{[1, 2, 3].map(i => <div key={i} className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30" />)}</motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="space-y-2"><div className="h-2 w-full bg-white/10 rounded" /><div className="h-2 w-full bg-white/10 rounded" /><div className="h-2 w-3/4 bg-white/10 rounded" /></motion.div>
+        <div className="grid grid-cols-2 gap-2 mt-2">{[1, 2, 3, 4].map((i) => (<motion.div key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 + i * 0.1 }} className="aspect-square rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2"><div className="w-6 h-6 rounded bg-emerald-500/20 mb-2" /><div className="h-1.5 w-8 bg-white/20 rounded" /></motion.div>))}</div>
     </div>
 );
 const HeroLeave = () => (
-    <div className="h-full p-3 flex flex-col gap-2">
-        <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2"><FiCalendar className="text-blue-400" /> Leave Calendar</div>
-        <div className="grid grid-cols-7 gap-1 flex-1">{Array.from({ length: 21 }).map((_, i) => { const isLeave = [3, 10, 17].includes(i); return <motion.div key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: i * 0.02 }} className={`aspect - square rounded text - [8px] flex items - center justify - center ${isLeave ? 'bg-blue-500/30 text-blue-200' : 'bg-white/5 text-slate-500'} `}>{(i % 7) + 1}</motion.div>; })}</div>
+    <div className="h-full p-4">
+        <div className="flex justify-between items-center mb-4 text-blue-400"><div className="text-xs font-bold">September 2025</div><div className="flex gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /><div className="w-1.5 h-1.5 rounded-full bg-white/20" /></div></div>
+        <div className="grid grid-cols-7 gap-1.5">{Array.from({ length: 28 }).map((_, i) => (<motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }} className={`aspect-square rounded-sm flex items-center justify-center text-[8px] ${[4, 12, 18, 25].includes(i) ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25 scale-110 font-bold' : [5, 13, 19, 26].includes(i) ? 'bg-blue-500/20 text-blue-200' : 'bg-white/5 text-white/30'}`}>{i + 1}</motion.div>))}</div>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.8 }} className="mt-4 p-2 bg-white/5 rounded-lg border border-white/10 flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center"><FiClock className="text-blue-400" /></div><div><div className="h-1.5 w-20 bg-white/30 rounded mb-1" /><div className="h-1.5 w-12 bg-white/10 rounded" /></div></motion.div>
     </div>
 );
 const HeroProjects = () => (
-    <div className="h-full p-3 flex flex-col gap-2">
-        <div className="text-[10px] font-bold text-slate-400 flex items-center gap-2 mb-1"><FiLayers className="text-violet-400" /> Active Projects</div>
-        {[{ name: 'Mobile App', progress: 75 }, { name: 'Dashboard', progress: 45 }].map((p, i) => (<motion.div key={i} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 + i * 0.15 }} className="p-2 rounded-lg bg-white/5 border border-white/5"><div className="flex justify-between text-[10px] mb-1"><span className="text-white/80">{p.name}</span><span className="text-violet-400">{p.progress}%</span></div><div className="h-1 bg-white/10 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${p.progress}% ` }} transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }} className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full" /></div></motion.div>))}
+    <div className="h-full p-4 flex flex-col gap-3">
+        <div className="flex gap-2 mb-2"><div className="h-6 w-20 bg-violet-500/20 rounded border border-violet-500/30" /><div className="h-6 w-16 bg-white/5 rounded border border-white/5" /></div>
+        <div className="space-y-2">{[1, 2, 3].map((i) => (<motion.div key={i} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.15 }} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10"><div className="w-8 h-8 rounded bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center border border-white/5"><FiLayers className="text-violet-300 text-xs" /></div><div className="flex-1"><div className="h-2 w-24 bg-white/20 rounded mb-1.5" /><div className="w-full bg-white/10 h-1 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${60 + Math.random() * 30}%` }} transition={{ delay: 0.5 + i * 0.1, duration: 1 }} className="h-full bg-violet-500" /></div></div></motion.div>))}</div>
     </div>
 );
 
 // --- Mock UIs for Feature Sections ---
 const MockChat = () => (
-    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/20 blur-3xl rounded-full" />
-        <div className="flex items-center gap-3 border-b border-white/10 pb-4"><div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center"><FiMessageCircle className="text-pink-400" /></div><div><div className="text-sm font-bold">#product-team</div><div className="text-xs text-slate-500">12 members online</div></div></div>
-        {[{ name: 'Alex', msg: 'Shipped the new dashboard! 🚀', time: '2m', self: false }, { name: 'You', msg: 'Amazing work! Looks great.', time: 'now', self: true }].map((m, i) => (<motion.div key={i} initial={{ opacity: 0, x: m.self ? 20 : -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className={`flex gap - 3 ${m.self ? 'flex-row-reverse' : ''} `}><div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-xs font-bold border border-white/10">{m.name[0]}</div><div className={`px - 4 py - 2 rounded - 2xl max - w - [70 %] ${m.self ? 'bg-indigo-500/20 text-indigo-100 rounded-br-sm' : 'bg-white/5 text-slate-300 rounded-bl-sm'} `}><div className="text-sm">{m.msg}</div><div className="text-[10px] text-slate-500 mt-1">{m.time}</div></div></motion.div>))}
-        <div className="flex items-center gap-2 mt-2 p-3 rounded-full bg-white/5 border border-white/10"><input type="text" placeholder="Type a message..." className="flex-1 bg-transparent text-sm outline-none placeholder-slate-500" /><FiSend className="text-indigo-400 cursor-pointer hover:text-indigo-300" /></div>
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-4">
+            <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center"><FiMessageCircle className="text-pink-400" /></div>
+            <div><div className="font-bold">#product-design</div><div className="text-xs text-slate-400">12 members active</div></div>
+        </div>
+        {[1, 2, 3].map((i) => (
+            <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className={`flex gap-3 mb-4 ${i === 2 ? 'flex-row-reverse' : ''}`}>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0" />
+                <div className={`p-3 rounded-2xl text-sm max-w-[80%] ${i === 2 ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white/5 text-slate-300 rounded-bl-none'}`}>
+                    <div className="h-2 w-32 bg-current opacity-20 rounded mb-2" /> <div className="h-2 w-20 bg-current opacity-10 rounded" />
+                </div>
+            </motion.div>
+        ))}
     </div>
 );
 
 const MockKanban = () => (
-    <div className="w-full max-w-lg mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 flex gap-3 overflow-hidden relative">
-        <div className="absolute bottom-0 right-0 w-40 h-40 bg-amber-500/20 blur-3xl rounded-full" />
-        {[{ title: 'To Do', count: 4, color: 'bg-slate-500' }, { title: 'In Progress', count: 3, color: 'bg-amber-500' }, { title: 'Done', count: 8, color: 'bg-emerald-500' }].map((col, i) => (<motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.15 }} className="flex-1 bg-white/5 rounded-xl p-3 border border-white/5"><div className="flex items-center justify-between mb-3"><div className="flex items-center gap-2"><div className={`w - 2 h - 2 rounded - full ${col.color} `} /><span className="text-xs font-bold text-slate-300">{col.title}</span></div><span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-slate-400">{col.count}</span></div><div className="space-y-2">{[1, 2].map((card) => (<motion.div key={card} initial={{ scale: 0.9, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3 + i * 0.1 + card * 0.05 }} className="p-3 rounded-lg bg-slate-800/50 border border-white/5 hover:border-amber-500/30 transition-colors cursor-pointer group"><div className="h-2 w-4/5 bg-white/20 rounded mb-2" /><div className="flex justify-between items-center"><div className="flex -space-x-1">{[1, 2].map(a => <div key={a} className="w-4 h-4 rounded-full bg-slate-700 border border-slate-600" />)}</div><FiCheckSquare className="text-slate-500 group-hover:text-amber-400 transition-colors" /></div></motion.div>))}</div></motion.div>))}
+    <div className="w-full max-w-md mx-auto grid grid-cols-2 gap-4">
+        {['In Progress', 'Done'].map((col, i) => (
+            <div key={col} className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex justify-between">{col} <span className="bg-white/10 px-1.5 rounded">{i + 2}</span></div>
+                {[1, 2].map((card) => (
+                    <motion.div key={card} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + card * 0.1 }} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-3 hover:bg-white/10 transition-colors">
+                        <div className="flex gap-2 mb-2"><div className={`w-8 h-1 rounded-full ${i === 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} /></div>
+                        <div className="h-2 w-full bg-white/20 rounded mb-2" /><div className="h-2 w-2/3 bg-white/10 rounded" />
+                    </motion.div>
+                ))}
+            </div>
+        ))}
     </div>
 );
 
 const MockStats = () => (
-    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/20 blur-3xl rounded-full" />
-        <div className="flex justify-between items-center mb-6"><div className="font-bold text-lg">Team Velocity</div><div className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">+12%</div></div>
-        <div className="h-32 flex items-end gap-2">{[40, 65, 45, 80, 55, 90, 70].map((h, i) => (<motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}% ` }} transition={{ delay: i * 0.1, duration: 0.5 }} className="flex-1 bg-gradient-to-t from-indigo-500/50 to-purple-500/50 rounded-t-lg hover:from-indigo-400/60 hover:to-purple-400/60 transition-colors cursor-pointer" />))}</div>
-        <div className="flex justify-between text-xs text-slate-500 mt-2">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <span key={d}>{d}</span>)}</div>
-        <div className="grid grid-cols-3 gap-4 mt-6">{[{ label: 'Tasks Done', value: '127', color: 'text-emerald-400' }, { label: 'In Progress', value: '34', color: 'text-amber-400' }, { label: 'Blocked', value: '8', color: 'text-rose-400' }].map((s, i) => (<motion.div key={i} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.1 }} className="text-center"><div className={`text - 2xl font - bold ${s.color} `}>{s.value}</div><div className="text-xs text-slate-500">{s.label}</div></motion.div>))}</div>
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+        <div className="flex justify-between items-end mb-8">
+            <div><div className="text-sm text-slate-400 mb-1">Team Velocity</div><div className="text-3xl font-bold text-white">124 <span className="text-sm text-emerald-400 font-normal">+12%</span></div></div>
+            <div className="flex gap-1 items-end h-16">
+                {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
+                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ delay: i * 0.1, duration: 0.5 }} className="w-3 bg-indigo-500/50 rounded-t-sm" />
+                ))}
+            </div>
+        </div>
+        <div className="space-y-4">
+            <div className="flex justify-between text-sm"><span className="text-slate-400">Sprint Completion</span><span className="text-white font-bold">92%</span></div>
+            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} whileInView={{ width: '92%' }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" /></div>
+        </div>
     </div>
 );
 
@@ -80,23 +108,33 @@ const MockStats = () => (
 const Section = ({ align = 'left', title, desc, tag, children }) => (
     <section className="py-32 px-6 relative z-10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <motion.div initial={{ opacity: 0, x: align === 'left' ? -40 : 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className={align === 'right' ? 'md:order-2' : ''}>
-                <div className="text-xs font-bold uppercase tracking-widest text-indigo-400 mb-4">{tag}</div>
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">{title}</h2>
-                <p className="text-lg text-slate-400 leading-relaxed">{desc}</p>
+            {/* Visual */}
+            <div className={`${align === 'right' ? 'md:order-2' : ''} relative`}>
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl rounded-full" />
+                {children}
+            </div>
+            {/* Text */}
+            <motion.div initial={{ opacity: 0, x: align === 'left' ? 50 : -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
+                <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-bold text-indigo-400 mb-6 uppercase tracking-widest">{tag}</div>
+                <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">{title}</h2>
+                <p className="text-xl text-slate-400 leading-relaxed">{desc}</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0, x: align === 'left' ? 40 : -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className={align === 'right' ? 'md:order-1' : ''}>{children}</motion.div>
         </div>
     </section>
 );
 
 export default function LandingPage() {
     const navigate = useNavigate();
+    const [scrolled, setScrolled] = useState(false);
     const [activeTab, setActiveTab] = useState('chat');
+    const [menuOpen, setMenuOpen] = useState(false);
     const { scrollY } = useScroll();
 
-    // Auto-cycle tabs for hero
+    // AuthPage Logic for Hero Animation
     useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        // Auto-cycle tabs for hero
         const timer = setInterval(() => {
             setActiveTab(prev => {
                 const idx = APP_MODULES.findIndex(m => m.id === prev);
@@ -104,6 +142,7 @@ export default function LandingPage() {
             });
         }, 3000);
         return () => {
+            window.removeEventListener('scroll', handleScroll);
             clearInterval(timer);
         };
     }, []);
@@ -111,7 +150,28 @@ export default function LandingPage() {
     const activeModule = APP_MODULES.find(m => m.id === activeTab);
 
     return (
-        <>
+        <div className="text-white selection:bg-indigo-500/30">
+            {/* Ambient Background (Exact Match to AuthPage) */}
+            {/* Ambient Background handled by PublicLayout */}
+
+            {/* Navbar */}
+            <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#0a0b14]/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
+                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3 font-bold text-xl tracking-tight">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center"><FiLayers className="text-white w-4 h-4" /></div>
+                        SYNC
+                    </div>
+                    <div className="hidden md:flex gap-8 items-center text-sm font-medium">
+                        <a href="#features" className="text-slate-400 hover:text-white transition-colors">Product</a>
+                        <a href="#pricing" className="text-slate-400 hover:text-white transition-colors">Pricing</a>
+                        <a href="#" className="text-slate-400 hover:text-white transition-colors">Company</a>
+                        <div className="h-4 w-px bg-white/10 mx-2" />
+                        <button onClick={() => navigate('/login')} className="text-white hover:text-indigo-400 transition-colors">Sign In</button>
+                        <button onClick={() => navigate('/signup')} className="px-5 py-2 rounded-full bg-white text-black hover:scale-105 transition-transform font-bold">Get Started</button>
+                    </div>
+                </div>
+            </nav>
+
             {/* Hero */}
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
@@ -130,11 +190,11 @@ export default function LandingPage() {
                     </div>
 
                     {/* Orbit Visualization (Synced with AuthPage) */}
-                    <div className="relative w-full max-w-[600px] aspect-square flex items-center justify-center">
+                    <motion.div layoutId="orbit-visual" className="relative w-full max-w-[600px] aspect-square flex items-center justify-center" transition={{ duration: 0.8, ease: [0.32, 0.72, 0, 1] }}>
 
                         {/* Center Core: Interface Projection */}
                         <div className="relative w-[320px] h-[200px] bg-[#1e293b]/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden transform-gpu transition-all duration-500 z-10">
-                            <div className={`absolute inset - 0 bg - gradient - to - br ${activeModule.gradient} opacity - 10 transition - colors duration - 500`} />
+                            <div className={`absolute inset-0 bg-gradient-to-br ${activeModule.gradient} opacity-10 transition-colors duration-500`} />
                             <div className="absolute top-0 left-0 right-0 h-8 border-b border-white/5 bg-white/5 flex items-center px-3 gap-1.5">
                                 <div className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
                                 <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
@@ -164,8 +224,8 @@ export default function LandingPage() {
                                 const isActive = activeTab === module.id;
 
                                 return (
-                                    <motion.button key={module.id} className={`absolute top - 1 / 2 left - 1 / 2 w - 16 h - 16 - ml - 8 - mt - 8 rounded - 2xl flex items - center justify - center backdrop - blur - md border transition - all duration - 300 pointer - events - auto cursor - pointer ${isActive ? 'bg-white/20 border-white/50 shadow-[0_0_30px_rgba(255,255,255,0.3)] scale-110 z-50' : 'bg-black/40 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/40 hover:text-white'} `} style={{ x, y }} onClick={() => setActiveTab(module.id)} whileHover={{ scale: 1.2, zIndex: 60 }} whileTap={{ scale: 0.95 }}>
-                                        <module.icon className={`text - 2xl transition - colors duration - 300 ${isActive ? 'text-white' : ''} `} style={{ color: isActive ? module.color : undefined }} />
+                                    <motion.button key={module.id} className={`absolute top-1/2 left-1/2 w-16 h-16 -ml-8 -mt-8 rounded-2xl flex items-center justify-center backdrop-blur-md border transition-all duration-300 pointer-events-auto cursor-pointer ${isActive ? 'bg-white/20 border-white/50 shadow-[0_0_30px_rgba(255,255,255,0.3)] scale-110 z-50' : 'bg-black/40 border-white/10 text-slate-400 hover:bg-white/10 hover:border-white/40 hover:text-white'}`} style={{ x, y }} onClick={() => setActiveTab(module.id)} whileHover={{ scale: 1.2, zIndex: 60 }} whileTap={{ scale: 0.95 }}>
+                                        <module.icon className={`text-2xl transition-colors duration-300 ${isActive ? 'text-white' : ''}`} style={{ color: isActive ? module.color : undefined }} />
                                         <svg className="absolute top-1/2 left-1/2 w-[300px] h-[300px] -translate-x-1/2 -translate-y-1/2 -z-10 pointer-events-none overflow-visible">
                                             <motion.line x1="50%" y1="50%" x2={150 - x * 0.6} y2={150 - y * 0.6} stroke={module.color} strokeWidth="2" strokeDasharray="4 4" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: isActive ? 1 : 0, opacity: isActive ? 0.4 : 0 }} transition={{ duration: 0.5 }} />
                                         </svg>
@@ -181,7 +241,7 @@ export default function LandingPage() {
                         {/* Orbit Ring visual */}
                         <div className="absolute inset-0 rounded-full border border-white/5 scale-[0.8] animate-[spin_60s_linear_infinite]" />
                         <div className="absolute inset-0 rounded-full border border-dashed border-white/5 scale-[0.8] animate-[spin_40s_linear_infinite_reverse]" />
-                    </div>
+                    </motion.div>
                 </div>
             </header>
 
@@ -235,6 +295,7 @@ export default function LandingPage() {
                     </div>
                 </div>
             </footer>
-        </>
+
+        </div>
     );
 }

@@ -14,6 +14,7 @@ import Navbar from './components/Navbar';
 // Import the new profile components
 import UserProfile from './components/UserProfile';
 import ManagerUserProfile from './components/ManagerUserProfile';
+import PublicLayout from './layouts/PublicLayout';
 
 // Pages
 import AuthPage from './pages/AuthPage';
@@ -40,7 +41,6 @@ import NotesPage from './pages/NotesPage';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import SubscriptionGuard from './components/SubscriptionGuard';
 import LandingPage from './pages/LandingPage';
-import PublicLayout from './layouts/PublicLayout';
 
 // Animation variants
 const pageVariants = {
@@ -289,19 +289,15 @@ function AppContent({ session, userRole, sidebarMode }) {
         <AnimatePresence mode="sync" initial={false}>
           <Routes location={background || location}>
             {!session ? (
-              // Unauthenticated routes - wrapped in PublicLayout for smooth transitions
-              <Route path="*" element={
-                <PublicLayout>
-                  <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<AuthPage mode="login" />} />
-                    <Route path="/signup" element={<AuthPage mode="signup" />} />
-                    <Route path="/forgot" element={<AuthPage mode="forgot" />} />
-                    <Route path="/reset-password" element={<AuthPage mode="reset" />} />
-                    <Route path="*" element={<Navigate to="/login" replace />} />
-                  </Routes>
-                </PublicLayout>
-              } />
+              // Unauthenticated routes
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<AuthPage mode="login" />} />
+                <Route path="/signup" element={<AuthPage mode="signup" />} />
+                <Route path="/forgot" element={<AuthPage mode="forgot" />} />
+                <Route path="/reset-password" element={<AuthPage mode="reset" />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Route>
             ) : (
               // Authenticated routes
               // Authenticated routes
