@@ -137,6 +137,23 @@ const ScrambleText = ({ text, className, isInView }) => {
 
 
 
+// --- Cinematic Reveal Component ---
+const MaskedReveal = ({ children, delay = 0, className = "" }) => (
+    <div className={`overflow-hidden relative inline-block align-bottom ${className}`}>
+        <motion.div
+            initial={{ y: "110%" }}
+            animate={{ y: 0 }}
+            transition={{
+                duration: 1.2,
+                ease: [0.16, 1, 0.3, 1], // Custom cinematic bezier
+                delay
+            }}
+        >
+            {children}
+        </motion.div>
+    </div>
+);
+
 // --- Hero Mock Components (Exact copies from AuthPage for consistency) ---
 const HeroChat = () => (
     <div className="flex flex-col h-full p-4 gap-3">
@@ -685,70 +702,70 @@ export default function LandingPage() {
             {/* Hero */}
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                    <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                            hidden: { opacity: 0 },
-                            visible: {
-                                opacity: 1,
-                                transition: {
-                                    staggerChildren: 0.1,
-                                    delayChildren: 1.2 // Late appear animation
-                                }
-                            }
-                        }}
-                    >
-                        <motion.div
-                            variants={{
-                                hidden: { opacity: 0, y: 20, filter: 'blur(10px)' },
-                                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.8 } }
-                            }}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-indigo-400 mb-8 uppercase tracking-widest"
-                        >
-                            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                            New Enterprise OS v2.0
-                        </motion.div>
+                    <div className="flex flex-col justify-center">
+                        {/* Architectural Label */}
+                        <MaskedReveal delay={1.2} className="mb-6">
+                            <div className="flex items-center gap-3">
+                                <span className="w-6 h-[1px] bg-indigo-500"></span>
+                                <span className="font-mono text-xs font-bold tracking-[0.2em] text-indigo-400 uppercase">
+                                    Architect Your Organization
+                                </span>
+                            </div>
+                        </MaskedReveal>
 
-                        <motion.h1
-                            variants={{
-                                hidden: { opacity: 0, y: 30, filter: 'blur(12px)' },
-                                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1, ease: 'easeOut' } }
-                            }}
-                            className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-8"
-                        >
-                            The Operating System for <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient bg-[length:200%_auto]">
-                                Modern Companies.
-                            </span>
-                        </motion.h1>
+                        {/* Main Headline */}
+                        <div className="mb-8 leading-none">
+                            <div className="block overflow-hidden relative">
+                                <MaskedReveal delay={1.3}>
+                                    <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mb-2">
+                                        One Workspace.
+                                    </h1>
+                                </MaskedReveal>
+                            </div>
+                            <div className="block overflow-hidden relative">
+                                <MaskedReveal delay={1.4}>
+                                    <div className="flex items-baseline gap-1">
+                                        <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-slate-400">
+                                            Infinite Teams.
+                                        </h1>
+                                        {/* Blinking Cursor */}
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: [0, 1, 1, 0] }}
+                                            transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.2 }}
+                                            className="w-4 h-12 bg-indigo-500 ml-1 translate-y-2"
+                                        />
+                                    </div>
+                                </MaskedReveal>
+                            </div>
+                        </div>
 
-                        <motion.p
-                            variants={{
-                                hidden: { opacity: 0, y: 20 },
-                                visible: { opacity: 1, y: 0, transition: { duration: 0.8 } }
-                            }}
-                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-12"
-                        >
-                            <span className="text-white font-medium">End-to-End Product.</span> <br />
-                            Company level segregation. Handle multiple teams, projects, and insights inside one unified platform.
-                        </motion.p>
+                        {/* Description */}
+                        <div className="mb-10 block">
+                            <MaskedReveal delay={1.6}>
+                                <p className="text-lg md:text-xl text-slate-400 max-w-lg leading-relaxed border-l-2 border-white/10 pl-6">
+                                    The complete operating system for company-wide alignment.
+                                    From executive strategy to sprint execution,
+                                    <span className="text-white font-medium"> handle everything</span> in one unified platform.
+                                </p>
+                            </MaskedReveal>
+                        </div>
 
-                        <motion.div
-                            variants={{
-                                hidden: { opacity: 0 },
-                                visible: { opacity: 1, transition: { delay: 0.2, duration: 0.8 } }
-                            }}
-                            className="flex gap-4"
-                        >
-                            <button onClick={() => navigate('/signup')} className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-                                Start Enterprise Trial <FiArrowRight />
-                            </button>
-                            <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition-colors backdrop-blur-sm">
-                                Book Demo
-                            </button>
-                        </motion.div>
-                    </motion.div>
+                        {/* Buttons */}
+                        <MaskedReveal delay={1.8}>
+                            <div className="flex gap-4">
+                                <button onClick={() => navigate('/signup')} className="group relative px-8 py-4 bg-white text-black rounded-sm font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
+                                    <span className="relative z-10 flex items-center gap-2">
+                                        Start Enterprise <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                    </span>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                                <button className="px-8 py-4 text-white border-b border-white/20 hover:border-white transition-colors font-mono text-sm uppercase tracking-wider">
+                                    Book Demo
+                                </button>
+                            </div>
+                        </MaskedReveal>
+                    </div>
 
                     {/* Orbit Visualization (Synced with AuthPage) */}
                     <motion.div
