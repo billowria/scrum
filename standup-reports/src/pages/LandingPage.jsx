@@ -23,70 +23,70 @@ const APP_MODULES = [
 // --- Feature Showcase Configuration ---
 const FEATURE_SHOWCASE = [
     {
-        id: 'communication',
-        tag: 'Communication',
-        title: 'Talk less, ship more.',
-        desc: 'Replace daily standup meetings with asynchronous updates. Keep everyone aligned without breaking flow state.',
-        Icon: FiMessageCircle,
-        gradient: 'from-pink-500 via-rose-500 to-red-500',
-        bgGradient: 'from-pink-500/20 via-transparent to-transparent',
-        features: ['Real-time chat', 'Thread discussions', 'File sharing', 'Integrations'],
-        mockType: 'chat'
-    },
-    {
-        id: 'analytics',
-        tag: 'Analytics',
-        title: 'Clarity at scale.',
-        desc: "Visualize your team's velocity and blockers in real-time. Spot patterns before they become problems.",
-        Icon: FiPieChart,
-        gradient: 'from-indigo-500 via-purple-500 to-violet-500',
-        bgGradient: 'from-indigo-500/20 via-transparent to-transparent',
-        features: ['Sprint analytics', 'Burndown charts', 'Team metrics', 'Custom reports'],
-        mockType: 'stats'
-    },
-    {
-        id: 'tasks',
-        tag: 'Task Management',
-        title: 'Work flows freely.',
-        desc: 'A modern Kanban board that links directly to your daily updates. Drag, drop, done.',
+        id: 'standups',
+        tag: 'Daily Sync',
+        title: 'Reports that don\'t suck.',
+        desc: 'Replace boring 9 AM meetings with playful async updates. Your team stays aligned while you ship code, not attend calls.',
         Icon: FiCheckSquare,
-        gradient: 'from-amber-400 via-orange-500 to-red-500',
-        bgGradient: 'from-amber-500/20 via-transparent to-transparent',
-        features: ['Kanban boards', 'Sprint planning', 'Subtasks', 'Time tracking'],
-        mockType: 'kanban'
-    },
-    {
-        id: 'calendar',
-        tag: 'Time Management',
-        title: 'Time is on your side.',
-        desc: 'Integrated leave management and timesheets. Track holidays, time-off, and work hours in one beautiful view.',
-        Icon: FiCalendar,
-        gradient: 'from-blue-400 via-cyan-500 to-teal-500',
-        bgGradient: 'from-blue-500/20 via-transparent to-transparent',
-        features: ['Leave calendar', 'Holidays', 'Timesheet', 'Attendance'],
-        mockType: 'calendar'
-    },
-    {
-        id: 'notes',
-        tag: 'Knowledge Base',
-        title: 'Shared brainpower.',
-        desc: 'A powerful knowledge base for your team. Create wikis, docs, and guidelines that live right next to your code.',
-        Icon: FiEdit3,
         gradient: 'from-emerald-400 via-green-500 to-teal-500',
         bgGradient: 'from-emerald-500/20 via-transparent to-transparent',
-        features: ['Rich editor', 'Team wikis', 'Templates', 'Version history'],
-        mockType: 'notes'
+        features: ['Async updates', 'Smart reminders', 'Team visibility', 'Beautiful reports'],
+        mockType: 'standups'
     },
     {
-        id: 'admin',
-        tag: 'Administration',
-        title: 'Command center.',
-        desc: 'Effortless admin tools. Manage users, projects, and permissions with granular control and total visibility.',
+        id: 'security',
+        tag: 'Enterprise Security',
+        title: 'Walls that work.',
+        desc: 'Complete company-level data segregation. Your workspace is yours alone — no cross-contamination, ever.',
         Icon: FiShield,
         gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
         bgGradient: 'from-violet-500/20 via-transparent to-transparent',
-        features: ['User management', 'Role permissions', 'Project settings', 'Audit logs'],
-        mockType: 'admin'
+        features: ['Data isolation', 'SSO ready', 'Audit trails', 'Role-based access'],
+        mockType: 'security'
+    },
+    {
+        id: 'teams',
+        tag: 'Team Hub',
+        title: 'One org. Infinite teams.',
+        desc: 'Create unlimited teams, each with their own projects, chats, and analytics. Cross-team visibility without cross-team chaos.',
+        Icon: FiUsers,
+        gradient: 'from-blue-400 via-indigo-500 to-purple-500',
+        bgGradient: 'from-blue-500/20 via-transparent to-transparent',
+        features: ['Unlimited teams', 'Team analytics', 'Hierarchy views', 'Role permissions'],
+        mockType: 'teams'
+    },
+    {
+        id: 'calendar',
+        tag: 'Team Visibility',
+        title: 'Calendar that tells the truth.',
+        desc: 'Leave requests, holidays, and availability in one shared view. Plan sprints knowing exactly who\'s around.',
+        Icon: FiCalendar,
+        gradient: 'from-cyan-400 via-blue-500 to-indigo-500',
+        bgGradient: 'from-cyan-500/20 via-transparent to-transparent',
+        features: ['Shared calendar', 'Leave approvals', 'Holiday sync', 'Capacity view'],
+        mockType: 'calendar'
+    },
+    {
+        id: 'projects',
+        tag: 'Project Command',
+        title: 'Drag. Drop. Done.',
+        desc: 'Beautiful Kanban boards, sprint planning, and project documentation that actually gets read. Track everything, miss nothing.',
+        Icon: FiLayers,
+        gradient: 'from-amber-400 via-orange-500 to-red-500',
+        bgGradient: 'from-amber-500/20 via-transparent to-transparent',
+        features: ['Kanban boards', 'Sprint cycles', 'Project docs', 'Progress tracking'],
+        mockType: 'kanban'
+    },
+    {
+        id: 'analytics',
+        tag: 'Insights',
+        title: 'Data, delightfully visualized.',
+        desc: 'Real-time dashboards that make you look smart in meetings. Velocity, burndown, and team health — all at a glance.',
+        Icon: FiPieChart,
+        gradient: 'from-pink-400 via-rose-500 to-red-500',
+        bgGradient: 'from-pink-500/20 via-transparent to-transparent',
+        features: ['Live dashboards', 'Velocity charts', 'Team health', 'Exportable reports'],
+        mockType: 'stats'
     }
 ];
 
@@ -196,7 +196,7 @@ const MockChat = () => (
             <div><div className="font-bold">#product-design</div><div className="text-xs text-slate-400">12 members active</div></div>
         </div>
         {[1, 2, 3].map((i) => (
-            <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.2 }} className={`flex gap-3 mb-4 ${i === 2 ? 'flex-row-reverse' : ''}`}>
+            <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: i * 0.2 }} className={`flex gap-3 mb-4 ${i === 2 ? 'flex-row-reverse' : ''}`}>
                 <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0" />
                 <div className={`p-3 rounded-2xl text-sm max-w-[80%] ${i === 2 ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white/5 text-slate-300 rounded-bl-none'}`}>
                     <div className="h-2 w-32 bg-current opacity-20 rounded mb-2" /> <div className="h-2 w-20 bg-current opacity-10 rounded" />
@@ -212,7 +212,7 @@ const MockKanban = () => (
             <div key={col} className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex justify-between">{col} <span className="bg-white/10 px-1.5 rounded">{i + 2}</span></div>
                 {[1, 2].map((card) => (
-                    <motion.div key={card} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.2 + card * 0.1 }} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-3 hover:bg-white/10 transition-colors">
+                    <motion.div key={card} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.2 + card * 0.1 }} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-3 hover:bg-white/10 transition-colors">
                         <div className="flex gap-2 mb-2"><div className={`w-8 h-1 rounded-full ${i === 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} /></div>
                         <div className="h-2 w-full bg-white/20 rounded mb-2" /><div className="h-2 w-2/3 bg-white/10 rounded" />
                     </motion.div>
@@ -228,13 +228,13 @@ const MockStats = () => (
             <div><div className="text-sm text-slate-400 mb-1">Team Velocity</div><div className="text-3xl font-bold text-white">124 <span className="text-sm text-emerald-400 font-normal">+12%</span></div></div>
             <div className="flex gap-1 items-end h-16">
                 {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
-                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.1, duration: 0.5 }} className="w-3 bg-indigo-500/50 rounded-t-sm" />
+                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: i * 0.1, duration: 0.5 }} className="w-3 bg-indigo-500/50 rounded-t-sm" />
                 ))}
             </div>
         </div>
         <div className="space-y-4">
             <div className="flex justify-between text-sm"><span className="text-slate-400">Sprint Completion</span><span className="text-white font-bold">92%</span></div>
-            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} whileInView={{ width: '92%' }} viewport={{ once: false, amount: 0.1 }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" /></div>
+            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} whileInView={{ width: '92%' }} viewport={{ once: true, amount: 0.3 }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" /></div>
         </div>
     </div>
 );
@@ -259,7 +259,7 @@ const MockCalendar = () => (
                 const isHoliday = [12].includes(i);
                 const isToday = i === 14;
                 return (
-                    <motion.div key={i} initial={{ scale: 0.8, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} viewport={{ once: false, amount: 0.05 }} transition={{ delay: i * 0.01 }}
+                    <motion.div key={i} initial={{ scale: 0.8, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: i * 0.01 }}
                         className={`aspect-square rounded-lg flex items-center justify-center text-xs relative cursor-pointer hover:bg-white/10 transition-colors
                         ${isToday ? 'bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/25' :
                                 isLeave ? 'bg-blue-500/20 text-blue-300' :
@@ -271,7 +271,7 @@ const MockCalendar = () => (
                 );
             })}
         </div>
-        <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.5 }} className="bg-white/5 rounded-xl p-4 border border-white/5">
+        <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.5 }} className="bg-white/5 rounded-xl p-4 border border-white/5">
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><FiClock className="text-blue-400" /></div>
                 <div>
@@ -303,8 +303,8 @@ const MockNotes = () => (
                 <div className="h-2 w-2/3 bg-white/5 rounded" />
             </div>
             <div className="mt-6 flex gap-3">
-                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.3 }} className="w-24 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><FiEdit3 className="text-emerald-400 text-xl" /></motion.div>
-                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.4 }} className="flex-1 h-16 rounded-lg bg-white/5 border border-white/5" />
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.3 }} className="w-24 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><FiEdit3 className="text-emerald-400 text-xl" /></motion.div>
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.4 }} className="flex-1 h-16 rounded-lg bg-white/5 border border-white/5" />
             </div>
         </div>
     </div>
@@ -325,7 +325,7 @@ const MockAdmin = () => (
                 { name: 'Mike Ross', role: 'Design', status: 'Offline', color: 'bg-slate-500' },
                 { name: 'Emma Watson', role: 'Product', status: 'Online', color: 'bg-green-500' }
             ].map((user, i) => (
-                <motion.div key={i} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.15 }}
+                <motion.div key={i} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: i * 0.15 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-white/10 text-xs font-bold">
                         {user.name.split(' ').map(n => n[0]).join('')}
@@ -343,9 +343,190 @@ const MockAdmin = () => (
     </div>
 );
 
+// --- NEW: MockStandups - Playful daily standup visual ---
+const MockStandups = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <FiCheckSquare className="text-emerald-400" />
+                </div>
+                <div>
+                    <div className="font-bold text-white">Daily Standup</div>
+                    <div className="text-xs text-slate-400">Today, 9:00 AM</div>
+                </div>
+            </div>
+            <motion.div
+                className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+            >
+                ✓ 4/5 submitted
+            </motion.div>
+        </div>
+        <div className="space-y-3">
+            {[
+                { name: 'Alex', task: 'Shipped login flow', emoji: '🚀' },
+                { name: 'Sarah', task: 'API integration', emoji: '⚡' },
+                { name: 'Mike', task: 'Waiting on design', emoji: '🎨' },
+            ].map((update, i) => (
+                <motion.div
+                    key={i}
+                    className="p-3 rounded-xl bg-white/5 border border-white/5"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.2 + i * 0.15 }}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm font-bold">
+                            {update.name[0]}
+                        </div>
+                        <div className="flex-1">
+                            <div className="text-sm font-medium text-white">{update.name}</div>
+                            <div className="text-xs text-slate-400">{update.task}</div>
+                        </div>
+                        <span className="text-lg">{update.emoji}</span>
+                    </div>
+                </motion.div>
+            ))}
+        </div>
+        <motion.div
+            className="mt-4 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm font-medium cursor-pointer hover:bg-emerald-500/20 transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+        >
+            + Add your update
+        </motion.div>
+    </div>
+);
+
+// --- NEW: MockSecurity - Animated vault/shield visual ---
+const MockSecurity = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+        <motion.div
+            className="absolute inset-0 opacity-10"
+            style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.3) 0%, transparent 70%)' }}
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 4, repeat: Infinity }}
+        />
+        <div className="relative z-10">
+            <div className="flex items-center justify-center mb-6">
+                <motion.div
+                    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-2xl"
+                    animate={{ rotateY: [0, 10, 0, -10, 0] }}
+                    transition={{ duration: 6, repeat: Infinity }}
+                >
+                    <FiShield className="text-white text-3xl" />
+                </motion.div>
+            </div>
+            <div className="text-center mb-6">
+                <div className="text-lg font-bold text-white mb-1">Company Isolation Active</div>
+                <div className="text-sm text-slate-400">Your data never leaves your organization</div>
+            </div>
+            <div className="space-y-3">
+                {[
+                    { label: 'Encryption', status: 'AES-256', icon: '🔐' },
+                    { label: 'SSO', status: 'Enabled', icon: '🔑' },
+                    { label: 'Audit Log', status: '2,847 events', icon: '📋' },
+                ].map((item, i) => (
+                    <motion.div
+                        key={i}
+                        className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.3 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="text-lg">{item.icon}</span>
+                            <span className="text-sm text-slate-300">{item.label}</span>
+                        </div>
+                        <span className="text-sm font-medium text-emerald-400">{item.status}</span>
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+// --- NEW: MockTeams - Animated org chart visual ---
+const MockTeams = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+            <div className="font-bold text-white">Your Organization</div>
+            <div className="text-xs text-slate-400">4 teams • 28 members</div>
+        </div>
+        <div className="relative flex items-center justify-center mb-6 h-24">
+            <motion.div
+                className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg z-10"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 3, repeat: Infinity }}
+            >
+                <FiUsers className="text-white text-xl" />
+            </motion.div>
+            {['T1', 'T2', 'T3', 'T4'].map((t, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-xs font-bold text-white"
+                    animate={{
+                        x: [Math.cos(i * Math.PI / 2) * 50, Math.cos((i * Math.PI / 2) + Math.PI) * 50],
+                        y: [Math.sin(i * Math.PI / 2) * 35, Math.sin((i * Math.PI / 2) + Math.PI) * 35],
+                    }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "linear", delay: i * 0.5 }}
+                >
+                    {t}
+                </motion.div>
+            ))}
+        </div>
+        <div className="space-y-2">
+            {[
+                { name: 'Engineering', members: 12, color: 'from-blue-400 to-cyan-500' },
+                { name: 'Design', members: 6, color: 'from-pink-400 to-rose-500' },
+                { name: 'Product', members: 5, color: 'from-amber-400 to-orange-500' },
+                { name: 'Marketing', members: 5, color: 'from-emerald-400 to-teal-500' },
+            ].map((team, i) => (
+                <motion.div
+                    key={i}
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                >
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${team.color} flex items-center justify-center`}>
+                        <FiUsers className="text-white text-sm" />
+                    </div>
+                    <div className="flex-1 text-sm text-white">{team.name}</div>
+                    <div className="text-xs text-slate-400">{team.members} members</div>
+                </motion.div>
+            ))}
+        </div>
+    </div>
+);
+
 // --- Full Viewport Feature Component ---
 const FullViewportFeature = ({ feature, index }) => {
     const containerRef = useRef(null);
+
+    // Delay mount detection to prevent premature animation firing
+    const [hasMounted, setHasMounted] = useState(false);
+    useEffect(() => {
+        // Small delay ensures IntersectionObserver doesn't fire on initial render
+        const timer = setTimeout(() => setHasMounted(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
+    // Explicit useInView hook with replay enabled (once: false)
+    // Only becomes active AFTER hasMounted is true
+    const isInView = useInView(containerRef, {
+        once: false, // Allow replay on both scroll directions
+        amount: 0.35, // Trigger when 35% visible
+    });
+
+    // Combined state: only animate when both mounted AND in view
+    const shouldAnimate = hasMounted && isInView;
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start end", "end start"]
@@ -358,10 +539,13 @@ const FullViewportFeature = ({ feature, index }) => {
 
     // Mock component mapping
     const MockComponents = {
-        chat: MockChat,
-        stats: MockStats,
-        kanban: MockKanban,
+        standups: MockStandups,
+        security: MockSecurity,
+        teams: MockTeams,
         calendar: MockCalendar,
+        kanban: MockKanban,
+        stats: MockStats,
+        chat: MockChat,
         notes: MockNotes,
         admin: MockAdmin
     };
@@ -428,8 +612,7 @@ const FullViewportFeature = ({ feature, index }) => {
                     <motion.div
                         className="inline-flex items-center gap-3 mb-6"
                         initial={{ opacity: 0, x: -30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: false, amount: 0.5 }}
+                        animate={shouldAnimate ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
                         transition={{ duration: 0.6, delay: 0.1 }}
                     >
                         <motion.div
@@ -448,8 +631,7 @@ const FullViewportFeature = ({ feature, index }) => {
                     <motion.h2
                         className="text-5xl md:text-7xl font-black leading-tight mb-6"
                         initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
-                        whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        viewport={{ once: false, amount: 0.5 }}
+                        animate={shouldAnimate ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 50, filter: "blur(10px)" }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
                         {feature.title}
@@ -459,8 +641,7 @@ const FullViewportFeature = ({ feature, index }) => {
                     <motion.p
                         className="text-xl text-slate-400 leading-relaxed mb-8 max-w-lg"
                         initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, amount: 0.5 }}
+                        animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                         transition={{ duration: 0.6, delay: 0.3 }}
                     >
                         {feature.desc}
@@ -473,8 +654,7 @@ const FullViewportFeature = ({ feature, index }) => {
                                 key={i}
                                 className="flex items-center gap-3 text-sm text-slate-300 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-colors"
                                 initial={{ opacity: 0, x: -20, scale: 0.9 }}
-                                whileInView={{ opacity: 1, x: 0, scale: 1 }}
-                                viewport={{ once: false, amount: 0.5 }}
+                                animate={shouldAnimate ? { opacity: 1, x: 0, scale: 1 } : { opacity: 0, x: -20, scale: 0.9 }}
                                 transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
                                 whileHover={{ x: 5 }}
                             >
@@ -491,9 +671,8 @@ const FullViewportFeature = ({ feature, index }) => {
                 <motion.div
                     className={`relative ${index % 2 === 1 ? 'lg:order-1' : ''}`}
                     initial={{ opacity: 0, scale: 0.8, rotateY: index % 2 === 0 ? 20 : -20 }}
-                    whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
-                    transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 100 }}
+                    animate={shouldAnimate ? { opacity: 1, scale: 1, rotateY: 0 } : { opacity: 0, scale: 0.8, rotateY: index % 2 === 0 ? 20 : -20 }}
+                    transition={{ duration: 0.8, delay: 0.5, type: "spring", stiffness: 100 }}
                     style={{ perspective: 1000 }}
                 >
                     {/* Glow effect */}
