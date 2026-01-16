@@ -6,7 +6,7 @@ import {
   AnimatePresence
 } from "framer-motion";
 import { supabase } from "../supabaseClient";
-import QuantumBackground from '../components/shared/QuantumBackground';
+// QuantumBackground removed - now provided by PublicLayout
 import squadSyncLogo from '../assets/brand/squadsync-logo.png';
 import {
   FiMail, FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff, FiGithub, FiCheckCircle,
@@ -400,9 +400,7 @@ export default function AuthPage({ mode = "login" }) {
 
       <canvas ref={confettiCanvasRef} className="confetti-canvas" />
 
-      {/* Full page animated background with Advanced Stars */}
-      {/* Full page animated background with Advanced Stars */}
-      <QuantumBackground />
+      {/* Background now provided by PublicLayout */}
 
       <div
         className="auth-container"
