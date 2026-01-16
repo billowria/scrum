@@ -34,17 +34,6 @@ const FEATURE_SHOWCASE = [
         mockType: 'standups'
     },
     {
-        id: 'security',
-        tag: 'Enterprise Security',
-        title: 'Walls that work.',
-        desc: 'Complete company-level data segregation. Your workspace is yours alone — no cross-contamination, ever.',
-        Icon: FiShield,
-        gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
-        bgGradient: 'from-violet-500/20 via-transparent to-transparent',
-        features: ['Data isolation', 'SSO ready', 'Audit trails', 'Role-based access'],
-        mockType: 'security'
-    },
-    {
         id: 'teams',
         tag: 'Team Hub',
         title: 'One org. Infinite teams.',
@@ -54,6 +43,39 @@ const FEATURE_SHOWCASE = [
         bgGradient: 'from-blue-500/20 via-transparent to-transparent',
         features: ['Unlimited teams', 'Team analytics', 'Hierarchy views', 'Role permissions'],
         mockType: 'teams'
+    },
+    {
+        id: 'chatnotes',
+        tag: 'Collaborate',
+        title: 'Share everything. Instantly.',
+        desc: 'Team chat and personal notes with beautiful UI. Share tasks, reports, and documents with a click. Knowledge flows freely.',
+        Icon: FiMessageCircle,
+        gradient: 'from-pink-400 via-rose-500 to-orange-500',
+        bgGradient: 'from-pink-500/20 via-transparent to-transparent',
+        features: ['Team chat', 'Personal notes', 'Share anything', 'Rich formatting'],
+        mockType: 'chatnotes'
+    },
+    {
+        id: 'dashboard',
+        tag: 'Command Center',
+        title: 'Everything. One glance.',
+        desc: 'A dashboard that actually dashboards. Quick actions, live stats, and your team\'s pulse — all in one beautiful view.',
+        Icon: FiZap,
+        gradient: 'from-cyan-400 via-teal-500 to-emerald-500',
+        bgGradient: 'from-cyan-500/20 via-transparent to-transparent',
+        features: ['Quick actions', 'Live metrics', 'Team activity', 'Smart shortcuts'],
+        mockType: 'dashboard'
+    },
+    {
+        id: 'admincontrol',
+        tag: 'Admin Power',
+        title: 'Total control. Zero friction.',
+        desc: 'Manage users, teams, and projects from one powerful control center. Permissions, invites, and oversight made simple.',
+        Icon: FiShield,
+        gradient: 'from-slate-400 via-zinc-500 to-neutral-600',
+        bgGradient: 'from-slate-500/20 via-transparent to-transparent',
+        features: ['User management', 'Team controls', 'Project settings', 'Permission matrix'],
+        mockType: 'admincontrol'
     },
     {
         id: 'calendar',
@@ -401,55 +423,6 @@ const MockStandups = () => (
     </div>
 );
 
-// --- NEW: MockSecurity - Animated vault/shield visual ---
-const MockSecurity = () => (
-    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-        <motion.div
-            className="absolute inset-0 opacity-10"
-            style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.3) 0%, transparent 70%)' }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-            transition={{ duration: 4, repeat: Infinity }}
-        />
-        <div className="relative z-10">
-            <div className="flex items-center justify-center mb-6">
-                <motion.div
-                    className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-2xl"
-                    animate={{ rotateY: [0, 10, 0, -10, 0] }}
-                    transition={{ duration: 6, repeat: Infinity }}
-                >
-                    <FiShield className="text-white text-3xl" />
-                </motion.div>
-            </div>
-            <div className="text-center mb-6">
-                <div className="text-lg font-bold text-white mb-1">Company Isolation Active</div>
-                <div className="text-sm text-slate-400">Your data never leaves your organization</div>
-            </div>
-            <div className="space-y-3">
-                {[
-                    { label: 'Encryption', status: 'AES-256', icon: '🔐' },
-                    { label: 'SSO', status: 'Enabled', icon: '🔑' },
-                    { label: 'Audit Log', status: '2,847 events', icon: '📋' },
-                ].map((item, i) => (
-                    <motion.div
-                        key={i}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5"
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{ delay: 0.3 + i * 0.1 }}
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="text-lg">{item.icon}</span>
-                            <span className="text-sm text-slate-300">{item.label}</span>
-                        </div>
-                        <span className="text-sm font-medium text-emerald-400">{item.status}</span>
-                    </motion.div>
-                ))}
-            </div>
-        </div>
-    </div>
-);
-
 // --- NEW: MockTeams - Animated org chart visual ---
 const MockTeams = () => (
     <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
@@ -505,6 +478,178 @@ const MockTeams = () => (
     </div>
 );
 
+// --- NEW: MockChatNotes - Chat and notes sharing visual ---
+const MockChatNotes = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex gap-4 mb-4">
+            {/* Chat side */}
+            <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                    <FiMessageCircle className="text-pink-400" />
+                    <span className="text-sm font-bold text-white">Team Chat</span>
+                </div>
+                <div className="space-y-2">
+                    {['Shared the design doc 📎', 'Check the new API ⚡', 'LGTM! 🚀'].map((msg, i) => (
+                        <motion.div
+                            key={i}
+                            className="p-2 rounded-lg bg-white/5 text-xs text-slate-300"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, amount: 0.3 }}
+                            transition={{ delay: 0.2 + i * 0.1 }}
+                        >
+                            {msg}
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+            {/* Notes side */}
+            <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                    <FiEdit3 className="text-emerald-400" />
+                    <span className="text-sm font-bold text-white">Notes</span>
+                </div>
+                <div className="space-y-2">
+                    {['Sprint Retro', 'Meeting Notes', 'Ideas 💡'].map((note, i) => (
+                        <motion.div
+                            key={i}
+                            className="p-2 rounded-lg bg-white/5 text-xs text-slate-300 border-l-2 border-emerald-500/50"
+                            initial={{ opacity: 0, x: 10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true, amount: 0.3 }}
+                            transition={{ delay: 0.3 + i * 0.1 }}
+                        >
+                            {note}
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </div>
+        <motion.div
+            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-pink-500/20 to-orange-500/20 border border-pink-500/20"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ delay: 0.5 }}
+        >
+            <FiSend className="text-pink-400" />
+            <span className="text-sm text-white">Share with team</span>
+        </motion.div>
+    </div>
+);
+
+// --- NEW: MockDashboard - Command center with quick actions ---
+const MockDashboard = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+            <div className="font-bold text-white">Dashboard</div>
+            <motion.div
+                className="px-2 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold"
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+            >
+                ● Live
+            </motion.div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+                { label: 'Tasks', value: '24', color: 'from-blue-400 to-cyan-500' },
+                { label: 'Done', value: '18', color: 'from-emerald-400 to-teal-500' },
+                { label: 'Team', value: '8', color: 'from-purple-400 to-pink-500' },
+            ].map((stat, i) => (
+                <motion.div
+                    key={i}
+                    className="p-3 rounded-xl bg-white/5 text-center"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.2 + i * 0.1 }}
+                >
+                    <div className={`text-2xl font-black bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}>{stat.value}</div>
+                    <div className="text-xs text-slate-400">{stat.label}</div>
+                </motion.div>
+            ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Quick Actions</div>
+        <div className="grid grid-cols-2 gap-2">
+            {[
+                { icon: <FiCheckSquare />, label: 'New Task', color: 'text-amber-400' },
+                { icon: <FiMessageCircle />, label: 'Chat', color: 'text-pink-400' },
+                { icon: <FiCalendar />, label: 'Schedule', color: 'text-blue-400' },
+                { icon: <FiEdit3 />, label: 'Note', color: 'text-emerald-400' },
+            ].map((action, i) => (
+                <motion.div
+                    key={i}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                >
+                    <span className={action.color}>{action.icon}</span>
+                    <span className="text-xs text-white">{action.label}</span>
+                </motion.div>
+            ))}
+        </div>
+    </div>
+);
+
+// --- NEW: MockAdminCenter - Admin control panel visual ---
+const MockAdminCenter = () => (
+    <div className="w-full max-w-md mx-auto bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-zinc-600 flex items-center justify-center">
+                <FiShield className="text-white" />
+            </div>
+            <div>
+                <div className="font-bold text-white">Admin Control</div>
+                <div className="text-xs text-slate-400">Full system access</div>
+            </div>
+        </div>
+
+        {/* Control sections */}
+        <div className="space-y-3">
+            {[
+                { label: 'Users', count: 28, icon: <FiUsers />, color: 'from-blue-400 to-cyan-500' },
+                { label: 'Teams', count: 4, icon: <FiLayers />, color: 'from-violet-400 to-purple-500' },
+                { label: 'Projects', count: 12, icon: <FiCheckSquare />, color: 'from-amber-400 to-orange-500' },
+            ].map((section, i) => (
+                <motion.div
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: 0.2 + i * 0.15 }}
+                >
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${section.color} flex items-center justify-center text-white text-sm`}>
+                        {section.icon}
+                    </div>
+                    <div className="flex-1 text-sm text-white">{section.label}</div>
+                    <div className="px-2 py-1 rounded-full bg-white/10 text-xs text-slate-300">{section.count}</div>
+                    <FiArrowRight className="text-slate-500" />
+                </motion.div>
+            ))}
+        </div>
+
+        <motion.div
+            className="mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ delay: 0.6 }}
+        >
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm text-emerald-400">All systems operational</span>
+        </motion.div>
+    </div>
+);
+
 // --- Full Viewport Feature Component ---
 const FullViewportFeature = ({ feature, index }) => {
     const containerRef = useRef(null);
@@ -540,8 +685,10 @@ const FullViewportFeature = ({ feature, index }) => {
     // Mock component mapping
     const MockComponents = {
         standups: MockStandups,
-        security: MockSecurity,
         teams: MockTeams,
+        chatnotes: MockChatNotes,
+        dashboard: MockDashboard,
+        admincontrol: MockAdminCenter,
         calendar: MockCalendar,
         kanban: MockKanban,
         stats: MockStats,
@@ -693,64 +840,134 @@ const FullViewportFeature = ({ feature, index }) => {
                 </motion.div>
             </motion.div>
 
-            {/* Progress indicator */}
-            <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3">
+            {/* Progress indicator - Right side navigation */}
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-2 z-50">
                 {FEATURE_SHOWCASE.map((f, i) => (
-                    <motion.div
+                    <motion.button
                         key={i}
-                        className={`w-2 h-10 rounded-full cursor-pointer transition-all duration-300 ${i === index ? `bg-gradient-to-b ${feature.gradient} shadow-lg` : 'bg-white/10 hover:bg-white/20'}`}
-                        whileHover={{ scale: 1.2 }}
-                    />
+                        className={`group relative w-3 h-8 rounded-full cursor-pointer transition-all duration-300 ${i === index ? `bg-gradient-to-b ${feature.gradient} shadow-lg shadow-current/50` : 'bg-white/10 hover:bg-white/30'}`}
+                        onClick={() => {
+                            const targetFeature = document.getElementById(`feature-${f.id}`);
+                            if (targetFeature) targetFeature.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        whileHover={{ scale: 1.3, x: -5 }}
+                        whileTap={{ scale: 0.9 }}
+                    >
+                        {/* Tooltip on hover */}
+                        <motion.div
+                            className="absolute right-full mr-4 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-lg bg-black/90 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200"
+                            initial={{ x: 10 }}
+                            whileHover={{ x: 0 }}
+                        >
+                            <div className="text-xs font-bold text-white">{f.title}</div>
+                            <div className="text-[10px] text-slate-400">{f.tag}</div>
+                            {/* Arrow */}
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-2 h-2 bg-black/90 border-r border-t border-white/10 rotate-45" />
+                        </motion.div>
+                        {/* Active indicator pulse */}
+                        {i === index && (
+                            <motion.div
+                                className={`absolute inset-0 rounded-full bg-gradient-to-b ${f.gradient}`}
+                                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
+                        )}
+                    </motion.button>
                 ))}
             </div>
 
-            {/* Scroll for more indicator */}
+            {/* Scroll for more indicator - Dynamic texts per section */}
             {index < FEATURE_SHOWCASE.length - 1 && (
                 <motion.button
-                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer hover:scale-110 transition-transform"
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 cursor-pointer group"
                     initial={{ opacity: 0, y: -10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: false, amount: 0.8 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
                     onClick={() => {
                         const nextFeature = document.getElementById(`feature-${FEATURE_SHOWCASE[index + 1].id}`);
-                        if (nextFeature) {
-                            nextFeature.scrollIntoView({ behavior: 'smooth' });
-                        }
+                        if (nextFeature) nextFeature.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    {/* Text */}
-                    <span className="text-xs text-slate-400 uppercase tracking-widest font-medium hover:text-white transition-colors">
-                        Click to explore
-                    </span>
-
-                    {/* Animated mouse/scroll icon */}
-                    <motion.div
-                        className="relative w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center pt-2"
-                        animate={{ borderColor: ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0.2)'] }}
+                    {/* Dynamic scroll text based on next feature */}
+                    <motion.span
+                        className="text-xs text-slate-500 uppercase tracking-[0.2em] font-medium group-hover:text-white transition-colors"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity }}
                     >
-                        <motion.div
-                            className={`w-1.5 h-3 rounded-full bg-gradient-to-b ${feature.gradient}`}
-                            animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                        />
-                    </motion.div>
+                        {[
+                            '↓ Explore Teams',
+                            '↓ See Collaboration',
+                            '↓ View Dashboard',
+                            '↓ Admin Power',
+                            '↓ Calendar Magic',
+                            '↓ Project Flow',
+                            '↓ Analytics Awaits'
+                        ][index] || '↓ Next Feature'}
+                    </motion.span>
 
-                    {/* Animated chevrons */}
-                    <div className="flex flex-col -mt-1">
-                        {[0, 1, 2].map((i) => (
-                            <motion.div
-                                key={i}
-                                animate={{ y: [0, 4, 0], opacity: [0.3, 1, 0.3] }}
-                                transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
-                            >
-                                <FiArrowRight className="rotate-90 text-white/40 w-4 h-4 -my-1.5" />
-                            </motion.div>
-                        ))}
+                    {/* Slim elegant scroll indicator */}
+                    <div className="relative flex flex-col items-center">
+                        {/* Glowing line */}
+                        <motion.div
+                            className={`w-px h-12 bg-gradient-to-b ${feature.gradient} rounded-full`}
+                            animate={{ opacity: [0.3, 1, 0.3], scaleY: [0.8, 1, 0.8] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                        />
+                        {/* Animated dot traveling down */}
+                        <motion.div
+                            className={`absolute top-0 w-2 h-2 rounded-full bg-gradient-to-br ${feature.gradient} shadow-lg`}
+                            animate={{ y: [0, 44, 0], opacity: [1, 0.5, 1], scale: [1, 0.6, 1] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        {/* Bottom chevron */}
+                        <motion.div
+                            className="mt-1"
+                            animate={{ y: [0, 3, 0] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                        >
+                            <FiArrowRight className={`rotate-90 w-4 h-4 text-transparent bg-gradient-to-br ${feature.gradient} bg-clip-text`} style={{ color: 'currentColor' }} />
+                        </motion.div>
                     </div>
+                </motion.button>
+            )}
+
+            {/* Back/Up scroll indicator - Shows on all except first section */}
+            {index > 0 && (
+                <motion.button
+                    className="absolute top-8 left-1/2 -translate-x-1/2 flex flex-col-reverse items-center gap-3 cursor-pointer group"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false, amount: 0.8 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    onClick={() => {
+                        const prevFeature = document.getElementById(`feature-${FEATURE_SHOWCASE[index - 1].id}`);
+                        if (prevFeature) prevFeature.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    {/* Dynamic back text */}
+                    <motion.span
+                        className="text-xs text-slate-500 uppercase tracking-[0.2em] font-medium group-hover:text-white transition-colors"
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                    >
+                        {[
+                            '↑ Back to Top',
+                            '↑ Daily Standups',
+                            '↑ Team Hub',
+                            '↑ Collaboration',
+                            '↑ Dashboard',
+                            '↑ Admin Control',
+                            '↑ Calendar',
+                            '↑ Projects'
+                        ][index] || '↑ Previous'}
+                    </motion.span>
+
+
                 </motion.button>
             )}
         </motion.div>
@@ -1001,47 +1218,57 @@ export default function LandingPage() {
                     </motion.div>
                 </div>
 
-                {/* Scroll to features indicator */}
+                {/* Scroll to features indicator - Hero specific design */}
                 <motion.button
-                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer"
-                    initial={{ opacity: 0, y: -10 }}
+                    className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 cursor-pointer group"
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1, duration: 0.6 }}
+                    transition={{ delay: 2.2, duration: 0.8 }}
                     onClick={() => {
-                        const firstFeature = document.getElementById('feature-communication');
-                        if (firstFeature) {
-                            firstFeature.scrollIntoView({ behavior: 'smooth' });
-                        }
+                        const firstFeature = document.getElementById('feature-standups');
+                        if (firstFeature) firstFeature.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <span className="text-xs text-slate-400 uppercase tracking-widest font-medium hover:text-white transition-colors">
-                        Discover Features
-                    </span>
-
-                    <motion.div
-                        className="relative w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center pt-2"
-                        animate={{ borderColor: ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.4)', 'rgba(255,255,255,0.2)'] }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                    {/* Dynamic text */}
+                    <motion.span
+                        className="text-xs text-slate-500 uppercase tracking-[0.25em] font-light group-hover:text-indigo-400 transition-colors"
+                        animate={{ opacity: [0.4, 0.8, 0.4] }}
+                        transition={{ duration: 3, repeat: Infinity }}
                     >
-                        <motion.div
-                            className="w-1.5 h-3 rounded-full bg-gradient-to-b from-indigo-400 to-purple-400"
-                            animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                        />
-                    </motion.div>
+                        Scroll to Begin
+                    </motion.span>
 
-                    <div className="flex flex-col -mt-1">
-                        {[0, 1, 2].map((i) => (
-                            <motion.div
-                                key={i}
-                                animate={{ y: [0, 4, 0], opacity: [0.3, 1, 0.3] }}
-                                transition={{ duration: 1, repeat: Infinity, delay: i * 0.15 }}
-                            >
-                                <FiArrowRight className="rotate-90 text-white/40 w-4 h-4 -my-1.5" />
-                            </motion.div>
-                        ))}
+                    {/* Elegant slim indicator */}
+                    <div className="relative flex flex-col items-center">
+                        {/* Outer glow ring */}
+                        <motion.div
+                            className="absolute -inset-4 rounded-full border border-indigo-500/20"
+                            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0, 0.3] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        />
+
+                        {/* Center dot with pulse */}
+                        <motion.div
+                            className="w-3 h-3 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shadow-lg shadow-indigo-500/50"
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                        />
+
+                        {/* Vertical line */}
+                        <motion.div
+                            className="w-px h-8 bg-gradient-to-b from-indigo-400 to-transparent mt-2"
+                            animate={{ opacity: [0.5, 1, 0.5], scaleY: [0.8, 1, 0.8] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                        />
+
+                        {/* Animated traveling dot */}
+                        <motion.div
+                            className="absolute top-3 w-1.5 h-1.5 rounded-full bg-white"
+                            animate={{ y: [0, 32, 0], opacity: [1, 0, 1] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        />
                     </div>
                 </motion.button>
             </header>
