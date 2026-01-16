@@ -66,7 +66,8 @@ const NavbarPro = ({ session }) => {
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.href = '/auth';
+    localStorage.clear();
+    navigate('/login');
   };
 
   return (

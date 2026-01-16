@@ -196,7 +196,7 @@ const MockChat = () => (
             <div><div className="font-bold">#product-design</div><div className="text-xs text-slate-400">12 members active</div></div>
         </div>
         {[1, 2, 3].map((i) => (
-            <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }} className={`flex gap-3 mb-4 ${i === 2 ? 'flex-row-reverse' : ''}`}>
+            <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.2 }} className={`flex gap-3 mb-4 ${i === 2 ? 'flex-row-reverse' : ''}`}>
                 <div className="w-8 h-8 rounded-full bg-white/10 flex-shrink-0" />
                 <div className={`p-3 rounded-2xl text-sm max-w-[80%] ${i === 2 ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-white/5 text-slate-300 rounded-bl-none'}`}>
                     <div className="h-2 w-32 bg-current opacity-20 rounded mb-2" /> <div className="h-2 w-20 bg-current opacity-10 rounded" />
@@ -212,7 +212,7 @@ const MockKanban = () => (
             <div key={col} className="bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex justify-between">{col} <span className="bg-white/10 px-1.5 rounded">{i + 2}</span></div>
                 {[1, 2].map((card) => (
-                    <motion.div key={card} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + card * 0.1 }} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-3 hover:bg-white/10 transition-colors">
+                    <motion.div key={card} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.2 + card * 0.1 }} className="p-3 rounded-xl bg-white/5 border border-white/5 mb-3 hover:bg-white/10 transition-colors">
                         <div className="flex gap-2 mb-2"><div className={`w-8 h-1 rounded-full ${i === 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} /></div>
                         <div className="h-2 w-full bg-white/20 rounded mb-2" /><div className="h-2 w-2/3 bg-white/10 rounded" />
                     </motion.div>
@@ -228,13 +228,13 @@ const MockStats = () => (
             <div><div className="text-sm text-slate-400 mb-1">Team Velocity</div><div className="text-3xl font-bold text-white">124 <span className="text-sm text-emerald-400 font-normal">+12%</span></div></div>
             <div className="flex gap-1 items-end h-16">
                 {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
-                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} transition={{ delay: i * 0.1, duration: 0.5 }} className="w-3 bg-indigo-500/50 rounded-t-sm" />
+                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${h}%` }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.1, duration: 0.5 }} className="w-3 bg-indigo-500/50 rounded-t-sm" />
                 ))}
             </div>
         </div>
         <div className="space-y-4">
             <div className="flex justify-between text-sm"><span className="text-slate-400">Sprint Completion</span><span className="text-white font-bold">92%</span></div>
-            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} whileInView={{ width: '92%' }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" /></div>
+            <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} whileInView={{ width: '92%' }} viewport={{ once: false, amount: 0.1 }} transition={{ duration: 1 }} className="h-full bg-gradient-to-r from-indigo-500 to-purple-500" /></div>
         </div>
     </div>
 );
@@ -259,7 +259,7 @@ const MockCalendar = () => (
                 const isHoliday = [12].includes(i);
                 const isToday = i === 14;
                 return (
-                    <motion.div key={i} initial={{ scale: 0.8, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ delay: i * 0.01 }}
+                    <motion.div key={i} initial={{ scale: 0.8, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} viewport={{ once: false, amount: 0.05 }} transition={{ delay: i * 0.01 }}
                         className={`aspect-square rounded-lg flex items-center justify-center text-xs relative cursor-pointer hover:bg-white/10 transition-colors
                         ${isToday ? 'bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/25' :
                                 isLeave ? 'bg-blue-500/20 text-blue-300' :
@@ -271,7 +271,7 @@ const MockCalendar = () => (
                 );
             })}
         </div>
-        <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="bg-white/5 rounded-xl p-4 border border-white/5">
+        <motion.div initial={{ y: 20, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.5 }} className="bg-white/5 rounded-xl p-4 border border-white/5">
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><FiClock className="text-blue-400" /></div>
                 <div>
@@ -303,8 +303,8 @@ const MockNotes = () => (
                 <div className="h-2 w-2/3 bg-white/5 rounded" />
             </div>
             <div className="mt-6 flex gap-3">
-                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ delay: 0.3 }} className="w-24 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><FiEdit3 className="text-emerald-400 text-xl" /></motion.div>
-                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ delay: 0.4 }} className="flex-1 h-16 rounded-lg bg-white/5 border border-white/5" />
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.3 }} className="w-24 h-16 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><FiEdit3 className="text-emerald-400 text-xl" /></motion.div>
+                <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: 0.4 }} className="flex-1 h-16 rounded-lg bg-white/5 border border-white/5" />
             </div>
         </div>
     </div>
@@ -325,7 +325,7 @@ const MockAdmin = () => (
                 { name: 'Mike Ross', role: 'Design', status: 'Offline', color: 'bg-slate-500' },
                 { name: 'Emma Watson', role: 'Product', status: 'Online', color: 'bg-green-500' }
             ].map((user, i) => (
-                <motion.div key={i} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} transition={{ delay: i * 0.15 }}
+                <motion.div key={i} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} viewport={{ once: false, amount: 0.1 }} transition={{ delay: i * 0.15 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border border-white/10 text-xs font-bold">
                         {user.name.split(' ').map(n => n[0]).join('')}
@@ -346,7 +346,6 @@ const MockAdmin = () => (
 // --- Full Viewport Feature Component ---
 const FullViewportFeature = ({ feature, index }) => {
     const containerRef = useRef(null);
-    const isInView = useInView(containerRef, { amount: 0.1, once: false });
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start end", "end start"]
@@ -374,9 +373,6 @@ const FullViewportFeature = ({ feature, index }) => {
             id={`feature-${feature.id}`}
             className="h-screen w-full relative flex items-center justify-center px-6 overflow-hidden snap-start"
             style={{ height: '100vh', minHeight: '100vh' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isInView ? 1 : 0 }}
-            transition={{ duration: 0.5 }}
         >
             {/* Background gradient */}
             <motion.div

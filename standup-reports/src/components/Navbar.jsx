@@ -18,7 +18,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const avatarUrl = user.avatar_url || user.avatar;
