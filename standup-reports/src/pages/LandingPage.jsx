@@ -685,17 +685,86 @@ export default function LandingPage() {
             {/* Hero */}
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                    <div>
-                        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-8">
+                    <div className="relative">
+                        {/* New Version Badge */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm"
+                        >
+                            <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                            <span className="text-xs font-bold tracking-widest text-indigo-400 uppercase">Version 2.0 is live</span>
+                        </motion.div>
+
+                        <motion.h1
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.9] mb-10"
+                        >
                             Sync your <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">team brain.</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient pb-2">
+                                team brain.
+                            </span>
                         </motion.h1>
-                        <motion.p initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }} className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-12">
-                            The operating system for agile teams. Async standups, planning, and knowledge living in perfect harmony.
+
+                        <motion.p
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.1 }}
+                            className="text-xl md:text-2xl text-slate-400 max-w-xl leading-relaxed mb-12"
+                        >
+                            The decentralized operating system for modern agile teams.
+                            Async standups, deep-work planning, and shared knowledge in one unified universe.
                         </motion.p>
-                        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="flex gap-4">
-                            <button onClick={() => navigate('/signup')} className="px-8 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center gap-2">Start Free <FiArrowRight /></button>
-                            <button className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition-colors">See Demo</button>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className="flex flex-wrap gap-5 mb-16"
+                        >
+                            <button
+                                onClick={() => navigate('/signup')}
+                                className="group px-8 py-5 bg-white text-black rounded-2xl font-black text-xl hover:scale-105 transition-all flex items-center gap-3 shadow-[0_20px_50px_rgba(255,255,255,0.1)] relative overflow-hidden"
+                            >
+                                <span className="relative z-10">Start for Free</span>
+                                <FiArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                            </button>
+
+                            <button className="px-8 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xl hover:bg-white/10 transition-all backdrop-blur-md flex items-center gap-2 group">
+                                <FiZap className="text-amber-400 group-hover:scale-110 transition-transform" />
+                                See the Magic
+                            </button>
+                        </motion.div>
+
+                        {/* Trusted by / Social Proof */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 1, duration: 1 }}
+                            className="flex items-center gap-6"
+                        >
+                            <div className="flex -space-x-4">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className={`w-12 h-12 rounded-full border-4 border-[#0a0b14] bg-slate-800 flex items-center justify-center overflow-hidden`}>
+                                        <div className={`w-full h-full bg-gradient-to-br ${i % 2 === 0 ? 'from-indigo-500 to-purple-600' : 'from-pink-500 to-rose-600'} opacity-80`} />
+                                    </div>
+                                ))}
+                                <div className="w-12 h-12 rounded-full border-4 border-[#0a0b14] bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white z-10">
+                                    +12k
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex gap-1 text-amber-400 mb-1">
+                                    {[1, 2, 3, 4, 5].map(i => <FiStar key={i} className="fill-current w-3 h-3" />)}
+                                </div>
+                                <div className="text-sm font-medium text-slate-500">
+                                    Trusted by <span className="text-white">12,000+</span> teams globally
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
 
