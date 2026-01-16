@@ -686,146 +686,102 @@ export default function LandingPage() {
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                     <div className="relative">
-                        {/* Floating Accent Elements */}
-                        <div className="absolute -top-20 -left-10 pointer-events-none">
-                            <motion.div
-                                className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 blur-2xl"
-                                animate={{
-                                    scale: [1, 1.3, 1],
-                                    opacity: [0.3, 0.6, 0.3],
-                                    x: [0, 20, 0],
-                                    y: [0, -15, 0]
-                                }}
-                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                            />
-                        </div>
-                        <div className="absolute top-40 -left-20 pointer-events-none">
-                            <motion.div
-                                className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500/25 to-rose-500/25 blur-xl"
-                                animate={{
-                                    scale: [1, 1.2, 1],
-                                    opacity: [0.2, 0.5, 0.2],
-                                    rotate: [0, 180, 360]
-                                }}
-                                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                            />
-                        </div>
+                        {/* Floating decorative elements */}
+                        <motion.div
+                            className="absolute -left-20 top-10 w-72 h-72 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-3xl"
+                            animate={{
+                                scale: [1, 1.2, 1],
+                                opacity: [0.3, 0.5, 0.3],
+                            }}
+                            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                        />
 
-                        {/* Animated Badge */}
+                        {/* Enterprise Badge */}
                         <motion.div
                             initial={{ opacity: 0, y: 20, scale: 0.9 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                            className="inline-flex items-center gap-2 mb-6"
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-sm mb-6"
                         >
                             <motion.div
-                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
-                                whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.3)' }}
-                            >
-                                <motion.div
-                                    className="w-2 h-2 rounded-full bg-emerald-400"
-                                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
-                                    transition={{ duration: 1.5, repeat: Infinity }}
-                                />
-                                <span className="text-sm font-medium text-slate-300">2,400+ teams synced</span>
-                                <div className="flex -space-x-2 ml-2">
-                                    {[...Array(4)].map((_, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, x: -10 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: 0.3 + i * 0.1 }}
-                                            className="w-6 h-6 rounded-full border-2 border-[#0a0b14] bg-gradient-to-br from-indigo-400 to-purple-500"
-                                            style={{ zIndex: 4 - i }}
-                                        />
-                                    ))}
-                                </div>
-                            </motion.div>
+                                className="w-2 h-2 rounded-full bg-indigo-400"
+                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
+                            <span className="text-sm font-semibold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                Enterprise-Grade Team Operating System
+                            </span>
                         </motion.div>
 
-                        {/* Main Headline with Staggered Animation */}
-                        <div className="relative mb-8">
-                            <motion.div
+                        {/* Main Headline with word-by-word reveal */}
+                        <div className="mb-6">
+                            <motion.h1
+                                className="text-6xl md:text-8xl font-black tracking-tight leading-none"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ duration: 0.5 }}
-                                className="text-6xl md:text-8xl font-black tracking-tight leading-[0.9]"
+                                transition={{ duration: 0.3, delay: 0.4 }}
                             >
-                                {['Sync', 'your'].map((word, i) => (
+                                {["One", "platform.", "Infinite", "teams."].map((word, i) => (
                                     <motion.span
-                                        key={word}
-                                        initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
-                                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                        transition={{ duration: 0.7, delay: 0.2 + i * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                        className="inline-block mr-[0.3em]"
+                                        key={i}
+                                        className={i >= 2 ? "block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400" : "block"}
+                                        initial={{ opacity: 0, y: 20, rotateX: -90 }}
+                                        animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                                        transition={{
+                                            duration: 0.8,
+                                            delay: 0.5 + (i * 0.15),
+                                            type: "spring",
+                                            stiffness: 100
+                                        }}
                                     >
                                         {word}
                                     </motion.span>
                                 ))}
-                                <br />
-                                <motion.span
-                                    initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
-                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                    transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                    className="relative inline-block"
-                                >
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient bg-[length:200%_auto]">
-                                        team brain.
-                                    </span>
-                                    {/* Underline accent */}
-                                    <motion.div
-                                        initial={{ scaleX: 0 }}
-                                        animate={{ scaleX: 1 }}
-                                        transition={{ duration: 0.8, delay: 1.0, ease: [0.25, 0.46, 0.45, 0.94] }}
-                                        className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full origin-left"
-                                    />
-                                    {/* Floating sparkle */}
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0 }}
-                                        animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5], rotate: [0, 180, 360] }}
-                                        transition={{ duration: 2, delay: 1.2, repeat: Infinity, repeatDelay: 3 }}
-                                        className="absolute -top-4 -right-8"
-                                    >
-                                        <FiStar className="w-6 h-6 text-amber-400" />
-                                    </motion.div>
-                                </motion.span>
-                            </motion.div>
+                            </motion.h1>
                         </div>
 
-                        {/* Animated Description */}
+                        {/* Enhanced Description */}
                         <motion.p
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.7 }}
-                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-10"
+                            transition={{ duration: 0.8, delay: 1.1 }}
+                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-8"
                         >
-                            The operating system for agile teams.
-                            <motion.span
-                                className="text-white font-medium"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 1.2 }}
-                            > Async standups</motion.span>,
-                            <motion.span
-                                className="text-white font-medium"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 1.4 }}
-                            > planning</motion.span>, and
-                            <motion.span
-                                className="text-white font-medium"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 1.6 }}
-                            > knowledge</motion.span> living in perfect harmony.
+                            Orchestrate entire companies with multiple teams. From async standups to sprint planning—all in one unified workspace.
                         </motion.p>
 
-                        {/* Enhanced CTA Buttons */}
+                        {/* Feature Pills */}
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
+                            className="flex flex-wrap gap-3 mb-10"
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.9 }}
-                            className="flex flex-wrap gap-4 mb-12"
+                            transition={{ duration: 0.6, delay: 1.3 }}
+                        >
+                            {[
+                                { icon: FiUsers, text: "Multi-Company", color: "from-blue-500 to-cyan-500" },
+                                { icon: FiLayers, text: "Unlimited Teams", color: "from-purple-500 to-pink-500" },
+                                { icon: FiZap, text: "Real-time Sync", color: "from-amber-500 to-orange-500" }
+                            ].map((feature, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.5, delay: 1.4 + (i * 0.1) }}
+                                    whileHover={{ scale: 1.05, y: -2 }}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${feature.color} bg-opacity-10 border border-white/10 backdrop-blur-sm`}
+                                >
+                                    <feature.icon className="w-4 h-4 text-white" />
+                                    <span className="text-sm font-medium text-white">{feature.text}</span>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+
+                        {/* CTA Buttons with enhanced effects */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 1.7 }}
+                            className="flex flex-wrap gap-4 mb-10"
                         >
                             <motion.button
                                 onClick={() => navigate('/signup')}
@@ -834,64 +790,59 @@ export default function LandingPage() {
                                 whileTap={{ scale: 0.98 }}
                             >
                                 <motion.div
-                                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
-                                    initial={{ x: '-100%' }}
-                                    whileHover={{ x: '0%' }}
-                                    transition={{ duration: 0.4 }}
+                                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500"
+                                    initial={{ x: "-100%" }}
+                                    whileHover={{ x: 0 }}
+                                    transition={{ duration: 0.3 }}
                                 />
-                                <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors">
-                                    Start Free
-                                    <motion.span
+                                <span className="relative flex items-center gap-2 group-hover:text-white transition-colors">
+                                    Start Free Trial
+                                    <motion.div
                                         animate={{ x: [0, 5, 0] }}
                                         transition={{ duration: 1.5, repeat: Infinity }}
                                     >
                                         <FiArrowRight />
-                                    </motion.span>
+                                    </motion.div>
                                 </span>
                             </motion.button>
+
                             <motion.button
-                                className="relative px-8 py-4 rounded-full font-bold text-lg border border-white/20 overflow-hidden group"
-                                whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.4)' }}
+                                className="px-8 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 backdrop-blur-sm transition-all"
+                                whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,0.2)" }}
                                 whileTap={{ scale: 0.98 }}
                             >
-                                <motion.div
-                                    className="absolute inset-0 bg-white/10"
-                                    initial={{ opacity: 0 }}
-                                    whileHover={{ opacity: 1 }}
-                                />
-                                <span className="relative z-10 flex items-center gap-2">
-                                    <motion.span
-                                        animate={{ scale: [1, 1.2, 1] }}
-                                        transition={{ duration: 2, repeat: Infinity }}
-                                        className="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400"
-                                    />
-                                    Watch Demo
-                                </span>
+                                See Demo
                             </motion.button>
                         </motion.div>
 
-                        {/* Trust Indicators */}
+                        {/* Animated Stats Counter */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 1.1 }}
-                            className="flex flex-wrap items-center gap-6 text-sm text-slate-500"
+                            transition={{ duration: 0.8, delay: 1.9 }}
+                            className="flex items-center gap-8 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm"
                         >
                             {[
-                                { icon: FiCheck, text: 'No credit card' },
-                                { icon: FiZap, text: '2 min setup' },
-                                { icon: FiShield, text: 'Enterprise secure' }
-                            ].map((item, i) => (
+                                { value: "500+", label: "Companies" },
+                                { value: "5K+", label: "Teams" },
+                                { value: "50K+", label: "Users" }
+                            ].map((stat, i) => (
                                 <motion.div
                                     key={i}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 1.2 + i * 0.1 }}
-                                    className="flex items-center gap-2"
-                                    whileHover={{ color: '#fff', x: 3 }}
+                                    className="flex flex-col"
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.5, delay: 2.0 + (i * 0.1) }}
                                 >
-                                    <item.icon className="w-4 h-4 text-indigo-400" />
-                                    <span>{item.text}</span>
+                                    <motion.div
+                                        className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.5, delay: 2.1 + (i * 0.1) }}
+                                    >
+                                        {stat.value}
+                                    </motion.div>
+                                    <div className="text-xs text-slate-500 font-medium">{stat.label}</div>
                                 </motion.div>
                             ))}
                         </motion.div>
