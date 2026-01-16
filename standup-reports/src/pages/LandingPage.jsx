@@ -686,85 +686,214 @@ export default function LandingPage() {
             <header className="relative z-10 pt-48 pb-32 px-6">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                     <div className="relative">
-                        {/* New Version Badge */}
+                        {/* Floating Accent Elements */}
+                        <div className="absolute -top-20 -left-10 pointer-events-none">
+                            <motion.div
+                                className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500/30 to-purple-500/30 blur-2xl"
+                                animate={{
+                                    scale: [1, 1.3, 1],
+                                    opacity: [0.3, 0.6, 0.3],
+                                    x: [0, 20, 0],
+                                    y: [0, -15, 0]
+                                }}
+                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                        </div>
+                        <div className="absolute top-40 -left-20 pointer-events-none">
+                            <motion.div
+                                className="w-24 h-24 rounded-full bg-gradient-to-br from-pink-500/25 to-rose-500/25 blur-xl"
+                                animate={{
+                                    scale: [1, 1.2, 1],
+                                    opacity: [0.2, 0.5, 0.2],
+                                    rotate: [0, 180, 360]
+                                }}
+                                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                            />
+                        </div>
+
+                        {/* Animated Badge */}
                         <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm"
+                            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.6, delay: 0.1 }}
+                            className="inline-flex items-center gap-2 mb-6"
                         >
-                            <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                            <span className="text-xs font-bold tracking-widest text-indigo-400 uppercase">Version 2.0 is live</span>
+                            <motion.div
+                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
+                                whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.3)' }}
+                            >
+                                <motion.div
+                                    className="w-2 h-2 rounded-full bg-emerald-400"
+                                    animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                                <span className="text-sm font-medium text-slate-300">2,400+ teams synced</span>
+                                <div className="flex -space-x-2 ml-2">
+                                    {[...Array(4)].map((_, i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.3 + i * 0.1 }}
+                                            className="w-6 h-6 rounded-full border-2 border-[#0a0b14] bg-gradient-to-br from-indigo-400 to-purple-500"
+                                            style={{ zIndex: 4 - i }}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
                         </motion.div>
 
-                        <motion.h1
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.9] mb-10"
-                        >
-                            Sync your <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient pb-2">
-                                team brain.
-                            </span>
-                        </motion.h1>
+                        {/* Main Headline with Staggered Animation */}
+                        <div className="relative mb-8">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="text-6xl md:text-8xl font-black tracking-tight leading-[0.9]"
+                            >
+                                {['Sync', 'your'].map((word, i) => (
+                                    <motion.span
+                                        key={word}
+                                        initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
+                                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                        transition={{ duration: 0.7, delay: 0.2 + i * 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                        className="inline-block mr-[0.3em]"
+                                    >
+                                        {word}
+                                    </motion.span>
+                                ))}
+                                <br />
+                                <motion.span
+                                    initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
+                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                    transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                    className="relative inline-block"
+                                >
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-gradient bg-[length:200%_auto]">
+                                        team brain.
+                                    </span>
+                                    {/* Underline accent */}
+                                    <motion.div
+                                        initial={{ scaleX: 0 }}
+                                        animate={{ scaleX: 1 }}
+                                        transition={{ duration: 0.8, delay: 1.0, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                        className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full origin-left"
+                                    />
+                                    {/* Floating sparkle */}
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0 }}
+                                        animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5], rotate: [0, 180, 360] }}
+                                        transition={{ duration: 2, delay: 1.2, repeat: Infinity, repeatDelay: 3 }}
+                                        className="absolute -top-4 -right-8"
+                                    >
+                                        <FiStar className="w-6 h-6 text-amber-400" />
+                                    </motion.div>
+                                </motion.span>
+                            </motion.div>
+                        </div>
 
+                        {/* Animated Description */}
                         <motion.p
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.1 }}
-                            className="text-xl md:text-2xl text-slate-400 max-w-xl leading-relaxed mb-12"
+                            transition={{ duration: 0.8, delay: 0.7 }}
+                            className="text-xl md:text-2xl text-slate-400 max-w-lg leading-relaxed mb-10"
                         >
-                            The decentralized operating system for modern agile teams.
-                            Async standups, deep-work planning, and shared knowledge in one unified universe.
+                            The operating system for agile teams.
+                            <motion.span
+                                className="text-white font-medium"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.2 }}
+                            > Async standups</motion.span>,
+                            <motion.span
+                                className="text-white font-medium"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.4 }}
+                            > planning</motion.span>, and
+                            <motion.span
+                                className="text-white font-medium"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 1.6 }}
+                            > knowledge</motion.span> living in perfect harmony.
                         </motion.p>
 
+                        {/* Enhanced CTA Buttons */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
-                            className="flex flex-wrap gap-5 mb-16"
+                            transition={{ duration: 0.8, delay: 0.9 }}
+                            className="flex flex-wrap gap-4 mb-12"
                         >
-                            <button
+                            <motion.button
                                 onClick={() => navigate('/signup')}
-                                className="group px-8 py-5 bg-white text-black rounded-2xl font-black text-xl hover:scale-105 transition-all flex items-center gap-3 shadow-[0_20px_50px_rgba(255,255,255,0.1)] relative overflow-hidden"
+                                className="group relative px-8 py-4 bg-white text-black rounded-full font-bold text-lg overflow-hidden"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.98 }}
                             >
-                                <span className="relative z-10">Start for Free</span>
-                                <FiArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" />
-                                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-                            </button>
-
-                            <button className="px-8 py-5 bg-white/5 border border-white/10 rounded-2xl font-bold text-xl hover:bg-white/10 transition-all backdrop-blur-md flex items-center gap-2 group">
-                                <FiZap className="text-amber-400 group-hover:scale-110 transition-transform" />
-                                See the Magic
-                            </button>
+                                <motion.div
+                                    className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"
+                                    initial={{ x: '-100%' }}
+                                    whileHover={{ x: '0%' }}
+                                    transition={{ duration: 0.4 }}
+                                />
+                                <span className="relative z-10 flex items-center gap-2 group-hover:text-white transition-colors">
+                                    Start Free
+                                    <motion.span
+                                        animate={{ x: [0, 5, 0] }}
+                                        transition={{ duration: 1.5, repeat: Infinity }}
+                                    >
+                                        <FiArrowRight />
+                                    </motion.span>
+                                </span>
+                            </motion.button>
+                            <motion.button
+                                className="relative px-8 py-4 rounded-full font-bold text-lg border border-white/20 overflow-hidden group"
+                                whileHover={{ scale: 1.05, borderColor: 'rgba(255,255,255,0.4)' }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <motion.div
+                                    className="absolute inset-0 bg-white/10"
+                                    initial={{ opacity: 0 }}
+                                    whileHover={{ opacity: 1 }}
+                                />
+                                <span className="relative z-10 flex items-center gap-2">
+                                    <motion.span
+                                        animate={{ scale: [1, 1.2, 1] }}
+                                        transition={{ duration: 2, repeat: Infinity }}
+                                        className="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400"
+                                    />
+                                    Watch Demo
+                                </span>
+                            </motion.button>
                         </motion.div>
 
-                        {/* Trusted by / Social Proof */}
+                        {/* Trust Indicators */}
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 1, duration: 1 }}
-                            className="flex items-center gap-6"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 1.1 }}
+                            className="flex flex-wrap items-center gap-6 text-sm text-slate-500"
                         >
-                            <div className="flex -space-x-4">
-                                {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className={`w-12 h-12 rounded-full border-4 border-[#0a0b14] bg-slate-800 flex items-center justify-center overflow-hidden`}>
-                                        <div className={`w-full h-full bg-gradient-to-br ${i % 2 === 0 ? 'from-indigo-500 to-purple-600' : 'from-pink-500 to-rose-600'} opacity-80`} />
-                                    </div>
-                                ))}
-                                <div className="w-12 h-12 rounded-full border-4 border-[#0a0b14] bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white z-10">
-                                    +12k
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex gap-1 text-amber-400 mb-1">
-                                    {[1, 2, 3, 4, 5].map(i => <FiStar key={i} className="fill-current w-3 h-3" />)}
-                                </div>
-                                <div className="text-sm font-medium text-slate-500">
-                                    Trusted by <span className="text-white">12,000+</span> teams globally
-                                </div>
-                            </div>
+                            {[
+                                { icon: FiCheck, text: 'No credit card' },
+                                { icon: FiZap, text: '2 min setup' },
+                                { icon: FiShield, text: 'Enterprise secure' }
+                            ].map((item, i) => (
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 1.2 + i * 0.1 }}
+                                    className="flex items-center gap-2"
+                                    whileHover={{ color: '#fff', x: 3 }}
+                                >
+                                    <item.icon className="w-4 h-4 text-indigo-400" />
+                                    <span>{item.text}</span>
+                                </motion.div>
+                            ))}
                         </motion.div>
                     </div>
 
