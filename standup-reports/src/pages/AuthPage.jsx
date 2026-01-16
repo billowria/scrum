@@ -396,7 +396,7 @@ export default function AuthPage({ mode = "login" }) {
   const activeModule = APP_MODULES.find(m => m.id === activeTab);
 
   return (
-    <div className="auth-page" style={{ backgroundColor: '#0a0b14' }}>
+    <div className="auth-page" style={{ backgroundColor: 'transparent' }}>
 
       <canvas ref={confettiCanvasRef} className="confetti-canvas" />
 
@@ -405,8 +405,7 @@ export default function AuthPage({ mode = "login" }) {
       {/* Full page animated background handled by PublicLayout */}
 
       <div
-        className="auth-container bg-transparent"
-        style={{ background: 'transparent', backgroundColor: 'transparent' }}
+        className="auth-container"
       >
 
         {/* === LEFT PANEL: PRODUCT OS === */}
@@ -865,7 +864,7 @@ export default function AuthPage({ mode = "login" }) {
           min-height: 100vh;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           overflow: hidden;
-          background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+          background: transparent;
         }
 
         .confetti-canvas {
