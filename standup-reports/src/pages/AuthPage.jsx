@@ -405,7 +405,8 @@ export default function AuthPage({ mode = "login" }) {
       {/* Full page animated background handled by PublicLayout */}
 
       <div
-        className="auth-container"
+        className="auth-container bg-transparent"
+        style={{ background: 'transparent', backgroundColor: 'transparent' }}
       >
 
         {/* === LEFT PANEL: PRODUCT OS === */}

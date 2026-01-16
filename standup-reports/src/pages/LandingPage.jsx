@@ -663,7 +663,7 @@ export default function LandingPage() {
     const activeModule = APP_MODULES.find(m => m.id === activeTab);
 
     return (
-        <div className="min-h-screen bg-[#0a0b14] text-white selection:bg-indigo-500/30 overflow-x-hidden scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+        <div className="min-h-screen bg-transparent text-white selection:bg-indigo-500/30 overflow-x-hidden scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
             {/* Ambient Background (Exact Match to AuthPage) */}
             {/* Ambient Background handled by PublicLayout */}
 
