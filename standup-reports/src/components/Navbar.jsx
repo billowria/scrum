@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiSun, FiMenu, FiMoon, FiCpu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight, FiGlobe } from 'react-icons/fi';
+import { FiUser, FiChevronDown, FiLogOut, FiShield, FiBell, FiSettings, FiZap, FiSun, FiMenu, FiMoon, FiCpu, FiX, FiSidebar, FiLayout, FiEyeOff, FiChevronLeft, FiChevronRight, FiGlobe, FiStar } from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
-import squadsyncLogo from '../assets/brand/squadsync-logo.png';
 import CompactThemeToggle from './CompactThemeToggle';
+import AnimatedSyncLogo from './shared/AnimatedSyncLogo';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -129,22 +129,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
         {/* Brand - Absolutely Centered */}
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer group/brand z-10" onClick={() => window.location.href = '/'}>
-          <div className="flex items-center gap-3">
-            {/* Unique Animated Icon - "Double Arrow Sync" */}
-
-
-            {/* Brand Name replaced with Logo */}
-            <div className="relative hidden md:block">
-              <motion.img
-                src={squadsyncLogo}
-                alt="SquadSync Logo"
-                className="h-20 w-auto object-contain"
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </div>
+          <AnimatedSyncLogo size="md" showText={true} />
         </div>
 
         {/* Right Side - Actions & User */}
@@ -230,25 +215,36 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
                   <div className="px-4 py-3 border-b border-slate-100/50 dark:border-white/5">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-bold text-slate-500 dark:text-gray-400 tracking-wider uppercase">Appearance</span>
+                      <span className="text-[10px] font-black text-slate-500 dark:text-gray-400 tracking-[0.1em] uppercase">Appearance</span>
                     </div>
-                    <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200/50 dark:border-white/5 relative">
+                    <div className="grid grid-cols-2 gap-2">
                       {[
-                        { id: 'light', icon: <FiSun size={14} />, label: 'Light' },
-                        { id: 'dark', icon: <FiMoon size={14} />, label: 'Dark' },
-                        { id: 'space', icon: <FiGlobe size={14} />, label: 'Space' },
-                        { id: 'system', icon: <FiCpu size={14} />, label: 'Auto' }
+                        { id: 'light', icon: <FiSun size={14} />, label: 'Solaris', color: 'text-amber-500' },
+                        { id: 'dark', icon: <FiMoon size={14} />, label: 'Obsidian', color: 'text-indigo-400' },
+                        { id: 'space', icon: <FiStar size={14} />, label: 'Nebula', color: 'text-purple-400' },
+                        { id: 'system', icon: <FiZap size={14} />, label: 'Neural', color: 'text-emerald-400' }
                       ].map((mode) => (
                         <button
                           key={mode.id}
                           onClick={() => setThemeMode(mode.id)}
-                          className={`relative flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold z-10 transition-all duration-300 ${themeMode === mode.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'}`}
+                          className={`relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all duration-300 border ${themeMode === mode.id
+                            ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 shadow-sm'
+                            : 'bg-slate-100/50 dark:bg-slate-800/30 border-transparent hover:border-slate-200 dark:hover:border-white/5'
+                            }`}
                         >
+                          <span className={`relative z-10 ${themeMode === mode.id ? mode.color : 'text-slate-400 dark:text-slate-500'}`}>
+                            {mode.icon}
+                          </span>
+                          <span className={`relative z-10 ${themeMode === mode.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                            {mode.label}
+                          </span>
                           {themeMode === mode.id && (
-                            <motion.div layoutId="activeTheme" className="absolute inset-0 bg-white dark:bg-slate-700 shadow-sm rounded-lg" transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+                            <motion.div
+                              layoutId="activeThemeDropdown"
+                              className="absolute inset-0 border-2 border-indigo-500/20 dark:border-indigo-400/20 rounded-xl"
+                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            />
                           )}
-                          <span className="relative z-10">{mode.icon}</span>
-                          <span className="relative z-10">{mode.label}</span>
                         </button>
                       ))}
                     </div>

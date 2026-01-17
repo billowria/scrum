@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../supabaseClient';
 import { notesService } from '../../services/notesService';
+import { useTheme } from '../../context/ThemeContext';
 
 // Icons
-import { FiShare2, FiX, FiUsers, FiMail, FiShield, FiClock, FiEdit, FiEye, FiUserPlus, FiSearch, FiCheck, FiUser } from 'react-icons/fi';
+import { FiShare2, FiX, FiUsers, FiShield, FiClock, FiEdit, FiEye, FiSearch, FiUser, FiCheck, FiLink } from 'react-icons/fi';
 
 const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
+  const { themeMode } = useTheme();
   const [teamMembers, setTeamMembers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [permission, setPermission] = useState('read');
@@ -14,6 +16,60 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [shareHistory, setShareHistory] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  // Theme classes
+  const getThemeClasses = () => {
+    switch (themeMode) {
+      case 'light':
+        return {
+          bg: 'bg-white',
+          bgSecondary: 'bg-slate-50',
+          bgHover: 'hover:bg-slate-100',
+          border: 'border-slate-200',
+          text: 'text-slate-900',
+          textSecondary: 'text-slate-600',
+          textMuted: 'text-slate-400',
+          input: 'bg-white border-slate-300 focus:ring-indigo-500 focus:border-indigo-500',
+          cardHover: 'hover:border-slate-300 hover:bg-slate-50',
+          accent: 'indigo',
+          gradient: 'from-indigo-500 to-purple-600',
+          gradientBg: 'from-indigo-50 to-purple-50',
+        };
+      case 'space':
+        return {
+          bg: 'bg-slate-900',
+          bgSecondary: 'bg-slate-800/50',
+          bgHover: 'hover:bg-slate-800',
+          border: 'border-white/10',
+          text: 'text-white',
+          textSecondary: 'text-slate-300',
+          textMuted: 'text-slate-500',
+          input: 'bg-slate-800 border-white/10 focus:ring-purple-500 focus:border-purple-500 text-white placeholder:text-slate-500',
+          cardHover: 'hover:border-purple-500/30 hover:bg-slate-800',
+          accent: 'purple',
+          gradient: 'from-purple-500 to-fuchsia-600',
+          gradientBg: 'from-purple-900/30 to-fuchsia-900/30',
+        };
+      default: // dark
+        return {
+          bg: 'bg-slate-900',
+          bgSecondary: 'bg-slate-800/50',
+          bgHover: 'hover:bg-slate-800',
+          border: 'border-slate-700',
+          text: 'text-white',
+          textSecondary: 'text-slate-300',
+          textMuted: 'text-slate-500',
+          input: 'bg-slate-800 border-slate-700 focus:ring-indigo-500 focus:border-indigo-500 text-white placeholder:text-slate-500',
+          cardHover: 'hover:border-indigo-500/30 hover:bg-slate-800',
+          accent: 'indigo',
+          gradient: 'from-indigo-500 to-purple-600',
+          gradientBg: 'from-indigo-900/30 to-purple-900/30',
+        };
+    }
+  };
+
+  const theme = getThemeClasses();
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -26,7 +82,7 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
         }
       }
     };
-    
+
     if (isOpen) {
       getCurrentUser();
     }
@@ -69,22 +125,16 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
     setLoading(true);
     try {
       const results = await notesService.shareNote(note.id, selectedUsers, permission);
-      
-      // Show success for successful shares
+
       const successful = results.filter(r => r.success);
       const failed = results.filter(r => !r.success);
 
       if (successful.length > 0) {
         onShareSuccess?.(successful);
-        
-        // Reload share history
         await loadShareHistory(note.id);
-        
-        // Reset form
         setSelectedUsers([]);
         setSearchQuery('');
-        
-        // Close modal if all shares were successful
+
         if (failed.length === 0) {
           setTimeout(() => onClose(), 1000);
         }
@@ -116,73 +166,110 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
     }
   };
 
+  const copyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/notes/${note.id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
-          initial={{ scale: 0.9, y: 20 }}
+          className={`${theme.bg} rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border ${theme.border}`}
+          initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
+          exit={{ scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+          <div className={`p-6 border-b ${theme.border} bg-gradient-to-r ${theme.gradientBg}`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg">
-                  <FiShare2 className="w-5 h-5" />
+              <div className="flex items-center gap-4">
+                <div className={`p-3 bg-gradient-to-br ${theme.gradient} rounded-2xl text-white shadow-lg`}>
+                  <FiShare2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Share Note</h2>
-                  <p className="text-sm text-gray-600">{note?.title || 'Untitled Note'}</p>
+                  <h2 className={`text-xl font-bold ${theme.text}`}>Share Note</h2>
+                  <p className={`text-sm ${theme.textSecondary} truncate max-w-xs`}>
+                    {note?.title || 'Untitled Note'}
+                  </p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className={`p-2.5 rounded-xl ${theme.bgHover} transition-colors`}
               >
-                <FiX className="w-5 h-5 text-gray-500" />
+                <FiX className={`w-5 h-5 ${theme.textMuted}`} />
               </button>
             </div>
           </div>
 
-          <div className="p-6 max-h-[60vh] overflow-y-auto">
+          <div className="p-6 max-h-[55vh] overflow-y-auto custom-scrollbar">
+            {/* Copy Link Section */}
+            <div className={`mb-6 p-4 rounded-2xl ${theme.bgSecondary} border ${theme.border}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-${theme.accent}-500/10`}>
+                    <FiLink className={`w-4 h-4 text-${theme.accent}-500`} />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${theme.text}`}>Share via link</p>
+                    <p className={`text-xs ${theme.textMuted}`}>Anyone with the link can view</p>
+                  </div>
+                </div>
+                <button
+                  onClick={copyLink}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${copied
+                      ? 'bg-emerald-500 text-white'
+                      : `${theme.bgHover} ${theme.text} border ${theme.border}`
+                    }`}
+                >
+                  {copied ? (
+                    <span className="flex items-center gap-2">
+                      <FiCheck className="w-4 h-4" />
+                      Copied!
+                    </span>
+                  ) : (
+                    'Copy Link'
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Permission Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                <FiShield className="inline w-4 h-4 mr-2" />
+              <label className={`block text-sm font-medium ${theme.textSecondary} mb-3 flex items-center gap-2`}>
+                <FiShield className="w-4 h-4" />
                 Default Permission
               </label>
               <div className="flex gap-3">
                 <button
                   onClick={() => setPermission('read')}
-                  className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                    permission === 'read'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${permission === 'read'
+                      ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
+                      : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
+                    }`}
                 >
-                  <FiEye className="w-4 h-4" />
+                  <FiEye className="w-5 h-5" />
                   <span className="font-medium">Can View</span>
                 </button>
                 <button
                   onClick={() => setPermission('edit')}
-                  className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                    permission === 'edit'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${permission === 'edit'
+                      ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
+                      : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
+                    }`}
                 >
-                  <FiEdit className="w-4 h-4" />
+                  <FiEdit className="w-5 h-5" />
                   <span className="font-medium">Can Edit</span>
                 </button>
               </div>
@@ -191,63 +278,70 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
             {/* Search */}
             <div className="mb-4">
               <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <FiSearch className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${theme.textMuted} w-4 h-4`} />
                 <input
                   type="text"
                   placeholder="Search team members..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:outline-none transition-all ${theme.input}`}
                 />
               </div>
             </div>
 
             {/* Team Members */}
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
-                <FiUsers className="inline w-4 h-4 mr-2" />
+              <h3 className={`text-sm font-medium ${theme.textSecondary} mb-3 flex items-center gap-2`}>
+                <FiUsers className="w-4 h-4" />
                 Team Members
+                {selectedUsers.length > 0 && (
+                  <span className={`ml-auto px-2 py-0.5 rounded-full text-xs font-semibold bg-${theme.accent}-500 text-white`}>
+                    {selectedUsers.length} selected
+                  </span>
+                )}
               </h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                 {filteredMembers.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">
-                    {searchQuery ? 'No members found' : 'No team members available'}
-                  </p>
+                  <div className={`text-center py-8 ${theme.textMuted}`}>
+                    <FiUsers className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">{searchQuery ? 'No members found' : 'No team members available'}</p>
+                  </div>
                 ) : (
                   filteredMembers.map(member => (
                     <motion.div
                       key={member.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                        selectedUsers.includes(member.id)
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${selectedUsers.includes(member.id)
+                          ? `border-${theme.accent}-500 bg-${theme.accent}-500/10`
+                          : `${theme.border} ${theme.cardHover}`
+                        }`}
                       onClick={() => handleUserToggle(member.id)}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(member.id)}
-                        onChange={() => handleUserToggle(member.id)}
-                        className="mr-3 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                      />
+                      <div className={`w-5 h-5 rounded-md border-2 mr-3 flex items-center justify-center transition-all ${selectedUsers.includes(member.id)
+                          ? `border-${theme.accent}-500 bg-${theme.accent}-500`
+                          : `${theme.border}`
+                        }`}>
+                        {selectedUsers.includes(member.id) && (
+                          <FiCheck className="w-3 h-3 text-white" />
+                        )}
+                      </div>
                       {member.avatar_url ? (
                         <img
                           src={member.avatar_url}
                           alt={member.name}
-                          className="w-8 h-8 rounded-full mr-3"
+                          className="w-10 h-10 rounded-xl mr-3 object-cover"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                          <FiUser className="w-4 h-4 text-gray-600" />
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center mr-3`}>
+                          <span className="text-white font-bold">{member.name?.[0]}</span>
                         </div>
                       )}
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{member.name}</p>
-                        <p className="text-sm text-gray-500">{member.email}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium ${theme.text} truncate`}>{member.name}</p>
+                        <p className={`text-sm ${theme.textMuted} truncate`}>{member.email}</p>
                       </div>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                      <span className={`text-xs px-2 py-1 rounded-lg ${theme.bgSecondary} ${theme.textMuted} capitalize`}>
                         {member.role}
                       </span>
                     </motion.div>
@@ -258,34 +352,34 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
 
             {/* Share History */}
             {shareHistory.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  <FiClock className="inline w-4 h-4 mr-2" />
+              <div>
+                <h3 className={`text-sm font-medium ${theme.textSecondary} mb-3 flex items-center gap-2`}>
+                  <FiClock className="w-4 h-4" />
                   Already Shared With
                 </h3>
                 <div className="space-y-2">
                   {shareHistory.map(share => (
                     <motion.div
                       key={share.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex items-center justify-between p-3 rounded-xl ${theme.bgSecondary} border ${theme.border}`}
                     >
                       <div className="flex items-center">
                         {share.recipient?.avatar_url ? (
                           <img
                             src={share.recipient.avatar_url}
                             alt={share.recipient.name}
-                            className="w-8 h-8 rounded-full mr-3"
+                            className="w-9 h-9 rounded-xl mr-3 object-cover"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                            <FiUser className="w-4 h-4 text-gray-600" />
+                          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center mr-3`}>
+                            <span className="text-white font-bold text-sm">{share.recipient?.name?.[0]}</span>
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-gray-900">{share.recipient?.name}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className={`font-medium ${theme.text} text-sm`}>{share.recipient?.name}</p>
+                          <p className={`text-xs ${theme.textMuted}`}>
                             Shared {new Date(share.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -294,14 +388,14 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
                         <select
                           value={share.permission}
                           onChange={(e) => handleUpdatePermission(share.id, share.shared_with, e.target.value)}
-                          className="text-xs px-2 py-1 border border-gray-300 rounded"
+                          className={`text-xs px-3 py-1.5 rounded-lg border ${theme.border} ${theme.bg} ${theme.text} focus:outline-none focus:ring-2 focus:ring-${theme.accent}-500`}
                         >
                           <option value="read">Can View</option>
                           <option value="edit">Can Edit</option>
                         </select>
                         <button
                           onClick={() => handleUnshare(share.id, share.shared_with)}
-                          className="text-red-500 hover:text-red-700 p-1"
+                          className={`p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors`}
                         >
                           <FiX className="w-4 h-4" />
                         </button>
@@ -314,24 +408,27 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className={`p-6 border-t ${theme.border} ${theme.bgSecondary}`}>
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+              <div className={`text-sm ${theme.textMuted}`}>
                 {selectedUsers.length > 0 && (
-                  <span>{selectedUsers.length} member{selectedUsers.length > 1 ? 's' : ''} selected</span>
+                  <span className="flex items-center gap-2">
+                    <FiUsers className="w-4 h-4" />
+                    {selectedUsers.length} member{selectedUsers.length > 1 ? 's' : ''} selected
+                  </span>
                 )}
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className={`px-5 py-2.5 ${theme.text} ${theme.bgHover} border ${theme.border} rounded-xl font-medium transition-colors`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleShare}
                   disabled={selectedUsers.length === 0 || loading}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                  className={`px-5 py-2.5 bg-gradient-to-r ${theme.gradient} text-white rounded-xl font-medium hover:shadow-lg hover:shadow-${theme.accent}-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2`}
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

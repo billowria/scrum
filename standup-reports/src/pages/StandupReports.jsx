@@ -633,6 +633,30 @@ export default function StandupReports({ sidebarMode }) {
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-2 relative z-10">
+                        {/* View Mode Toggle */}
+                        <div className="flex bg-white/20 dark:bg-slate-800/50 p-1 rounded-xl border border-white/20 dark:border-slate-700/50">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'list'
+                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                    }`}
+                                title="List View"
+                            >
+                                List
+                            </button>
+                            <button
+                                onClick={() => setViewMode('carousel')}
+                                className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'carousel'
+                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                    }`}
+                                title="Carousel View"
+                            >
+                                Carousel
+                            </button>
+                        </div>
+
                         {/* Refresh */}
                         <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -769,8 +793,159 @@ export default function StandupReports({ sidebarMode }) {
                                 It seems quiet here. {reportsViewMode === 'today' ? "Wait for the team to submit their updates." : "Try adjusting your filters."}
                             </p>
                         </div>
+                    ) : viewMode === 'carousel' ? (
+                        /* Carousel View */
+                        <div className="relative">
+                            {/* Navigation Buttons */}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={prevReport}
+                                    disabled={currentReportIndex === 0}
+                                    className={`p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-lg border border-white/50 dark:border-slate-700/50 ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'
+                                        }`}
+                                >
+                                    <FiChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                </motion.button>
+                            </div>
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={nextReport}
+                                    disabled={currentReportIndex === filteredReports.length - 1}
+                                    className={`p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-lg border border-white/50 dark:border-slate-700/50 ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'
+                                        }`}
+                                >
+                                    <FiChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                </motion.button>
+                            </div>
+
+                            {/* Carousel Content */}
+                            <div className="px-16">
+                                <AnimatePresence mode="wait">
+                                    {filteredReports[currentReportIndex] && (
+                                        <motion.div
+                                            key={filteredReports[currentReportIndex].id}
+                                            initial={{ opacity: 0, x: slideDirection === 'right' ? 100 : -100 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: slideDirection === 'right' ? -100 : 100 }}
+                                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                                            className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl rounded-[2rem] border border-white/50 dark:border-slate-700/50 shadow-xl overflow-hidden"
+                                        >
+                                            {(() => {
+                                                const report = filteredReports[currentReportIndex];
+                                                return (
+                                                    <>
+                                                        {/* Status Strip */}
+                                                        <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${report.blockers ? 'bg-gradient-to-b from-rose-500 to-red-600' :
+                                                            (report.yesterday && report.today) ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
+                                                                'bg-gradient-to-b from-orange-400 to-amber-500'
+                                                            }`} />
+
+                                                        <div className="p-8 pl-10">
+                                                            {/* Card Header */}
+                                                            <div className="flex items-start justify-between mb-8">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="relative">
+                                                                        {report.users?.avatar_url ? (
+                                                                            <img src={report.users.avatar_url} alt={report.users.name} className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+                                                                        ) : (
+                                                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-md border-2 border-white">
+                                                                                {report.users?.name?.[0]}
+                                                                            </div>
+                                                                        )}
+                                                                        {isToday(new Date(report.created_at)) && <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>}
+                                                                    </div>
+                                                                    <div>
+                                                                        <h3 className="font-bold text-gray-900 dark:text-white text-xl">{report.users?.name}</h3>
+                                                                        <div className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                                                                            <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
+                                                                                {report.users?.teams?.name || 'No Team'}
+                                                                            </span>
+                                                                            <span>•</span>
+                                                                            <span className="flex items-center gap-1">
+                                                                                <FiClock className="w-3 h-3" />
+                                                                                {format(new Date(report.created_at), 'h:mm a')}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="text-sm font-mono text-gray-400 dark:text-gray-500">
+                                                                    {currentReportIndex + 1} / {filteredReports.length}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Content Grid */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                {/* Yesterday */}
+                                                                <div className="bg-white/50 dark:bg-slate-700/40 rounded-2xl p-5 border border-white/60 dark:border-slate-600/30">
+                                                                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                                                        Yesterday
+                                                                    </div>
+                                                                    <div className="prose prose-sm prose-indigo dark:prose-invert leading-relaxed text-gray-600 dark:text-gray-300">
+                                                                        <ReportContentParser content={report.yesterday} mode="view" />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Today */}
+                                                                <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-500/20">
+                                                                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                                                        Today
+                                                                    </div>
+                                                                    <div className="prose prose-sm prose-indigo dark:prose-invert leading-relaxed text-gray-700 dark:text-gray-200">
+                                                                        <ReportContentParser content={report.today} mode="view" />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Blockers Row */}
+                                                                {report.blockers && (
+                                                                    <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-5 border border-rose-100/50 dark:border-rose-500/20">
+                                                                        <div className="flex items-center gap-2 mb-3 text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">
+                                                                            <FiAlertCircle className="w-3.5 h-3.5" />
+                                                                            Blockers
+                                                                        </div>
+                                                                        <div className="prose prose-sm prose-rose dark:prose-invert leading-relaxed text-gray-700 dark:text-gray-200">
+                                                                            <ReportContentParser content={report.blockers} mode="view" />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Pagination Dots */}
+                            <div className="flex justify-center gap-2 mt-6">
+                                {filteredReports.slice(0, Math.min(10, filteredReports.length)).map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => {
+                                            setSlideDirection(idx > currentReportIndex ? 'right' : 'left');
+                                            setCurrentReportIndex(idx);
+                                        }}
+                                        className={`w-2 h-2 rounded-full transition-all ${idx === currentReportIndex
+                                                ? 'w-6 bg-indigo-500'
+                                                : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                                            }`}
+                                    />
+                                ))}
+                                {filteredReports.length > 10 && (
+                                    <span className="text-xs text-gray-400 ml-2">+{filteredReports.length - 10}</span>
+                                )}
+                            </div>
+                        </div>
                     ) : (
-                        <div className={`grid grid-cols-1 ${viewMode === 'list' && filteredReports.length > 0 ? 'xl:grid-cols-2' : ''} gap-8`}>
+                        /* List View */
+                        <div className={`grid grid-cols-1 ${filteredReports.length > 0 ? 'xl:grid-cols-2' : ''} gap-8`}>
                             {filteredReports.map((report, index) => (
                                 <motion.div
                                     key={report.id}
@@ -971,7 +1146,7 @@ export default function StandupReports({ sidebarMode }) {
                 onClose={() => setSelectedUserProfileId(null)}
                 userId={selectedUserProfileId}
             />
-        </motion.div>
+        </motion.div >
 
     );
 }

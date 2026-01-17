@@ -7,7 +7,7 @@ import {
 } from "framer-motion";
 import { supabase } from "../supabaseClient";
 import QuantumBackground from '../components/shared/QuantumBackground';
-import squadSyncLogo from '../assets/brand/squadsync-logo.png';
+import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
 import {
   FiMail, FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff, FiGithub, FiCheckCircle,
   FiMessageCircle, FiCheckSquare, FiCalendar, FiLayers, FiEdit3, FiZap, FiSearch,
@@ -423,9 +423,7 @@ export default function AuthPage({ mode = "login" }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="relative flex items-center justify-center">
-                <img src={squadSyncLogo} alt="SquadSync" className="h-24 w-auto" />
-              </div>
+              <AnimatedSyncLogo size="lg" showText={true} />
             </motion.div>
 
             {/* Main Visualization Grid - Shared Element Transition */}

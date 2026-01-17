@@ -1,394 +1,376 @@
-import React, { useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+    FiSave, FiTrash2, FiStar, FiMapPin, FiClock, FiMaximize2, FiMinimize2,
+    FiBold, FiItalic, FiUnderline, FiList, FiCode, FiMinus
+} from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
-import {
-  FiPlus, FiFileText, FiX, FiBold, FiItalic, FiUnderline, FiType, FiAlignLeft,
-  FiCode, FiSave, FiShare2, FiHeart, FiStar, FiTrash2, FiList, FiCheckSquare,
-  FiArrowLeft, FiChevronLeft
-} from 'react-icons/fi';
+import Placeholder from '@tiptap/extension-placeholder';
 
-const NotesEditor = ({
-  selectedNote,
-  openTabs,
-  activeTabId,
-  isDirty,
-  wordWrap,
-  cursorPosition,
-  stats,
-  onTabClose,
-  onNewTab,
-  onTabSwitch,
-  onUpdateNote,
-  onSaveNote,
-  onShareNote,
-  onToggleFavorite,
-  onTogglePin,
-  onDeleteNote,
-  onKeyDown,
-  onCursorMove,
-  onToggleWordWrap,
-  isMobile = false,
-  onBack
-}) => {
+const NotesEditor = ({ note, updateNote, saveNote, isDirty, onDelete, onToggleFavorite, onTogglePin, theme, themeMode }) => {
+    const [isZenMode, setIsZenMode] = useState(false);
+    const [wordCount, setWordCount] = useState(0);
+    const [charCount, setCharCount] = useState(0);
 
-  // Refs to avoid stale closures in Tiptap's stable callbacks
-  const onUpdateNoteRef = useRef(onUpdateNote);
-  const selectedNoteRef = useRef(selectedNote);
-  const onKeyDownRef = useRef(onKeyDown);
+    // Title Editor - simplified, just for single line title
+    const titleEditor = useEditor({
+        extensions: [
+            StarterKit.configure({
+                heading: false,
+                bulletList: false,
+                orderedList: false,
+                blockquote: false,
+                codeBlock: false,
+                horizontalRule: false,
+                hardBreak: false,
+                paragraph: {
+                    HTMLAttributes: {
+                        class: 'm-0 p-0',
+                    },
+                },
+            }),
+            Placeholder.configure({
+                placeholder: 'Untitled',
+                emptyNodeClass: 'is-empty',
+            }),
+        ],
+        content: note.title ? `<p>${note.title}</p>` : '',
+        editorProps: {
+            attributes: {
+                class: `text-3xl md:text-4xl font-bold outline-none leading-tight transition-colors ${themeMode === 'light' ? 'text-slate-900' : 'text-white'}`,
+                style: 'min-height: auto;',
+            },
+            handleKeyDown: (view, event) => {
+                // Prevent Enter in title
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    contentEditor?.chain().focus().run();
+                    return true;
+                }
+                return false;
+            },
+        },
+        onUpdate: ({ editor }) => {
+            const text = editor.getText();
+            updateNote(note.id, { title: text });
+        },
+    });
 
-  // Update refs on every render
-  useEffect(() => {
-    onUpdateNoteRef.current = onUpdateNote;
-    selectedNoteRef.current = selectedNote;
-    onKeyDownRef.current = onKeyDown;
-  });
+    // Content Editor with full features
+    const contentEditor = useEditor({
+        extensions: [
+            StarterKit.configure({
+                heading: {
+                    levels: [1, 2, 3],
+                },
+                bulletList: {
+                    keepMarks: true,
+                    keepAttributes: false,
+                },
+                orderedList: {
+                    keepMarks: true,
+                    keepAttributes: false,
+                },
+                codeBlock: {
+                    HTMLAttributes: {
+                        class: `rounded-lg p-4 my-2 font-mono text-sm ${themeMode === 'light'
+                            ? 'bg-slate-100 text-slate-800'
+                            : 'bg-slate-800 text-slate-200'
+                            }`,
+                    },
+                },
+            }),
+            Underline,
+            Placeholder.configure({
+                placeholder: 'Start writing your thoughts...',
+            }),
+        ],
+        content: note.content || '',
+        editorProps: {
+            attributes: {
+                class: `prose prose-sm md:prose-base max-w-none outline-none min-h-[50vh] [&>p:first-child]:mt-0 ${themeMode === 'light'
+                    ? 'prose-slate'
+                    : 'prose-invert prose-p:text-slate-300 prose-headings:text-white prose-strong:text-white prose-code:text-indigo-300'}`,
+            },
+        },
+        onUpdate: ({ editor }) => {
+            const html = editor.getHTML();
+            const text = editor.getText();
+            updateNote(note.id, { content: html });
 
-  // Initialize editor with stable configuration
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Underline,
-      Placeholder.configure({
-        placeholder: 'Start typing your note...',
-      }),
-    ],
-    content: selectedNote?.content || '',
-    editable: true,
-    onUpdate: ({ editor }) => {
-      // Use ref to call the latest version of the function
-      if (onUpdateNoteRef.current) {
-        onUpdateNoteRef.current('content', editor.getHTML());
-      }
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose prose-blue prose-lg dark:prose-invert max-w-none w-full focus:outline-none min-h-[50vh] p-4 text-gray-800 dark:text-gray-100 leading-relaxed outline-none cursor-text pointer-events-auto',
-      },
-      handleKeyDown: (view, event) => {
-        if (onKeyDownRef.current) {
-          onKeyDownRef.current(event);
+            // Update counts
+            setCharCount(text.length);
+            setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
+        },
+    });
+
+    // Sync editors when note changes
+    useEffect(() => {
+        if (titleEditor && note.title !== titleEditor.getText()) {
+            titleEditor.commands.setContent(note.title ? `<p>${note.title}</p>` : '');
         }
-        // Always return false to let the editor handle the event natively (typing etc)
-        // unless the parent specifically prevented default (which our parent handler mostly doesn't for regular keys)
-        return false;
-      }
-    },
-  }, []);
+    }, [note.id]);
 
-  // Real fix: Sync content ONLY when note ID changes
-  const lastNoteIdRef = useRef(selectedNote?.id);
-  useEffect(() => {
-    if (editor && selectedNote?.id !== lastNoteIdRef.current) {
-      editor.commands.setContent(selectedNote?.content || '');
-      lastNoteIdRef.current = selectedNote?.id;
-      editor.commands.focus('end');
+    useEffect(() => {
+        if (contentEditor && note.content !== contentEditor.getHTML()) {
+            contentEditor.commands.setContent(note.content || '');
+        }
+    }, [note.id]);
+
+    // Update word count on mount
+    useEffect(() => {
+        const text = note.content?.replace(/<[^>]*>/g, '') || '';
+        setCharCount(text.length);
+        setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
+    }, [note.id]);
+
+    // Keyboard shortcut for save
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+                e.preventDefault();
+                saveNote();
+            }
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [saveNote]);
+
+    const accentColor = themeMode === 'space' ? 'purple' : 'indigo';
+
+    if (!titleEditor || !contentEditor) {
+        return (
+            <div className={`flex items-center justify-center h-full ${theme.bg}`}>
+                <div className="animate-pulse text-slate-500">Loading editor...</div>
+            </div>
+        );
     }
-  }, [selectedNote?.id, editor]);
 
-  // Ensure editable
-  useEffect(() => {
-    if (editor && !editor.isEditable) {
-      editor.setEditable(true);
-    }
-  }, [editor]);
-
-
-  // Handle global keyboard shortcuts (outside of editor)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e) => {
-      // Forward save command
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        onSaveNote();
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [onSaveNote]);
-
-
-  if (openTabs.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50/50 dark:bg-slate-900/50 backdrop-blur-sm">
-        <div className="text-center px-6">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 rounded-2xl flex items-center justify-center shadow-lg border border-white/50 dark:border-white/10 backdrop-blur-md">
-              <FiFileText className="w-10 h-10 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Welcome to Sync Notes</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto leading-relaxed">
-              Create beautiful notes with our professional editor.
-            </p>
-            <button
-              onClick={onNewTab}
-              className="group px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transition-all duration-300 flex items-center gap-2 mx-auto font-medium"
-            >
-              <FiPlus className="w-5 h-5" />
-              New Note
-            </button>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex-1 flex flex-col bg-white dark:bg-slate-900 h-full relative overflow-hidden ${isMobile ? 'z-50' : ''}`}>
-      {/* Tab Bar - Hidden on mobile if preferred, or made very compact */}
-      {!isMobile && (
-        <div className="border-b border-gray-100 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
-          <div className="flex items-center">
-            {/* Tabs */}
-            <div className="flex-1 flex items-center overflow-x-auto no-scrollbar">
-              {openTabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  className={`group flex items-center h-10 px-4 border-r border-gray-100 dark:border-slate-700 cursor-pointer transition-all duration-200 relative select-none min-w-[120px] max-w-[200px] ${activeTabId === tab.id
-                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-medium'
-                    : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100/50 dark:hover:bg-slate-700/50 hover:text-gray-700 dark:hover:text-gray-200'
-                    }`}
-                  onClick={() => onTabSwitch(tab)}
-                >
-                  {/* Active Tab Indicator */}
-                  {activeTabId === tab.id && (
-                    <motion.div
-                      layoutId="activeTabIndicator"
-                      className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"
-                    />
-                  )}
-
-                  <FiFileText className={`w-3.5 h-3.5 mr-2 flex-shrink-0 ${activeTabId === tab.id ? 'text-blue-500 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} />
-
-                  <span className="text-xs truncate flex-1 mr-2">
-                    {tab.title || 'Untitled'}
-                  </span>
-
-                  {/* Dirty Indicator */}
-                  <div className={`w-1.5 h-1.5 rounded-full mr-2 transition-all duration-300 ${isDirty && activeTabId === tab.id ? 'opacity-100 bg-amber-500 scale-100' : 'opacity-0 scale-0'}`}></div>
-
-                  {/* Close Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onTabClose(tab.id);
-                    }}
-                    className={`opacity-0 group-hover:opacity-100 p-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 transition-all ${activeTabId === tab.id ? 'opacity-100' : ''}`}
-                  >
-                    <FiX className="w-3 h-3" />
-                  </button>
+        <motion.div
+            key={note.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className={`flex flex-col h-full ${isZenMode ? 'fixed inset-0 z-50' : ''} ${theme.bg} transition-colors duration-300`}
+        >
+            {/* Toolbar */}
+            <div className={`flex items-center justify-between px-6 py-3 border-b ${theme.border} ${theme.card} sticky top-0 z-30 backdrop-blur-lg`}>
+                {/* Left: Meta Info */}
+                <div className={`flex items-center gap-4 text-xs font-medium ${themeMode === 'light' ? 'text-slate-500' : 'text-slate-500'}`}>
+                    <div className="flex items-center gap-1.5">
+                        <FiClock className="w-3.5 h-3.5" />
+                        <span>{formatDistanceToNow(new Date(note.updated_at || Date.now()), { addSuffix: true })}</span>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded-md ${themeMode === 'light' ? 'bg-slate-100' : 'bg-white/5'}`}>
+                        {wordCount} words
+                    </div>
+                    <div className={`px-2 py-0.5 rounded-md ${themeMode === 'light' ? 'bg-slate-100' : 'bg-white/5'}`}>
+                        {charCount} chars
+                    </div>
+                    <AnimatePresence>
+                        {isDirty && (
+                            <motion.span
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -10 }}
+                                className="text-amber-500 font-semibold"
+                            >
+                                • Unsaved
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
                 </div>
-              ))}
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={onTogglePin}
+                        className={`p-2 rounded-lg transition-all ${note.is_pinned ? 'text-indigo-400 bg-indigo-400/10' : `${themeMode === 'light' ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}`}
+                        title="Pin Note"
+                    >
+                        <FiMapPin className={`w-4 h-4 ${note.is_pinned ? 'fill-current' : ''}`} />
+                    </button>
+                    <button
+                        onClick={onToggleFavorite}
+                        className={`p-2 rounded-lg transition-all ${note.is_favorite ? 'text-amber-400 bg-amber-400/10' : `${themeMode === 'light' ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}`}
+                        title="Favorite"
+                    >
+                        <FiStar className={`w-4 h-4 ${note.is_favorite ? 'fill-current' : ''}`} />
+                    </button>
+                    <button
+                        onClick={saveNote}
+                        className={`p-2 rounded-lg transition-all ${themeMode === 'light' ? 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600' : 'text-slate-400 hover:bg-white/5 hover:text-emerald-400'}`}
+                        title="Save (Cmd+S)"
+                    >
+                        <FiSave className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={() => setIsZenMode(!isZenMode)}
+                        className={`p-2 rounded-lg transition-all ${themeMode === 'light' ? 'text-slate-500 hover:bg-slate-100' : 'text-slate-400 hover:bg-white/5'}`}
+                        title={isZenMode ? 'Exit Zen Mode' : 'Zen Mode'}
+                    >
+                        {isZenMode ? <FiMinimize2 className="w-4 h-4" /> : <FiMaximize2 className="w-4 h-4" />}
+                    </button>
+                    <div className={`w-px h-4 mx-1 ${themeMode === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+                    <button
+                        onClick={onDelete}
+                        className={`p-2 rounded-lg transition-all ${themeMode === 'light' ? 'text-slate-500 hover:bg-red-50 hover:text-red-600' : 'text-slate-400 hover:bg-red-500/10 hover:text-red-400'}`}
+                        title="Delete"
+                    >
+                        <FiTrash2 className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
-            {/* New Tab Button */}
-            <button
-              onClick={onNewTab}
-              className="h-10 w-10 flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-500/20 hover:text-blue-600 dark:hover:text-blue-400 text-gray-500 dark:text-gray-400 transition-colors border-l border-gray-100 dark:border-slate-700"
-              title="New Note"
-            >
-              <FiPlus className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
+            {/* Formatting Toolbar */}
+            <div className={`flex items-center gap-1 px-6 py-2 border-b ${theme.border} ${theme.card} overflow-x-auto`}>
+                {/* Text Formatting */}
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleBold().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('bold')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Bold (Cmd+B)"
+                >
+                    <FiBold className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleItalic().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('italic')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Italic (Cmd+I)"
+                >
+                    <FiItalic className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleUnderline().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('underline')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Underline"
+                >
+                    <FiUnderline className="w-4 h-4" />
+                </button>
 
-      {/* Toolbar / Header */}
-      <div className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-700 z-20 ${isMobile ? 'pt-4 pb-2 shadow-sm' : 'px-4 py-2 sticky top-10 flex items-center justify-between shadow-sm'}`}>
-        {/* Mobile Header Top Row */}
-        {isMobile && (
-          <div className="flex items-center justify-between px-4 mb-3">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onBack}
-                className="p-2 -ml-2 text-gray-600 dark:text-gray-300"
-              >
-                <FiArrowLeft className="w-6 h-6" />
-              </button>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate max-w-[150px]">
-                {selectedNote?.title || 'Untitled'}
-              </h2>
+                <div className={`w-px h-4 mx-1 ${themeMode === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                {/* Lists */}
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleBulletList().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('bulletList')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Bullet List"
+                >
+                    <FiList className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleOrderedList().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('orderedList')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Numbered List"
+                >
+                    <span className="text-xs font-bold">1.</span>
+                </button>
+
+                <div className={`w-px h-4 mx-1 ${themeMode === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                {/* Headings */}
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleHeading({ level: 2 }).run()}
+                    className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${contentEditor.isActive('heading', { level: 2 })
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Heading"
+                >
+                    H2
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleHeading({ level: 3 }).run()}
+                    className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${contentEditor.isActive('heading', { level: 3 })
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Subheading"
+                >
+                    H3
+                </button>
+
+                <div className={`w-px h-4 mx-1 ${themeMode === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                {/* Code */}
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleCode().run()}
+                    className={`p-2 rounded-lg transition-all ${contentEditor.isActive('code')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Inline Code"
+                >
+                    <FiCode className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleCodeBlock().run()}
+                    className={`px-2 py-1.5 rounded-lg text-xs font-mono transition-all ${contentEditor.isActive('codeBlock')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Code Block"
+                >
+                    {'</>'}
+                </button>
+                <button
+                    onClick={() => contentEditor.chain().focus().setHorizontalRule().run()}
+                    className={`p-2 rounded-lg transition-all ${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`}
+                    title="Divider"
+                >
+                    <FiMinus className="w-4 h-4" />
+                </button>
+
+                <div className={`w-px h-4 mx-1 ${themeMode === 'light' ? 'bg-slate-200' : 'bg-white/10'}`} />
+
+                {/* Blockquote */}
+                <button
+                    onClick={() => contentEditor.chain().focus().toggleBlockquote().run()}
+                    className={`px-2 py-1.5 rounded-lg text-sm transition-all ${contentEditor.isActive('blockquote')
+                        ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                        : `${themeMode === 'light' ? 'hover:bg-slate-100 text-slate-600' : 'hover:bg-white/5 text-slate-400'}`
+                        }`}
+                    title="Quote"
+                >
+                    "
+                </button>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onSaveNote}
-                disabled={!isDirty}
-                className={`p-2 rounded-full ${isDirty ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500'}`}
-              >
-                <FiSave className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => selectedNote && onShareNote(selectedNote)}
-                className="p-2 text-gray-500 dark:text-gray-400"
-              >
-                <FiShare2 className="w-5 h-5" />
-              </button>
+
+            {/* Editor Canvas */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <div className={`px-8 py-6 ${isZenMode ? 'max-w-4xl mx-auto w-full' : 'w-full'}`}>
+                    {/* Title */}
+                    <EditorContent
+                        editor={titleEditor}
+                        className="mb-2 [&_.ProseMirror]:min-h-0 [&_.ProseMirror]:outline-none [&_.ProseMirror_p]:m-0 [&_.ProseMirror_.is-empty]:before:text-slate-400"
+                    />
+
+                    {/* Content */}
+                    <EditorContent
+                        editor={contentEditor}
+                        className="min-h-[50vh] [&_.ProseMirror]:min-h-[50vh] [&_.ProseMirror]:outline-none [&_.ProseMirror>*:first-child]:mt-0"
+                    />
+                </div>
             </div>
-          </div>
-        )}
-
-        {/* Toolbar Controls */}
-        <div className={`flex items-center gap-1.5 overflow-x-auto no-scrollbar ${isMobile ? 'px-4 pb-1' : ''}`}>
-          {/* Formatting Controls */}
-          <div className="flex items-center gap-0.5 pr-2 border-r border-gray-100 dark:border-slate-700 flex-shrink-0">
-            <button
-              onClick={() => editor?.chain().focus().toggleBold().run()}
-              className={`p-1.5 rounded-lg transition-all ${editor?.isActive('bold') ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-            >
-              <FiBold className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => editor?.chain().focus().toggleItalic().run()}
-              className={`p-1.5 rounded-lg transition-all ${editor?.isActive('italic') ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-            >
-              <FiItalic className="w-4 h-4" />
-            </button>
-            {!isMobile && (
-              <button
-                onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                className={`p-1.5 rounded-lg transition-all ${editor?.isActive('underline') ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-              >
-                <FiUnderline className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-0.5 px-2 border-r border-gray-100 dark:border-slate-700 flex-shrink-0">
-            <button
-              onClick={() => editor?.chain().focus().toggleBulletList().run()}
-              className={`p-1.5 rounded-lg transition-all ${editor?.isActive('bulletList') ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-            >
-              <FiList className="w-4 h-4" />
-            </button>
-            {!isMobile && (
-              <button
-                onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
-                className={`p-1.5 rounded-lg transition-all ${editor?.isActive('codeBlock') ? 'bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
-              >
-                <FiCode className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Additional Actions for Mobile */}
-          {isMobile && (
-            <div className="flex items-center gap-0.5 pl-1 flex-shrink-0">
-              <button
-                onClick={() => selectedNote && onToggleFavorite(selectedNote.id)}
-                className={`p-1.5 rounded-lg ${selectedNote?.is_favorite ? 'text-red-500' : 'text-gray-400'}`}
-              >
-                <FiHeart className={`w-4 h-4 ${selectedNote?.is_favorite ? 'fill-current' : ''}`} />
-              </button>
-              <button
-                onClick={() => selectedNote && onTogglePin(selectedNote.id)}
-                className={`p-1.5 rounded-lg ${selectedNote?.is_pinned ? 'text-amber-500' : 'text-gray-400'}`}
-              >
-                <FiStar className={`w-4 h-4 ${selectedNote?.is_pinned ? 'fill-current' : ''}`} />
-              </button>
-            </div>
-          )}
-
-          {!isMobile && (
-            <button
-              onClick={onSaveNote}
-              disabled={!isDirty}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm ${isDirty
-                ? 'bg-blue-600 text-white shadow-blue-500/20'
-                : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500'
-                }`}
-            >
-              <FiSave className="w-3.5 h-3.5" />
-              {isDirty ? 'Save' : 'Saved'}
-            </button>
-          )}
-        </div>
-
-        {/* Desktop-only Property Controls */}
-        {!isMobile && (
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedNote?.category || 'general'}
-              onChange={(e) => onUpdateNote('category', e.target.value)}
-              className="text-xs bg-gray-50 dark:bg-slate-800 border-none rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 font-medium focus:ring-0 cursor-pointer"
-            >
-              <option value="general">General</option>
-              <option value="work">Work</option>
-              <option value="personal">Personal</option>
-              <option value="ideas">Ideas</option>
-              <option value="meeting">Meeting</option>
-              <option value="project">Project</option>
-              <option value="todo">To-Do</option>
-            </select>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => selectedNote && onToggleFavorite(selectedNote.id)}
-                className={`p-1.5 rounded-lg ${selectedNote?.is_favorite ? 'text-red-500' : 'text-gray-400'}`}
-              >
-                <FiHeart className={`w-4 h-4 ${selectedNote?.is_favorite ? 'fill-current' : ''}`} />
-              </button>
-              <button
-                onClick={() => selectedNote && onDeleteNote(selectedNote.id)}
-                className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-              >
-                <FiTrash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Editor Area */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 overflow-y-auto pb-24">
-          <div className={`w-full mx-auto ${isMobile ? 'p-4' : 'max-w-4xl p-8 pb-32'}`}>
-            {/* Title Input */}
-            <input
-              type="text"
-              value={selectedNote?.title || ''}
-              onChange={(e) => onUpdateNote('title', e.target.value)}
-              className={`w-full font-bold text-gray-800 dark:text-white border-none outline-none placeholder-gray-300 dark:placeholder-gray-600 bg-transparent focus:ring-0 p-0 ${isMobile ? 'text-2xl mb-4' : 'text-4xl mb-6'}`}
-              placeholder="Note Title"
-            />
-
-            {/* Editor Content */}
-            <div
-              className={`min-h-[60vh] cursor-text outline-none relative z-0 ${isMobile ? 'text-base' : 'text-lg'}`}
-              onClick={() => editor?.commands.focus()}
-            >
-              {editor ? (
-                <EditorContent editor={editor} />
-              ) : (
-                <div className="text-gray-400 dark:text-gray-500">Loading...</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Status Bar */}
-      <div className={`border-t border-gray-100 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur px-4 py-2 absolute bottom-0 w-full ${isMobile ? 'pb-6' : ''}`}>
-        <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">
-          <div className="flex items-center gap-3">
-            <span>{editor?.storage.characterCount?.words() || stats.words || 0} WORDS</span>
-            {!isMobile && <span>{editor?.storage.characterCount?.characters() || stats.characters || 0} CHARS</span>}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full ${isDirty ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-            <span>{isDirty ? 'UNSAVED' : 'SYNCED'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        </motion.div>
+    );
 };
 
 export default NotesEditor;

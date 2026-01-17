@@ -1,502 +1,361 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabaseClient';
-import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { NotesSidebar, NotesEditor, ToastNotification, NotesList } from '../components/notes';
 import ShareModal from '../components/notes/ShareModal';
+import { FiEdit3, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { useTheme } from '../context/ThemeContext';
 
-// Import notes components
-import {
-  NotesHeader,
-  NotesSidebar,
-  NotesEditor,
-  ToastNotification
-} from '../components/notes';
+const NotesPage = () => {
+    const { themeMode } = useTheme();
 
-const NotesPage = ({ sidebarOpen }) => {
-  // Basic state
-  const [notes, setNotes] = useState([]);
-  const [selectedNote, setSelectedNote] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('list');
-  const [sortBy, setSortBy] = useState('updated_at');
+    // --- State: Data ---
+    const [notes, setNotes] = useState([]);
+    const [sharedNotes, setSharedNotes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  // Advanced state
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [shareNote, setShareNote] = useState(null);
-  const [sharedNotes, setSharedNotes] = useState([]);
+    // --- State: Selection & Navigation ---
+    const [selectedFolder, setSelectedFolder] = useState('all');
+    const [selectedNote, setSelectedNote] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
-  // UI state
-  const [favoritesCollapsed, setFavoritesCollapsed] = useState(true);
-  const [allNotesCollapsed, setAllNotesCollapsed] = useState(false);
-  const [sharedCollapsed, setSharedCollapsed] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    // --- State: Editor ---
+    const [isDirty, setIsDirty] = useState(false);
 
-  // Editor state
-  const [openTabs, setOpenTabs] = useState([]);
-  const [activeTabId, setActiveTabId] = useState(null);
-  const [isDirty, setIsDirty] = useState(false);
-  const [wordWrap, setWordWrap] = useState(true);
-  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+    // --- State: UI ---
+    const [folderSidebarOpen, setFolderSidebarOpen] = useState(true);
+    const [listSidebarOpen, setListSidebarOpen] = useState(true);
+    const [toast, setToast] = useState(null);
 
-  // Toast notifications
-  const [toast, setToast] = useState(null);
+    // --- State: Share Modal ---
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareNote, setShareNote] = useState(null);
 
-  // Editor reference
-  const editorRef = useRef(null);
-
-  // Mobile & View State
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  const [mobileView, setMobileView] = useState('list'); // 'list' or 'editor'
-
-  // Handle Resize
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
+    // Theme-aware background classes
+    const getThemeClasses = () => {
+        switch (themeMode) {
+            case 'light':
+                return {
+                    bg: 'bg-slate-100',
+                    text: 'text-slate-900',
+                    card: 'bg-white/80',
+                    border: 'border-slate-200',
+                    accent: 'bg-indigo-500'
+                };
+            case 'space':
+                return {
+                    bg: 'bg-transparent',
+                    text: 'text-slate-100',
+                    card: 'bg-slate-900/40 backdrop-blur-xl',
+                    border: 'border-white/10',
+                    accent: 'bg-purple-500'
+                };
+            default: // dark
+                return {
+                    bg: 'bg-[#0a0a0f]',
+                    text: 'text-slate-200',
+                    card: 'bg-slate-900/50',
+                    border: 'border-white/5',
+                    accent: 'bg-indigo-500'
+                };
+        }
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
-  // Effect to switch to editor view when a note is selected on mobile
-  useEffect(() => {
-    if (isMobile && selectedNote) {
-      setMobileView('editor');
-    }
-  }, [selectedNote, isMobile]);
+    const theme = getThemeClasses();
 
-  // Utility functions
-  const getTextStats = (html) => {
-    if (!html) return { characters: 0, words: 0, lines: 1 };
+    // --- Data Fetching ---
+    useEffect(() => {
+        fetchNotes();
+    }, []);
 
-    // Strip HTML tags
-    const tmp = document.createElement('DIV');
-    tmp.innerHTML = html;
-    const text = tmp.textContent || tmp.innerText || '';
+    const fetchNotes = async () => {
+        try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
 
-    const characters = text.length;
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const lines = text.split('\n').length;
+            const { data: personalData, error: personalError } = await supabase
+                .from('notes')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('is_pinned', { ascending: false })
+                .order('updated_at', { ascending: false });
 
-    return { characters, words, lines };
-  };
+            if (personalError) throw personalError;
+            setNotes(personalData || []);
 
-  // Computed values
-  const stats = selectedNote ? getTextStats(selectedNote.content) : { words: 0, characters: 0, lines: 1 };
-  const favoriteNotes = notes.filter(note => note.is_favorite);
-  const allNotes = notes.filter(note => !note.is_favorite);
+            const { data: sharedData, error: sharedError } = await supabase
+                .from('notes')
+                .select(`*, users:shared_by (id, name, email, avatar_url)`)
+                .eq('is_shared', true)
+                .contains('shared_with', [user.id])
+                .order('shared_at', { ascending: false });
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+            if (sharedError) throw sharedError;
+            setSharedNotes(sharedData || []);
 
-  const fetchNotes = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+        } catch (error) {
+            console.error('Error fetching notes:', error);
+            showToast('Failed to load notes', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_pinned', { ascending: false })
-        .order(sortBy, { ascending: false });
+    // --- Actions ---
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
-      if (error) throw error;
-      setNotes(data || []);
+    const createNewNote = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
 
-      // Also fetch shared notes
-      await fetchSharedNotes(user.id);
-    } catch (error) {
-      console.error('Error fetching notes:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+            const newNote = {
+                title: '',
+                content: '',
+                user_id: user.id,
+                category: 'general',
+                is_pinned: false,
+                is_favorite: false,
+                updated_at: new Date().toISOString()
+            };
 
-  const fetchSharedNotes = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('notes')
-        .select(`
-          *,
-          users:shared_by (id, name, email, avatar_url)
-        `)
-        .eq('is_shared', true)
-        .contains('shared_with', [userId])
-        .order('shared_at', { ascending: false });
+            const { data, error } = await supabase
+                .from('notes')
+                .insert([newNote])
+                .select()
+                .single();
 
-      if (error) throw error;
-      setSharedNotes(data || []);
-    } catch (error) {
-      console.error('Error fetching shared notes:', error);
-    }
-  };
+            if (error) throw error;
 
-  // Utility functions
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+            setNotes([data, ...notes]);
+            setSelectedNote(data);
+            showToast('New note created', 'success');
+        } catch (error) {
+            console.error('Error creating note:', error);
+            showToast('Failed to create note', 'error');
+        }
+    };
 
-  // Tab management
-  const createNewNote = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    const updateNote = (noteId, updates) => {
+        setNotes(prev => prev.map(n => n.id === noteId ? { ...n, ...updates, updated_at: new Date().toISOString() } : n));
+        if (selectedNote?.id === noteId) {
+            setSelectedNote(prev => ({ ...prev, ...updates }));
+        }
+        setIsDirty(true);
+    };
 
-      const newNote = {
-        title: 'Untitled Note',
-        content: '',
-        user_id: user.id,
-        category: 'general',
-        tags: [],
-        is_pinned: false,
-        background_color: '#ffffff',
-        font_size: 16, // Medium font size as integer (16px)
-        is_favorite: false,
-        is_shared: false,
-        shared_with: [],
-        share_permission: 'read'
-      };
+    const saveNote = async () => {
+        if (!selectedNote || !isDirty) return;
+        try {
+            const { error } = await supabase
+                .from('notes')
+                .update({
+                    title: selectedNote.title,
+                    content: selectedNote.content,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', selectedNote.id);
 
-      const { data, error } = await supabase
-        .from('notes')
-        .insert([newNote])
-        .select()
-        .single();
+            if (error) throw error;
+            setIsDirty(false);
+            showToast('Saved', 'success');
+        } catch (error) {
+            console.error('Error saving:', error);
+            showToast('Failed to save', 'error');
+        }
+    };
 
-      if (error) throw error;
+    const deleteNote = async (noteId) => {
+        try {
+            const { error } = await supabase.from('notes').delete().eq('id', noteId);
+            if (error) throw error;
 
-      setNotes([data, ...notes]);
-      switchTab(data);
-      showToast('New note created successfully', 'success');
-    } catch (error) {
-      console.error('Error creating note:', error);
-      showToast('Failed to create note', 'error');
-    }
-  };
+            setNotes(prev => prev.filter(n => n.id !== noteId));
+            if (selectedNote?.id === noteId) setSelectedNote(null);
+            showToast('Note deleted', 'success');
+        } catch (error) {
+            console.error('Error deleting:', error);
+            showToast('Failed to delete', 'error');
+        }
+    };
 
-  const switchTab = useCallback((note) => {
-    if (selectedNote?.id === note.id) return;
+    const toggleFavorite = async (noteId, currentStatus) => {
+        const newStatus = !currentStatus;
+        setNotes(prev => prev.map(n => n.id === noteId ? { ...n, is_favorite: newStatus } : n));
+        if (selectedNote?.id === noteId) {
+            setSelectedNote(prev => ({ ...prev, is_favorite: newStatus }));
+        }
 
-    setIsDirty(false);
-    setSelectedNote(note);
-    setActiveTabId(note.id);
+        try {
+            const { error } = await supabase.from('notes').update({ is_favorite: newStatus }).eq('id', noteId);
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error toggling fav:', error);
+        }
+    };
 
-    // Add to open tabs if not already there
-    setOpenTabs(prev => {
-      const exists = prev.find(tab => tab.id === note.id);
-      if (!exists) {
-        return [...prev, note];
-      }
-      return prev;
-    });
-  }, [selectedNote?.id]);
+    const togglePin = async (noteId, currentStatus) => {
+        const newStatus = !currentStatus;
+        setNotes(prev => prev.map(n => n.id === noteId ? { ...n, is_pinned: newStatus } : n));
+        if (selectedNote?.id === noteId) {
+            setSelectedNote(prev => ({ ...prev, is_pinned: newStatus }));
+        }
 
-  const closeTab = useCallback((noteId) => {
-    setOpenTabs(prev => prev.filter(tab => tab.id !== noteId));
-    if (activeTabId === noteId) {
-      const remainingTabs = openTabs.filter(tab => tab.id !== noteId);
-      if (remainingTabs.length > 0) {
-        setSelectedNote(remainingTabs[0]);
-        setActiveTabId(remainingTabs[0].id);
-      } else {
-        setSelectedNote(null);
-        setActiveTabId(null);
-      }
-    }
-  }, [activeTabId, openTabs]);
+        try {
+            const { error } = await supabase.from('notes').update({ is_pinned: newStatus }).eq('id', noteId);
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error toggling pin:', error);
+        }
+    };
 
-  // Note operations
-  const updateNote = async (field, value) => {
-    if (!selectedNote) return;
+    // --- Share Functions ---
+    const handleShareNote = (note) => {
+        setShareNote(note);
+        setShowShareModal(true);
+    };
 
-    const updatedNote = { ...selectedNote, [field]: value };
-    setSelectedNote(updatedNote);
-    setIsDirty(true);
+    const handleShareSuccess = (sharedUsers) => {
+        if (shareNote) {
+            setNotes(prevNotes =>
+                prevNotes.map(n =>
+                    n.id === shareNote.id
+                        ? {
+                            ...n,
+                            is_shared: true,
+                            shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
+                            shared_at: new Date().toISOString()
+                        }
+                        : n
+                )
+            );
 
-    // Update in open tabs
-    setOpenTabs(prev => prev.map(tab =>
-      tab.id === selectedNote.id ? updatedNote : tab
-    ));
-
-    // Update in notes list
-    setNotes(prev => prev.map(note =>
-      note.id === selectedNote.id ? updatedNote : note
-    ));
-  };
-
-  const saveNote = async () => {
-    if (!selectedNote || !isDirty) return;
-
-    try {
-      const { error } = await supabase
-        .from('notes')
-        .update({
-          title: selectedNote.title,
-          content: selectedNote.content,
-          category: selectedNote.category,
-          background_color: selectedNote.background_color,
-          font_size: selectedNote.font_size,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedNote.id);
-
-      if (error) throw error;
-
-      setIsDirty(false);
-      showToast('Note saved successfully', 'success');
-    } catch (error) {
-      console.error('Error saving note:', error);
-      showToast('Failed to save note', 'error');
-    }
-  };
-
-  const toggleFavorite = async (noteId) => {
-    try {
-      const note = notes.find(n => n.id === noteId);
-      if (!note) return;
-
-      const { error } = await supabase
-        .from('notes')
-        .update({ is_favorite: !note.is_favorite, updated_at: new Date().toISOString() })
-        .eq('id', noteId);
-
-      if (error) throw error;
-
-      setNotes(prevNotes =>
-        prevNotes.map(n =>
-          n.id === noteId ? { ...n, is_favorite: !n.is_favorite } : n
-        )
-      );
-
-      // Update selected note if it's the one being favorited
-      if (selectedNote?.id === noteId) {
-        setSelectedNote(prev => ({ ...prev, is_favorite: !prev.is_favorite }));
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
-  };
-
-  const togglePin = async (noteId) => {
-    try {
-      const note = notes.find(n => n.id === noteId);
-      if (!note) return;
-
-      const { error } = await supabase
-        .from('notes')
-        .update({ is_pinned: !note.is_pinned, updated_at: new Date().toISOString() })
-        .eq('id', noteId);
-
-      if (error) throw error;
-
-      setNotes(prevNotes =>
-        prevNotes.map(n =>
-          n.id === noteId ? { ...n, is_pinned: !n.is_pinned } : n
-        )
-      );
-
-      // Update selected note if it's the one being pinned
-      if (selectedNote?.id === noteId) {
-        setSelectedNote(prev => ({ ...prev, is_pinned: !prev.is_pinned }));
-      }
-    } catch (error) {
-      console.error('Error toggling pin:', error);
-    }
-  };
-
-  const deleteNote = async (noteId) => {
-    try {
-      const note = notes.find(n => n.id === noteId);
-      if (!note) return;
-
-      const { error } = await supabase
-        .from('notes')
-        .delete()
-        .eq('id', noteId);
-
-      if (error) throw error;
-
-      setNotes(prevNotes => prevNotes.filter(n => n.id !== noteId));
-
-      // Close tab if this note was open
-      if (selectedNote?.id === noteId) {
-        closeTab(noteId);
-      }
-
-      showToast(`"${note.title || 'Untitled'}" deleted successfully`, 'error');
-    } catch (error) {
-      console.error('Error deleting note:', error);
-      showToast('Failed to delete note', 'error');
-    }
-  };
-
-  // Share functionality
-  const handleShareNote = (note) => {
-    setShareNote(note);
-    setShowShareModal(true);
-  };
-
-  const handleShareSuccess = (sharedUsers) => {
-    // Update the note in local state to reflect sharing
-    if (shareNote) {
-      setNotes(prevNotes =>
-        prevNotes.map(n =>
-          n.id === shareNote.id
-            ? {
-              ...n,
-              is_shared: true,
-              shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
-              shared_at: new Date().toISOString()
+            if (selectedNote?.id === shareNote.id) {
+                setSelectedNote(prev => ({
+                    ...prev,
+                    is_shared: true,
+                    shared_with: [...(prev.shared_with || []), ...sharedUsers.map(u => u.userId)],
+                    shared_at: new Date().toISOString()
+                }));
             }
-            : n
-        )
-      );
 
-      // Update selected note if it's the one being shared
-      if (selectedNote?.id === shareNote.id) {
-        setSelectedNote(prev => ({
-          ...prev,
-          is_shared: true,
-          shared_with: [...(prev.shared_with || []), ...sharedUsers.map(u => u.userId)],
-          shared_at: new Date().toISOString()
-        }));
-      }
+            showToast(`Note shared with ${sharedUsers.length} member${sharedUsers.length > 1 ? 's' : ''}`, 'success');
+        }
+    };
 
-      showToast(`Note shared with ${sharedUsers.length} member${sharedUsers.length > 1 ? 's' : ''}`, 'success');
-    }
-  };
+    // --- Filter Logic ---
+    const getFilteredNotes = () => {
+        let filtered = selectedFolder === 'shared' ? sharedNotes : notes;
 
-  // Editor event handlers
-  const handleKeyDown = (e) => {
-    if (e.ctrlKey && e.key === 's') {
-      e.preventDefault();
-      saveNote();
-    } else if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-      e.preventDefault();
-      if (selectedNote) {
-        handleShareNote(selectedNote);
-      }
-    }
-  };
+        if (selectedFolder === 'favorites') {
+            filtered = filtered.filter(n => n.is_favorite);
+        }
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(n =>
+                (n.title?.toLowerCase() || '').includes(q) ||
+                (n.content?.toLowerCase() || '').includes(q)
+            );
+        }
+        return filtered;
+    };
 
-  const handleCursorMove = () => {
-    if (!editorRef.current) return;
+    const filteredNotes = getFilteredNotes();
 
-    const textarea = editorRef.current;
-    const text = textarea.value;
-    const cursorIndex = textarea.selectionStart;
+    return (
+        <div className={`flex h-screen ${theme.bg} ${theme.text} overflow-hidden font-sans selection:bg-indigo-500/30 transition-colors duration-300`}>
+            <ToastNotification toast={toast} onClose={() => setToast(null)} />
 
-    const textBeforeCursor = text.substring(0, cursorIndex);
-    const lines = textBeforeCursor.split('\n');
-    const line = lines.length;
-    const column = lines[lines.length - 1].length + 1;
+            {/* Pane 1: Folder Sidebar */}
+            <NotesSidebar
+                selectedFolder={selectedFolder}
+                setSelectedFolder={setSelectedFolder}
+                isOpen={folderSidebarOpen}
+                setIsOpen={setFolderSidebarOpen}
+                theme={theme}
+                themeMode={themeMode}
+            />
 
-    setCursorPosition({ line, column });
-  };
+            {/* Pane 2: Notes List */}
+            <AnimatePresence initial={false}>
+                {listSidebarOpen && (
+                    <motion.div
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: 320, opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        className="flex-shrink-0 overflow-hidden"
+                    >
+                        <NotesList
+                            notes={filteredNotes}
+                            selectedNote={selectedNote}
+                            setSelectedNote={setSelectedNote}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            onNewNote={createNewNote}
+                            theme={theme}
+                            themeMode={themeMode}
+                            onToggleCollapse={() => setListSidebarOpen(false)}
+                            onShareNote={handleShareNote}
+                            onDeleteNote={deleteNote}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-  return (
-    <div className={`h-screen ${isMobile ? 'bg-white dark:bg-slate-950' : 'bg-gray-50 dark:bg-slate-950'} overflow-hidden flex flex-col`}>
-      {/* Toast Notification */}
-      <ToastNotification
-        toast={toast}
-        onClose={() => setToast(null)}
-      />
+            {/* Pane 3: Editor */}
+            <div className={`flex-1 min-w-0 ${theme.bg} relative flex flex-col transition-colors duration-300`}>
+                {/* Expand List Button (visible when list is collapsed) */}
+                {!listSidebarOpen && (
+                    <button
+                        onClick={() => setListSidebarOpen(true)}
+                        className={`absolute left-4 top-4 z-40 p-2 rounded-xl ${theme.card} ${theme.border} border shadow-lg hover:scale-105 transition-all flex items-center gap-2`}
+                        title="Show Notes List"
+                    >
+                        <FiChevronRight className="w-4 h-4" />
+                        <span className="text-xs font-medium">Library</span>
+                    </button>
+                )}
 
-      {/* Enhanced Header - Hidden on mobile editor view */}
-      {(!isMobile || mobileView === 'list') && (
-        <NotesHeader
-          notes={notes}
-          favoriteNotes={favoriteNotes}
-          sharedNotes={sharedNotes}
-          selectedNote={selectedNote}
-          isDirty={isDirty}
-          stats={stats}
-          searchQuery={searchQuery}
-          viewMode={viewMode}
-          sortBy={sortBy}
-          onSearchChange={setSearchQuery}
-          onViewModeChange={setViewMode}
-          onSortChange={setSortBy}
-          onNewNote={createNewNote}
-          isMobile={isMobile}
-        />
-      )}
+                {selectedNote ? (
+                    <NotesEditor
+                        note={selectedNote}
+                        updateNote={updateNote}
+                        saveNote={saveNote}
+                        isDirty={isDirty}
+                        onDelete={() => deleteNote(selectedNote.id)}
+                        onToggleFavorite={() => toggleFavorite(selectedNote.id, selectedNote.is_favorite)}
+                        onTogglePin={() => togglePin(selectedNote.id, selectedNote.is_pinned)}
+                        theme={theme}
+                        themeMode={themeMode}
+                    />
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full opacity-50">
+                        <div className={`w-20 h-20 rounded-3xl ${theme.card} ${theme.border} border flex items-center justify-center mb-6`}>
+                            <FiEdit3 className="w-8 h-8" />
+                        </div>
+                        <p className="text-lg font-medium">Select a note to start editing</p>
+                        <p className="text-sm mt-2 opacity-60">Or create a new one from the sidebar</p>
+                    </div>
+                )}
+            </div>
 
-      {/* Main Content Area */}
-      <div className={`flex-1 flex ${isMobile ? 'h-full' : 'h-[calc(100vh-64px)]'} bg-gray-50 dark:bg-slate-950`}>
-        {/* Notes Sidebar - List View on Mobile */}
-        {(!isMobile || mobileView === 'list') && (
-          <NotesSidebar
-            favoriteNotes={favoriteNotes}
-            allNotes={allNotes}
-            sharedNotes={sharedNotes}
-            favoritesCollapsed={favoritesCollapsed}
-            allNotesCollapsed={allNotesCollapsed}
-            sharedCollapsed={sharedCollapsed}
-            onToggleFavorites={() => setFavoritesCollapsed(!favoritesCollapsed)}
-            onToggleAllNotes={() => setAllNotesCollapsed(!allNotesCollapsed)}
-            onToggleShared={() => setSharedCollapsed(!sharedCollapsed)}
-            onSelectNote={(note) => {
-              switchTab(note);
-              if (isMobile) setMobileView('editor');
-            }}
-            onShareNote={handleShareNote}
-            onToggleFavorite={toggleFavorite}
-            onDeleteNote={deleteNote}
-            selectedNote={selectedNote}
-            openTabs={openTabs}
-            isMobile={isMobile}
-            isCollapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        )}
-
-        {/* Notes Editor - Editor View on Mobile */}
-        {(!isMobile || mobileView === 'editor') && (
-          <NotesEditor
-            selectedNote={selectedNote}
-            openTabs={openTabs}
-            activeTabId={activeTabId}
-            isDirty={isDirty}
-            wordWrap={wordWrap}
-            cursorPosition={cursorPosition}
-            stats={stats}
-            onTabClose={(id) => {
-              closeTab(id);
-              if (isMobile && openTabs.length <= 1) setMobileView('list');
-            }}
-            onNewTab={createNewNote}
-            onTabSwitch={switchTab}
-            onUpdateNote={updateNote}
-            onSaveNote={saveNote}
-            onShareNote={handleShareNote}
-            onToggleFavorite={toggleFavorite}
-            onTogglePin={togglePin}
-            onDeleteNote={deleteNote}
-            onKeyDown={handleKeyDown}
-            onCursorMove={handleCursorMove}
-            onToggleWordWrap={() => setWordWrap(!wordWrap)}
-            isMobile={isMobile}
-            onBack={() => setMobileView('list')}
-          />
-        )}
-      </div>
-
-      {/* Share Modal */}
-      <ShareModal
-        isOpen={showShareModal}
-        onClose={() => {
-          setShowShareModal(false);
-          setShareNote(null);
-        }}
-        note={shareNote}
-        onShareSuccess={handleShareSuccess}
-      />
-    </div>
-  );
+            {/* Share Modal */}
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => {
+                    setShowShareModal(false);
+                    setShareNote(null);
+                }}
+                note={shareNote}
+                onShareSuccess={handleShareSuccess}
+            />
+        </div>
+    );
 };
 
 export default NotesPage;

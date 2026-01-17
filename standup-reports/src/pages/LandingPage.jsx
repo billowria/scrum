@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 // QuantumBackground handled by PublicLayout
-import squadSyncLogo from '../assets/brand/squadsync-logo.png';
+import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
 import Lenis from '@studio-freight/lenis';
 import {
     FiArrowRight, FiCheck, FiMessageCircle, FiCheckSquare, FiCalendar, FiEdit3,
@@ -258,18 +258,8 @@ const TestimonialCard = ({ testimonial, index }) => {
     );
 };
 
-// --- Animated Logo Component ---
-const AnimatedLogo = () => (
-    <div className="relative flex items-center gap-3 group cursor-pointer">
-
-        {/* Text */}
-        <div className="flex flex-col">
-            <span className="text-xl font-black tracking-tight bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent">
-                Sync
-            </span>
-        </div>
-    </div>
-);
+// --- Animated Logo Component (now using shared component) ---
+const AnimatedLogo = () => <AnimatedSyncLogo size="md" showText={true} />;
 
 // --- Text Scramble Effect ---
 const ScrambleText = ({ text, className, isInView }) => {
