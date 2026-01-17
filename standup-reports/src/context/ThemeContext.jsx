@@ -2,6 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
+// Theme modes that use animated backgrounds
+const ANIMATED_THEMES = ['space', 'ocean', 'forest'];
+
 export const ThemeProvider = ({ children }) => {
     const [themeMode, setThemeMode] = useState(() => {
         if (typeof window !== 'undefined') {
@@ -19,17 +22,27 @@ export const ThemeProvider = ({ children }) => {
 
         const applyTheme = (mode) => {
             let actualTheme = mode;
+
+            // System theme follows OS preference
             if (mode === 'system') {
                 actualTheme = mediaQuery.matches ? 'dark' : 'light';
-            } else if (mode === 'space') {
+            }
+            // All animated themes use dark as base
+            else if (ANIMATED_THEMES.includes(mode)) {
                 actualTheme = 'dark';
             }
 
-            root.classList.remove('light', 'dark', 'space');
+            // Remove all theme classes
+            root.classList.remove('light', 'dark', ...ANIMATED_THEMES);
+
+            // Add base theme class
             root.classList.add(actualTheme);
-            if (mode === 'space') {
-                root.classList.add('space');
+
+            // Add specific animated theme class if applicable
+            if (ANIMATED_THEMES.includes(mode)) {
+                root.classList.add(mode);
             }
+
             setThemeState(actualTheme);
         };
 
@@ -50,8 +63,11 @@ export const ThemeProvider = ({ children }) => {
         setThemeMode((prev) => (prev === 'light' ? 'dark' : 'light'));
     };
 
+    // Check if current theme is an animated one
+    const isAnimatedTheme = ANIMATED_THEMES.includes(themeMode);
+
     return (
-        <ThemeContext.Provider value={{ theme, themeMode, toggleTheme, setThemeMode }}>
+        <ThemeContext.Provider value={{ theme, themeMode, toggleTheme, setThemeMode, isAnimatedTheme, ANIMATED_THEMES }}>
             {children}
         </ThemeContext.Provider>
     );

@@ -222,7 +222,7 @@ const MilkyWayBand = () => (
 );
 
 // --- Main Galaxy Background Component ---
-const QuantumBackground = () => {
+const StarsBackground = () => {
     return (
         <div className="fixed inset-0 z-0 bg-[#0a0a12] overflow-hidden pointer-events-none">
             {/* Deep space base gradient */}
@@ -288,5 +288,5 @@ const QuantumBackground = () => {
     );
 };
 
-export default QuantumBackground;
+export default StarsBackground;
 

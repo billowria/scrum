@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useInView } from 'fra
 import { useNavigate } from 'react-router-dom';
 // QuantumBackground handled by PublicLayout
 import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
+import CompactThemeToggle from '../components/CompactThemeToggle';
 import Lenis from '@studio-freight/lenis';
 import {
     FiArrowRight, FiCheck, FiMessageCircle, FiCheckSquare, FiCalendar, FiEdit3,
@@ -1190,7 +1191,29 @@ export default function LandingPage() {
             easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
             direction: 'vertical',
             smooth: true,
+            wheelMultiplier: 1.0, // Normal speed
         });
+
+        // Scroll Snap Logic
+        let isSnapping = false;
+        const handleWheel = (e) => {
+            // Only snap if we are near the top and scrolling down
+            if (window.scrollY < 100 && e.deltaY > 0 && !isSnapping) {
+                isSnapping = true;
+                e.preventDefault(); // Prevent default tiny scroll
+
+                // Scroll to features
+                lenis.scrollTo('#feature-standups', {
+                    offset: -100, // Adjust for navbar
+                    duration: 1.5,
+                    onComplete: () => {
+                        setTimeout(() => { isSnapping = false; }, 500);
+                    }
+                });
+            }
+        };
+
+        window.addEventListener('wheel', handleWheel, { passive: false });
 
         function raf(time) {
             lenis.raf(time);
@@ -1200,6 +1223,7 @@ export default function LandingPage() {
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('wheel', handleWheel);
             clearInterval(timer);
             lenis.destroy();
         };
@@ -1223,6 +1247,7 @@ export default function LandingPage() {
                         <div className="h-4 w-px bg-white/10 mx-2" />
                         <button onClick={() => navigate('/login')} className="text-white hover:text-indigo-400 transition-colors">Sign In</button>
                         <button onClick={() => navigate('/signup')} className="px-5 py-2 rounded-full bg-white text-black hover:scale-105 transition-transform font-bold">Get Started</button>
+                        <CompactThemeToggle />
                     </div>
                 </div>
             </nav>

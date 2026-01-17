@@ -2,201 +2,158 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 /**
- * AnimatedSyncLogo - Border Tracing Stars Design
- * Clean SYNC text with visible stars orbiting along the rectangular border
+ * AnimatedSyncLogo - "Static Grid Sync" Theme-Aware Edition
+ * Features a high-intensity photon tracing a relay path.
+ * Corner L-brackets are permanently visible and adapt to light/dark themes.
  */
-const AnimatedSyncLogo = ({ size = 'md', showText = true, className = '' }) => {
+const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     const sizes = {
-        sm: { text: 'text-xs', padding: 'px-2.5 py-1.5' },
-        md: { text: 'text-sm', padding: 'px-3.5 py-2' },
-        lg: { text: 'text-base', padding: 'px-4 py-2.5' },
-        xl: { text: 'text-xl', padding: 'px-5 py-3' },
+        sm: { text: 'text-[10px]', padding: '0.4rem 1.1rem', radius: 4, starSize: 2, tracking: '0.35em' },
+        md: { text: 'text-xs', padding: '0.5rem 1.5rem', radius: 6, starSize: 2.5, tracking: '0.45em' },
+        lg: { text: 'text-sm', padding: '0.7rem 2rem', radius: 8, starSize: 3.5, tracking: '0.55em' },
+        xl: { text: 'text-xl', padding: '1.2rem 3.5rem', radius: 12, starSize: 5, tracking: '0.6em' },
     };
 
-    const config = sizes[size] || sizes.md;
-
-    // Star configuration - each travels the full rectangular perimeter
-    const stars = [
-        { duration: 4, delay: 0, color: '#818cf8', size: 4 },      // Indigo
-        { duration: 4, delay: 1, color: '#a78bfa', size: 3 },      // Violet
-        { duration: 4, delay: 2, color: '#c084fc', size: 3 },      // Purple
-        { duration: 4, delay: 3, color: '#67e8f9', size: 2.5 },    // Cyan accent
-    ];
+    const cfg = sizes[size] || sizes.md;
+    const CYCLE_DURATION = 4;
 
     return (
         <motion.div
-            className={`relative inline-flex ${className} cursor-pointer select-none`}
+            className={`relative inline-flex items-center justify-center ${className} cursor-pointer group select-none`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         >
-            {/* Main Container */}
+            {/* Premium Glass Container (Theme Aware) */}
             <div
-                className={`relative ${config.padding} rounded-lg`}
+                className="relative flex items-center justify-center transition-all duration-700
+          bg-white/60 dark:bg-slate-900/40 backdrop-blur-md
+          border border-slate-200 dark:border-white/10"
                 style={{
-                    background: isHovered
-                        ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.06) 100%)'
-                        : 'rgba(99, 102, 241, 0.03)',
-                    transition: 'background 0.3s ease',
+                    padding: cfg.padding,
+                    borderRadius: cfg.radius,
                 }}
             >
-                {/* Static Border */}
-                <div
-                    className="absolute inset-0 rounded-lg pointer-events-none"
-                    style={{
-                        border: '1px solid rgba(99, 102, 241, 0.25)',
-                    }}
-                />
-
-                {/* Orbiting Stars - Travel along rectangular border */}
-                {stars.map((star, index) => (
-                    <motion.div
-                        key={index}
-                        className="absolute pointer-events-none"
-                        style={{
-                            width: star.size,
-                            height: star.size,
-                            borderRadius: '50%',
-                            background: star.color,
-                            boxShadow: `0 0 ${star.size * 2}px ${star.size / 2}px ${star.color}, 0 0 ${star.size * 4}px ${star.size}px ${star.color}50`,
-                        }}
-                        animate={{
-                            // Rectangular path: top-left → top-right → bottom-right → bottom-left → back
-                            offsetDistance: ['0%', '100%'],
-                        }}
-                        transition={{
-                            duration: star.duration,
-                            delay: star.delay,
-                            repeat: Infinity,
-                            ease: 'linear',
-                        }}
-                        initial={{
-                            offsetPath: 'path("M 6 0 L calc(100% - 6px) 0 Q 100% 0 100% 6 L 100% calc(100% - 6px) Q 100% 100% calc(100% - 6px) 100% L 6 100% Q 0 100% 0 calc(100% - 6px) L 0 6 Q 0 0 6 0")',
-                            offsetRotate: '0deg',
-                        }}
-                    />
-                ))}
-
-                {/* Fallback: CSS-based border animation for better browser support */}
-                <style>{`
-                    @keyframes borderTrace1 {
-                        0%, 100% { top: -2px; left: -2px; }
-                        25% { top: -2px; left: calc(100% - 2px); }
-                        50% { top: calc(100% - 2px); left: calc(100% - 2px); }
-                        75% { top: calc(100% - 2px); left: -2px; }
-                    }
-                    @keyframes borderTrace2 {
-                        0%, 100% { top: -2px; left: calc(100% - 2px); }
-                        25% { top: calc(100% - 2px); left: calc(100% - 2px); }
-                        50% { top: calc(100% - 2px); left: -2px; }
-                        75% { top: -2px; left: -2px; }
-                    }
-                    @keyframes borderTrace3 {
-                        0%, 100% { top: calc(100% - 2px); left: calc(100% - 2px); }
-                        25% { top: calc(100% - 2px); left: -2px; }
-                        50% { top: -2px; left: -2px; }
-                        75% { top: -2px; left: calc(100% - 2px); }
-                    }
-                    @keyframes borderTrace4 {
-                        0%, 100% { top: calc(100% - 2px); left: -2px; }
-                        25% { top: -2px; left: -2px; }
-                        50% { top: -2px; left: calc(100% - 2px); }
-                        75% { top: calc(100% - 2px); left: calc(100% - 2px); }
-                    }
-                    @keyframes starPulse {
-                        0%, 100% { transform: scale(1); opacity: 0.9; }
-                        50% { transform: scale(1.3); opacity: 1; }
-                    }
-                `}</style>
-
-                {/* Star 1 - Indigo */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: 4,
-                        height: 4,
-                        borderRadius: '50%',
-                        background: '#818cf8',
-                        boxShadow: '0 0 6px 2px #818cf8, 0 0 12px 4px rgba(129, 140, 248, 0.4)',
-                        animation: 'borderTrace1 4s linear infinite, starPulse 2s ease-in-out infinite',
-                    }}
-                />
-
-                {/* Star 2 - Violet */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: 3,
-                        height: 3,
-                        borderRadius: '50%',
-                        background: '#a78bfa',
-                        boxShadow: '0 0 5px 1.5px #a78bfa, 0 0 10px 3px rgba(167, 139, 250, 0.4)',
-                        animation: 'borderTrace2 4s linear infinite, starPulse 2.2s ease-in-out infinite',
-                    }}
-                />
-
-                {/* Star 3 - Purple */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: 3,
-                        height: 3,
-                        borderRadius: '50%',
-                        background: '#c084fc',
-                        boxShadow: '0 0 5px 1.5px #c084fc, 0 0 10px 3px rgba(192, 132, 252, 0.4)',
-                        animation: 'borderTrace3 4s linear infinite, starPulse 1.8s ease-in-out infinite',
-                    }}
-                />
-
-                {/* Star 4 - Cyan */}
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        width: 2.5,
-                        height: 2.5,
-                        borderRadius: '50%',
-                        background: '#67e8f9',
-                        boxShadow: '0 0 4px 1px #67e8f9, 0 0 8px 2px rgba(103, 232, 249, 0.4)',
-                        animation: 'borderTrace4 4s linear infinite, starPulse 2.5s ease-in-out infinite',
-                    }}
-                />
-
-                {/* Inner Glow on Hover */}
-                <motion.div
-                    className="absolute inset-0 rounded-lg pointer-events-none"
-                    style={{
-                        boxShadow: 'inset 0 0 15px rgba(99, 102, 241, 0.12)',
-                    }}
-                    animate={{ opacity: isHovered ? 1 : 0 }}
-                    transition={{ duration: 0.3 }}
-                />
-
-                {/* SYNC Text */}
-                <motion.span
-                    className={`${config.text} font-semibold tracking-widest relative z-10`}
-                    style={{
-                        background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
-                        backgroundSize: '200% 100%',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        letterSpacing: '0.18em',
-                    }}
-                    animate={{
-                        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-                    }}
-                    transition={{
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: 'easeInOut',
-                    }}
+                {/* The SYNC Text (Theme Aware) */}
+                <span
+                    className={`${cfg.text} font-black relative z-10 transition-all duration-300
+            text-slate-800 dark:text-white/90`}
+                    style={{ letterSpacing: cfg.tracking }}
                 >
                     SYNC
-                </motion.span>
+                </span>
+
+                {/* The Animation Layer */}
+                <div className="absolute inset-0 pointer-events-none">
+
+                    {/* 1. Precision Photon Star */}
+                    <motion.div
+                        className="absolute z-20"
+                        style={{
+                            width: cfg.starSize,
+                            height: cfg.starSize,
+                            background: '#3b82f6', // Use a consistent primary blue for visibility
+                            borderRadius: '50%',
+                            boxShadow: `
+                0 0 4px #fff, 
+                0 0 8px #3b82f6
+              `,
+                            top: 0,
+                            left: 0,
+                            x: '-50%',
+                            y: '-50%'
+                        }}
+                        animate={{
+                            left: ["0%", "100%", "100%", "0%", "0%"],
+                            top: ["0%", "0%", "100%", "100%", "0%"],
+                        }}
+                        transition={{
+                            duration: CYCLE_DURATION,
+                            repeat: Infinity,
+                            ease: "linear",
+                        }}
+                    />
+
+                    {/* 2. Permanent L-Brackets with Theme Intelligence */}
+                    {[
+                        { top: "0%", left: "0%", delay: 0, rot: 0 },       // Corner A
+                        { top: "0%", left: "100%", delay: 1, rot: 90 },    // Corner B
+                        { top: "100%", left: "100%", delay: 2, rot: 180 }, // Corner C
+                        { top: "100%", left: "0%", delay: 3, rot: 270 },   // Corner D
+                    ].map((pos, i) => (
+                        <div
+                            key={i}
+                            className="absolute"
+                            style={{
+                                top: pos.top,
+                                left: pos.left,
+                                transform: `translate(-50%, -50%) rotate(${pos.rot}deg)`
+                            }}
+                        >
+                            {/* The Static Base Bracket - Uses Tailwind for Theme Support */}
+                            <div
+                                className="absolute w-full h-full border-t border-l 
+                  border-slate-300 dark:border-white/20"
+                                style={{
+                                    width: cfg.starSize * 3,
+                                    height: cfg.starSize * 3,
+                                }}
+                            />
+
+                            {/* The Active Animated Overlay (Theme Aware) */}
+                            <motion.div
+                                className="absolute border-t border-l
+                  border-blue-600 dark:border-white"
+                                style={{
+                                    width: cfg.starSize * 3,
+                                    height: cfg.starSize * 3,
+                                }}
+                                animate={{
+                                    opacity: [0, 1, 0],
+                                    scale: [1, 1.25, 1],
+                                    x: [0, -2, 0],
+                                    y: [0, -2, 0],
+                                    boxShadow: [
+                                        '0px 0px 0px transparent',
+                                        '0px 0px 8px rgba(59, 130, 246, 0.4)',
+                                        '0px 0px 0px transparent'
+                                    ]
+                                }}
+                                transition={{
+                                    duration: 0.6,
+                                    repeat: Infinity,
+                                    repeatDelay: CYCLE_DURATION - 0.6,
+                                    delay: pos.delay,
+                                    ease: "easeInOut"
+                                }}
+                            />
+
+                            {/* Synced Micro-Dot */}
+                            <motion.div
+                                className="absolute w-1 h-1 bg-blue-500 rounded-full"
+                                style={{ opacity: 0.1 }}
+                                animate={{
+                                    opacity: [0.1, 0.8, 0.1],
+                                    scale: [1, 1.5, 1],
+                                }}
+                                transition={{
+                                    duration: 0.4,
+                                    repeat: Infinity,
+                                    repeatDelay: CYCLE_DURATION - 0.4,
+                                    delay: pos.delay,
+                                }}
+                            />
+                        </div>
+                    ))}
+
+                </div>
             </div>
+
+            {/* Subtle outer glow on hover */}
+            <div className="absolute inset-0 rounded-lg bg-blue-500/5 blur-xl group-hover:opacity-100 opacity-0 transition-opacity duration-700 pointer-events-none" />
         </motion.div>
     );
 };

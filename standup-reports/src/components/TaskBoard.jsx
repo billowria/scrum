@@ -96,7 +96,7 @@ const statusColumns = [
   }
 ];
 
-const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete, onTaskView }) => {
+const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete, onTaskView, showHeader = true }) => {
   const [justReceivedTask, setJustReceivedTask] = useState(false);
 
   const {
@@ -125,7 +125,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
   });
 
   return (
-    <div className="flex-1 min-w-[320px] max-w-[420px] flex flex-col relative">
+    <div className="flex-1 min-w-[340px] max-w-[460px] flex flex-col relative group/column">
       {/* Droppable area overlay */}
       <div
         ref={setNodeRef}
@@ -206,7 +206,7 @@ const SortableColumn = ({ column, tasks, onTaskUpdate, onTaskEdit, onTaskDelete,
         </div>
 
         {/* Task List */}
-        <div className="flex-1 p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-280px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className={`flex-1 p-3 space-y-3 overflow-y-auto ${showHeader ? 'max-h-[calc(100vh-320px)]' : 'max-h-[calc(100vh-180px)]'} scrollbar-thin scrollbar-thumb-gray-400/20 hover:scrollbar-thumb-gray-400/40 scrollbar-track-transparent transition-all duration-500`}>
           <AnimatePresence>
             {columnTasks.map((task, index) => (
               <motion.div
@@ -306,7 +306,8 @@ function TaskBoard({
   onOpenSprintManagement = () => { },
   displayMode: externalDisplayMode,
   setDisplayMode: setExternalDisplayMode,
-  hideInternalControls = false
+  hideInternalControls = false,
+  showHeader = true
 }) {
   const [internalDisplayMode, setInternalDisplayMode] = useState('board'); // 'board' or 'list'
 
@@ -560,7 +561,7 @@ function TaskBoard({
   };
 
   return (
-    <div className="mt-8 space-y-4">
+    <div className={`${hideInternalControls ? 'mt-0' : 'mt-8'} space-y-4`}>
       {/* FILTERS SECTION - Hideable */}
       {!hideInternalControls && (
         <AnimatePresence>
@@ -1150,7 +1151,7 @@ function TaskBoard({
                 onDragEnd={handleDragEnd}
                 onDragCancel={handleDragCancel}
               >
-                <div className="flex gap-8 h-full overflow-x-auto pb-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <div className="flex gap-10 h-full overflow-x-auto pb-8 px-2 scrollbar-thin scrollbar-thumb-gray-400/30 hover:scrollbar-thumb-gray-400/50 scrollbar-track-transparent transition-all">
                   {statusColumns.map(column => (
                     <SortableColumn
                       key={column.id}
@@ -1160,6 +1161,7 @@ function TaskBoard({
                       onTaskEdit={onTaskEdit}
                       onTaskDelete={onTaskDelete}
                       onTaskView={onTaskView}
+                      showHeader={showHeader}
                     />
                   ))}
                 </div>

@@ -84,6 +84,52 @@ body {
   color: var(--text-primary);
 }
 
+/* Global Dark Mode Overrides for hardcoded Tailwind text classes */
+:root.dark {
+  --text-900: #f8fafc;
+  /* text-gray-900 override */
+  --text-800: #f1f5f9;
+  /* text-gray-800 override */
+  --text-700: #e2e8f0;
+  /* text-gray-700 override */
+  --text-600: #cbd5e1;
+  /* text-gray-600 override */
+  --text-500: #94a3b8;
+  /* text-gray-500 override */
+  --text-400: #64748b;
+  /* text-gray-400 override */
+}
+
+.dark .text-gray-900,
+.dark .text-slate-900 {
+  color: var(--text-900);
+}
+
+.dark .text-gray-800,
+.dark .text-slate-800 {
+  color: var(--text-800);
+}
+
+.dark .text-gray-700,
+.dark .text-slate-700 {
+  color: var(--text-700);
+}
+
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: var(--text-600);
+}
+
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: var(--text-500);
+}
+
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: var(--text-400);
+}
+
 
 /* Responsive breakpoints utilities */
 @layer utilities {
@@ -584,21 +630,87 @@ body {
 }
 
 /* --- Space Theme Overrides --- */
-/* Ensure main containers are transparent to reveal QuantumBackground */
+/* Ensure main containers are transparent to reveal StarsBackground */
 html.space body {
   background-color: #0a0a12;
 }
 
-/* Target the specific layout containers in App.jsx to make them transparent */
+/* --- Ocean Theme Overrides --- */
+html.ocean body {
+  background-color: #0c1929;
+}
+
+/* --- Forest Theme Overrides --- */
+html.forest body {
+  background-color: #041f1e;
+}
+
+/* --- Shared Animated Theme Overrides --- */
+/* Target the specific layout containers to make them transparent for all animated themes */
 html.space .min-h-screen.bg-gray-50,
 html.space .min-h-screen.dark\:bg-slate-950,
 html.space .flex-1.bg-gray-50,
-html.space .flex-1.dark\:bg-slate-950 {
+html.space .flex-1.dark\:bg-slate-950,
+html.ocean .min-h-screen.bg-gray-50,
+html.ocean .min-h-screen.dark\:bg-slate-950,
+html.ocean .flex-1.bg-gray-50,
+html.ocean .flex-1.dark\:bg-slate-950,
+html.forest .min-h-screen.bg-gray-50,
+html.forest .min-h-screen.dark\:bg-slate-950,
+html.forest .flex-1.bg-gray-50,
+html.forest .flex-1.dark\:bg-slate-950,
+html.space aside,
+html.ocean aside,
+html.forest aside,
+html.space .bg-white,
+html.ocean .bg-white,
+html.forest .bg-white,
+html.space .bg-slate-950,
+html.ocean .bg-slate-950,
+html.forest .bg-slate-950 {
   background-color: transparent !important;
   background-image: none !important;
 }
 
-/* Ensure Dashboard gradients don't block the stars */
-html.space .bg-gradient-to-b.from-slate-50 {
+/* Ensure Dashboard gradients don't block animated backgrounds */
+html.space .bg-gradient-to-b.from-slate-50,
+html.space .bg-gradient-to-br.from-primary-50\/30,
+html.ocean .bg-gradient-to-b.from-slate-50,
+html.ocean .bg-gradient-to-br.from-primary-50\/30,
+html.forest .bg-gradient-to-b.from-slate-50,
+html.forest .bg-gradient-to-br.from-primary-50\/30 {
   background: transparent !important;
+}
+
+/* Glass effect for widgets in animated themes */
+html.space .bg-white\/60,
+html.space .dark\:bg-slate-800\/60,
+html.ocean .bg-white\/60,
+html.ocean .dark\:bg-slate-800\/60,
+html.forest .bg-white\/60,
+html.forest .dark\:bg-slate-800\/60 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* Force high visibility for key text in all animated themes */
+html.space h1,
+html.space h2,
+html.ocean h1,
+html.ocean h2,
+html.forest h1,
+html.forest h2,
+html.space .text-gray-900,
+html.ocean .text-gray-900,
+html.forest .text-gray-900 {
+  color: #ffffff !important;
+}
+
+html.space .text-gray-500,
+html.space .text-slate-400,
+html.ocean .text-gray-500,
+html.ocean .text-slate-400,
+html.forest .text-gray-500,
+html.forest .text-slate-400 {
+  color: rgba(255, 255, 255, 0.7) !important;
 }

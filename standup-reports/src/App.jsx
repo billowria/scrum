@@ -7,7 +7,9 @@ import brandLogo from './assets/brand/squadsync-logo.png';
 import { CompanyProvider } from './contexts/CompanyContext';
 import { TaskModalProvider } from './contexts/TaskModalContext';
 import { useTheme } from './context/ThemeContext';
-import QuantumBackground from './components/shared/QuantumBackground';
+import StarsBackground from './components/shared/StarsBackground';
+import OceanBackground from './components/shared/OceanBackground';
+import ForestBackground from './components/shared/ForestBackground';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -52,59 +54,104 @@ const pageVariants = {
 };
 
 function AppLoader() {
+  const { theme } = useTheme();
+
   return (
-    <div className="grid min-h-screen place-items-center bg-gradient-to-br from-primary-50/60 via-white to-secondary-50/60">
-      <div
-        className="relative w-[320px] rounded-3xl border border-gray-200 bg-white/70 p-8 shadow-2xl backdrop-blur-xl"
+    <div className={`grid min-h-screen place-items-center transition-all duration-700 ${theme === 'dark'
+      ? 'bg-slate-950 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05)_0%,transparent_70%)]'
+      : 'bg-gradient-to-br from-primary-50/60 via-white to-secondary-50/60'
+      }`}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className={`relative w-[340px] rounded-[2rem] border p-10 shadow-3xl backdrop-blur-2xl transition-all duration-700 ${theme === 'dark'
+          ? 'border-white/10 bg-slate-900/40 shadow-[0_0_50px_-12px_rgba(59,130,246,0.15)]'
+          : 'border-gray-200 bg-white/80 shadow-2xl'
+          }`}
         role="status"
         aria-busy="true"
       >
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative h-28 w-28">
-            <div className="absolute inset-0 rounded-full border-2 border-gray-100" />
+        <div className="flex flex-col items-center gap-8">
+          <div className="relative h-32 w-32">
+            {/* Outer Ring */}
+            <div className={`absolute inset-0 rounded-full border-2 transition-colors duration-700 ${theme === 'dark' ? 'border-white/5' : 'border-gray-100'
+              }`} />
+
+            {/* Animated Rings */}
             <motion.div
               className="absolute inset-0 rounded-full border-4 border-transparent"
-              style={{ borderTopColor: 'rgb(2 132 199)' }}
+              style={{ borderTopColor: '#3b82f6' }}
               animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
             />
             <motion.div
-              className="absolute inset-3 rounded-full border-4 border-transparent"
-              style={{ borderBottomColor: 'rgb(20 184 166)' }}
+              className="absolute inset-2 rounded-full border-4 border-transparent opacity-50"
+              style={{ borderBottomColor: '#60a5fa' }}
               animate={{ rotate: -360 }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+              transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
             />
-            <div className="absolute inset-6 grid place-items-center rounded-full bg-white shadow-inner">
-              <img
+
+            {/* Center Logo Area */}
+            <div className={`absolute inset-6 grid place-items-center rounded-full shadow-inner transition-all duration-700 ${theme === 'dark' ? 'bg-slate-800' : 'bg-white'
+              }`}>
+              <motion.img
                 src={brandLogo}
                 alt="Sync"
-                className="h-10 w-10 object-contain"
-                decoding="async"
+                className="h-12 w-12 object-contain"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
               />
             </div>
           </div>
 
-          <div className="text-center">
-            <div className="font-display text-lg font-semibold text-gray-800">Loading Sync</div>
+          <div className="text-center space-y-2">
             <motion.div
-              className="mt-1 text-sm text-gray-500"
+              className={`font-display text-2xl font-black tracking-tight transition-colors duration-500 ${theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              Loading <span className="text-blue-500">Sync</span>
+            </motion.div>
+            <motion.div
+              className={`text-sm font-medium transition-colors duration-500 ${theme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+                }`}
               initial={{ opacity: 0.4 }}
               animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
+              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
             >
               Preparing your workspace…
             </motion.div>
           </div>
 
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+          {/* Progress Bar Container */}
+          <div className={`h-1.5 w-full overflow-hidden rounded-full transition-colors duration-700 ${theme === 'dark' ? 'bg-white/5' : 'bg-gray-100'
+            }`}>
             <motion.div
-              className="h-full w-1/3 rounded-full bg-gradient-to-r from-primary-300 via-primary-500 to-primary-300"
-              animate={{ x: ['-120%', '220%'] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+              className="h-full rounded-full bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600"
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{
+                repeat: Infinity,
+                duration: 2,
+                ease: "linear"
+              }}
+              style={{ width: '60%' }}
             />
           </div>
+
+          <motion.div
+            className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            v2.1.0 Premium
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -286,8 +333,10 @@ function AppContent({ session, userRole, sidebarMode }) {
 
   return (
     <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950" : "min-h-screen"}>
-      {/* Background for Space Theme */}
-      {themeMode === 'space' && <QuantumBackground />}
+      {/* Animated Theme Backgrounds */}
+      {themeMode === 'space' && <StarsBackground />}
+      {themeMode === 'ocean' && <OceanBackground />}
+      {themeMode === 'forest' && <ForestBackground />}
 
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}

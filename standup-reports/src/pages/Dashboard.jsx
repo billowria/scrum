@@ -111,7 +111,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors truncate">
                               {project.name}
                             </h4>
                             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-${priority.color}-50 text-${priority.color}-700 ml-2`}>
@@ -119,7 +119,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
                             </span>
                           </div>
 
-                          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
                             <span>Progress: {progress}%</span>
                             <span className="flex items-center gap-1">
                               <FiClock className="w-3 h-3" />
@@ -144,7 +144,7 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
                 <FiBriefcase className="w-12 h-12 mb-3 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500">No active projects</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No active projects</p>
               </div>
             )}
           </div>
@@ -191,7 +191,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
-              <p className="text-[11px] font-medium text-gray-500">
+              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
                 {incompleteTasks.length} pending
               </p>
             </div>
@@ -231,7 +231,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 pr-2">
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 pr-2">
                               {task.title}
                             </h4>
                             <span className="text-xs flex-shrink-0">{priorityInfo.icon}</span>
@@ -248,7 +248,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
                           )}
 
                           {task.description && (
-                            <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
                               {task.description}
                             </p>
                           )}
@@ -261,14 +261,14 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
                               </span>
 
                               {/* Comments indicator */}
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                 <FiMessageSquare className="w-3 h-3" />
                                 <span>{task.comments_count}</span>
                               </div>
                             </div>
 
                             {task.due_date && (
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                 <FiClock className="w-3 h-3" />
                                 <span>{formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}</span>
                               </div>
@@ -279,7 +279,7 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
 
                       {/* Professional icon on hover */}
                       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <FiExternalLink className="w-4 h-4 text-gray-500" />
+                        <FiExternalLink className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                       </div>
                     </motion.div>
                   );
@@ -288,8 +288,8 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
                 <FiTarget className="w-12 h-12 mb-3 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500">No pending tasks</p>
-                <p className="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No pending tasks</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">You're all caught up!</p>
               </div>
             )}
           </div>
@@ -383,7 +383,7 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                     </span>
                     <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full opacity-30"></div>
                   </div>
-                  <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1">Complete</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider mt-1">Complete</span>
                 </div>
               </div>
             </div>
@@ -404,13 +404,13 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <FiCheckCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-gray-600 block">Completed</span>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 block">Completed</span>
                       <span className="text-[10px] text-emerald-600 font-bold">{completedPercent}% of total</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">{taskStats.completed}</span>
-                    <span className="text-xs text-gray-500 block">tasks</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.completed}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
                   </div>
                 </div>
               </motion.div>
@@ -429,13 +429,13 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <FiActivity className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-gray-600 block">In Progress</span>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 block">In Progress</span>
                       <span className="text-[10px] text-blue-600 font-bold">{inProgressPercent}% of total</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">{taskStats.inProgress}</span>
-                    <span className="text-xs text-gray-500 block">tasks</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.inProgress}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
                   </div>
                 </div>
               </motion.div>
@@ -454,13 +454,13 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <FiLayers className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-gray-600 block">To Do</span>
-                      <span className="text-[10px] text-gray-600 font-bold">{todoPercent}% of total</span>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 block">To Do</span>
+                      <span className="text-[10px] text-gray-600 dark:text-slate-400 font-bold">{todoPercent}% of total</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900">{taskStats.todo}</span>
-                    <span className="text-xs text-gray-500 block">tasks</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.todo}</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
                   </div>
                 </div>
               </motion.div>
@@ -556,9 +556,9 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
               const hasMissingReport = missingReportIds.includes(member.id) && !isOnLeave;
 
               const roleColors = {
-                manager: 'bg-blue-50 text-blue-700 border-blue-200',
-                admin: 'bg-purple-50 text-purple-700 border-purple-200',
-                member: 'bg-gray-50 text-gray-700 border-gray-200'
+                manager: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+                admin: 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+                member: 'bg-gray-50 text-gray-700 border-gray-100 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700'
               };
 
               return (
@@ -713,7 +713,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
 
                   {/* Chat Button */}
                   <motion.button
-                    className="p-2 hover:bg-white rounded-lg text-gray-400 hover:text-purple-600 transition-colors hover:shadow-sm border border-transparent hover:border-purple-100 opacity-0 group-hover:opacity-100"
+                    className="p-2 hover:bg-white rounded-lg text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors hover:shadow-sm border border-transparent hover:border-purple-100 opacity-0 group-hover:opacity-100"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onStartChat?.(member)}
@@ -725,7 +725,7 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
               );
             })}
             {myTeamMembers.length === 0 && (
-              <div className="text-center py-8 text-gray-400 text-xs">No team members in your team</div>
+              <div className="text-center py-8 text-gray-400 dark:text-gray-500 text-xs">No team members in your team</div>
             )}
           </div>
         </div>
@@ -1190,7 +1190,7 @@ const HeroActionTile = ({ action, index }) => {
 
         {/* Arrow Icon */}
         <motion.div
-          className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 transition-colors duration-300 ${style.arrowBg} ${style.arrowColor}`}
+          className={`w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center text-gray-300 dark:text-slate-400 transition-colors duration-300 ${style.arrowBg} ${style.arrowColor}`}
           variants={{
             hover: { x: 5 }
           }}
@@ -1284,8 +1284,8 @@ const QuickActionsHero = ({ navigate, userRole }) => {
   return (
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-6 px-2">
-        <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-        <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+        <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Quick Actions</h2>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-5">
         {actions.map((action, index) => (

@@ -580,7 +580,7 @@ export default function Sidebar({ mode, setMode, user }) {
               backdrop-blur-md border border-white/20 dark:border-white/5
               ${location.pathname === '/chat'
                 ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 border-l-4 border-cyan-500 shadow-lg dark:shadow-cyan-900/20'
-                : 'hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-gray-400 hover:scale-105 hover:shadow-md dark:hover:text-cyan-400'
+                : 'hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-400 hover:scale-105 hover:shadow-md dark:hover:text-cyan-400'
               }
             `}
             onMouseEnter={() => setHoveredItem('chat')}
@@ -617,11 +617,11 @@ export default function Sidebar({ mode, setMode, user }) {
                   exit="hidden"
                   className="ml-4 flex-1 text-left"
                 >
-                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${location.pathname === '/chat' ? 'text-cyan-700' : 'text-slate-800'
+                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${location.pathname === '/chat' ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-200'
                     }`}>
                     Chat
                   </div>
-                  <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 mt-1 leading-none opacity-80 transition-all duration-300`}>
+                  <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400 mt-1 leading-none opacity-80 transition-all duration-300`}>
                     Team messaging & DMs
                   </div>
                 </motion.div>
@@ -663,7 +663,7 @@ export default function Sidebar({ mode, setMode, user }) {
             exit={{ opacity: 0 }}
             className="p-4 pb-6 text-center"
           >
-            <p className="text-[10px] text-gray-400 font-semibold tracking-widest flex items-center justify-center gap-1.5 uppercase">
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 font-semibold tracking-widest flex items-center justify-center gap-1.5 uppercase">
               Made with <FiHeart className="w-3 h-3 text-rose-500 fill-current animate-pulse" /> by Akhil Billowria
             </p>
           </motion.div>

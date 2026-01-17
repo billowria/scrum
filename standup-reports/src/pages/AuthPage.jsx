@@ -6,7 +6,7 @@ import {
   AnimatePresence
 } from "framer-motion";
 import { supabase } from "../supabaseClient";
-import QuantumBackground from '../components/shared/QuantumBackground';
+import StarsBackground from '../components/shared/StarsBackground';
 import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
 import {
   FiMail, FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff, FiGithub, FiCheckCircle,

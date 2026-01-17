@@ -1152,294 +1152,308 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
 
       {/* Creative Modern Tasks Header */}
-      {showHeader && (
-        <motion.div
-          className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
-          id="tasks-header"
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -30, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 25 }}
-          style={{
-            left: headerStyles.left,
-            width: headerStyles.width,
-            transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-          }}
-        >
-          {/* Liquid Glass Header */}
-          <div
-            ref={headerRef}
-            className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-slate-700/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group min-h-[70px]"
+      <AnimatePresence>
+        {showHeader && (
+          <motion.div
+            className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
+            id="tasks-header"
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -30, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 25 }}
             style={{
-              boxShadow: `
+              left: headerStyles.left,
+              width: headerStyles.width,
+              transition: 'width 300ms cubic-bezier(0.4, 0, 0.2, 1), left 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          >
+            {/* Liquid Glass Header */}
+            <div
+              ref={headerRef}
+              className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-slate-700/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group min-h-[70px]"
+              style={{
+                boxShadow: `
                 0 8px 32px 0 rgba(31, 38, 135, 0.15),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.2),
                 inset 0 0 20px rgba(255, 255, 255, 0.05)
               `
-            }}
-            onMouseMove={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
-              e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
-              e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
-            }}
-          >
-            {/* Liquid Sheen Effect */}
-            <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-              style={{
-                background: `radial-gradient(
+              }}
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+                e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+              }}
+            >
+              {/* Liquid Sheen Effect */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background: `radial-gradient(
                   800px circle at var(--mouse-x) var(--mouse-y), 
                   rgba(255, 255, 255, 0.15), 
                   transparent 40%
                 )`
-              }}
-            />
+                }}
+              />
 
-            {/* Chromatic Edge Simulation (Fake Refraction) */}
-            <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
+              {/* Chromatic Edge Simulation (Fake Refraction) */}
+              <div className="absolute inset-0 rounded-[2rem] pointer-events-none opacity-50 mix-blend-overlay bg-gradient-to-br from-indigo-500/10 via-transparent to-pink-500/10" />
 
-            {/* Left: Title & Context */}
-            <div className="flex items-center gap-4 px-4 relative z-10">
-              <div className="relative group/icon cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-60 transition-opacity"></div>
-                <div className="relative p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300">
-                  {view === 'sprint' ? <FiTarget className="w-5 h-5" /> : <FiGrid className="w-5 h-5" />}
+              {/* Left: Title & Context */}
+              <div className="flex items-center gap-4 px-4 relative z-10">
+                <div className="relative group/icon cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl blur-lg opacity-40 group-hover/icon:opacity-60 transition-opacity"></div>
+                  <div className="relative p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 ring-1 ring-white/20 group-hover/icon:scale-105 transition-transform duration-300">
+                    {view === 'sprint' ? <FiTarget className="w-5 h-5" /> : <FiGrid className="w-5 h-5" />}
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
+                    {view === 'sprint' ? 'Sprint Management' : 'Tasks'}
+                  </h1>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                    {view === 'sprint' ? 'Plan, track, and deliver' : 'Manage your workflow'}
+                  </p>
                 </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
-                  {view === 'sprint' ? 'Sprint Management' : 'Tasks'}
-                </h1>
-                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  {view === 'sprint' ? 'Plan, track, and deliver' : 'Manage your workflow'}
-                </p>
-              </div>
-            </div>
 
-            {/* Center: Futuristic Toggle - Fixed at Center */}
-            <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-gray-100/30 backdrop-blur-xl p-1.5 rounded-2xl z-20 border border-white/40 shadow-inner overflow-hidden">
-              {[
-                { id: 'tasks', icon: FiGrid, label: 'Tasks' },
-                { id: 'sprint', icon: FiTarget, label: 'Sprint' }
-              ].map((tab) => (
-                <motion.button
-                  key={tab.id}
-                  className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${view === tab.id
-                    ? 'text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-600/40'
-                    }`}
-                  onClick={() => setView(tab.id)}
-                  whileHover={{
-                    scale: 1.05,
-                    rotateY: view === tab.id ? 0 : 2,
-                    z: 10
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    perspective: '1000px',
-                    transformStyle: 'preserve-3d'
-                  }}
-                >
-                  {/* Active Indicator Background */}
-                  {view === tab.id && (
-                    <>
-                      <motion.div
-                        className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'sprint'
-                          ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' // Sprint -> Pink/Purple
-                          : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500' // Tasks -> Blue/Cyan
-                          }`}
-                        layoutId="activeTabTasks"
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      />
+              {/* Center: Futuristic Toggle - Fixed at Center */}
+              <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-gray-100/30 backdrop-blur-xl p-1.5 rounded-2xl z-20 border border-white/40 shadow-inner overflow-hidden">
+                {[
+                  { id: 'tasks', icon: FiGrid, label: 'Tasks' },
+                  { id: 'sprint', icon: FiTarget, label: 'Sprint' }
+                ].map((tab) => (
+                  <motion.button
+                    key={tab.id}
+                    className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center gap-2 z-10 ${view === tab.id
+                      ? 'text-white shadow-lg'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-600/40'
+                      }`}
+                    onClick={() => setView(tab.id)}
+                    whileHover={{
+                      scale: 1.05,
+                      rotateY: view === tab.id ? 0 : 2,
+                      z: 10
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                      perspective: '1000px',
+                      transformStyle: 'preserve-3d'
+                    }}
+                  >
+                    {/* Active Indicator Background */}
+                    {view === tab.id && (
+                      <>
+                        <motion.div
+                          className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'sprint'
+                            ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' // Sprint -> Pink/Purple
+                            : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500' // Tasks -> Blue/Cyan
+                            }`}
+                          layoutId="activeTabTasks"
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                        />
 
-                      {/* Inner Pulse/Glow */}
-                      <motion.div
-                        className={`absolute inset-0.5 rounded-xl opacity-50 ${tab.id === 'sprint'
-                          ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
-                          : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400'
-                          }`}
-                        animate={{ opacity: [0.3, 0.6, 0.3] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
+                        {/* Inner Pulse/Glow */}
+                        <motion.div
+                          className={`absolute inset-0.5 rounded-xl opacity-50 ${tab.id === 'sprint'
+                            ? 'bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400'
+                            : 'bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400'
+                            }`}
+                          animate={{ opacity: [0.3, 0.6, 0.3] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        />
 
-                      {/* Diagonal Surface Shine */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent rounded-xl"
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                      />
-                    </>
-                  )}
-
-                  <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
-                    <tab.icon className={`w-4 h-4 ${view === tab.id ? 'text-white' : ''}`} />
-                    {tab.label}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Right: Actions */}
-            <div className="flex items-center gap-2 px-2 relative z-10">
-
-              {/* Professional Search Bar */}
-              <div className="relative flex items-center group/search">
-                <motion.div
-                  initial={false}
-                  animate={{
-                    width: searchFocused || search ? (window.innerWidth < 1280 ? 160 : 220) : 42,
-                    backgroundColor: searchFocused ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
-                    boxShadow: searchFocused ? '0 0 20px rgba(99, 102, 241, 0.2)' : 'none'
-                  }}
-                  className={`relative flex items-center bg-white/10 dark:bg-slate-800/40 backdrop-blur-md border ${searchFocused ? 'border-indigo-500/50' : 'border-white/20 dark:border-slate-700/50'} rounded-xl transition-all duration-500 overflow-hidden min-h-[42px]`}
-                >
-                  <FiSearch className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchFocused ? 'text-indigo-400' : 'text-gray-400'} w-4 h-4 pointer-events-none`} />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    placeholder="Search tasks or ID..."
-                    className={`w-full bg-transparent border-none focus:ring-0 text-sm py-2 pl-10 pr-10 text-gray-900 dark:text-white transition-opacity duration-300 ${searchFocused || search ? 'opacity-100' : 'opacity-0'}`}
-                  />
-
-                  {/* Clear Button */}
-                  <AnimatePresence>
-                    {search && (
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        onClick={() => setSearch('')}
-                        className="absolute right-2 px-2 py-1 text-gray-400 hover:text-rose-500 transition-colors"
-                      >
-                        <FiX className="w-4 h-4" />
-                      </motion.button>
+                        {/* Diagonal Surface Shine */}
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent rounded-xl"
+                          animate={{ x: ['-100%', '200%'] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        />
+                      </>
                     )}
-                  </AnimatePresence>
-                </motion.div>
 
-                {/* Search Shortcut Hint */}
-                {!searchFocused && !search && (
-                  <div className="absolute right-3 pointer-events-none hidden lg:flex items-center gap-0.5 opacity-40 group-hover/search:opacity-10 transition-opacity">
-                    <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">⌘</kbd>
-                    <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">/</kbd>
+                    <span className="relative z-10 flex items-center gap-2 drop-shadow-sm">
+                      <tab.icon className={`w-4 h-4 ${view === tab.id ? 'text-white' : ''}`} />
+                      {tab.label}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 px-2 relative z-10">
+
+                {/* Professional Search Bar */}
+                <div className="relative flex items-center group/search">
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      width: searchFocused || search ? (window.innerWidth < 1280 ? 160 : 220) : 42,
+                      backgroundColor: searchFocused ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+                      boxShadow: searchFocused ? '0 0 20px rgba(99, 102, 241, 0.2)' : 'none'
+                    }}
+                    className={`relative flex items-center bg-white/10 dark:bg-slate-800/40 backdrop-blur-md border ${searchFocused ? 'border-indigo-500/50' : 'border-white/20 dark:border-slate-700/50'} rounded-xl transition-all duration-500 overflow-hidden min-h-[42px]`}
+                  >
+                    <FiSearch className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 ${searchFocused ? 'text-indigo-400' : 'text-gray-400'} w-4 h-4 pointer-events-none`} />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => setSearchFocused(false)}
+                      placeholder="Search tasks or ID..."
+                      className={`w-full bg-transparent border-none focus:ring-0 text-sm py-2 pl-10 pr-10 text-gray-900 dark:text-white transition-opacity duration-300 ${searchFocused || search ? 'opacity-100' : 'opacity-0'}`}
+                    />
+
+                    {/* Clear Button */}
+                    <AnimatePresence>
+                      {search && (
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          onClick={() => setSearch('')}
+                          className="absolute right-2 px-2 py-1 text-gray-400 hover:text-rose-500 transition-colors"
+                        >
+                          <FiX className="w-4 h-4" />
+                        </motion.button>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Search Shortcut Hint */}
+                  {!searchFocused && !search && (
+                    <div className="absolute right-3 pointer-events-none hidden lg:flex items-center gap-0.5 opacity-40 group-hover/search:opacity-10 transition-opacity">
+                      <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">⌘</kbd>
+                      <kbd className="text-[9px] font-bold px-1 bg-gray-500/20 rounded">/</kbd>
+                    </div>
+                  )}
+                </div>
+
+                {/* Compact View Toggle - repositioned to header */}
+                {view === 'tasks' && (
+                  <div className="flex bg-white/10 dark:bg-slate-800/40 backdrop-blur-md rounded-xl p-1 border border-white/20 dark:border-slate-700/50 h-[42px] items-center">
+                    {[
+                      { id: 'board', icon: FiGrid, label: 'Kanban' },
+                      { id: 'list', icon: FiList, label: 'List' }
+                    ].map((mode) => (
+                      <motion.button
+                        key={mode.id}
+                        onClick={() => setDisplayMode(mode.id)}
+                        whileHover={{ backgroundColor: displayMode === mode.id ? '' : 'rgba(255,255,255,0.05)' }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 ${displayMode === mode.id ? 'text-white' : 'text-gray-500'}`}
+                        title={`${mode.label} View`}
+                      >
+                        {displayMode === mode.id && (
+                          <motion.div
+                            layoutId="headerViewToggle"
+                            className="absolute inset-0 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                        <mode.icon className="w-3.5 h-3.5 relative z-10" />
+                      </motion.button>
+                    ))}
                   </div>
                 )}
-              </div>
 
-              {/* Compact View Toggle - repositioned to header */}
-              {view === 'tasks' && (
-                <div className="flex bg-white/10 dark:bg-slate-800/40 backdrop-blur-md rounded-xl p-1 border border-white/20 dark:border-slate-700/50 h-[42px] items-center">
-                  {[
-                    { id: 'board', icon: FiGrid, label: 'Kanban' },
-                    { id: 'list', icon: FiList, label: 'List' }
-                  ].map((mode) => (
-                    <motion.button
-                      key={mode.id}
-                      onClick={() => setDisplayMode(mode.id)}
-                      whileHover={{ backgroundColor: displayMode === mode.id ? '' : 'rgba(255,255,255,0.05)' }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 ${displayMode === mode.id ? 'text-white' : 'text-gray-500'}`}
-                      title={`${mode.label} View`}
-                    >
-                      {displayMode === mode.id && (
-                        <motion.div
-                          layoutId="headerViewToggle"
-                          className="absolute inset-0 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <mode.icon className="w-3.5 h-3.5 relative z-10" />
-                    </motion.button>
-                  ))}
-                </div>
-              )}
-
-              {/* Advanced Filter Button with Active Badge */}
-              <motion.button
-                onClick={() => setIsFilterDrawerOpen(true)}
-                whileHover={{ scale: 1.05, y: -1 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative p-2.5 rounded-xl border border-white/20 dark:border-slate-700/50 transition-all flex items-center justify-center min-w-[42px] min-h-[42px] ${activeFilterCount > 0
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border-indigo-400'
-                  : 'bg-white/10 dark:bg-slate-700/40 text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-slate-600/60'}`}
-              >
-                <FiFilter className="w-5 h-5" />
-                {activeFilterCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white dark:ring-slate-900"
-                  >
-                    {activeFilterCount}
-                  </motion.span>
-                )}
-              </motion.button>
-
-              <div className="w-px h-6 bg-white/20 dark:bg-slate-700/50 mx-1 hidden sm:block" />
-
-              {/* Refresh Button */}
-              <motion.button
-                className="p-2.5 bg-white/10 dark:bg-slate-700/40 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-white/30 dark:hover:bg-slate-600/60 transition-all min-w-[42px] min-h-[42px]"
-                onClick={view === 'sprint' ? fetchSprints : fetchTasks}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title={view === 'sprint' ? 'Refresh Sprints' : 'Refresh Tasks'}
-              >
-                <FiRefreshCw className={`w-5 h-5 ${loading || sprintLoading ? 'animate-spin' : ''}`} />
-              </motion.button>
-
-              {/* Professional Create Button */}
-              {userRole === 'manager' && (
+                {/* Advanced Filter Button with Active Badge */}
                 <motion.button
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl hover:shadow-indigo-500/20 border border-white/10 hover:border-white/30 transition-all ml-1 min-h-[42px]"
-                  onClick={() => view === 'sprint' ? setShowSprintModal(true) : setShowCreateModal(true)}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setIsFilterDrawerOpen(true)}
+                  whileHover={{ scale: 1.05, y: -1 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative p-2.5 rounded-xl border border-white/20 dark:border-slate-700/50 transition-all flex items-center justify-center min-w-[42px] min-h-[42px] ${activeFilterCount > 0
+                    ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border-indigo-400'
+                    : 'bg-white/10 dark:bg-slate-700/40 text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-slate-600/60'}`}
                 >
-                  <FiPlus className="w-4 h-4" />
-                  <span className="hidden lg:inline">{view === 'sprint' ? 'New Sprint' : 'New Task'}</span>
+                  <FiFilter className="w-5 h-5" />
+                  {activeFilterCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-lg ring-2 ring-white dark:ring-slate-900"
+                    >
+                      {activeFilterCount}
+                    </motion.span>
+                  )}
                 </motion.button>
-              )}
 
-              {/* Hide Header Button */}
-              <motion.button
-                className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 bg-white/5 dark:bg-slate-800/20 rounded-xl transition-all hover:bg-white/20"
-                onClick={() => setShowHeader(false)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Hide Header"
-              >
-                <FiEyeOff className="w-4 h-4" />
-              </motion.button>
+                <div className="w-px h-6 bg-white/20 dark:bg-slate-700/50 mx-1 hidden sm:block" />
+
+                {/* Refresh Button */}
+                <motion.button
+                  className="p-2.5 bg-white/10 dark:bg-slate-700/40 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-white/30 dark:hover:bg-slate-600/60 transition-all min-w-[42px] min-h-[42px]"
+                  onClick={view === 'sprint' ? fetchSprints : fetchTasks}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={view === 'sprint' ? 'Refresh Sprints' : 'Refresh Tasks'}
+                >
+                  <FiRefreshCw className={`w-5 h-5 ${loading || sprintLoading ? 'animate-spin' : ''}`} />
+                </motion.button>
+
+                {/* Professional Create Button */}
+                {userRole === 'manager' && (
+                  <motion.button
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl hover:shadow-indigo-500/20 border border-white/10 hover:border-white/30 transition-all ml-1 min-h-[42px]"
+                    onClick={() => view === 'sprint' ? setShowSprintModal(true) : setShowCreateModal(true)}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <FiPlus className="w-4 h-4" />
+                    <span className="hidden lg:inline">{view === 'sprint' ? 'New Sprint' : 'New Task'}</span>
+                  </motion.button>
+                )}
+
+                {/* Hide Header Button */}
+                <motion.button
+                  className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 bg-white/5 dark:bg-slate-800/20 rounded-xl transition-all hover:bg-white/20"
+                  onClick={() => setShowHeader(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Hide Header"
+                >
+                  <FiEyeOff className="w-4 h-4" />
+                </motion.button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth">
-        <div className="w-full space-y-8 pt-32 px-4">
+      <div
+        className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth"
+        style={{
+          marginLeft: headerStyles.left,
+          width: headerStyles.width,
+          transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      >
+        <div className={`w-full space-y-4 px-4 transition-all duration-500 ease-out ${showHeader ? 'pt-24' : 'pt-2'}`}>
           {/* Show Header Button - Icon Only, Clean Design */}
-          {!showHeader && (
-            <motion.button
-              className="fixed top-20 right-6 z-[99999] p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all"
-              onClick={() => setShowHeader(true)}
-              initial={{ opacity: 0, y: -20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.9 }}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              title="Show Header"
-            >
-              <FiEye className="w-5 h-5" />
-            </motion.button>
-          )}
+          <AnimatePresence>
+            {!showHeader && (
+              <motion.button
+                className="fixed top-20 z-[99999] p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 rounded-xl shadow-lg hover:shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all"
+                style={{
+                  right: '24px'
+                }}
+                onClick={() => setShowHeader(true)}
+                initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                title="Show Header"
+              >
+                <FiEye className="w-5 h-5" />
+              </motion.button>
+            )}
+          </AnimatePresence>
           {/* Content */}
           <motion.div
             variants={itemVariants}
@@ -1483,6 +1497,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                     displayMode={displayMode}
                     setDisplayMode={setDisplayMode}
                     hideInternalControls={true} // New prop to hide old controls
+                    showHeader={showHeader}
                   />
                 ) : (
                   <SprintManagement

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSun, FiMoon, FiStar, FiZap, FiChevronRight } from 'react-icons/fi';
+import { FiSun, FiMoon, FiStar, FiZap, FiChevronRight, FiDroplet, FiFeather } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 
 const THEME_CORES = [
     {
         id: 'light',
-        name: 'Solaris',
+        name: 'Sun',
         icon: FiSun,
         gradient: 'from-amber-400 to-orange-500',
         color: 'text-amber-500',
@@ -14,7 +14,7 @@ const THEME_CORES = [
     },
     {
         id: 'dark',
-        name: 'Obsidian',
+        name: 'Moon',
         icon: FiMoon,
         gradient: 'from-indigo-500 to-blue-700',
         color: 'text-indigo-400',
@@ -22,32 +22,55 @@ const THEME_CORES = [
     },
     {
         id: 'space',
-        name: 'Nebula',
+        name: 'Stars',
         icon: FiStar,
         gradient: 'from-purple-500 to-fuchsia-800',
         color: 'text-purple-400',
         glow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]'
     },
     {
+        id: 'ocean',
+        name: 'Ocean',
+        icon: FiDroplet,
+        gradient: 'from-cyan-400 to-blue-600',
+        color: 'text-cyan-400',
+        glow: 'shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+    },
+    {
+        id: 'forest',
+        name: 'Forest',
+        icon: FiFeather,
+        gradient: 'from-lime-500 to-green-700',
+        color: 'text-lime-400',
+        glow: 'shadow-[0_0_15px_rgba(132,204,22,0.3)]'
+    },
+    {
         id: 'system',
-        name: 'Neural',
+        name: 'Auto',
         icon: FiZap,
-        gradient: 'from-emerald-400 to-teal-600',
-        color: 'text-emerald-400',
-        glow: 'shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+        gradient: 'from-slate-400 to-zinc-600',
+        color: 'text-slate-400',
+        glow: 'shadow-[0_0_15px_rgba(148,163,184,0.3)]'
     },
 ];
 
 const CompactThemeToggle = () => {
-    const { themeMode, setThemeMode } = useTheme();
+    const { theme, themeMode, setThemeMode } = useTheme();
     const [isHovered, setIsHovered] = useState(false);
 
     const activeCore = THEME_CORES.find(c => c.id === themeMode) || THEME_CORES[3];
     const ActiveIcon = activeCore.icon;
 
+    // Theme-aware text/icon colors
+    const textColorClass = theme === 'dark' ? 'text-white' : 'text-slate-900';
+    const secondaryColorClass = theme === 'dark' ? 'text-white/20' : 'text-slate-900/20';
+
     return (
         <motion.div
-            className="relative flex items-center p-1 rounded-full bg-slate-900/40 dark:bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 transition-all duration-500 group"
+            className={`relative flex items-center p-1 rounded-full backdrop-blur-2xl border transition-all duration-500 group ${theme === 'dark'
+                ? 'bg-white/5 border-white/10 hover:border-white/20'
+                : 'bg-slate-200/50 border-slate-300 hover:border-slate-400'
+                }`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             initial={false}
@@ -88,20 +111,25 @@ const CompactThemeToggle = () => {
                                 onClick={() => setThemeMode(core.id)}
                                 whileHover={{ scale: 1.2, y: -1 }}
                                 whileTap={{ scale: 0.9 }}
-                                className={`p-1.5 rounded-full transition-all duration-300 relative group/btn ${isActive ? 'bg-white/10' : 'hover:bg-white/10'}`}
+                                className={`p-1.5 rounded-full transition-all duration-300 relative group/btn ${isActive
+                                    ? (theme === 'dark' ? 'bg-white/10' : 'bg-slate-900/10')
+                                    : (theme === 'dark' ? 'hover:bg-white/10' : 'hover:bg-slate-900/10')
+                                    }`}
                                 title={core.name}
                             >
                                 {isActive && (
                                     <motion.div
                                         layoutId="active-selection-ring"
-                                        className={`absolute inset-0 rounded-full border border-white/40 ${core.glow}`}
+                                        className={`absolute inset-0 rounded-full border ${theme === 'dark' ? 'border-white/40' : 'border-slate-900/20'
+                                            } ${core.glow}`}
                                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
                                 )}
-                                <CoreIcon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : core.color} transition-all duration-300 group-hover/btn:drop-shadow-[0_0_8px_currentColor] relative z-10`} />
+                                <CoreIcon className={`w-3.5 h-3.5 ${isActive ? textColorClass : core.color} transition-all duration-300 group-hover/btn:drop-shadow-[0_0_8px_currentColor] relative z-10`} />
 
                                 {/* Compact Label on Hover */}
-                                <div className="absolute top-full mt-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-slate-900/90 backdrop-blur-md border border-white/10 text-[8px] font-black text-white uppercase tracking-tighter opacity-0 group-hover/btn:opacity-100 pointer-events-none whitespace-nowrap transition-all duration-300 group-hover/btn:translate-y-0 translate-y-1 z-20">
+                                <div className={`absolute top-full mt-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded backdrop-blur-md border border-white/10 text-[8px] font-black uppercase tracking-tighter opacity-0 group-hover/btn:opacity-100 pointer-events-none whitespace-nowrap transition-all duration-300 group-hover/btn:translate-y-0 translate-y-1 z-20 ${theme === 'dark' ? 'bg-slate-900/90 text-white' : 'bg-white/90 text-slate-900'
+                                    }`}>
                                     {core.name}
                                 </div>
                             </motion.button>
@@ -112,7 +140,7 @@ const CompactThemeToggle = () => {
 
             {/* Subtle indicator when collapsed */}
             {!isHovered && (
-                <motion.div className="px-2 text-white/20">
+                <motion.div className={`px-2 ${secondaryColorClass}`}>
                     <FiChevronRight size={10} className="animate-pulse" />
                 </motion.div>
             )}
