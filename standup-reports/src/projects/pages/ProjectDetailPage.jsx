@@ -75,7 +75,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             setLoading(true);
             const { data, error } = await supabase
                 .from('projects')
-                .select(`*, created_by_user:users!projects_created_by_fkey(id, name)`)
+                .select(`*, created_by_user:users!projects_created_by_fkey(id, name, avatar_url)`)
                 .eq('id', projectId)
                 .single();
 
@@ -157,7 +157,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             setSelectedContent(null); // Clear selected content when viewing topic overview
             const { data, error } = await supabase
                 .from('project_topic_content')
-                .select(`*, created_by(id, name)`)
+                .select(`*, created_by:users(id, name, avatar_url)`)
                 .eq('topic_id', topic.id)
                 .order('created_at', { ascending: true });
 
@@ -179,7 +179,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             // Fetch full content details
             const { data, error } = await supabase
                 .from('project_topic_content')
-                .select(`*, created_by(id, name)`)
+                .select(`*, created_by(id, name, avatar_url)`)
                 .eq('id', content.id)
                 .single();
 
@@ -334,7 +334,7 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
                     created_by: currentUser.id,
                     company_id: currentCompany?.id
                 })
-                .select(`*, created_by(id, name)`)
+                .select(`*, created_by(id, name, avatar_url)`)
                 .single();
 
             if (error) throw error;
@@ -468,14 +468,14 @@ export default function ProjectDetailPage({ projectId: propProjectId, onBack }) 
             {/* Mobile Overlays - separate for each sidebar */}
             {isMobile && sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/20 z-40"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {!isInline && isMobile && projectsListOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/20 z-40"
                     onClick={() => setProjectsListOpen(false)}
                 />
             )}

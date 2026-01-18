@@ -709,6 +709,11 @@ html.forest body {
   background-color: #041f1e;
 }
 
+/* --- Diwali Theme Overrides --- */
+html.diwali body {
+  background-color: #0F0518;
+}
+
 /* --- Shared Animated Theme Overrides --- */
 /* Target the specific layout containers to make them transparent for all animated themes */
 html.space .min-h-screen.bg-gray-50,
@@ -723,15 +728,22 @@ html.forest .min-h-screen.bg-gray-50,
 html.forest .min-h-screen.dark\:bg-slate-950,
 html.forest .flex-1.bg-gray-50,
 html.forest .flex-1.dark\:bg-slate-950,
+html.diwali .min-h-screen.bg-gray-50,
+html.diwali .min-h-screen.dark\:bg-slate-950,
+html.diwali .flex-1.bg-gray-50,
+html.diwali .flex-1.dark\:bg-slate-950,
 html.space aside,
 html.ocean aside,
 html.forest aside,
+html.diwali aside,
 html.space .bg-white,
 html.ocean .bg-white,
 html.forest .bg-white,
+html.diwali .bg-white,
 html.space .bg-slate-950,
 html.ocean .bg-slate-950,
-html.forest .bg-slate-950 {
+html.forest .bg-slate-950,
+html.diwali .bg-slate-950 {
   background-color: transparent !important;
   background-image: none !important;
 }
@@ -741,8 +753,11 @@ html.space .bg-gradient-to-b.from-slate-50,
 html.space .bg-gradient-to-br.from-primary-50\/30,
 html.ocean .bg-gradient-to-b.from-slate-50,
 html.ocean .bg-gradient-to-br.from-primary-50\/30,
+html.ocean .bg-gradient-to-br.from-primary-50\/30,
 html.forest .bg-gradient-to-b.from-slate-50,
-html.forest .bg-gradient-to-br.from-primary-50\/30 {
+html.forest .bg-gradient-to-br.from-primary-50\/30,
+html.diwali .bg-gradient-to-b.from-slate-50,
+html.diwali .bg-gradient-to-br.from-primary-50\/30 {
   background: transparent !important;
 }
 
@@ -751,8 +766,11 @@ html.space .bg-white\/60,
 html.space .dark\:bg-slate-800\/60,
 html.ocean .bg-white\/60,
 html.ocean .dark\:bg-slate-800\/60,
+html.ocean .dark\:bg-slate-800\/60,
 html.forest .bg-white\/60,
-html.forest .dark\:bg-slate-800\/60 {
+html.forest .dark\:bg-slate-800\/60,
+html.diwali .bg-white\/60,
+html.diwali .dark\:bg-slate-800\/60 {
   background-color: rgba(15, 23, 42, 0.4) !important;
   backdrop-filter: blur(12px) !important;
 }
@@ -762,11 +780,15 @@ html.space h1,
 html.space h2,
 html.ocean h1,
 html.ocean h2,
+html.ocean h2,
 html.forest h1,
 html.forest h2,
+html.diwali h1,
+html.diwali h2,
 html.space .text-gray-900,
 html.ocean .text-gray-900,
-html.forest .text-gray-900 {
+html.forest .text-gray-900,
+html.diwali .text-gray-900 {
   color: #ffffff !important;
 }
 
@@ -774,7 +796,10 @@ html.space .text-gray-500,
 html.space .text-slate-400,
 html.ocean .text-gray-500,
 html.ocean .text-slate-400,
+html.ocean .text-slate-400,
 html.forest .text-gray-500,
-html.forest .text-slate-400 {
+html.forest .text-slate-400,
+html.diwali .text-gray-500,
+html.diwali .text-slate-400 {
   color: rgba(255, 255, 255, 0.7) !important;
 }

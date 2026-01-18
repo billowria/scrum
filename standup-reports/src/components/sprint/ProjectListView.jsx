@@ -9,6 +9,7 @@ import {
     FiActivity
 } from 'react-icons/fi';
 import { getSprintStatus } from '../../utils/sprintUtils';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProjectListView = ({
     projects,
@@ -16,6 +17,9 @@ const ProjectListView = ({
     getSprintTasks,
     setSelectedProjectId
 }) => {
+    const { themeMode } = useTheme();
+    const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
+
     const getProjectGradient = (index) => {
         const gradients = [
             'from-blue-500 to-cyan-500',
@@ -31,7 +35,7 @@ const ProjectListView = ({
     return (
         <div className="space-y-4">
             {/* Table Header */}
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl px-6 py-4 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 shadow-sm">
+            <div className={`${isPremiumTheme ? 'bg-white/5 border-white/10' : 'bg-white/60 dark:bg-slate-800/60 border-gray-200/50 dark:border-slate-700/50'} px-6 py-4 rounded-2xl border shadow-sm`}>
                 <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                     <div className="col-span-4">Project Name</div>
                     <div className="col-span-2 text-center">Sprints</div>
@@ -63,7 +67,7 @@ const ProjectListView = ({
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className="group relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer overflow-hidden"
+                            className={`group relative ${isPremiumTheme ? 'bg-white/5 border-white/10' : 'bg-white/80 dark:bg-slate-800/80 border-gray-200 dark:border-slate-700'} rounded-2xl border hover:border-purple-200 dark:hover:border-purple-500/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer overflow-hidden`}
                             onClick={() => setSelectedProjectId(project.id)}
                         >
                             {/* Hover Gradient Overlay */}
@@ -102,17 +106,17 @@ const ProjectListView = ({
 
                                 {/* Sprints Count */}
                                 <div className="col-span-2 flex justify-center">
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50 w-24">
-                                        <span className="text-lg font-bold text-blue-700 dark:text-blue-400">{sprintCount}</span>
-                                        <span className="text-xs text-blue-600 dark:text-blue-500 font-medium">Sprints</span>
+                                    <div className={`flex flex-col items-center justify-center p-2 rounded-xl ${isPremiumTheme ? 'bg-blue-900/40 border-blue-400/30' : 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800/50'} border w-24`}>
+                                        <span className={`text-lg font-bold ${isPremiumTheme ? 'text-blue-300' : 'text-blue-700 dark:text-blue-400'}`}>{sprintCount}</span>
+                                        <span className={`text-xs ${isPremiumTheme ? 'text-blue-400' : 'text-blue-600 dark:text-blue-500'} font-medium`}>Sprints</span>
                                     </div>
                                 </div>
 
                                 {/* Tasks Count */}
                                 <div className="col-span-2 flex justify-center">
-                                    <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-purple-50/50 border border-purple-100 w-24">
-                                        <span className="text-lg font-bold text-purple-700">{totalTasks}</span>
-                                        <span className="text-xs text-purple-600 font-medium">Tasks</span>
+                                    <div className={`flex flex-col items-center justify-center p-2 rounded-xl ${isPremiumTheme ? 'bg-purple-900/40 border-purple-400/30' : 'bg-purple-50/50 border-purple-100'} border w-24`}>
+                                        <span className={`text-lg font-bold ${isPremiumTheme ? 'text-purple-300' : 'text-purple-700'}`}>{totalTasks}</span>
+                                        <span className={`text-xs ${isPremiumTheme ? 'text-purple-400' : 'text-purple-600'} font-medium`}>Tasks</span>
                                     </div>
                                 </div>
 
@@ -120,13 +124,13 @@ const ProjectListView = ({
                                 <div className="col-span-3">
                                     <div className="flex flex-col gap-2 px-4">
                                         <div className="flex items-center justify-between text-sm">
-                                            <span className="font-semibold text-gray-700 flex items-center gap-1.5">
+                                            <span className={`font-semibold ${isPremiumTheme ? 'text-white/80' : 'text-gray-700'} flex items-center gap-1.5`}>
                                                 <FiActivity className="w-4 h-4 text-gray-400" />
                                                 Progress
                                             </span>
-                                            <span className="font-bold text-gray-900">{completionPercentage}%</span>
+                                            <span className={`font-bold ${isPremiumTheme ? 'text-white' : 'text-gray-900'}`}>{completionPercentage}%</span>
                                         </div>
-                                        <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-100">
+                                        <div className={`w-full h-2.5 ${isPremiumTheme ? 'bg-white/10' : 'bg-gray-100'} rounded-full overflow-hidden border ${isPremiumTheme ? 'border-white/5' : 'border-gray-100'}`}>
                                             <motion.div
                                                 className={`h-full bg-gradient-to-r ${gradient} rounded-full`}
                                                 initial={{ width: 0 }}
@@ -140,7 +144,7 @@ const ProjectListView = ({
                                 {/* Action */}
                                 <div className="col-span-1 flex justify-center">
                                     <motion.button
-                                        className="p-2 bg-white dark:bg-slate-800 rounded-full text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 shadow-sm border border-gray-200 dark:border-slate-700 transition-all"
+                                        className={`p-2 ${isPremiumTheme ? 'bg-white/10 text-white/60 hover:text-white hover:bg-white/20' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30'} rounded-full shadow-sm border ${isPremiumTheme ? 'border-white/10' : 'border-gray-200 dark:border-slate-700'} transition-all`}
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                     >
@@ -155,7 +159,7 @@ const ProjectListView = ({
 
             {/* Empty State */}
             {projects.length === 0 && (
-                <div className="text-center py-12 bg-white/50 dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-slate-700 border-dashed">
+                <div className={`${isPremiumTheme ? 'bg-white/5 border-white/10' : 'bg-white/50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700'} text-center py-12 rounded-2xl border border-dashed`}>
                     <FiFolder className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                     <p className="text-gray-500 dark:text-gray-400 font-medium">No projects found</p>
                 </div>

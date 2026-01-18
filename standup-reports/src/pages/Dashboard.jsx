@@ -895,25 +895,25 @@ const DashboardHeader = ({
             <button
               onClick={() => navigate?.('/subscription')}
               className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${subscription?.plan?.name === 'Enterprise'
-                  ? 'bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 border-2 border-amber-400/50 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30'
-                  : subscription?.plan?.name === 'Pro'
-                    ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 hover:bg-amber-500/30'
-                    : isLight
-                      ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
-                      : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                ? 'bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 border-2 border-amber-400/50 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30'
+                : subscription?.plan?.name === 'Pro'
+                  ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 hover:bg-amber-500/30'
+                  : isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                    : 'bg-white/5 hover:bg-white/10 border border-white/10'
                 }`}
             >
               <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Enterprise'
-                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                  : subscription?.plan?.name === 'Pro'
-                    ? 'text-amber-500 fill-amber-500'
-                    : textMuted
+                ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                : subscription?.plan?.name === 'Pro'
+                  ? 'text-amber-500 fill-amber-500'
+                  : textMuted
                 }`} />
               <span className={`text-xs font-bold ${subscription?.plan?.name === 'Enterprise'
-                  ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent'
-                  : subscription?.plan?.name === 'Pro'
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : textSecondary
+                ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent'
+                : subscription?.plan?.name === 'Pro'
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : textSecondary
                 }`}>
                 {subscription?.plan?.name || 'Free'}
               </span>
@@ -971,76 +971,20 @@ const DashboardHeader = ({
 
 
 const HeroActionTile = ({ action, index }) => {
-  const { isAnimatedTheme } = useTheme();
+  const { isAnimatedTheme, themeMode } = useTheme();
 
-  // Map theme colors to specific Tailwind classes - using gradient colors for text
+  // Premium hover effects and colors
   const themeStyles = {
-    violet: {
-      hoverBg: 'hover:bg-violet-50',
-      hoverBorder: 'hover:border-violet-200 dark:hover:border-violet-400',
-      titleColor: 'group-hover:!text-violet-600 dark:group-hover:!text-violet-400',
-      descColor: 'group-hover:!text-violet-500 dark:group-hover:!text-violet-300',
-      arrowBg: 'group-hover:bg-violet-100 dark:group-hover:bg-violet-900',
-      arrowColor: 'group-hover:text-violet-600 dark:group-hover:text-violet-300',
-      premiumBorder: 'border-violet-500/20'
-    },
-    amber: {
-      hoverBg: 'hover:bg-amber-50',
-      hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-400',
-      titleColor: 'group-hover:!text-amber-600 dark:group-hover:!text-amber-400',
-      descColor: 'group-hover:!text-amber-500 dark:group-hover:!text-amber-300',
-      arrowBg: 'group-hover:bg-amber-100 dark:group-hover:bg-amber-900',
-      arrowColor: 'group-hover:text-amber-600 dark:group-hover:text-amber-300',
-      premiumBorder: 'border-amber-500/20'
-    },
-    blue: {
-      hoverBg: 'hover:bg-blue-50',
-      hoverBorder: 'hover:border-blue-200 dark:hover:border-blue-400',
-      titleColor: 'group-hover:!text-blue-600 dark:group-hover:!text-blue-400',
-      descColor: 'group-hover:!text-blue-500 dark:group-hover:!text-blue-300',
-      arrowBg: 'group-hover:bg-blue-100 dark:group-hover:bg-blue-900',
-      arrowColor: 'group-hover:text-blue-600 dark:group-hover:text-blue-300',
-      premiumBorder: 'border-blue-500/20'
-    },
-    emerald: {
-      hoverBg: 'hover:bg-emerald-50',
-      hoverBorder: 'hover:border-emerald-200 dark:hover:border-emerald-400',
-      titleColor: 'group-hover:!text-emerald-600 dark:group-hover:!text-emerald-400',
-      descColor: 'group-hover:!text-emerald-500 dark:group-hover:!text-emerald-300',
-      arrowBg: 'group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900',
-      arrowColor: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-300',
-      premiumBorder: 'border-emerald-500/20'
-    },
-    cyan: {
-      hoverBg: 'hover:bg-cyan-50',
-      hoverBorder: 'hover:border-cyan-200 dark:hover:border-cyan-400',
-      titleColor: 'group-hover:!text-cyan-600 dark:group-hover:!text-cyan-400',
-      descColor: 'group-hover:!text-cyan-500 dark:group-hover:!text-cyan-300',
-      arrowBg: 'group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900',
-      arrowColor: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-300',
-      premiumBorder: 'border-cyan-500/20'
-    },
-    pink: {
-      hoverBg: 'hover:bg-pink-50',
-      hoverBorder: 'hover:border-pink-200 dark:hover:border-pink-400',
-      titleColor: 'group-hover:!text-pink-600 dark:group-hover:!text-pink-400',
-      descColor: 'group-hover:!text-pink-500 dark:group-hover:!text-pink-300',
-      arrowBg: 'group-hover:bg-pink-100 dark:group-hover:bg-pink-900',
-      arrowColor: 'group-hover:text-pink-600 dark:group-hover:text-pink-300',
-      premiumBorder: 'border-pink-500/20'
-    },
-    red: {
-      hoverBg: 'hover:bg-red-50',
-      hoverBorder: 'hover:border-red-200 dark:hover:border-red-400',
-      titleColor: 'group-hover:!text-red-600 dark:group-hover:!text-red-400',
-      descColor: 'group-hover:!text-red-500 dark:group-hover:!text-red-300',
-      arrowBg: 'group-hover:bg-red-100 dark:group-hover:bg-red-900',
-      arrowColor: 'group-hover:text-red-600 dark:group-hover:text-red-300',
-      premiumBorder: 'border-red-500/20'
-    }
+    violet: { glow: 'shadow-violet-500/20', border: 'border-violet-500/30', text: 'text-violet-400' },
+    amber: { glow: 'shadow-amber-500/20', border: 'border-amber-500/30', text: 'text-amber-400' },
+    blue: { glow: 'shadow-blue-500/20', border: 'border-blue-500/30', text: 'text-blue-400' },
+    emerald: { glow: 'shadow-emerald-500/20', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+    cyan: { glow: 'shadow-cyan-500/20', border: 'border-cyan-500/30', text: 'text-cyan-400' },
+    pink: { glow: 'shadow-pink-500/20', border: 'border-pink-500/30', text: 'text-pink-400' },
+    red: { glow: 'shadow-red-500/20', border: 'border-red-500/30', text: 'text-red-400' }
   };
 
-  const style = themeStyles[action.theme] || themeStyles.blue;
+  const currentStyle = themeStyles[action.theme] || themeStyles.blue;
 
   return (
     <motion.button
@@ -1048,52 +992,57 @@ const HeroActionTile = ({ action, index }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       whileHover="hover"
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ scale: 0.97 }}
       onClick={action.onClick}
-      className={`group relative overflow-hidden p-6 rounded-3xl bg-white dark:bg-slate-800 border-2 ${isAnimatedTheme ? style.premiumBorder : 'border-transparent'} shadow-sm transition-all duration-300 text-left h-full flex flex-col justify-between ${style.hoverBg} dark:hover:bg-slate-700 ${style.hoverBorder}`}
+      className={`group relative flex flex-col items-center justify-center w-full aspect-square p-4 rounded-[2rem] transition-all duration-500 overflow-hidden
+        ${isAnimatedTheme
+          ? 'bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10'
+          : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700'
+        }
+        hover:shadow-2xl ${currentStyle.glow} hover:-translate-y-1`}
     >
-      <div className="flex justify-between items-start mb-4">
-        {/* Animated Icon Container */}
+      {/* Dynamic Background Glow */}
+      <motion.div
+        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-br ${action.gradient} blur-[100px] -z-10`}
+        variants={{ hover: { scale: 1.2 } }}
+      />
+
+      {/* Decorative Border Glow */}
+      <div className={`absolute inset-0 rounded-[2rem] border-2 border-transparent group-hover:${currentStyle.border} transition-colors duration-500`} />
+
+      {/* Icon Section */}
+      <div className="relative mb-4">
         <motion.div
-          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.gradient} flex items-center justify-center text-white shadow-lg relative z-10`}
+          className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${action.gradient} flex items-center justify-center text-white shadow-xl relative z-10`}
           variants={{
             hover: {
+              rotate: [0, -10, 10, 0],
               scale: 1.1,
-              rotate: [0, -5, 5, 0],
-              transition: { duration: 0.4 }
+              transition: { duration: 0.5 }
             }
           }}
         >
-          <action.icon className="w-7 h-7" />
+          <action.icon className="w-8 h-8" />
         </motion.div>
 
-        {/* Arrow Icon */}
-        <motion.div
-          className={`w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-700 flex items-center justify-center text-gray-300 dark:text-slate-400 transition-colors duration-300 ${style.arrowBg} ${style.arrowColor}`}
-          variants={{
-            hover: { x: 5 }
-          }}
-        >
-          <FiArrowRight className="w-4 h-4 transform -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
-        </motion.div>
+        {/* Sub-icon glow */}
+        <div className={`absolute -inset-2 bg-gradient-to-br ${action.gradient} opacity-20 blur-lg rounded-full group-hover:opacity-40 transition-opacity duration-500`} />
       </div>
 
-      <div className="relative z-10">
-        <h3 className={`text-lg font-bold text-gray-900 dark:text-white transition-colors duration-300 ${style.titleColor}`}>
+      {/* Content Section */}
+      <div className="text-center relative z-10">
+        <h3 className={`text-sm md:text-base font-black tracking-tight leading-tight ${isAnimatedTheme ? 'text-white' : 'text-slate-900 dark:text-white'} group-hover:${currentStyle.text} transition-colors duration-300`}>
           {action.label}
         </h3>
-        <p className={`text-sm text-gray-500 dark:text-gray-400 mt-1 transition-colors duration-300 ${style.descColor}`}>
-          {action.desc}
+        <p className={`hidden md:block text-[10px] mt-1 font-medium ${isAnimatedTheme ? 'text-white/60' : 'text-slate-500 dark:text-slate-400'} uppercase tracking-widest`}>
+          {action.desc.split(' ').slice(0, 2).join(' ')}
         </p>
       </div>
 
-      {/* Decorative Background Blob */}
-      <motion.div
-        className={`absolute -bottom-10 -right-10 w-32 h-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-20 ${style.titleColor.replace('text-', 'bg-')}`}
-        variants={{
-          hover: { scale: 1.5 }
-        }}
-      />
+      {/* Corner Detail */}
+      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0">
+        <FiArrowRight className={`w-4 h-4 ${isAnimatedTheme ? 'text-white' : 'text-slate-400'} -rotate-45`} />
+      </div>
     </motion.button>
   );
 };
@@ -1203,10 +1152,10 @@ const QuickActionsHero = ({ navigate, userRole }) => {
       >
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 pb-8 pt-4 px-4 snap-x scroll-smooth hide-scrollbar w-full"
+          className="flex overflow-x-auto gap-6 pb-12 pt-4 px-6 snap-x scroll-smooth hide-scrollbar w-full"
         >
           {actions.map((action, index) => (
-            <div key={index} className="flex-none w-[200px] md:w-[220px] snap-start">
+            <div key={index} className="flex-none w-[160px] md:w-[200px] snap-start">
               <HeroActionTile action={action} index={index} />
             </div>
           ))}

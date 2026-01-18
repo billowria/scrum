@@ -7,6 +7,7 @@ import {
 import { Menu } from '@headlessui/react';
 import { supabase } from '../../supabaseClient';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import { useTheme } from '../../context/ThemeContext';
 
 const SidebarItem = ({
     icon: Icon,
@@ -166,6 +167,9 @@ const ProjectSidebar = ({
     editMode = false,
     isMobile = false
 }) => {
+    const { themeMode } = useTheme();
+    const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
+
     const [expandedSections, setExpandedSections] = useState({});
     const [expandedTopics, setExpandedTopics] = useState({});
     const [contentByTopic, setContentByTopic] = useState({});
@@ -247,13 +251,13 @@ const ProjectSidebar = ({
                 stiffness: 300,
                 damping: 30
             }}
-            className={`h-full bg-slate-50/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-gray-200/60 dark:border-white/10 flex flex-col overflow-hidden ${className}`}
+            className={`h-full ${isPremiumTheme ? 'bg-transparent' : 'bg-slate-50/80 dark:bg-slate-900/80'} border-r ${isPremiumTheme ? 'border-white/10' : 'border-gray-200/60 dark:border-white/10'} flex flex-col overflow-hidden ${className}`}
             style={{
                 maxWidth: isMobile && isOpen ? '100vw' : undefined
             }}
         >
             {/* Sidebar Header */}
-            <div className={`sticky top-0 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md z-10 space-y-3 border-b border-gray-200/50 dark:border-white/5 ${isOpen ? 'p-4' : 'p-2'}`}>
+            <div className={`sticky top-0 ${isPremiumTheme ? 'bg-white/5' : 'bg-slate-50/90 dark:bg-slate-900/90'} z-10 space-y-3 border-b ${isPremiumTheme ? 'border-white/10' : 'border-gray-200/50 dark:border-white/5'} ${isOpen ? 'p-4' : 'p-2'}`}>
                 {/* Project Name */}
                 {isOpen && projectName && (
                     <div className="flex items-center gap-2 px-1 pb-2 border-b border-gray-200 dark:border-slate-800">
@@ -265,8 +269,8 @@ const ProjectSidebar = ({
                 )}
 
                 {isOpen && !isMobile && (
-                    <div className="flex items-center gap-2 text-gray-500 bg-white dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 px-3 py-2 rounded-lg shadow-sm w-full focus-within:ring-2 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/30 transition-all">
-                        <FiSearch className="w-4 h-4 dark:text-gray-400" />
+                    <div className={`flex items-center gap-2 text-gray-500 ${isPremiumTheme ? 'bg-white/10 border-white/10' : 'bg-white dark:bg-slate-950/50 border-gray-200 dark:border-slate-800'} px-3 py-2 rounded-lg shadow-sm w-full focus-within:ring-2 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/30 transition-all`}>
+                        <FiSearch className={`w-4 h-4 ${isPremiumTheme ? 'text-white/60' : 'dark:text-gray-400'}`} />
                         <input
                             type="text"
                             placeholder="Search..."

@@ -14,7 +14,7 @@ const ChatRightSidebar = ({
     currentUser
 }) => {
     const { themeMode } = useTheme();
-    const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+    const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
     const [activeTab, setActiveTab] = useState('overview');
 

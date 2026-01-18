@@ -99,7 +99,7 @@ const SprintManagement = ({
               </h2>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-lg sm:rounded-xl p-1 sm:p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
+              <div className="flex items-center gap-1 sm:gap-2 bg-white/60 dark:bg-slate-800/60 rounded-lg sm:rounded-xl p-1 sm:p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
                 <motion.button
                   onClick={() => setViewMode('board')}
                   className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${viewMode === 'board'
@@ -157,7 +157,7 @@ const SprintManagement = ({
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <motion.button
                 onClick={() => setSelectedProjectId('all')}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-xs sm:text-sm"
+                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-xs sm:text-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -179,7 +179,7 @@ const SprintManagement = ({
             </div>
 
             {/* Filter Controls with View Toggle */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="bg-white/80 dark:bg-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-4">
                   <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">Filter Sprints</h3>
@@ -284,7 +284,7 @@ const SprintManagement = ({
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-20 bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl border-2 border-dashed border-purple-300 dark:border-purple-500/50 shadow-xl"
+                className="text-center py-20 bg-white/60 dark:bg-slate-800/60 rounded-3xl border-2 border-dashed border-purple-300 dark:border-purple-500/50 shadow-xl"
               >
                 <div className="relative w-20 h-20 mx-auto mb-6">
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 dark:opacity-10 blur-2xl" />

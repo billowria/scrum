@@ -10,6 +10,7 @@ import { useTheme } from './context/ThemeContext';
 import StarsBackground from './components/shared/StarsBackground';
 import OceanBackground from './components/shared/OceanBackground';
 import ForestBackground from './components/shared/ForestBackground';
+import DiwaliBackground from './components/shared/DiwaliBackground';
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -338,6 +339,7 @@ function AppContent({ session, userRole, sidebarMode }) {
       {themeMode === 'space' && <StarsBackground />}
       {themeMode === 'ocean' && <OceanBackground />}
       {themeMode === 'forest' && <ForestBackground />}
+      {themeMode === 'diwali' && <DiwaliBackground />}
 
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}

@@ -317,7 +317,7 @@ const Tooltip = ({ show, label, colors, elementRef }) => {
 
 // Modern simplified sidebar component
 export default function Sidebar({ mode, setMode, user }) {
-  const { theme } = useTheme();
+  const { theme, themeMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -451,6 +451,8 @@ export default function Sidebar({ mode, setMode, user }) {
     return 272;
   };
 
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
+
   return (
     <aside className="fixed top-14 md:top-16 left-0 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out"
       style={{
@@ -459,14 +461,18 @@ export default function Sidebar({ mode, setMode, user }) {
         opacity: mode === 'hidden' ? 0 : 1
       }}>
 
-      {/* Ultra-transparent glassmorphism - lets themes shine through */}
-      <div className="absolute inset-0 bg-white/[0.02] dark:bg-slate-950/[0.05] backdrop-blur-sm border-r border-white/5 dark:border-white/[0.03]" />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] dark:from-slate-800/[0.02] dark:to-slate-900/[0.02]" />
+      {/* Ultra-transparent glassmorphism - Only show for non-premium themes */}
+      {!isPremiumTheme && (
+        <>
+          <div className="absolute inset-0 bg-white/[0.02] dark:bg-slate-950/[0.05] backdrop-blur-sm border-r border-white/5 dark:border-white/[0.03]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] dark:from-slate-800/[0.02] dark:to-slate-900/[0.02]" />
 
-      {/* Animated glass reflection - ultra subtle */}
-      <div className="absolute inset-0 opacity-5 dark:opacity-[0.02]">
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] dark:via-slate-700/[0.02] to-transparent transform skew-y-12" />
-      </div>
+          {/* Animated glass reflection - ultra subtle */}
+          <div className="absolute inset-0 opacity-5 dark:opacity-[0.02]">
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] dark:via-slate-700/[0.02] to-transparent transform skew-y-12" />
+          </div>
+        </>
+      )}
 
 
 

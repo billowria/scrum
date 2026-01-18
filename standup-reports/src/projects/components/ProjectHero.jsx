@@ -58,7 +58,7 @@ const ProjectHero = ({
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto px-8 pt-12 pb-6">
+        <div className="w-full max-w-7xl mx-auto px-8 pt-12 pb-6">
             {/* Icon & Title */}
             <div className="flex items-start gap-6 mb-8">
                 <div className="w-20 h-20 bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-sm flex items-center justify-center text-4xl shrink-0">

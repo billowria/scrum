@@ -155,7 +155,7 @@ export default function StandupReports({ sidebarMode }) {
     const navigate = useNavigate();
     const { currentCompany, loading: companyLoading } = useCompany();
     const { themeMode } = useTheme();
-    const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+    const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
     // State
     const [reports, setReports] = useState([]);

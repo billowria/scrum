@@ -234,8 +234,8 @@ class NotificationService {
       });
       allNotifications = [...announcementNotifications];
 
-      // 2. Fetch pending leave requests (for managers only)
-      if (userRole === 'manager') {
+      // 2. Fetch pending leave requests (for managers and admins)
+      if (userRole === 'manager' || userRole === 'admin') {
         const { data: leaveRequests, error: leaveError } = await supabase
           .from('leave_plans')
           .select(`
@@ -268,8 +268,8 @@ class NotificationService {
         }
       }
 
-      // 3. Fetch timesheet submissions (for managers only)
-      if (userRole === 'manager') {
+      // 3. Fetch timesheet submissions (for managers and admins)
+      if (userRole === 'manager' || userRole === 'admin') {
         const { data: timesheetSubs, error: tsError } = await supabase
           .from('timesheet_submissions')
           .select(`

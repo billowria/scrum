@@ -44,7 +44,7 @@ const ChatSidebar = ({
   mobileLayout = false
 }) => {
   const { themeMode } = useTheme();
-  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
   const [showUserList, setShowUserList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

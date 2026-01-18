@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import StarsBackground from '../components/shared/StarsBackground';
 import OceanBackground from '../components/shared/OceanBackground';
 import ForestBackground from '../components/shared/ForestBackground';
+import DiwaliBackground from '../components/shared/DiwaliBackground';
 import { useTheme } from '../context/ThemeContext';
 
 const PublicLayout = () => {
@@ -20,6 +21,7 @@ const PublicLayout = () => {
             {(themeMode === 'space' || themeMode === 'dark') && <StarsBackground />}
             {themeMode === 'ocean' && <OceanBackground />}
             {themeMode === 'forest' && <ForestBackground />}
+            {themeMode === 'diwali' && <DiwaliBackground />}
 
             {/* Content Area */}
             <div className="relative z-10 w-full min-h-screen">

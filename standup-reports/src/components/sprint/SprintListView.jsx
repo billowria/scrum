@@ -51,7 +51,7 @@ const SprintListView = ({
     return (
         <div className="space-y-4">
             {/* Table Header */}
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl px-6 py-4 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 shadow-sm">
+            <div className="bg-white/60 dark:bg-slate-800/60 px-6 py-4 rounded-2xl border border-gray-200/50 dark:border-slate-700/50 shadow-sm">
                 <div className="grid grid-cols-12 gap-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                     <div className="col-span-3">Sprint Name</div>
                     <div className="col-span-2 text-center">Status</div>
@@ -79,7 +79,7 @@ const SprintListView = ({
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
-                            className={`group relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${isSelected
+                            className={`group relative bg-white/80 dark:bg-slate-800/80 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${isSelected
                                 ? 'border-purple-400 dark:border-purple-500 shadow-md ring-1 ring-purple-100 dark:ring-purple-900/20'
                                 : 'border-gray-200 dark:border-slate-700 hover:border-purple-200 dark:hover:border-purple-500/50'
                                 }`}

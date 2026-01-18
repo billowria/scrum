@@ -400,8 +400,8 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         setSelectedTimesheetDates(prev => [...prev, dateStr]);
       }
     } else if (viewMode === 'holidays') {
-      // Holidays Mode - Single selection for managers
-      if (currentUser?.role === 'manager') {
+      // Holidays Mode - Single selection for managers and admins
+      if (currentUser?.role === 'manager' || currentUser?.role === 'admin') {
         // Toggle: if already selected, deselect. Otherwise, select this date.
         if (selectedHolidayDate === dateStr) {
           setSelectedHolidayDate(null);
@@ -758,7 +758,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                   <span className="hidden sm:inline">{selectedTimesheetDates.length > 0 ? `Log (${selectedTimesheetDates.length})` : 'Log Today'}</span>
                 </motion.button>
               )}
-              {viewMode === 'holidays' && currentUser?.role === 'manager' && (
+              {viewMode === 'holidays' && (currentUser?.role === 'manager' || currentUser?.role === 'admin') && (
                 <motion.button
                   className={`flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-lg font-medium text-sm shadow-lg hover:bg-gray-800 dark:hover:bg-indigo-500 border border-gray-700 dark:border-indigo-500/50 transition-all ${!selectedHolidayDate ? 'opacity-60' : ''}`}
                   onClick={() => {

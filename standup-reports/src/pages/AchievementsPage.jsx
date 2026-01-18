@@ -350,7 +350,7 @@ const AchievementsPage = () => {
     { value: 'other', label: 'Other', icon: FiCircle }
   ];
 
-  const isManager = currentUser?.role === 'manager';
+  const isManager = currentUser?.role === 'manager' || currentUser?.role === 'admin';
 
   // Handle viewing achievement details
   const handleViewAchievement = (achievement) => {

@@ -586,7 +586,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       try {
         let query = supabase.from('users').select('id, name, avatar_url')
           .eq('company_id', currentCompany.id);
-        if (userRole === 'manager' && currentUser.team_id) {
+        if ((userRole === 'manager' || userRole === 'admin') && currentUser.team_id) {
           query = query.eq('team_id', currentUser.team_id);
         } else if (userRole === 'member') {
           query = query.eq('id', currentUser.id);
@@ -652,8 +652,8 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
         `);
 
       // Role-based filtering with validation
-      if (userRole === 'manager' && currentUser) {
-        // Manager: show tasks assigned to any member in their team
+      if ((userRole === 'manager' || userRole === 'admin') && currentUser) {
+        // Manager/Admin: show tasks assigned to any member in their team
         if (currentUser.team_id) {
           query = query.eq('team_id', currentUser.team_id);
         }
@@ -937,7 +937,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       // Filter by involvement: show created_by user or assigned (for members)
       const filtered = (data || []).filter((p) => {
         const assigned = (p.project_assignments || []).some(a => a.user_id === user.id);
-        if (userRole === 'manager') {
+        if (userRole === 'manager' || userRole === 'admin') {
           return assigned || p.created_by === user.id;
         }
         return assigned;
@@ -1400,7 +1400,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                 </motion.button>
 
                 {/* Professional Create Button */}
-                {userRole === 'manager' && (
+                {(userRole === 'manager' || userRole === 'admin') && (
                   <motion.button
                     className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-xl hover:shadow-indigo-500/20 border border-white/10 hover:border-white/30 transition-all ml-1 min-h-[42px]"
                     onClick={() => view === 'sprint' ? setShowSprintModal(true) : setShowCreateModal(true)}
@@ -1526,7 +1526,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
       {/* Modals */}
       <AnimatePresence>
-        {showCreateModal && userRole === 'manager' && (
+        {showCreateModal && (userRole === 'manager' || userRole === 'admin') && (
           <CreateTaskModalNew
             key="create-task-modal"
             isOpen={showCreateModal}

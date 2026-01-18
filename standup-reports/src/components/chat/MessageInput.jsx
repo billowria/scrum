@@ -25,7 +25,7 @@ const MessageInput = ({
   mobileLayout = false
 }) => {
   const { themeMode } = useTheme();
-  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
   const [attachments, setAttachments] = useState([]);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);

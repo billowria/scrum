@@ -54,7 +54,7 @@ const SprintCard = ({
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             whileHover={{ y: -8, scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className={`relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border-2 ${isSelected ? 'border-purple-400 shadow-2xl' : 'border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl'
+            className={`relative bg-white/80 dark:bg-slate-800/80 rounded-2xl border-2 ${isSelected ? 'border-purple-400 shadow-2xl' : 'border-gray-200 dark:border-slate-700 shadow-lg hover:shadow-xl'
                 } transition-all duration-300 cursor-pointer overflow-hidden group h-full flex flex-col`}
             onClick={onSelect}
         >

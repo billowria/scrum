@@ -185,7 +185,7 @@ const ProjectHeader = ({ project, onRefresh, loading, teamMembers = [] }) => {
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+          <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
             <FiFolder className="w-8 h-8" />
           </div>
           <div>
@@ -288,8 +288,8 @@ const ProjectSectionsSidebar = ({
 
       <motion.aside
         className={`bg-white border-r border-gray-200 h-full overflow-hidden flex flex-col ${isMobile
-            ? `fixed left-0 top-0 z-50 w-80 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
-            : 'w-80 relative'
+          ? `fixed left-0 top-0 z-50 w-80 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+          : 'w-80 relative'
           }`}
         variants={isMobile ? {} : sidebarVariants}
         initial="initial"
@@ -376,8 +376,8 @@ const ProjectSectionsSidebar = ({
                                 key={topic.id}
                                 onClick={() => onSelectTopic(topic)}
                                 className={`w-full text-left p-3 rounded-lg border transition-all duration-200 ${selectedTopic?.id === topic.id
-                                    ? 'bg-blue-50 border-blue-200 text-blue-800'
-                                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700'
+                                  ? 'bg-blue-50 border-blue-200 text-blue-800'
+                                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100 text-gray-700'
                                   }`}
                               >
                                 <div className="flex items-center gap-2">

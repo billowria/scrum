@@ -57,7 +57,7 @@ const ProjectGridView = ({ projects, sprints, getSprintTasks, setSelectedProject
                     >
                         <motion.button
                             onClick={() => setSelectedProjectId(project.id)}
-                            className="w-full h-full text-left bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden flex flex-col"
+                            className="w-full h-full text-left bg-white/80 dark:bg-slate-800/80 rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 transition-all duration-300 shadow-lg hover:shadow-2xl overflow-hidden flex flex-col"
                             whileHover={{ y: -8, scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >

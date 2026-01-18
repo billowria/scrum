@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext();
 
 // Theme modes that use animated backgrounds
-const ANIMATED_THEMES = ['space', 'ocean', 'forest'];
+const ANIMATED_THEMES = ['space', 'ocean', 'forest', 'diwali'];
 
 export const ThemeProvider = ({ children }) => {
     const [themeMode, setThemeMode] = useState(() => {

@@ -6,6 +6,7 @@ import {
   FiClock, FiTrash2, FiCheck, FiArrowRight, FiStar, FiCalendar, FiFileText,
   FiCheckCircle, FiXCircle, FiZap
 } from 'react-icons/fi';
+import { useTheme } from '../../context/ThemeContext';
 
 const NotificationCard = ({
   notification,
@@ -14,6 +15,7 @@ const NotificationCard = ({
   onClick,
   onAction
 }) => {
+  const { isAnimatedTheme } = useTheme();
   const {
     id, title, message, type, created_at, read, priority
   } = notification;
@@ -28,7 +30,7 @@ const NotificationCard = ({
         return FiCheckSquare;
       case 'mention':
       case 'message':
-        return FiMessageCircle;
+        return FiMessageSquare;
       case 'alert':
         return FiAlertCircle;
       case 'achievement':
@@ -50,8 +52,36 @@ const NotificationCard = ({
 
   const Icon = getIcon();
 
-  // Style Mapping
+  // Style Mapping for premium themes
   const getStyles = () => {
+    if (isAnimatedTheme) {
+      switch (type) {
+        case 'task':
+        case 'task_assigned':
+        case 'task_updated':
+        case 'task_comment':
+          return { bg: 'bg-emerald-500/20', color: 'text-emerald-300', border: 'border-emerald-400/30' };
+        case 'mention':
+        case 'message':
+          return { bg: 'bg-blue-500/20', color: 'text-blue-300', border: 'border-blue-400/30' };
+        case 'alert':
+          return { bg: 'bg-red-500/20', color: 'text-red-300', border: 'border-red-400/30' };
+        case 'achievement':
+          return { bg: 'bg-amber-500/20', color: 'text-amber-300', border: 'border-amber-400/30' };
+        case 'leave_request':
+        case 'meeting':
+          return { bg: 'bg-purple-500/20', color: 'text-purple-300', border: 'border-purple-400/30' };
+        case 'timesheet':
+          return { bg: 'bg-indigo-500/20', color: 'text-indigo-300', border: 'border-indigo-400/30' };
+        case 'urgent':
+          return { bg: 'bg-rose-500/20', color: 'text-rose-300', border: 'border-rose-400/30' };
+        case 'project_update':
+        case 'sprint_update':
+          return { bg: 'bg-indigo-500/20', color: 'text-indigo-300', border: 'border-indigo-400/30' };
+        default:
+          return { bg: 'bg-white/10', color: 'text-white/70', border: 'border-white/20' };
+      }
+    }
     switch (type) {
       case 'task':
       case 'task_assigned':
@@ -94,13 +124,17 @@ const NotificationCard = ({
       exit={{ opacity: 0, x: -20 }}
       whileHover={!isMobile ? { scale: 1.01 } : {}}
       className={`
-        relative p-4 mb-2 rounded-xl border transition-all duration-200 cursor-pointer group
-        ${read
-          ? 'bg-white/60 dark:bg-slate-800/60 border-gray-50 dark:border-slate-800'
-          : 'bg-white dark:bg-slate-800 border-blue-100 dark:border-blue-900 shadow-sm'
+        relative p-4 mb-2 rounded-xl border transition-all duration-200 cursor-pointer group backdrop-blur-sm
+        ${isAnimatedTheme
+          ? read
+            ? 'bg-white/5 border-white/10'
+            : 'bg-white/10 border-white/20 shadow-sm'
+          : read
+            ? 'bg-white/60 dark:bg-slate-800/60 border-gray-50 dark:border-slate-800'
+            : 'bg-white dark:bg-slate-800 border-blue-100 dark:border-blue-900 shadow-sm'
         }
         ${priority === 'Critical' ? 'border-l-4 border-l-red-500' : ''}
-        ${isMobile ? 'active:bg-gray-50 dark:active:bg-slate-700/50' : ''}
+        ${isMobile ? isAnimatedTheme ? 'active:bg-white/15' : 'active:bg-gray-50 dark:active:bg-slate-700/50' : ''}
       `}
       onClick={() => onClick && onClick(notification)}
     >
@@ -116,15 +150,15 @@ const NotificationCard = ({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h3 className={`text-sm font-semibold truncate ${read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
+            <h3 className={`text-sm font-semibold truncate ${isAnimatedTheme ? (read ? 'text-white/70' : 'text-white') : (read ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white')}`}>
               {title}
             </h3>
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0 flex items-center gap-1">
+            <span className={`text-[10px] flex-shrink-0 flex items-center gap-1 ${isAnimatedTheme ? 'text-white/40' : 'text-gray-400 dark:text-gray-500'}`}>
               {created_at && formatDistanceToNow(new Date(created_at), { addSuffix: true })}
             </span>
           </div>
 
-          <p className={`text-sm line-clamp-2 leading-tight ${read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}>
+          <p className={`text-sm line-clamp-2 leading-tight ${isAnimatedTheme ? (read ? 'text-white/50' : 'text-white/70') : (read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300')}`}>
             {message}
           </p>
 
@@ -136,7 +170,7 @@ const NotificationCard = ({
                   e.stopPropagation();
                   onAction && onAction(notification, 'approved');
                 }}
-                className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg border border-green-200/50 transition-colors"
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors ${isAnimatedTheme ? 'bg-green-500/20 text-green-300 border-green-400/30 hover:bg-green-500/30' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200/50'}`}
               >
                 <FiCheckCircle className="w-3.5 h-3.5" /> Approve
               </button>
@@ -145,7 +179,7 @@ const NotificationCard = ({
                   e.stopPropagation();
                   onAction && onAction(notification, 'rejected');
                 }}
-                className="flex items-center gap-1 px-3 py-2 text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg border border-red-200/50 transition-colors"
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg border transition-colors ${isAnimatedTheme ? 'bg-red-500/20 text-red-300 border-red-400/30 hover:bg-red-500/30' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200/50'}`}
               >
                 <FiXCircle className="w-3.5 h-3.5" /> Reject
               </button>
@@ -165,7 +199,7 @@ const NotificationCard = ({
                     e.stopPropagation();
                     onMarkRead && onMarkRead(id);
                   }}
-                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className={`p-1.5 rounded-lg transition-colors ${isAnimatedTheme ? 'text-blue-300 hover:bg-white/10' : 'text-blue-600 hover:bg-blue-50'}`}
                   title="Mark as read"
                 >
                   <FiCheck className="w-4 h-4" />
@@ -176,7 +210,7 @@ const NotificationCard = ({
                   e.stopPropagation();
                   onDelete && onDelete(id);
                 }}
-                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                className={`p-1.5 rounded-lg transition-colors ${isAnimatedTheme ? 'text-white/50 hover:text-red-300 hover:bg-white/10' : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30'}`}
                 title="Remove"
               >
                 <FiTrash2 className="w-4 h-4" />
@@ -188,7 +222,7 @@ const NotificationCard = ({
 
       {/* Unread Indicator */}
       {!read && (
-        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-blue-500 ring-4 ring-blue-50 dark:ring-blue-950" />
+        <div className={`absolute top-4 right-4 w-2 h-2 rounded-full ${isAnimatedTheme ? 'bg-blue-400 ring-4 ring-white/10' : 'bg-blue-500 ring-4 ring-blue-50 dark:ring-blue-950'}`} />
       )}
     </motion.div>
   );

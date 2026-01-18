@@ -60,9 +60,9 @@ const ContentCard = ({ item, onUpdate, canEdit }) => {
                     <div className="flex-1">
                         <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                            <span className="flex items-center gap-1.5">
-                                <FiUser className="w-3.5 h-3.5" />
-                                {item.created_by?.name || 'Unknown'}
+                            <span className="flex items-center gap-1.5 min-w-0">
+                                <Avatar user={item.created_by} size="xs" />
+                                <span className="truncate">{item.created_by?.name || 'Unknown'}</span>
                             </span>
                             <span className="flex items-center gap-1.5">
                                 <FiClock className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ const TopicView = ({
 
     if (loading) {
         return (
-            <div className="max-w-5xl mx-auto p-4 sm:p-8 space-y-6">
+            <div className="max-w-7xl mx-auto p-4 sm:p-8 space-y-6">
                 <div className="h-8 bg-gray-100 dark:bg-slate-800 rounded w-1/3 animate-pulse" />
                 <div className="space-y-4">
                     {[1, 2].map(i => (
@@ -146,7 +146,7 @@ const TopicView = ({
     // Single Content View
     if (selectedContent) {
         return (
-            <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
                     <span className="hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer">{topic.name}</span>
@@ -166,7 +166,7 @@ const TopicView = ({
 
     // Topic Overview with Content List
     return (
-        <div className="max-w-5xl mx-auto px-8 py-12">
+        <div className="max-w-7xl mx-auto px-8 py-12">
             {/* Topic Header */}
             <div className="mb-12 pb-8 border-b border-gray-200 dark:border-slate-800">
                 <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
@@ -192,9 +192,9 @@ const TopicView = ({
                                     {item.title}
                                 </h3>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="flex items-center gap-1.5">
-                                        <FiUser className="w-3.5 h-3.5" />
-                                        {item.created_by?.name || 'Unknown'}
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                        <Avatar user={item.created_by} size="xs" />
+                                        <span className="truncate">{item.created_by?.name || 'Unknown'}</span>
                                     </span>
                                     <span className="flex items-center gap-1.5">
                                         <FiClock className="w-3.5 h-3.5" />

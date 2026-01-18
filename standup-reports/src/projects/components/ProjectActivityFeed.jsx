@@ -59,7 +59,7 @@ const ProjectActivityFeed = ({ isOpen, onClose, activities = [], loading }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+                        className="fixed inset-0 bg-black/20 z-40"
                     />
 
                     {/* Drawer */}
@@ -70,7 +70,7 @@ const ProjectActivityFeed = ({ isOpen, onClose, activities = [], loading }) => {
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                         className="fixed inset-y-0 right-0 w-96 bg-white dark:bg-slate-900 shadow-2xl z-50 flex flex-col border-l border-gray-100 dark:border-slate-800"
                     >
-                        <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
+                        <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 sticky top-0 z-10">
                             <div className="flex items-center gap-2">
                                 <FiActivity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                 <h3 className="font-semibold text-gray-900 dark:text-white">Activity Log</h3>

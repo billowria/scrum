@@ -301,7 +301,7 @@ const ProjectsHeader = ({
 }) => {
   return (
     <motion.header
-      className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 border-b border-slate-200/60 dark:border-slate-700/60 backdrop-blur-sm px-4 lg:px-6 py-3 lg:py-4 shadow-sm"
+      className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800 border-b border-slate-200/60 dark:border-slate-700/60 px-4 lg:px-6 py-3 lg:py-4 shadow-sm"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -316,7 +316,7 @@ const ProjectsHeader = ({
                 isOpen={true}
                 onClick={onToggleSidebar}
                 isMobile={true}
-                className="backdrop-blur-sm dark:text-white"
+                className="dark:text-white"
               />
             )}
 
@@ -336,7 +336,7 @@ const ProjectsHeader = ({
             {/* Stats Pills - Desktop Only */}
             {!isMobile && (
               <div className="hidden md:flex items-center gap-1 mr-4">
-                <div className="flex items-center gap-3 px-3 py-1.5 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-slate-500 dark:bg-slate-400"></div>
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{stats.total}</span>
@@ -386,7 +386,7 @@ const ProjectsHeader = ({
         {/* Mobile Stats Overview */}
         {isMobile && (
           <motion.div
-            className="flex items-center justify-between bg-white/60 rounded-lg p-2 border border-slate-200/50 backdrop-blur-sm"
+            className="flex items-center justify-between bg-white/60 rounded-lg p-2 border border-slate-200/50"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -420,7 +420,7 @@ const ProjectsHeader = ({
                 placeholder="Search projects..."
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="w-full sm:w-64 pl-9 pr-8 py-2 bg-white/70 dark:bg-slate-700/50 border border-slate-200/50 dark:border-slate-600/50 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm backdrop-blur-sm"
+                className="w-full sm:w-64 pl-9 pr-8 py-2 bg-white/70 dark:bg-slate-700/50 border border-slate-200/50 dark:border-slate-600/50 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all duration-200 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm"
               />
               {search && (
                 <motion.button
@@ -435,7 +435,7 @@ const ProjectsHeader = ({
             </div>
 
             {/* Status Filters */}
-            <div className="flex items-center gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+            <div className="flex items-center gap-1 bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50">
               {[
                 { key: 'all', label: 'All', count: stats.total },
                 { key: 'active', label: 'Active', count: stats.active },
@@ -467,7 +467,7 @@ const ProjectsHeader = ({
           {/* View Controls */}
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
-            <div className="flex bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+            <div className="flex bg-white/60 dark:bg-slate-800/60 rounded-lg p-1 border border-slate-200/50 dark:border-slate-700/50">
               <motion.button
                 onClick={() => onViewModeChange('grid')}
                 className={`p-1.5 rounded-md transition-all duration-200 ${viewMode === 'grid'
@@ -495,7 +495,7 @@ const ProjectsHeader = ({
             {/* Refresh Button */}
             <motion.button
               onClick={onRefresh}
-              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/70 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200 backdrop-blur-sm"
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/70 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200"
               whileHover={{ scale: 1.05, rotate: 180 }}
               whileTap={{ scale: 0.95 }}
               title="Refresh projects"
@@ -594,7 +594,7 @@ const ProjectCard = ({
   // Glassmorphic icon styles
   const getGlassmorphicIconStyle = (iconType, viewMode = 'grid') => {
     const baseTextColor = viewMode === 'list' ? 'text-gray-700 dark:text-gray-300' : 'text-white';
-    const baseStyle = `p-2.5 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 dark:border-white/10 shadow-lg ${baseTextColor} hover:scale-110 dark:bg-slate-800/50`;
+    const baseStyle = `p-2.5 rounded-xl transition-all duration-300 border border-white/20 dark:border-white/10 shadow-lg ${baseTextColor} hover:scale-110 dark:bg-slate-800/50`;
 
     switch (iconType) {
       case 'favorite':
@@ -792,7 +792,7 @@ const ProjectCard = ({
       <div className={`relative h-16 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 p-4`}>
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
-          <span className={`flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-white/20 backdrop-blur-sm text-white border border-white/30`}>
+          <span className={`flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-white/20 text-white border border-white/30`}>
             <div className={`w-1.5 h-1.5 ${statusConfig.dot} rounded-full`} />
             {statusConfig.label}
           </span>
@@ -831,7 +831,7 @@ const ProjectCard = ({
                   {/* Tooltip for Edit */}
                   {hoveredIcon === 'edit' && (
                     <motion.div
-                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10 backdrop-blur-sm"
+                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10"
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -864,7 +864,7 @@ const ProjectCard = ({
                   {/* Tooltip for Assign */}
                   {hoveredIcon === 'assign' && (
                     <motion.div
-                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10 backdrop-blur-sm"
+                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10"
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -896,7 +896,7 @@ const ProjectCard = ({
                 {/* Tooltip for Members */}
                 {hoveredIcon === 'members' && (
                   <motion.div
-                    className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10 backdrop-blur-sm"
+                    className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10"
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -928,7 +928,7 @@ const ProjectCard = ({
                 {/* Tooltip for Favorite */}
                 {hoveredIcon === 'favorite' && (
                   <motion.div
-                    className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10 backdrop-blur-sm"
+                    className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10"
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -960,7 +960,7 @@ const ProjectCard = ({
                   {/* Tooltip for Delete */}
                   {hoveredIcon === 'delete' && (
                     <motion.div
-                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10 backdrop-blur-sm"
+                      className="absolute top-12 right-0 bg-gray-900 text-white text-xs px-2 py-1 rounded-lg shadow-xl whitespace-nowrap z-10"
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -1145,7 +1145,7 @@ const CreateEditProjectModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+        className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 flex items-center justify-center z-50 px-4"
         onClick={onClose}
       >
         <motion.div
@@ -1158,7 +1158,7 @@ const CreateEditProjectModal = ({
             damping: 25,
             duration: 0.4
           }}
-          className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl w-full max-w-2xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden"
+          className="bg-white/95 dark:bg-slate-900/95 rounded-3xl w-full max-w-2xl shadow-2xl border border-white/20 dark:border-white/10 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
           style={{
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)'
@@ -1190,7 +1190,7 @@ const CreateEditProjectModal = ({
                     <motion.div
                       animate={{ rotate: 360 }}
                       transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                      className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30"
+                      className="p-3 bg-white/20 rounded-2xl border border-white/30"
                     >
                       <selectedStatus.icon className="w-6 h-6" />
                     </motion.div>
@@ -1207,7 +1207,7 @@ const CreateEditProjectModal = ({
 
                 <motion.button
                   onClick={onClose}
-                  className="p-3 bg-white/20 backdrop-blur-sm rounded-xl hover:bg-white/30 transition-all duration-200 border border-white/30"
+                  className="p-3 bg-white/20 rounded-xl hover:bg-white/30 transition-all duration-200 border border-white/30"
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   initial={{ opacity: 0, x: 20 }}
@@ -1413,7 +1413,7 @@ const CreateEditProjectModal = ({
                     initial={{ opacity: 0, height: 0, y: -10 }}
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={{ opacity: 0, height: 0, y: -10 }}
-                    className="p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl text-red-700 text-sm"
+                    className="p-4 bg-red-50/80 border border-red-200 rounded-xl text-red-700 text-sm"
                   >
                     <div className="flex items-center gap-2">
                       <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -2383,7 +2383,7 @@ export default function ProjectsPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header - StandupReports/LeaveCalendar Style */}
           {!activeProjectId && (
-            <div className="z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-white/20 dark:border-white/10 shadow-lg p-4">
+            <div className="z-40 bg-white/80 dark:bg-slate-900/80 border-b border-white/20 dark:border-white/10 shadow-lg p-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
                 {/* Left Section - Title */}
                 <div className="flex items-center gap-3">

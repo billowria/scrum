@@ -32,7 +32,7 @@ const ConversationCard = ({
   className = ""
 }) => {
   const { themeMode } = useTheme();
-  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);

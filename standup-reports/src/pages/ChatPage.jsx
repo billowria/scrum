@@ -26,7 +26,7 @@ const ChatPage = () => {
   const { themeMode } = useTheme();
 
   // Check if using a premium animated theme (space, ocean, forest)
-  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeConversation, setActiveConversation] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);

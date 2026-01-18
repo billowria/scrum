@@ -33,8 +33,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
             transition={{ delay: index * 0.03 }}
             onClick={onClick}
             className={`relative p-4 rounded-2xl cursor-pointer transition-all duration-300 border group ${isSelected
-                    ? `${themeMode === 'light' ? 'bg-indigo-50 border-indigo-200' : `bg-${accentColor}-500/10 border-${accentColor}-500/30`} shadow-lg`
-                    : `${themeMode === 'light' ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}`
+                ? `${themeMode === 'light' ? 'bg-indigo-50 border-indigo-200' : `bg-${accentColor}-500/10 border-${accentColor}-500/30`} shadow-lg`
+                : `${themeMode === 'light' ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}`
                 }`}
         >
             {/* Selection Glow */}
@@ -49,8 +49,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
             {/* Header */}
             <div className="flex justify-between items-start mb-2 relative z-10">
                 <h3 className={`font-semibold text-sm truncate pr-2 transition-colors flex-1 ${isSelected
-                        ? (themeMode === 'light' ? 'text-indigo-900' : 'text-white')
-                        : (themeMode === 'light' ? 'text-slate-800 group-hover:text-slate-900' : 'text-slate-300 group-hover:text-white')
+                    ? (themeMode === 'light' ? 'text-indigo-900' : 'text-white')
+                    : (themeMode === 'light' ? 'text-slate-800 group-hover:text-slate-900' : 'text-slate-300 group-hover:text-white')
                     }`}>
                     {note.title || 'Untitled Note'}
                 </h3>
@@ -69,8 +69,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
 
             {/* Snippet */}
             <p className={`text-xs leading-relaxed line-clamp-2 mb-3 relative z-10 transition-colors ${isSelected
-                    ? (themeMode === 'light' ? 'text-indigo-700/70' : 'text-white/60')
-                    : (themeMode === 'light' ? 'text-slate-500' : 'text-slate-500 group-hover:text-slate-400')
+                ? (themeMode === 'light' ? 'text-indigo-700/70' : 'text-white/60')
+                : (themeMode === 'light' ? 'text-slate-500' : 'text-slate-500 group-hover:text-slate-400')
                 }`}>
                 {getSnippet(note.content)}
             </p>
@@ -86,8 +86,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
                     <button
                         onClick={handleShare}
                         className={`p-1.5 rounded-lg transition-colors ${themeMode === 'light'
-                                ? 'hover:bg-indigo-100 text-slate-400 hover:text-indigo-600'
-                                : 'hover:bg-white/10 text-slate-500 hover:text-indigo-400'
+                            ? 'hover:bg-indigo-100 text-slate-400 hover:text-indigo-600'
+                            : 'hover:bg-white/10 text-slate-500 hover:text-indigo-400'
                             }`}
                         title="Share Note"
                     >
@@ -96,8 +96,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
                     <button
                         onClick={handleDelete}
                         className={`p-1.5 rounded-lg transition-colors ${themeMode === 'light'
-                                ? 'hover:bg-red-100 text-slate-400 hover:text-red-600'
-                                : 'hover:bg-red-500/10 text-slate-500 hover:text-red-400'
+                            ? 'hover:bg-red-100 text-slate-400 hover:text-red-600'
+                            : 'hover:bg-red-500/10 text-slate-500 hover:text-red-400'
                             }`}
                         title="Delete Note"
                     >

@@ -7,6 +7,8 @@ import {
 } from 'react-icons/fi';
 import { useTaskModal } from '../../contexts/TaskModalContext';
 
+import { useTheme } from '../../context/ThemeContext';
+
 const MessageBubble = ({
   message,
   currentUser,
@@ -20,6 +22,8 @@ const MessageBubble = ({
   onMarkAsRead,
   className = ""
 }) => {
+  const { themeMode } = useTheme();
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
   const [showActions, setShowActions] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
@@ -117,7 +121,7 @@ const MessageBubble = ({
             <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
               <span className="text-blue-200 text-sm">Status</span>
               <span className={`font-semibold text-sm ${taskData.status?.toLowerCase() === 'done' ? 'text-green-300' :
-                  taskData.status?.toLowerCase() === 'in progress' ? 'text-yellow-300' : 'text-white'
+                taskData.status?.toLowerCase() === 'in progress' ? 'text-yellow-300' : 'text-white'
                 }`}>
                 {taskData.status}
               </span>
@@ -125,7 +129,7 @@ const MessageBubble = ({
             <div className="flex items-center justify-between border-b border-blue-500/30 pb-2">
               <span className="text-blue-200 text-sm">Priority</span>
               <span className={`font-semibold text-sm ${taskData.priority?.toLowerCase() === 'high' ? 'text-red-300' :
-                  taskData.priority?.toLowerCase() === 'medium' ? 'text-orange-300' : 'text-blue-300'
+                taskData.priority?.toLowerCase() === 'medium' ? 'text-orange-300' : 'text-blue-300'
                 }`}>
                 {taskData.priority}
               </span>
@@ -302,8 +306,12 @@ const MessageBubble = ({
 
         {/* Message Bubble */}
         <div className={`relative group/message transition-all duration-200 ${isOwnMessage
-          ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl rounded-br-sm shadow-md'
-          : 'bg-white/80 backdrop-blur-sm text-gray-800 rounded-2xl rounded-bl-sm shadow-sm border border-white/40 ring-1 ring-black/5'
+          ? (isPremiumTheme
+            ? 'bg-slate-900/60 backdrop-blur-md text-white rounded-2xl rounded-br-sm shadow-sm border border-white/10 ring-1 ring-white/5'
+            : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl rounded-br-sm shadow-md')
+          : isPremiumTheme
+            ? 'bg-slate-900/60 backdrop-blur-md text-white rounded-2xl rounded-bl-sm shadow-sm border border-white/10 ring-1 ring-white/5'
+            : 'bg-white/80 backdrop-blur-sm text-gray-800 rounded-2xl rounded-bl-sm shadow-sm border border-white/40 ring-1 ring-black/5'
           }`}>
           {/* Message Text */}
           <div className="px-4 py-2">

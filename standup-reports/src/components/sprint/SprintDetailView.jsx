@@ -122,7 +122,7 @@ const SprintDetailView = ({
     try {
       const { error } = await supabase
         .from('tasks')
-        .update({ 
+        .update({
           status: newStatus,
           updated_at: new Date().toISOString()
         })
@@ -131,7 +131,7 @@ const SprintDetailView = ({
       if (error) throw error;
 
       // Update local state
-      setTasks(tasks.map(task => 
+      setTasks(tasks.map(task =>
         task.id === taskId ? { ...task, status: newStatus } : task
       ));
 
@@ -200,7 +200,7 @@ const SprintDetailView = ({
             </div>
 
             {/* Sprint Info Bar */}
-            <div className="flex items-center justify-between bg-white bg-opacity-10 rounded-lg px-4 py-3 backdrop-blur-sm">
+            <div className="flex items-center justify-between bg-white bg-opacity-10 rounded-lg px-4 py-3">
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2 text-white">
                   <FiCalendar className="w-4 h-4" />
@@ -269,11 +269,10 @@ const SprintDetailView = ({
               <div className="flex items-center gap-2 bg-white rounded-lg p-1 shadow-sm">
                 <button
                   onClick={() => setView('board')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    view === 'board'
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${view === 'board'
                       ? 'bg-indigo-600 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <FiTarget className="w-4 h-4" />
@@ -282,11 +281,10 @@ const SprintDetailView = ({
                 </button>
                 <button
                   onClick={() => setView('analytics')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    view === 'analytics'
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${view === 'analytics'
                       ? 'bg-indigo-600 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <FiBarChart2 className="w-4 h-4" />

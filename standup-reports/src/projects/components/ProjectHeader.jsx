@@ -38,7 +38,7 @@ const ProjectHeader = ({
     };
 
     return (
-        <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/10 sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 transition-all duration-200 shadow-sm">
+        <header className="h-16 bg-white/80 dark:bg-slate-900/80 border-b border-gray-200/50 dark:border-white/10 sticky top-0 z-30 flex items-center justify-between px-3 sm:px-4 transition-all duration-200 shadow-sm">
             {/* Left: Sidebar Toggle and Back Link */}
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                 {/* Projects List Toggle - only on mobile and when not inline */}

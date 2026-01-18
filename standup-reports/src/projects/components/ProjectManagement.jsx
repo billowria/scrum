@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiFolder, FiUsers, FiCalendar, FiPlus, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import Avatar from '../../components/shared/Avatar';
 import { supabase } from '../supabaseClient';
 import { notifyProjectUpdate } from '../utils/notificationHelper';
 import { useCompany } from '../../contexts/CompanyContext';
@@ -41,7 +42,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         }
         const { data, error } = await supabase
           .from('users')
-          .select('id, name, role, team_id, manager_id')
+          .select('id, name, role, team_id, manager_id, avatar_url')
           .eq('id', user.id)
           .single();
         if (error) throw error;
@@ -64,7 +65,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
 
       let query = supabase
         .from('projects')
-        .select('*, project_assignments(user_id, users(id, name))')
+        .select('*, project_assignments(user_id, users(id, name, avatar_url))')
         .eq('created_by', user.id)
         .order('created_at', { ascending: false });
 
@@ -97,7 +98,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         status: projectForm.status,
       };
       let isUpdate = !!projectForm.id;
-      
+
       if (projectForm.id) {
         const { error } = await supabase.from('projects').update(projectData).eq('id', projectForm.id);
         if (error) throw error;
@@ -106,7 +107,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         const { error } = await supabase.from('projects').insert(projectData);
         if (error) throw error;
       }
-      
+
       // Send notification about project creation/update
       try {
         const { data: userData } = await supabase
@@ -114,12 +115,12 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
           .select('team_id')
           .eq('id', user.id)
           .single();
-        
+
         if (userData?.team_id) {
-          const message = isUpdate 
+          const message = isUpdate
             ? `Project "${projectForm.name}" has been updated.`
             : `New project "${projectForm.name}" has been created.`;
-          
+
           await notifyProjectUpdate(
             projectForm.name,
             message,
@@ -131,7 +132,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         console.error('Error sending project notification:', notificationError);
         // Continue even if notification fails
       }
-      
+
       setShowCreateProjectModal(false);
       setProjectForm({ id: null, name: '', description: '', start_date: '', end_date: '', status: 'active' });
       fetchProjects();
@@ -151,10 +152,10 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
       // Get all users in the same team
       const { data: allUsers, error: usersError } = await supabase
         .from('users')
-        .select('id, name, email, role')
+        .select('id, name, email, role, avatar_url')
         .eq('team_id', currentUser.team_id)
         .eq('company_id', currentCompany?.id);
-      
+
       if (usersError) throw usersError;
 
       // Get already assigned users for this project
@@ -162,13 +163,13 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         .from('project_assignments')
         .select('user_id')
         .eq('project_id', projectId);
-      
+
       if (assignedError) throw assignedError;
 
       // Filter out already assigned users
       const assignedUserIds = assignedUsers.map(assignment => assignment.user_id);
       const availableUsers = allUsers.filter(user => !assignedUserIds.includes(user.id));
-      
+
       setAvailableUsers(availableUsers || []);
     } catch (err) {
       console.error('Error fetching available users:', err);
@@ -191,7 +192,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
           )
         `)
         .eq('project_id', projectId);
-      
+
       if (error) throw error;
       setAssignedMembers(data || []);
     } catch (err) {
@@ -251,7 +252,7 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
         .delete()
         .eq('project_id', selectedProjectForMembers.id)
         .eq('user_id', userId);
-      
+
       if (error) throw error;
       fetchAssignedMembers(selectedProjectForMembers.id);
       fetchProjects(); // Refresh project list to update member count
@@ -362,11 +363,10 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
                     </h3>
                     <p className="text-xs text-gray-600 mt-1 line-clamp-2">{project.description}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                    project.status === 'active' ? 'bg-green-100 text-green-800' :
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${project.status === 'active' ? 'bg-green-100 text-green-800' :
                     project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                      'bg-gray-100 text-gray-800'
+                    }`}>
                     {project.status}
                   </span>
                 </div>
@@ -536,10 +536,13 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
                 )}
                 <div className="space-y-3 max-h-80 overflow-y-auto">
                   {availableUsers.map(user => (
-                    <div key={user.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-800">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                    <div key={user.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar user={user} size="sm" />
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">{user.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
                       </div>
                       <button
                         className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
@@ -585,17 +588,19 @@ export default function ProjectManagement({ selectedProjectId, onClose }) {
                 <h2 className="text-xl font-bold mb-4">Members Assigned to {selectedProjectForMembers.name}</h2>
                 <div className="space-y-4 max-h-full overflow-y-auto">
                   {assignedMembers.map(assignment => (
-                    <div key={assignment.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-800">{assignment.users.name}</p>
-                        <p className="text-sm text-gray-500">{assignment.users.email}</p>
+                    <div key={assignment.user_id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar user={assignment.users} size="sm" />
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-gray-200 text-sm">{assignment.users.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{assignment.users.email}</p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                          assignment.role_in_project === 'manager' ? 'bg-purple-100 text-purple-800' :
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${assignment.role_in_project === 'manager' ? 'bg-purple-100 text-purple-800' :
                           assignment.role_in_project === 'admin' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
+                            'bg-blue-100 text-blue-800'
+                          }`}>
                           {assignment.role_in_project}
                         </span>
                         <button

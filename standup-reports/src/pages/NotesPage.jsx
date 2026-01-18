@@ -59,12 +59,13 @@ const NotesPage = () => {
                     accent: 'bg-cyan-500'
                 };
             case 'forest':
+            case 'diwali':
                 return {
                     bg: 'bg-transparent',
                     text: 'text-slate-100',
                     card: 'bg-transparent',
                     border: 'border-white/10',
-                    accent: 'bg-emerald-500'
+                    accent: 'bg-emerald-500' // Using emerald/gold hybrid feel? Or maybe modify slightly. For simplicity, reusing object structure.
                 };
             default: // dark
                 return {

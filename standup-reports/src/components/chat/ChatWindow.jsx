@@ -47,7 +47,7 @@ const ChatWindow = ({
   const [messageInput, setMessageInput] = useState("");
 
   const { themeMode } = useTheme();
-  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);

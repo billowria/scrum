@@ -205,32 +205,32 @@ export default function NotificationCenterV2() {
 
   if (loading && !notifications.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className={`min-h-screen flex items-center justify-center ${isAnimatedTheme ? 'bg-transparent' : 'bg-gray-50 dark:bg-slate-950'}`}>
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isAnimatedTheme ? 'border-white' : 'border-blue-600'}`}></div>
       </div>
     );
   }
 
   const GroupHeader = ({ label, count }) => (
     <div className="flex items-center gap-3 mt-8 mb-4">
-      <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</h3>
-      <div className="h-px bg-gray-200 dark:bg-slate-800 flex-1" />
-      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{count}</span>
+      <h3 className={`text-sm font-bold uppercase tracking-wider ${isAnimatedTheme ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>{label}</h3>
+      <div className={`h-px flex-1 ${isAnimatedTheme ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-800'}`} />
+      <span className={`text-xs font-medium ${isAnimatedTheme ? 'text-white/50' : 'text-gray-400 dark:text-gray-500'}`}>{count}</span>
     </div>
   );
 
   return (
-    <div className={`min-h-screen ${isMobile ? 'bg-white dark:bg-slate-950' : 'bg-gray-50/50 dark:bg-slate-950'}`}>
+    <div className={`min-h-screen ${isAnimatedTheme ? 'bg-transparent' : (isMobile ? 'bg-white dark:bg-slate-950' : 'bg-gray-50/50 dark:bg-slate-950')}`}>
       <div className={`w-full max-w-[1920px] mx-auto ${isMobile ? 'px-0' : 'px-4 sm:px-6 lg:px-8 py-8'}`}>
 
         {/* Mobile Header */}
         {isMobile ? (
-          <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 px-4 py-4">
+          <div className={`sticky top-0 z-30 backdrop-blur-md border-b px-4 py-4 ${isAnimatedTheme ? 'bg-black/30 border-white/10' : 'bg-white/80 dark:bg-slate-950/80 border-gray-100 dark:border-slate-800'}`}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => window.history.back()}
-                  className="p-2 -ml-2 text-gray-600 dark:text-gray-400"
+                  className={`p-2 -ml-2 ${isAnimatedTheme ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}
                 >
                   <FiArrowLeft className="w-6 h-6" />
                 </button>
@@ -239,13 +239,13 @@ export default function NotificationCenterV2() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleMarkAllRead}
-                  className="p-2 text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800 rounded-full transition-colors"
+                  className={`p-2 rounded-full transition-colors ${isAnimatedTheme ? 'text-white/80 active:bg-white/10' : 'text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800'}`}
                 >
                   <FiCheck className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="p-2 text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800 rounded-full transition-colors"
+                  className={`p-2 rounded-full transition-colors ${isAnimatedTheme ? 'text-white/80 active:bg-white/10' : 'text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-slate-800'}`}
                 >
                   <FiFilter className="w-5 h-5" />
                 </button>
@@ -254,13 +254,13 @@ export default function NotificationCenterV2() {
 
             {/* Mobile Search */}
             <div className="relative group">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <FiSearch className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isAnimatedTheme ? 'text-white/50 group-focus-within:text-white' : 'text-gray-400 group-focus-within:text-indigo-500'}`} />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 w-full transition-all"
+                className={`pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none w-full transition-all ${isAnimatedTheme ? 'bg-white/10 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-white/40' : 'bg-gray-50 dark:bg-slate-900/50 border border-gray-100 dark:border-slate-800/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'}`}
               />
             </div>
           </div>
@@ -277,19 +277,19 @@ export default function NotificationCenterV2() {
             <div className="flex items-center gap-3">
               {/* Search Bar */}
               <div className="relative group">
-                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <FiSearch className={`absolute left-3 top-1/2 -translate-y-1/2 transition-colors ${isAnimatedTheme ? 'text-white/50 group-focus-within:text-white' : 'text-gray-400 group-focus-within:text-blue-500'}`} />
                 <input
                   type="text"
                   placeholder="Search by text or sender..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 text-gray-900 dark:text-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all backdrop-blur-sm"
+                  className={`pl-10 pr-4 py-2 rounded-xl text-sm focus:outline-none w-full sm:w-64 transition-all backdrop-blur-sm ${isAnimatedTheme ? 'bg-white/10 border border-white/20 text-white placeholder-white/50 focus:ring-2 focus:ring-white/30 focus:border-white/40' : 'bg-white dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'}`}
                 />
               </div>
 
               <button
                 onClick={() => setShowCreator(true)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-xl text-sm font-medium transition-colors shadow-sm shadow-blue-200 dark:shadow-indigo-950/50 flex items-center gap-2"
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm flex items-center gap-2 ${isAnimatedTheme ? 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/20' : 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white shadow-blue-200 dark:shadow-indigo-950/50'}`}
               >
                 <FiPlus className="w-4 h-4" />
                 <span className="hidden sm:inline">New Notification</span>
@@ -297,7 +297,7 @@ export default function NotificationCenterV2() {
 
               <button
                 onClick={handleMarkAllRead}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                className={`p-2 rounded-lg transition-colors ${isAnimatedTheme ? 'text-white/70 hover:text-white hover:bg-white/10' : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}
                 title="Mark all as read"
               >
                 <FiCheck className="w-5 h-5" />
@@ -324,10 +324,10 @@ export default function NotificationCenterV2() {
                     animate={{ x: 0 }}
                     exit={{ x: '100%' }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                    className="fixed inset-y-0 right-0 z-50 w-72 bg-white dark:bg-slate-900 shadow-2xl overflow-y-auto"
+                    className={`fixed inset-y-0 right-0 z-50 w-72 shadow-2xl overflow-y-auto ${isAnimatedTheme ? 'bg-black/60 backdrop-blur-xl border-l border-white/10' : 'bg-white dark:bg-slate-900'}`}
                   >
-                    <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
-                      <h2 className="font-bold text-gray-900 dark:text-white">Filters</h2>
+                    <div className={`p-4 border-b flex items-center justify-between ${isAnimatedTheme ? 'border-white/10' : 'border-gray-100 dark:border-slate-800'}`}>
+                      <h2 className={`font-bold ${isAnimatedTheme ? 'text-white' : 'text-gray-900 dark:text-white'}`}>Filters</h2>
                       <button
                         onClick={() => setIsSidebarOpen(false)}
                         className="p-2 text-gray-500"
@@ -344,6 +344,7 @@ export default function NotificationCenterV2() {
                         isOpen={true}
                         onToggle={() => { }}
                         hideToggle={true}
+                        isAnimatedTheme={isAnimatedTheme}
                       />
                     </div>
                   </motion.div>
@@ -359,6 +360,7 @@ export default function NotificationCenterV2() {
                 onOpenSettings={() => setShowSettings(true)}
                 isOpen={isSidebarOpen}
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                isAnimatedTheme={isAnimatedTheme}
               />
             </div>
           )}
@@ -441,15 +443,15 @@ export default function NotificationCenterV2() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-slate-900/50 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 backdrop-blur-sm"
+                  className={`flex flex-col items-center justify-center py-20 text-center rounded-2xl border border-dashed backdrop-blur-sm ${isAnimatedTheme ? 'bg-white/5 border-white/20' : 'bg-white dark:bg-slate-900/50 border-gray-200 dark:border-slate-800'}`}
                 >
-                  <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
-                    <FiBell className="w-8 h-8 text-blue-300 dark:text-blue-400" />
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isAnimatedTheme ? 'bg-white/10' : 'bg-blue-50 dark:bg-blue-900/30'}`}>
+                    <FiBell className={`w-8 h-8 ${isAnimatedTheme ? 'text-white/50' : 'text-blue-300 dark:text-blue-400'}`} />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+                  <h3 className={`text-lg font-medium mb-1 ${isAnimatedTheme ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
                     No notifications found
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 max-w-sm">
+                  <p className={`max-w-sm ${isAnimatedTheme ? 'text-white/60' : 'text-gray-500 dark:text-gray-400'}`}>
                     {searchQuery
                       ? `No matches found for "${searchQuery}"`
                       : activeFilter === 'all'
@@ -459,7 +461,7 @@ export default function NotificationCenterV2() {
                   {(activeFilter !== 'all' || searchQuery) && (
                     <button
                       onClick={() => { setActiveFilter('all'); setSearchQuery(''); }}
-                      className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                      className={`mt-4 font-medium ${isAnimatedTheme ? 'text-white hover:text-white/80' : 'text-blue-600 hover:text-blue-700'}`}
                     >
                       Clear filters
                     </button>

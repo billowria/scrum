@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSun, FiMoon, FiStar, FiZap, FiChevronRight, FiDroplet, FiFeather } from 'react-icons/fi';
+import { GiSparkles } from 'react-icons/gi';
 import { useTheme } from '../context/ThemeContext';
 
 const THEME_CORES = [
@@ -26,7 +27,16 @@ const THEME_CORES = [
         icon: FiFeather,
         gradient: 'from-lime-500 to-green-700',
         color: 'text-lime-400',
+        color: 'text-lime-400',
         glow: 'shadow-[0_0_15px_rgba(132,204,22,0.3)]'
+    },
+    {
+        id: 'diwali',
+        name: 'Diwali',
+        icon: GiSparkles,
+        gradient: 'from-orange-500 to-rose-600',
+        color: 'text-orange-400',
+        glow: 'shadow-[0_0_15px_rgba(249,115,22,0.3)]'
     },
 ];
 
