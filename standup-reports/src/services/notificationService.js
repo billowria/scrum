@@ -4,6 +4,7 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 // Notification types enum (based on announcement notification_type)
 export const NOTIFICATION_TYPES = {
   ANNOUNCEMENT: 'general',
+  BOSS_MESSAGE: 'boss_message',
   LEAVE_REQUEST: 'leave_request',
   TIMESHEET_SUBMISSION: 'timesheet',
   TASK_CREATED: 'task_created',

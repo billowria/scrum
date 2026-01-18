@@ -17,6 +17,7 @@ import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import UserListModal from '../components/UserListModal';
 import TaskDetailView from '../components/tasks/TaskDetailView';
 import HolidaysWidget from '../components/dashboard/HolidaysWidget';
+import BossMessageBanner from '../components/dashboard/BossMessageBanner';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 
@@ -776,16 +777,16 @@ const DashboardHeader = ({
   theme = 'dark',
   themeMode = 'dark'
 }) => {
-  // Theme-aware glassmorphic styles
+  // Theme-aware glassmorphic styles - Ultra transparent
   const getGlassStyles = () => {
-    const baseGlass = 'backdrop-blur-xl border-b';
+    const baseGlass = 'backdrop-blur-sm border-b';
 
     const themeStyles = {
-      light: `${baseGlass} bg-white/80 border-slate-200/60`,
-      dark: `${baseGlass} bg-slate-900/70 border-white/10`,
-      space: `${baseGlass} bg-slate-900/60 border-purple-500/20`,
-      ocean: `${baseGlass} bg-slate-900/60 border-cyan-500/20`,
-      forest: `${baseGlass} bg-slate-900/60 border-emerald-500/20`,
+      light: `${baseGlass} bg-white/[0.02] border-slate-200/20`,
+      dark: `${baseGlass} bg-slate-900/[0.05] border-white/5`,
+      space: `${baseGlass} bg-slate-900/[0.03] border-purple-500/10`,
+      ocean: `${baseGlass} bg-slate-900/[0.03] border-cyan-500/10`,
+      forest: `${baseGlass} bg-slate-900/[0.03] border-emerald-500/10`,
     };
 
     return themeStyles[themeMode] || themeStyles.dark;
@@ -893,16 +894,27 @@ const DashboardHeader = ({
             {/* Subscription Badge */}
             <button
               onClick={() => navigate?.('/subscription')}
-              className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isLight
-                ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
-                : 'bg-white/5 hover:bg-white/10 border border-white/10'
+              className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${subscription?.plan?.name === 'Enterprise'
+                  ? 'bg-gradient-to-r from-slate-700 via-slate-800 to-slate-900 border-2 border-amber-400/50 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30'
+                  : subscription?.plan?.name === 'Pro'
+                    ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 hover:bg-amber-500/30'
+                    : isLight
+                      ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                      : 'bg-white/5 hover:bg-white/10 border border-white/10'
                 }`}
             >
-              <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Pro'
-                ? 'text-amber-500 fill-amber-500'
-                : textMuted
+              <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Enterprise'
+                  ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                  : subscription?.plan?.name === 'Pro'
+                    ? 'text-amber-500 fill-amber-500'
+                    : textMuted
                 }`} />
-              <span className={`text-xs font-bold ${textSecondary}`}>
+              <span className={`text-xs font-bold ${subscription?.plan?.name === 'Enterprise'
+                  ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent'
+                  : subscription?.plan?.name === 'Pro'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : textSecondary
+                }`}>
                 {subscription?.plan?.name || 'Free'}
               </span>
             </button>
@@ -1641,8 +1653,12 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
       />
 
 
+      {/* Boss Message Banner - Between Header and Quick Actions */}
+      <div className="pt-8">
+        <BossMessageBanner userRole={userRole} />
+      </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 pt-12">
+      <div className="px-4 sm:px-6 lg:px-8 pt-4">
         {/* Hero Quick Actions */}
         <QuickActionsHero navigate={navigate} userRole={userRole} />
 

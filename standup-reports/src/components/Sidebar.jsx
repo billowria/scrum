@@ -452,20 +452,20 @@ export default function Sidebar({ mode, setMode, user }) {
   };
 
   return (
-    <aside className="fixed top-14 md:top-16 left-0 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-r-0"
+    <aside className="fixed top-14 md:top-16 left-0 h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] flex flex-col z-50 transition-all duration-300 ease-in-out"
       style={{
         width: getSidebarWidth(),
         transform: mode === 'hidden' ? 'translateX(-100%)' : 'translateX(0)',
         opacity: mode === 'hidden' ? 0 : 1
       }}>
 
-      {/* Glassmorphism background */}
-      <div className="absolute inset-0 bg-white/30 dark:bg-slate-950/40 backdrop-blur-xl border-r border-white/20 dark:border-white/5" />
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10 dark:from-slate-800/10 dark:to-slate-900/10" />
+      {/* Ultra-transparent glassmorphism - lets themes shine through */}
+      <div className="absolute inset-0 bg-white/[0.02] dark:bg-slate-950/[0.05] backdrop-blur-sm border-r border-white/5 dark:border-white/[0.03]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-white/[0.02] dark:from-slate-800/[0.02] dark:to-slate-900/[0.02]" />
 
-      {/* Animated glass reflection */}
-      <div className="absolute inset-0 opacity-30 dark:opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 dark:via-slate-700/10 to-transparent transform skew-y-12" />
+      {/* Animated glass reflection - ultra subtle */}
+      <div className="absolute inset-0 opacity-5 dark:opacity-[0.02]">
+        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] dark:via-slate-700/[0.02] to-transparent transform skew-y-12" />
       </div>
 
 
@@ -493,18 +493,18 @@ export default function Sidebar({ mode, setMode, user }) {
                 }}
                 className={`
                   w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
-                  backdrop-blur-md border border-white/20 dark:border-white/5
+                  backdrop-blur-sm border border-white/10 dark:border-white/5
                   ${isActiveLink
-                    ? `${link.colors.activeBg} ${link.colors.activeText} border-l-4 ${link.colors.activeBorder} shadow-lg dark:shadow-blue-900/20`
-                    : `${link.colors.hoverBg} text-slate-700 dark:text-slate-400 hover:scale-105 hover:shadow-md dark:hover:text-white`
+                    ? `${link.colors.activeBg} ${link.colors.activeText} border-l-4 ${link.colors.activeBorder} shadow-lg dark:shadow-${link.colors.iconBg.split('-')[1]}-900/20`
+                    : `${link.colors.hoverBg} text-slate-800 dark:text-slate-200 hover:scale-105 hover:shadow-md dark:hover:text-white`
                   }
                 `}
                 onMouseEnter={() => setHoveredItem(link.to || index)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
                   background: isActiveLink
-                    ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))' : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))')
-                    : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.5))' : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))')
+                    ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))' : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
+                    : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
                 }}
               >
                 {/* Enhanced icon container */}
@@ -531,11 +531,11 @@ export default function Sidebar({ mode, setMode, user }) {
                       exit="hidden"
                       className="ml-4 flex-1 text-left"
                     >
-                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${isActiveLink ? link.colors.activeText : 'text-slate-800 dark:text-slate-200'
+                      <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${isActiveLink ? link.colors.activeText : 'text-slate-900 dark:text-gray-100'
                         }`}>
                         {link.label}
                       </div>
-                      <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400 mt-1 leading-none opacity-80 transition-all duration-300`}>
+                      <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-gray-300 mt-1 leading-none opacity-90 transition-all duration-300`}>
                         {link.description}
                       </div>
                     </motion.div>
@@ -577,18 +577,18 @@ export default function Sidebar({ mode, setMode, user }) {
             }}
             className={`
               w-full flex items-center ${open ? 'px-3 py-3' : 'px-4 py-4'} rounded-2xl transition-all duration-300 relative group
-              backdrop-blur-md border border-white/20 dark:border-white/5
+              backdrop-blur-sm border border-white/10 dark:border-white/5
               ${location.pathname === '/chat'
-                ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 border-l-4 border-cyan-500 shadow-lg dark:shadow-cyan-900/20'
-                : 'hover:bg-cyan-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-400 hover:scale-105 hover:shadow-md dark:hover:text-cyan-400'
+                ? 'bg-cyan-100/50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-400 border-l-4 border-cyan-500 shadow-lg dark:shadow-cyan-900/20'
+                : 'hover:bg-cyan-50/50 dark:hover:bg-slate-800/30 text-slate-800 dark:text-slate-200 hover:scale-105 hover:shadow-md dark:hover:text-cyan-400'
               }
             `}
             onMouseEnter={() => setHoveredItem('chat')}
             onMouseLeave={() => setHoveredItem(null)}
             style={{
               background: location.pathname === '/chat'
-                ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))' : 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))')
-                : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.5))' : 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))')
+                ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))' : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
+                : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
             }}
           >
             <div className={`
@@ -617,11 +617,11 @@ export default function Sidebar({ mode, setMode, user }) {
                   exit="hidden"
                   className="ml-4 flex-1 text-left"
                 >
-                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${location.pathname === '/chat' ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-200'
+                  <div className={`font-semibold ${open ? 'text-sm' : 'text-base'} leading-none transition-all duration-300 ${location.pathname === '/chat' ? 'text-cyan-700 dark:text-cyan-400' : 'text-slate-900 dark:text-gray-100'
                     }`}>
                     Chat
                   </div>
-                  <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-slate-400 mt-1 leading-none opacity-80 transition-all duration-300`}>
+                  <div className={`${open ? 'text-xs' : 'text-sm'} text-slate-600 dark:text-gray-300 mt-1 leading-none opacity-90 transition-all duration-300`}>
                     Team messaging & DMs
                   </div>
                 </motion.div>
