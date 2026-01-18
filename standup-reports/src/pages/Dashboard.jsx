@@ -1106,41 +1106,57 @@ const QuickActionsHero = ({ navigate, userRole }) => {
       desc: 'Personal scratchpad'
     },
     {
-      label: 'Projects',
-      icon: FiBriefcase,
+      label: 'Sprint Board',
+      icon: FiLayers,
       gradient: 'from-blue-500 to-indigo-600',
       theme: 'blue',
+      onClick: () => navigate('/tasks'),
+      desc: 'Track sprint tasks'
+    },
+    {
+      label: 'Standup Reports',
+      icon: FiEdit3,
+      gradient: 'from-emerald-400 to-teal-500',
+      theme: 'emerald',
+      onClick: () => navigate('/standup-reports'),
+      desc: 'Daily status updates'
+    },
+    {
+      label: 'Holidays',
+      icon: FiCalendar,
+      gradient: 'from-pink-500 to-rose-500',
+      theme: 'pink',
+      onClick: () => navigate('/leave-calendar'),
+      desc: 'View team calendar'
+    },
+    {
+      label: 'Projects',
+      icon: FiBriefcase,
+      gradient: 'from-cyan-400 to-blue-500',
+      theme: 'cyan',
       onClick: () => navigate('/projects'),
       desc: 'Manage initiatives'
     },
     {
-      label: 'Leave Calendar',
-      icon: FiCalendar,
-      gradient: 'from-emerald-400 to-teal-500',
-      theme: 'emerald',
-      onClick: () => navigate('/leave-calendar'),
-      desc: 'Check availability'
-    },
-    {
       label: 'Analytics',
       icon: FiBarChart2,
-      gradient: 'from-cyan-400 to-blue-500',
-      theme: 'cyan',
+      gradient: 'from-indigo-400 to-purple-500',
+      theme: 'violet',
       onClick: () => navigate('/analytics-dashboard'),
       desc: 'Performance metrics'
     },
     {
       label: 'Achievements',
       icon: FiAward,
-      gradient: 'from-pink-500 to-rose-500',
-      theme: 'pink',
+      gradient: 'from-orange-400 to-red-500',
+      theme: 'red',
       onClick: () => navigate('/achievements'),
       desc: 'Badges & rewards'
     }
   ];
 
   if (userRole === 'manager' || userRole === 'admin') {
-    actions.splice(3, 0, {
+    actions.splice(4, 0, { // Insert after Holidays
       label: 'Manage Users',
       icon: FiUserPlus,
       gradient: 'from-red-500 to-orange-600',
@@ -1150,17 +1166,83 @@ const QuickActionsHero = ({ navigate, userRole }) => {
     });
   }
 
+  const scrollRef = React.useRef(null);
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="mb-10">
+    <div className="mb-10 relative">
       <div className="flex items-center gap-3 mb-6 px-2">
         <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
         <h2 className={`text-xl font-bold ${isAnimatedTheme ? '!text-white drop-shadow-md' : 'text-gray-900 dark:text-white'}`}>Quick Actions</h2>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-5">
-        {actions.map((action, index) => (
-          <HeroActionTile key={index} action={action} index={index} />
-        ))}
+
+      {/* Scrollable Container with CSS Mask for Glassmorphism */}
+      <div
+        className="relative group/scroll-container w-full max-w-[90vw] overflow-hidden"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent)'
+        }}
+      >
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto gap-4 pb-8 pt-4 px-4 snap-x scroll-smooth hide-scrollbar w-full"
+        >
+          {actions.map((action, index) => (
+            <div key={index} className="flex-none w-[200px] md:w-[220px] snap-start">
+              <HeroActionTile action={action} index={index} />
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Simplified Sleek Scroll Indicator */}
+      <div className="flex justify-center mt-2 mb-8">
+        <motion.button
+          onClick={scrollRight}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          whileHover="hover"
+          className="flex items-center gap-4 group cursor-pointer"
+        >
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50 group-hover:text-indigo-400 transition-colors duration-300">
+            Scroll for more
+          </span>
+
+          <div className="flex items-center">
+            <div className="w-8 h-[1px] bg-indigo-500/40 relative overflow-hidden">
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-400 to-transparent"
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+            <motion.div
+              className="text-indigo-400/80 group-hover:text-indigo-400 ml-2"
+              variants={{
+                hover: { x: [0, 5, 0], transition: { duration: 0.8, repeat: Infinity } }
+              }}
+            >
+              <FiArrowRight size={14} />
+            </motion.div>
+          </div>
+        </motion.button>
+      </div>
+
+      <style jsx>{`
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 };

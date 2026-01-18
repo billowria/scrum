@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // QuantumBackground handled by PublicLayout
 import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
 import CompactThemeToggle from '../components/CompactThemeToggle';
+import LandingNavbar from '../components/LandingNavbar';
 import Lenis from '@studio-freight/lenis';
 import {
     FiArrowRight, FiCheck, FiMessageCircle, FiCheckSquare, FiCalendar, FiEdit3,
@@ -815,7 +816,9 @@ const FullViewportFeature = ({ feature, index }) => {
     });
 
     const y = useTransform(scrollYProgress, [0, 0.5, 1], [80, 0, -80]);
-    const bgOpacity = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0, 0.6, 0]);
+    const blobOpacity = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0, 0.15, 0]);
+    const particlesOpacity = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0, 1, 0]);
+    const glowOpacity = useTransform(scrollYProgress, [0.2, 0.5, 0.8], [0, 0.5, 0]);
 
     const Icon = feature.Icon;
 
@@ -842,15 +845,12 @@ const FullViewportFeature = ({ feature, index }) => {
             className="h-screen w-full relative flex items-center justify-center px-6 overflow-hidden snap-start"
             style={{ height: '100vh', minHeight: '100vh' }}
         >
-            {/* Background gradient */}
-            <motion.div
-                className={`absolute inset-0 bg-gradient-to-br ${feature.bgGradient}`}
-                style={{ opacity: bgOpacity }}
-            />
+            {/* Background is now fully transparent to handle seamless transitions */}
 
             {/* Morphing blob background */}
             <motion.div
-                className={`absolute w-[600px] h-[600px] rounded-full bg-gradient-to-br ${feature.gradient} opacity-10 blur-3xl`}
+                className={`absolute w-[600px] h-[600px] rounded-full bg-gradient-to-br ${feature.gradient} blur-3xl`}
+                style={{ opacity: blobOpacity }}
                 animate={{
                     scale: [1, 1.2, 1],
                     x: [0, 50, -50, 0],
@@ -860,7 +860,10 @@ const FullViewportFeature = ({ feature, index }) => {
             />
 
             {/* Floating particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ opacity: particlesOpacity }}
+            >
                 {[...Array(12)].map((_, i) => (
                     <motion.div
                         key={i}
@@ -883,7 +886,7 @@ const FullViewportFeature = ({ feature, index }) => {
                         }}
                     />
                 ))}
-            </div>
+            </motion.div>
 
             {/* Content */}
             <motion.div
@@ -961,7 +964,8 @@ const FullViewportFeature = ({ feature, index }) => {
                 >
                     {/* Glow effect */}
                     <motion.div
-                        className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-30 blur-3xl rounded-3xl`}
+                        className={`absolute inset-10 bg-gradient-to-br ${feature.gradient} blur-3xl rounded-3xl`}
+                        style={{ opacity: glowOpacity }}
                         animate={{ scale: [1, 1.1, 1], rotate: [0, 3, -3, 0] }}
                         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                     />
@@ -1237,20 +1241,7 @@ export default function LandingPage() {
             {/* Ambient Background handled by PublicLayout */}
 
             {/* Navbar */}
-            <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 transform ${hidden ? '-translate-y-full' : 'translate-y-0'} ${scrolled ? 'bg-[#0a0b14]/80 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
-                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <AnimatedLogo />
-                    <div className="hidden md:flex gap-8 items-center text-sm font-medium">
-                        <a href="#features" className="text-slate-400 hover:text-white transition-colors">Product</a>
-                        <a href="#pricing" className="text-slate-400 hover:text-white transition-colors">Pricing</a>
-                        <a href="#" className="text-slate-400 hover:text-white transition-colors">Company</a>
-                        <div className="h-4 w-px bg-white/10 mx-2" />
-                        <button onClick={() => navigate('/login')} className="text-white hover:text-indigo-400 transition-colors">Sign In</button>
-                        <button onClick={() => navigate('/signup')} className="px-5 py-2 rounded-full bg-white text-black hover:scale-105 transition-transform font-bold">Get Started</button>
-                        <CompactThemeToggle />
-                    </div>
-                </div>
-            </nav>
+            <LandingNavbar activeSection={activeTab} />
 
             {/* Hero */}
             <header className="relative z-10 pt-48 pb-32 px-6">
