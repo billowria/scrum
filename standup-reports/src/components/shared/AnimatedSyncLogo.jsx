@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
 /**
  * AnimatedSyncLogo - "Static Grid Sync" Theme-Aware Edition
@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
  */
 const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const controls = useAnimation();
 
     const sizes = {
         sm: { text: 'text-[10px]', padding: '0.4rem 1.1rem', radius: 4, starSize: 2, tracking: '0.35em' },
@@ -17,7 +18,59 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
     };
 
     const cfg = sizes[size] || sizes.md;
-    const CYCLE_DURATION = 4;
+    const CYCLE_DURATION = 3;
+
+    useEffect(() => {
+        // Start both star and bracket sequences simultaneously
+        const startAnimations = async () => {
+            // Photon Star Journey
+            controls.start("star");
+            // Bracket Pulses (Individual delays handled via custom prop)
+            controls.start("bracket");
+        };
+        startAnimations();
+    }, [controls]);
+
+    // Define the synchronized variants
+    const variants = {
+        star: {
+            left: ["0%", "100%", "100%", "0%", "0%"],
+            top: ["0%", "0%", "100%", "100%", "0%"],
+            transition: {
+                duration: CYCLE_DURATION,
+                repeat: Infinity,
+                ease: "linear",
+            }
+        },
+        bracket: (delay) => ({
+            opacity: [0, 1, 0],
+            scale: [1, 1.25, 1],
+            x: [0, -2, 0],
+            y: [0, -2, 0],
+            boxShadow: [
+                '0px 0px 0px transparent',
+                '0px 0px 8px rgba(59, 130, 246, 0.4)',
+                '0px 0px 0px transparent'
+            ],
+            transition: {
+                duration: 0.6,
+                repeat: Infinity,
+                repeatDelay: CYCLE_DURATION - 0.6,
+                delay: delay,
+                ease: "easeInOut"
+            }
+        }),
+        dot: (delay) => ({
+            opacity: [0.1, 0.8, 0.1],
+            scale: [1, 1.5, 1],
+            transition: {
+                duration: 0.4,
+                repeat: Infinity,
+                repeatDelay: CYCLE_DURATION - 0.4,
+                delay: delay,
+            }
+        })
+    };
 
     return (
         <motion.div
@@ -66,23 +119,18 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
                             x: '-50%',
                             y: '-50%'
                         }}
-                        animate={{
-                            left: ["0%", "100%", "100%", "0%", "0%"],
-                            top: ["0%", "0%", "100%", "100%", "0%"],
-                        }}
-                        transition={{
-                            duration: CYCLE_DURATION,
-                            repeat: Infinity,
-                            ease: "linear",
-                        }}
+                        initial={{ left: "0%", top: "0%" }}
+                        animate={controls}
+                        variants={{ star: variants.star }}
+                        custom="star" // Not actually used for star but good for structure
                     />
 
                     {/* 2. Permanent L-Brackets with Theme Intelligence */}
                     {[
-                        { top: "0%", left: "0%", delay: 0, rot: 0 },       // Corner A
-                        { top: "0%", left: "100%", delay: 1, rot: 90 },    // Corner B
-                        { top: "100%", left: "100%", delay: 2, rot: 180 }, // Corner C
-                        { top: "100%", left: "0%", delay: 3, rot: 270 },   // Corner D
+                        { top: "0%", left: "0%", delay: 0, rot: 0 },         // Corner A (0s)
+                        { top: "0%", left: "100%", delay: 0.75, rot: 90 },   // Corner B (0.75s)
+                        { top: "100%", left: "100%", delay: 1.5, rot: 180 }, // Corner C (1.5s)
+                        { top: "100%", left: "0%", delay: 2.25, rot: 270 },  // Corner D (2.25s)
                     ].map((pos, i) => (
                         <div
                             key={i}
@@ -111,40 +159,20 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
                                     width: cfg.starSize * 3,
                                     height: cfg.starSize * 3,
                                 }}
-                                animate={{
-                                    opacity: [0, 1, 0],
-                                    scale: [1, 1.25, 1],
-                                    x: [0, -2, 0],
-                                    y: [0, -2, 0],
-                                    boxShadow: [
-                                        '0px 0px 0px transparent',
-                                        '0px 0px 8px rgba(59, 130, 246, 0.4)',
-                                        '0px 0px 0px transparent'
-                                    ]
-                                }}
-                                transition={{
-                                    duration: 0.6,
-                                    repeat: Infinity,
-                                    repeatDelay: CYCLE_DURATION - 0.6,
-                                    delay: pos.delay,
-                                    ease: "easeInOut"
-                                }}
+                                initial={{ opacity: 0, scale: 1 }}
+                                animate={controls}
+                                custom={pos.delay}
+                                variants={{ bracket: variants.bracket(pos.delay) }}
                             />
 
                             {/* Synced Micro-Dot */}
                             <motion.div
                                 className="absolute w-1 h-1 bg-blue-500 rounded-full"
                                 style={{ opacity: 0.1 }}
-                                animate={{
-                                    opacity: [0.1, 0.8, 0.1],
-                                    scale: [1, 1.5, 1],
-                                }}
-                                transition={{
-                                    duration: 0.4,
-                                    repeat: Infinity,
-                                    repeatDelay: CYCLE_DURATION - 0.4,
-                                    delay: pos.delay,
-                                }}
+                                initial={{ opacity: 0.1, scale: 1 }}
+                                animate={controls}
+                                custom={pos.delay}
+                                variants={{ dot: variants.dot(pos.delay) }}
                             />
                         </div>
                     ))}

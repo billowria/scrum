@@ -23,7 +23,7 @@ const PublicLayout = () => {
 
             {/* Content Area */}
             <div className="relative z-10 w-full min-h-screen">
-                <AnimatePresence mode="popLayout" initial={false}>
+                <AnimatePresence mode="popLayout">
                     <Outlet />
                 </AnimatePresence>
             </div>
