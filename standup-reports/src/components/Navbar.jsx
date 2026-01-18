@@ -219,26 +219,24 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {[
-                        { id: 'light', icon: <FiSun size={14} />, label: 'Sun', color: 'text-amber-500' },
-                        { id: 'dark', icon: <FiMoon size={14} />, label: 'Moon', color: 'text-indigo-400' },
-                        { id: 'space', icon: <FiStar size={14} />, label: 'Stars', color: 'text-purple-400' },
-                        { id: 'system', icon: <FiZap size={14} />, label: 'Auto', color: 'text-emerald-400' }
+                        { id: 'light', icon: <FiSun size={14} />, label: 'Light', color: 'text-amber-500' },
+                        { id: 'dark', icon: <FiMoon size={14} />, label: 'Dark', color: 'text-indigo-400' }
                       ].map((mode) => (
                         <button
                           key={mode.id}
                           onClick={() => setThemeMode(mode.id)}
-                          className={`relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all duration-300 border ${themeMode === mode.id
+                          className={`relative flex items-center gap-2.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all duration-300 border ${theme === mode.id
                             ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 shadow-sm'
                             : 'bg-slate-100/50 dark:bg-slate-800/30 border-transparent hover:border-slate-200 dark:hover:border-white/5'
                             }`}
                         >
-                          <span className={`relative z-10 ${themeMode === mode.id ? mode.color : 'text-slate-600 dark:text-slate-400'}`}>
+                          <span className={`relative z-10 ${theme === mode.id ? mode.color : 'text-slate-600 dark:text-slate-400'}`}>
                             {mode.icon}
                           </span>
-                          <span className={`relative z-10 ${themeMode === mode.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                          <span className={`relative z-10 ${theme === mode.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                             {mode.label}
                           </span>
-                          {themeMode === mode.id && (
+                          {theme === mode.id && (
                             <motion.div
                               layoutId="activeThemeDropdown"
                               className="absolute inset-0 border-2 border-indigo-500/20 dark:border-indigo-400/20 rounded-xl"

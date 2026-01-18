@@ -8,6 +8,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { useTypingIndicator } from '../hooks/useTypingIndicator';
 import { colors, animations } from '../config/designSystem';
+import { useTheme } from '../context/ThemeContext';
 
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatWindow from '../components/chat/ChatWindow';
@@ -22,6 +23,10 @@ import ChatRightSidebar from '../components/chat/ChatRightSidebar';
 
 const ChatPage = () => {
   const location = useLocation();
+  const { themeMode } = useTheme();
+
+  // Check if using a premium animated theme (space, ocean, forest)
+  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeConversation, setActiveConversation] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -315,14 +320,14 @@ const ChatPage = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+      <div className={`h-screen flex items-center justify-center ${isPremiumTheme ? 'bg-transparent' : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950'}`}>
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950 pt-16">
+    <div className={`flex flex-col h-screen max-h-screen overflow-hidden ${isPremiumTheme ? 'bg-transparent' : 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-950'} pt-16`}>
       {/* pt-16 accounts for the main app navbar */}
 
       {/* Mobile back button overlay */}
@@ -333,7 +338,7 @@ const ChatPage = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             onClick={handleBackToConversations}
-            className="absolute top-20 left-4 z-30 p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+            className={`absolute top-20 left-4 z-30 p-3 rounded-full shadow-lg transition-colors ${isPremiumTheme ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
           >
             <FiChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </motion.button>
@@ -350,7 +355,10 @@ const ChatPage = () => {
               : `relative flex-shrink-0 transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-20' : 'w-80'
               }`
             }
-            bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-white/20 dark:border-slate-700/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20
+            ${isPremiumTheme
+              ? 'bg-transparent border-r border-white/10'
+              : 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-r border-white/20 dark:border-slate-700/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]'
+            } z-20
           `}
         >
           <ChatSidebar
@@ -381,7 +389,9 @@ const ChatPage = () => {
             ${isMobile && showSidebar ? 'hidden' : ''}
           `}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-blue-50/40 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-blue-950/20 pointer-events-none" />
+          {!isPremiumTheme && (
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-blue-50/40 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-blue-950/20 pointer-events-none" />
+          )}
 
           {activeConversation ? (
             <div className="flex flex-1 overflow-hidden relative z-10">

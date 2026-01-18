@@ -58,7 +58,7 @@ class Firefly {
                 // Strong outward force
                 // Stronger if closer
                 const strength = (200 - dist) / 200; // 0 to 1
-                const force = strength * 5.0; // Explosion strength
+                const force = strength * 1.5; // Reduced explosion strength for smoother burst
 
                 // Direction away from burst center
                 const dirX = bdx / dist;
@@ -123,24 +123,37 @@ class Firefly {
 
     draw(ctx, time) {
         const pulse = Math.sin(time * 2 + this.x * 0.01) * 0.5 + 0.5;
-        const alpha = 0.5 + pulse * 0.5;
+        const alpha = 0.4 + pulse * 0.6; // Slightly less base alpha
 
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.globalCompositeOperation = 'screen';
 
-        const glowRad = this.size * (6 + pulse * 4);
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowRad);
-        grad.addColorStop(0, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.4})`);
-        grad.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
-        ctx.fillStyle = grad;
+        // 1. Outer Soft Glow (Large, very faint)
+        const outerGlowRad = this.size * (12 + pulse * 6);
+        const outerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, outerGlowRad);
+        outerGrad.addColorStop(0, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.15})`);
+        outerGrad.addColorStop(0.5, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.05})`);
+        outerGrad.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+        ctx.fillStyle = outerGrad;
         ctx.beginPath();
-        ctx.arc(0, 0, glowRad, 0, Math.PI * 2);
+        ctx.arc(0, 0, outerGlowRad, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = `hsla(${this.hue}, 100%, 90%, ${alpha})`;
+        // 2. Inner Core Glow (Tight, warmer hue shift)
+        const innerGlowRad = this.size * (5 + pulse * 2);
+        const innerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, innerGlowRad);
+        innerGrad.addColorStop(0, `hsla(${this.hue + 5}, 100%, 60%, ${alpha * 0.4})`);
+        innerGrad.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+        ctx.fillStyle = innerGrad;
         ctx.beginPath();
-        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+        ctx.arc(0, 0, innerGlowRad, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Central Nucleus (The "body")
+        ctx.fillStyle = `hsla(${this.hue + 10}, 100%, 95%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 0.8, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -198,10 +211,10 @@ const ForestBackground = () => {
                 seekCooldownRef.current -= dt;
             }
 
-            // Gathering Logic: If mouse is active, accumulate time. After 5s, burst.
+            // Gathering Logic: If mouse is active, accumulate time. After 3s, burst.
             if (mouseRef.current.x > 0) {
                 gatheringDurationRef.current += dt;
-                if (gatheringDurationRef.current > 5.0) {
+                if (gatheringDurationRef.current > 3.0) {
                     burstRef.current = {
                         active: true,
                         x: mouseRef.current.x,
@@ -276,6 +289,7 @@ const ForestBackground = () => {
                         frame: 0
                     };
                     gatheringDurationRef.current = 0;
+                    seekCooldownRef.current = 2.0;
                 }
             }
 

@@ -11,6 +11,8 @@ import FilterPanel from '../components/history/FilterPanel';
 import MissingReports from '../components/MissingReports';
 import ReportContentParser from '../components/reports/ReportContentParser';
 import UserProfileInfoModal from '../components/UserProfileInfoModal';
+import { useTheme } from '../context/ThemeContext';
+import { uuidToShortId } from '../utils/taskIdUtils';
 
 // Animation variants
 const containerVariants = {
@@ -152,6 +154,8 @@ function RichTextDisplay({ content, onTaskClick }) {
 export default function StandupReports({ sidebarMode }) {
     const navigate = useNavigate();
     const { currentCompany, loading: companyLoading } = useCompany();
+    const { themeMode } = useTheme();
+    const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
 
     // State
     const [reports, setReports] = useState([]);
@@ -165,7 +169,7 @@ export default function StandupReports({ sidebarMode }) {
     const [endDate, setEndDate] = useState('');
     const [refreshing, setRefreshing] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
-    const [viewMode, setViewMode] = useState('list');
+    const [viewMode, setViewMode] = useState('carousel');
     const [currentReportIndex, setCurrentReportIndex] = useState(0);
     const [showFullscreenModal, setShowFullscreenModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -191,6 +195,32 @@ export default function StandupReports({ sidebarMode }) {
     const [dragEnd, setDragEnd] = useState(0);
     const [selectedUserProfileId, setSelectedUserProfileId] = useState(null);
     const headerRef = useRef(null);
+
+    // State for extracted entities
+    const [usersMap, setUsersMap] = useState({});
+    const [tasksMap, setTasksMap] = useState({});
+
+    // Helper functions to extract mentions and tasks from content
+    const extractMentionIds = (content) => {
+        if (!content) return [];
+        const regex = /@([a-f0-9-]{36})/g;
+        return [...new Set([...content.matchAll(regex)].map(m => m[1]))];
+    };
+
+    const extractTaskIds = (content) => {
+        if (!content) return [];
+        const regex = /#TASK-([a-f0-9-]+|\d+)/g;
+        return [...new Set([...content.matchAll(regex)].map(m => m[1]))];
+    };
+
+    // Get all mentions and tasks from a report
+    const getReportEntities = (report) => {
+        const allContent = `${report.yesterday || ''} ${report.today || ''} ${report.blockers || ''}`;
+        return {
+            mentionIds: extractMentionIds(allContent),
+            taskIds: extractTaskIds(allContent)
+        };
+    };
 
     // Fetch User Info
     useEffect(() => {
@@ -337,6 +367,53 @@ export default function StandupReports({ sidebarMode }) {
             console.error('Error fetching team context:', error);
         }
     };
+
+    // Fetch entity data (users and tasks) for all mentions and task references in reports
+    useEffect(() => {
+        const fetchEntityData = async () => {
+            if (!reports || reports.length === 0) return;
+
+            // Collect all unique user IDs and task IDs from all reports
+            const allUserIds = new Set();
+            const allTaskIds = new Set();
+
+            reports.forEach(report => {
+                const { mentionIds, taskIds } = getReportEntities(report);
+                mentionIds.forEach(id => allUserIds.add(id));
+                taskIds.forEach(id => allTaskIds.add(id));
+            });
+
+            // Fetch users
+            if (allUserIds.size > 0) {
+                const { data: usersData } = await supabase
+                    .from('users')
+                    .select('id, name, avatar_url')
+                    .in('id', [...allUserIds]);
+
+                const newUsersMap = {};
+                (usersData || []).forEach(user => {
+                    newUsersMap[user.id] = user;
+                });
+                setUsersMap(newUsersMap);
+            }
+
+            // Fetch tasks
+            if (allTaskIds.size > 0) {
+                const { data: tasksData } = await supabase
+                    .from('tasks')
+                    .select('id, title')
+                    .in('id', [...allTaskIds]);
+
+                const newTasksMap = {};
+                (tasksData || []).forEach(task => {
+                    newTasksMap[task.id] = task;
+                });
+                setTasksMap(newTasksMap);
+            }
+        };
+
+        fetchEntityData();
+    }, [reports]);
 
     const handleRefresh = async () => {
         setRefreshing(true);
@@ -486,16 +563,20 @@ export default function StandupReports({ sidebarMode }) {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 relative overflow-hidden bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-pink-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950"
+            className={`w-full h-[calc(100vh-4rem)] flex flex-col -mt-6 relative overflow-hidden ${isPremiumTheme ? 'bg-transparent' : 'bg-gradient-to-br from-indigo-50/40 via-purple-50/40 to-pink-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950'}`}
         >
-            {/* Ambient Background Orbs */}
-            <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-300/20 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-300/20 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
+            {/* Ambient Background Orbs - Hidden for premium themes */}
+            {!isPremiumTheme && (
+                <>
+                    <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-300/20 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-purple-300/20 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none" />
+                </>
+            )}
 
             {/* Liquid Glass Header - Fixed Position */}
             <motion.div
                 ref={headerRef}
-                className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
+                className="fixed top-16 right-0 z-30 px-6 py-4 pointer-events-none"
                 initial={{ y: -30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 25 }}
@@ -506,13 +587,14 @@ export default function StandupReports({ sidebarMode }) {
                 }}
             >
                 <div
-                    className="pointer-events-auto relative overflow-hidden bg-white/10 dark:bg-slate-900/60 backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 border border-white/20 dark:border-slate-700/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex items-center justify-between group"
+                    className={`pointer-events-auto relative overflow-hidden backdrop-blur-[20px] backdrop-saturate-[180%] rounded-[2rem] p-2 flex items-center justify-between group ${isPremiumTheme
+                        ? 'bg-white/5 border border-white/10'
+                        : 'bg-white/10 dark:bg-slate-900/60 border border-white/20 dark:border-slate-700/50'
+                        }`}
                     style={{
-                        boxShadow: `
-                            0 8px 32px 0 rgba(31, 38, 135, 0.15),
-                            inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-                            inset 0 0 20px rgba(255, 255, 255, 0.05)
-                        `
+                        boxShadow: isPremiumTheme
+                            ? '0 8px 32px 0 rgba(0, 0, 0, 0.2)'
+                            : `0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.2), inset 0 0 20px rgba(255, 255, 255, 0.05)`
                     }}
                     onMouseMove={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
@@ -777,19 +859,22 @@ export default function StandupReports({ sidebarMode }) {
                     {loading ? (
                         <div className="flex justify-center py-20">
                             <div className="relative">
-                                <div className="w-12 h-12 rounded-full border-4 border-indigo-200 animate-spin border-t-indigo-600"></div>
+                                <div className={`w-12 h-12 rounded-full border-4 animate-spin ${isPremiumTheme ? 'border-white/20 border-t-white' : 'border-indigo-200 border-t-indigo-600'}`}></div>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-4 h-4 bg-indigo-600 rounded-full animate-pulse"></div>
+                                    <div className={`w-4 h-4 rounded-full animate-pulse ${isPremiumTheme ? 'bg-white' : 'bg-indigo-600'}`}></div>
                                 </div>
                             </div>
                         </div>
                     ) : filteredReports.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-24 h-24 bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                                <FiFileText className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-inner ${isPremiumTheme
+                                ? 'bg-white/5 border border-white/10'
+                                : 'bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700'
+                                }`}>
+                                <FiFileText className={`w-10 h-10 ${isPremiumTheme ? 'text-white/40' : 'text-gray-400 dark:text-gray-500'}`} />
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Reports Found</h3>
-                            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                            <h3 className={`text-xl font-bold mb-2 ${isPremiumTheme ? 'text-white' : 'text-gray-900 dark:text-white'}`}>No Reports Found</h3>
+                            <p className={`max-w-md mx-auto ${isPremiumTheme ? 'text-white/60' : 'text-gray-500 dark:text-gray-400'}`}>
                                 It seems quiet here. {reportsViewMode === 'today' ? "Wait for the team to submit their updates." : "Try adjusting your filters."}
                             </p>
                         </div>
@@ -803,10 +888,12 @@ export default function StandupReports({ sidebarMode }) {
                                     whileTap={{ scale: 0.9 }}
                                     onClick={prevReport}
                                     disabled={currentReportIndex === 0}
-                                    className={`p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-lg border border-white/50 dark:border-slate-700/50 ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'
+                                    className={`p-3 rounded-full backdrop-blur-md shadow-lg ${isPremiumTheme
+                                        ? `bg-white/10 border border-white/20 ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/20'}`
+                                        : `bg-white/80 dark:bg-slate-800/80 border border-white/50 dark:border-slate-700/50 ${currentReportIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'}`
                                         }`}
                                 >
-                                    <FiChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                    <FiChevronLeft className={`w-6 h-6 ${isPremiumTheme ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
                                 </motion.button>
                             </div>
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
@@ -815,10 +902,12 @@ export default function StandupReports({ sidebarMode }) {
                                     whileTap={{ scale: 0.9 }}
                                     onClick={nextReport}
                                     disabled={currentReportIndex === filteredReports.length - 1}
-                                    className={`p-3 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md shadow-lg border border-white/50 dark:border-slate-700/50 ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'
+                                    className={`p-3 rounded-full backdrop-blur-md shadow-lg ${isPremiumTheme
+                                        ? `bg-white/10 border border-white/20 ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/20'}`
+                                        : `bg-white/80 dark:bg-slate-800/80 border border-white/50 dark:border-slate-700/50 ${currentReportIndex === filteredReports.length - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-slate-700'}`
                                         }`}
                                 >
-                                    <FiChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                                    <FiChevronRight className={`w-6 h-6 ${isPremiumTheme ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
                                 </motion.button>
                             </div>
 
@@ -832,88 +921,140 @@ export default function StandupReports({ sidebarMode }) {
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: slideDirection === 'right' ? -100 : 100 }}
                                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                                            className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl rounded-[2rem] border border-white/50 dark:border-slate-700/50 shadow-xl overflow-hidden"
+                                            className={`group relative rounded-[2rem] overflow-hidden ${isPremiumTheme
+                                                ? 'bg-white/5 backdrop-blur-xl border border-white/10'
+                                                : 'bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl border border-white/50 dark:border-slate-700/50 shadow-xl'
+                                                }`}
                                         >
                                             {(() => {
                                                 const report = filteredReports[currentReportIndex];
                                                 return (
                                                     <>
-                                                        {/* Status Strip */}
-                                                        <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${report.blockers ? 'bg-gradient-to-b from-rose-500 to-red-600' :
-                                                            (report.yesterday && report.today) ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
-                                                                'bg-gradient-to-b from-orange-400 to-amber-500'
-                                                            }`} />
+                                                        {/* Gradient Header Bar */}
+                                                        <div className={`relative px-8 py-6 ${isPremiumTheme
+                                                            ? 'bg-gradient-to-r from-indigo-500/20 via-purple-500/10 to-transparent border-b border-white/10'
+                                                            : 'bg-gradient-to-r from-indigo-50 via-purple-50/50 to-white dark:from-indigo-900/30 dark:via-purple-900/20 dark:to-slate-800/50 border-b border-slate-200/50 dark:border-slate-700/50'
+                                                            }`}>
+                                                            {/* Status Strip */}
+                                                            <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${report.blockers ? 'bg-gradient-to-b from-rose-500 to-red-600' :
+                                                                (report.yesterday && report.today) ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
+                                                                    'bg-gradient-to-b from-orange-400 to-amber-500'
+                                                                }`} />
 
-                                                        <div className="p-8 pl-10">
-                                                            {/* Card Header */}
-                                                            <div className="flex items-start justify-between mb-8">
+                                                            <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="relative">
                                                                         {report.users?.avatar_url ? (
-                                                                            <img src={report.users.avatar_url} alt={report.users.name} className="w-16 h-16 rounded-2xl object-cover shadow-md border-2 border-white" />
+                                                                            <img src={report.users.avatar_url} alt={report.users.name} className={`w-14 h-14 rounded-2xl object-cover shadow-lg ${isPremiumTheme ? 'ring-2 ring-white/20' : 'ring-2 ring-white'}`} />
                                                                         ) : (
-                                                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-md border-2 border-white">
+                                                                            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xl font-bold shadow-lg ${isPremiumTheme ? 'ring-2 ring-white/20' : 'ring-2 ring-white'}`}>
                                                                                 {report.users?.name?.[0]}
                                                                             </div>
                                                                         )}
-                                                                        {isToday(new Date(report.created_at)) && <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>}
+                                                                        {isToday(new Date(report.created_at)) && (
+                                                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-sm" />
+                                                                        )}
                                                                     </div>
                                                                     <div>
-                                                                        <h3 className="font-bold text-gray-900 dark:text-white text-xl">{report.users?.name}</h3>
-                                                                        <div className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                                                                            <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
+                                                                        <h3 className={`font-bold text-xl ${isPremiumTheme ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                                                            {report.users?.name}
+                                                                        </h3>
+                                                                        <div className={`flex items-center gap-3 text-sm mt-1 ${isPremiumTheme ? 'text-white/60' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                                            <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${isPremiumTheme
+                                                                                ? 'bg-white/10 text-white/80 border border-white/10'
+                                                                                : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                                                                                }`}>
                                                                                 {report.users?.teams?.name || 'No Team'}
                                                                             </span>
-                                                                            <span>•</span>
-                                                                            <span className="flex items-center gap-1">
-                                                                                <FiClock className="w-3 h-3" />
-                                                                                {format(new Date(report.created_at), 'h:mm a')}
+                                                                            <span className="flex items-center gap-1.5">
+                                                                                <FiClock className="w-3.5 h-3.5" />
+                                                                                {format(new Date(report.created_at), 'MMM d, h:mm a')}
                                                                             </span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="text-sm font-mono text-gray-400 dark:text-gray-500">
-                                                                    {currentReportIndex + 1} / {filteredReports.length}
+
+                                                                {/* Report Counter */}
+                                                                <div className={`flex items-center gap-3 ${isPremiumTheme ? 'text-white/50' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                                    <span className="text-sm font-medium">
+                                                                        {currentReportIndex + 1} of {filteredReports.length}
+                                                                    </span>
+                                                                    <motion.button
+                                                                        whileHover={{ scale: 1.1 }}
+                                                                        whileTap={{ scale: 0.9 }}
+                                                                        onClick={() => openFullscreenModal(currentReportIndex)}
+                                                                        className={`p-2 rounded-lg transition-colors ${isPremiumTheme
+                                                                            ? 'hover:bg-white/10 text-white/60 hover:text-white'
+                                                                            : 'hover:bg-white dark:hover:bg-slate-700 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                                                            }`}
+                                                                        title="View fullscreen"
+                                                                    >
+                                                                        <FiMaximize className="w-4 h-4" />
+                                                                    </motion.button>
                                                                 </div>
                                                             </div>
+                                                        </div>
 
-                                                            {/* Content Grid */}
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                                {/* Yesterday */}
-                                                                <div className="bg-white/50 dark:bg-slate-700/40 rounded-2xl p-5 border border-white/60 dark:border-slate-600/30">
-                                                                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                                        {/* Content Sections - Vertical Stack for Better Readability */}
+                                                        <div className="p-6 space-y-4">
+                                                            {/* Yesterday Section */}
+                                                            <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                                ? 'bg-white/5 border border-white/10'
+                                                                : 'bg-slate-50/80 dark:bg-slate-700/30 border border-slate-200/50 dark:border-slate-600/30'
+                                                                }`}>
+                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                    ? 'bg-white/5 border-white/10'
+                                                                    : 'bg-white dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/30'
+                                                                    }`}>
+                                                                    <div className={`w-2 h-2 rounded-full ${isPremiumTheme ? 'bg-white/40' : 'bg-slate-400'}`} />
+                                                                    <span className={`text-xs font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-white/50' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                         Yesterday
-                                                                    </div>
-                                                                    <div className="prose prose-sm prose-indigo dark:prose-invert leading-relaxed text-gray-600 dark:text-gray-300">
-                                                                        <ReportContentParser content={report.yesterday} mode="view" />
-                                                                    </div>
+                                                                    </span>
                                                                 </div>
-
-                                                                {/* Today */}
-                                                                <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-5 border border-indigo-100/50 dark:border-indigo-500/20">
-                                                                    <div className="flex items-center gap-2 mb-3 text-xs font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                                                                        Today
-                                                                    </div>
-                                                                    <div className="prose prose-sm prose-indigo dark:prose-invert leading-relaxed text-gray-700 dark:text-gray-200">
-                                                                        <ReportContentParser content={report.today} mode="view" />
-                                                                    </div>
+                                                                <div className={`p-4 max-h-48 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/80' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                    <ReportContentParser content={report.yesterday} mode="view" />
                                                                 </div>
-
-                                                                {/* Blockers Row */}
-                                                                {report.blockers && (
-                                                                    <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-5 border border-rose-100/50 dark:border-rose-500/20">
-                                                                        <div className="flex items-center gap-2 mb-3 text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">
-                                                                            <FiAlertCircle className="w-3.5 h-3.5" />
-                                                                            Blockers
-                                                                        </div>
-                                                                        <div className="prose prose-sm prose-rose dark:prose-invert leading-relaxed text-gray-700 dark:text-gray-200">
-                                                                            <ReportContentParser content={report.blockers} mode="view" />
-                                                                        </div>
-                                                                    </div>
-                                                                )}
                                                             </div>
+
+                                                            {/* Today Section */}
+                                                            <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                                ? 'bg-indigo-500/10 border border-indigo-400/20'
+                                                                : 'bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-200/50 dark:border-indigo-500/20'
+                                                                }`}>
+                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                    ? 'bg-indigo-500/10 border-indigo-400/20'
+                                                                    : 'bg-indigo-100/50 dark:bg-indigo-900/30 border-indigo-200/50 dark:border-indigo-500/20'
+                                                                    }`}>
+                                                                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                                                    <span className={`text-xs font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-indigo-300/70' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                                                                        Today
+                                                                    </span>
+                                                                </div>
+                                                                <div className={`p-4 max-h-48 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                    <ReportContentParser content={report.today} mode="view" />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Blockers Section */}
+                                                            {report.blockers && (
+                                                                <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                                    ? 'bg-rose-500/10 border border-rose-400/20'
+                                                                    : 'bg-rose-50/80 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-500/20'
+                                                                    }`}>
+                                                                    <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                        ? 'bg-rose-500/10 border-rose-400/20'
+                                                                        : 'bg-rose-100/50 dark:bg-rose-900/30 border-rose-200/50 dark:border-rose-500/20'
+                                                                        }`}>
+                                                                        <FiAlertCircle className={`w-3.5 h-3.5 ${isPremiumTheme ? 'text-rose-400' : 'text-rose-500'}`} />
+                                                                        <span className={`text-xs font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-rose-300/70' : 'text-rose-600 dark:text-rose-400'}`}>
+                                                                            Blockers
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className={`p-4 max-h-36 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                        <ReportContentParser content={report.blockers} mode="view" />
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </>
                                                 );
@@ -933,8 +1074,8 @@ export default function StandupReports({ sidebarMode }) {
                                             setCurrentReportIndex(idx);
                                         }}
                                         className={`w-2 h-2 rounded-full transition-all ${idx === currentReportIndex
-                                                ? 'w-6 bg-indigo-500'
-                                                : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                                            ? 'w-6 bg-indigo-500'
+                                            : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
                                             }`}
                                     />
                                 ))}
@@ -944,103 +1085,110 @@ export default function StandupReports({ sidebarMode }) {
                             </div>
                         </div>
                     ) : (
-                        /* List View */
-                        <div className={`grid grid-cols-1 ${filteredReports.length > 0 ? 'xl:grid-cols-2' : ''} gap-8`}>
+                        /* List View - Redesigned as True List Layout */
+                        <div className="space-y-3">
                             {filteredReports.map((report, index) => (
                                 <motion.div
                                     key={report.id}
-                                    variants={itemVariants}
-                                    whileHover={{ y: -5, scale: 1.01 }}
-                                    className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-2xl rounded-[2rem] border border-white/50 dark:border-slate-700/50 shadow-lg overflow-hidden transition-all duration-300"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className={`group relative overflow-hidden transition-all duration-200 ${isPremiumTheme
+                                        ? 'bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-xl'
+                                        : 'bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-500/50 shadow-sm hover:shadow-md rounded-xl'
+                                        }`}
                                 >
-                                    {/* Status Strip */}
-                                    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${report.blockers ? 'bg-gradient-to-b from-rose-500 to-red-600' :
-                                        (report.yesterday && report.today) ? 'bg-gradient-to-b from-emerald-400 to-green-600' :
-                                            'bg-gradient-to-b from-orange-400 to-amber-500'
+                                    {/* Status indicator */}
+                                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${report.blockers ? 'bg-rose-500' :
+                                        (report.yesterday && report.today) ? 'bg-emerald-500' : 'bg-amber-500'
                                         }`} />
 
-                                    <div className="p-6 pl-8">
-                                        {/* Card Header */}
-                                        <div className="flex items-start justify-between mb-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="relative">
-                                                    {report.users?.avatar_url ? (
-                                                        <img src={report.users.avatar_url} alt={report.users.name} className="w-14 h-14 rounded-2xl object-cover shadow-md border-2 border-white" />
-                                                    ) : (
-                                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-xl font-bold shadow-md border-2 border-white">
-                                                            {report.users?.name?.[0]}
-                                                        </div>
-                                                    )}
-                                                    {isToday(new Date(report.created_at)) && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>}
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900 dark:text-white text-lg">{report.users?.name}</h3>
-                                                    <div className="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">
-                                                        <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20">
-                                                            {report.users?.teams?.name || 'No Team'}
-                                                        </span>
-                                                        <span>•</span>
-                                                        <span className="flex items-center gap-1">
-                                                            <FiClock className="w-3 h-3" />
-                                                            {format(new Date(report.created_at), 'h:mm a')}
-                                                        </span>
+                                    <div className="flex flex-col lg:flex-row">
+                                        {/* User Info - Fixed width on desktop */}
+                                        <div className={`flex items-center gap-3 p-4 lg:w-56 lg:shrink-0 lg:border-r ${isPremiumTheme ? 'lg:border-white/10' : 'lg:border-slate-100 dark:lg:border-slate-700/50'}`}>
+                                            <div className="relative">
+                                                {report.users?.avatar_url ? (
+                                                    <img
+                                                        src={report.users.avatar_url}
+                                                        alt={report.users.name}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold">
+                                                        {report.users?.name?.[0]}
                                                     </div>
+                                                )}
+                                                {isToday(new Date(report.created_at)) && (
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-slate-800 rounded-full" />
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className={`font-semibold text-sm truncate ${isPremiumTheme ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                                    {report.users?.name}
+                                                </h3>
+                                                <div className={`flex items-center gap-1.5 text-xs ${isPremiumTheme ? 'text-white/50' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                    <FiClock className="w-3 h-3" />
+                                                    <span>{format(new Date(report.created_at), 'h:mm a')}</span>
                                                 </div>
                                             </div>
-                                            <motion.button
-                                                whileHover={{ scale: 1.1 }}
-                                                whileTap={{ scale: 0.9 }}
-                                                onClick={() => openFullscreenModal(index)}
-                                                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700/50 rounded-xl transition-colors"
-                                            >
-                                                <FiMaximize className="w-5 h-5" />
-                                            </motion.button>
                                         </div>
 
-                                        {/* Card Content Grid */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Content Sections - Responsive horizontal layout */}
+                                        <div className="flex-1 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-700/50">
                                             {/* Yesterday */}
-                                            <div className="bg-white/50 dark:bg-slate-700/40 rounded-2xl p-4 border border-white/60 dark:border-slate-600/30">
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+                                            <div className="flex-1 p-3 md:p-4">
+                                                <div className={`flex items-center gap-1.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-white/40' : 'text-gray-400'}`}>
+                                                    <div className={`w-1 h-1 rounded-full ${isPremiumTheme ? 'bg-white/40' : 'bg-gray-400'}`} />
                                                     Yesterday
                                                 </div>
-                                                <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-600 dark:text-gray-300 max-h-40 overflow-y-auto custom-scrollbar">
+                                                <div className={`text-sm leading-relaxed max-h-20 overflow-y-auto custom-scrollbar report-content ${isPremiumTheme ? 'text-white/80' : 'text-gray-600 dark:text-gray-300'}`}>
                                                     <ReportContentParser content={report.yesterday} mode="view" />
                                                 </div>
                                             </div>
 
                                             {/* Today */}
-                                            <div className="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl p-4 border border-indigo-100/50 dark:border-indigo-500/20">
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                                            <div className={`flex-1 p-3 md:p-4 ${isPremiumTheme ? '' : 'bg-indigo-50/30 dark:bg-indigo-900/5'}`}>
+                                                <div className={`flex items-center gap-1.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-indigo-300/60' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                                                    <div className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
                                                     Today
                                                 </div>
-                                                <div className="prose prose-sm prose-indigo dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
+                                                <div className={`text-sm leading-relaxed max-h-20 overflow-y-auto custom-scrollbar report-content ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
                                                     <ReportContentParser content={report.today} mode="view" />
                                                 </div>
                                             </div>
 
-                                            {/* Blockers Row (Full Width if exists) */}
+                                            {/* Blockers (only if exists) */}
                                             {report.blockers && (
-                                                <div className="md:col-span-2 bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-4 border border-rose-100/50 dark:border-rose-500/20">
-                                                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-rose-500 dark:text-rose-400 uppercase tracking-wider">
+                                                <div className={`flex-1 p-3 md:p-4 ${isPremiumTheme ? '' : 'bg-rose-50/30 dark:bg-rose-900/5'}`}>
+                                                    <div className={`flex items-center gap-1.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider ${isPremiumTheme ? 'text-rose-300/60' : 'text-rose-500 dark:text-rose-400'}`}>
                                                         <FiAlertCircle className="w-3 h-3" />
                                                         Blockers
                                                     </div>
-                                                    <div className="prose prose-sm prose-rose dark:prose-invert leading-snug text-gray-700 dark:text-gray-200 max-h-40 overflow-y-auto custom-scrollbar">
+                                                    <div className={`text-sm leading-relaxed max-h-20 overflow-y-auto custom-scrollbar report-content ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
                                                         <ReportContentParser content={report.blockers} mode="view" />
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Footer Gradient overlay on hover */}
-                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+                                        {/* Actions */}
+                                        <div className={`hidden lg:flex items-center p-4 ${isPremiumTheme ? '' : ''}`}>
+                                            <motion.button
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => openFullscreenModal(index)}
+                                                className={`p-2 rounded-lg transition-colors ${isPremiumTheme
+                                                    ? 'text-white/40 hover:text-white hover:bg-white/10'
+                                                    : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                                                    }`}
+                                                title="View full report"
+                                            >
+                                                <FiMaximize className="w-4 h-4" />
+                                            </motion.button>
+                                        </div>
+                                    </div>
                                 </motion.div>
-                            ))
-                            }
+                            ))}
                         </div>
                     )}
                 </div>

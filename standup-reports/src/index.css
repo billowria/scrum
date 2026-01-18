@@ -609,6 +609,70 @@ body {
   pointer-events: none;
 }
 
+/* Report Content List Styles - Bullet and Numbered Lists */
+.report-content ul,
+.report-content ol,
+.prose ul,
+.prose ol,
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.report-content ul,
+.prose ul,
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.report-content ol,
+.prose ol,
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.report-content li,
+.prose li,
+.ProseMirror li {
+  margin: 0.25rem 0;
+  padding-left: 0.25rem;
+}
+
+.report-content ul ul,
+.prose ul ul,
+.ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.report-content ul ul ul,
+.prose ul ul ul,
+.ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
+.report-content ol ol,
+.prose ol ol,
+.ProseMirror ol ol {
+  list-style-type: lower-alpha;
+}
+
+.report-content ol ol ol,
+.prose ol ol ol,
+.ProseMirror ol ol ol {
+  list-style-type: lower-roman;
+}
+
+/* Strong/Bold text styling */
+.report-content strong,
+.report-content b,
+.prose strong,
+.prose b,
+.ProseMirror strong,
+.ProseMirror b {
+  font-weight: 600;
+}
+
 /* Animated Gradient for Buttons */
 @keyframes gradient {
   0% {

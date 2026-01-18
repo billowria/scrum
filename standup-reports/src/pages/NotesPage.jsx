@@ -46,9 +46,25 @@ const NotesPage = () => {
                 return {
                     bg: 'bg-transparent',
                     text: 'text-slate-100',
-                    card: 'bg-slate-900/40 backdrop-blur-xl',
+                    card: 'bg-transparent',
                     border: 'border-white/10',
                     accent: 'bg-purple-500'
+                };
+            case 'ocean':
+                return {
+                    bg: 'bg-transparent',
+                    text: 'text-slate-100',
+                    card: 'bg-transparent',
+                    border: 'border-white/10',
+                    accent: 'bg-cyan-500'
+                };
+            case 'forest':
+                return {
+                    bg: 'bg-transparent',
+                    text: 'text-slate-100',
+                    card: 'bg-transparent',
+                    border: 'border-white/10',
+                    accent: 'bg-emerald-500'
                 };
             default: // dark
                 return {

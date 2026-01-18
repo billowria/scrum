@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import notificationService from '../services/notificationService';
 import { format, isToday, isYesterday, subDays, isAfter } from 'date-fns';
+import { useTheme } from '../context/ThemeContext';
 
 // Components
 import NotificationCard from '../components/notifications/NotificationCard';
@@ -15,6 +16,7 @@ import NotificationSettingsModal from '../components/notifications/NotificationS
 import { FiCheck, FiRefreshCw, FiBell, FiPlus, FiSearch, FiArrowLeft, FiFilter, FiChevronLeft } from 'react-icons/fi';
 
 export default function NotificationCenterV2() {
+  const { isAnimatedTheme } = useTheme();
   // State
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -232,7 +234,7 @@ export default function NotificationCenterV2() {
                 >
                   <FiArrowLeft className="w-6 h-6" />
                 </button>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+                <h1 className={`text-xl font-bold ${isAnimatedTheme ? '!text-white drop-shadow-md' : 'text-gray-900 dark:text-white'}`}>Notifications</h1>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -266,8 +268,8 @@ export default function NotificationCenterV2() {
           /* Desktop Header Section */
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notification Center</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <h1 className={`text-2xl font-bold ${isAnimatedTheme ? '!text-white drop-shadow-md' : 'text-gray-900 dark:text-white'}`}>Notification Center</h1>
+              <p className={`text-sm mt-1 ${isAnimatedTheme ? '!text-white/80 drop-shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}>
                 You have {stats.unread} unread notifications
               </p>
             </div>

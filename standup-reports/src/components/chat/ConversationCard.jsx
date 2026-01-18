@@ -16,6 +16,7 @@ import {
   FiUserPlus,
   FiInfo
 } from 'react-icons/fi';
+import { useTheme } from '../../context/ThemeContext';
 
 const ConversationCard = ({
   conversation,
@@ -30,6 +31,9 @@ const ConversationCard = ({
   onAvatarClick,
   className = ""
 }) => {
+  const { themeMode } = useTheme();
+  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -194,8 +198,12 @@ const ConversationCard = ({
         className={`
           relative p-3 rounded-2xl cursor-pointer transition-all duration-300
           ${isActive
-            ? 'bg-white dark:bg-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-slate-900/50 ring-1 ring-black/5 dark:ring-slate-700'
-            : 'bg-white/40 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:shadow-lg backdrop-blur-sm hover:ring-1 hover:ring-black/5 dark:hover:ring-slate-700 border border-transparent hover:border-white/50 dark:hover:border-slate-700'
+            ? (isPremiumTheme
+              ? 'bg-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-white/20'
+              : 'bg-white dark:bg-slate-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-slate-900/50 ring-1 ring-black/5 dark:ring-slate-700')
+            : (isPremiumTheme
+              ? 'bg-white/5 hover:bg-white/10 backdrop-blur-sm hover:ring-1 hover:ring-white/10 border border-transparent hover:border-white/10'
+              : 'bg-white/40 dark:bg-slate-800/40 hover:bg-white dark:hover:bg-slate-800 hover:shadow-lg backdrop-blur-sm hover:ring-1 hover:ring-black/5 dark:hover:ring-slate-700 border border-transparent hover:border-white/50 dark:hover:border-slate-700')
           }
         `}
       >
@@ -233,7 +241,10 @@ const ConversationCard = ({
           {/* Content Area */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-0.5">
-              <h3 className={`font-bold truncate text-sm flex items-center gap-1.5 ${isActive ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+              <h3 className={`font-bold truncate text-sm flex items-center gap-1.5 ${isActive
+                ? (isPremiumTheme ? 'text-white' : 'text-gray-900 dark:text-white')
+                : (isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-300')
+                }`}>
                 {getConversationName()}
                 {isPinned && <FiBookmark className="w-3 h-3 text-indigo-500 fill-current" />}
                 {isMuted && <FiVolumeX className="w-3 h-3 text-gray-400" />}
@@ -244,7 +255,10 @@ const ConversationCard = ({
             </div>
 
             <div className="flex items-center justify-between">
-              <p className={`text-xs truncate max-w-[140px] ${isActive ? 'text-gray-600 dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
+              <p className={`text-xs truncate max-w-[140px] ${isActive
+                ? (isPremiumTheme ? 'text-white/70' : 'text-gray-600 dark:text-gray-400')
+                : (isPremiumTheme ? 'text-white/60' : 'text-gray-500 dark:text-gray-400')
+                }`}>
                 {conversation.isTyping ? (
                   <span className="text-indigo-500 font-medium animate-pulse">Typing...</span>
                 ) : (

@@ -109,11 +109,10 @@ const EnhancedAnalyticsFilters = ({
       {/* Filter Toggle Button */}
       <motion.button
         onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all duration-200 ${
-          hasActiveFilters()
+        className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-all duration-200 ${hasActiveFilters()
             ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
             : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-        }`}
+          }`}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -158,11 +157,10 @@ const EnhancedAnalyticsFilters = ({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === tab.id
+                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id
                       ? 'text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {tab.name}
                 </button>

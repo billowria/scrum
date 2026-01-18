@@ -5,6 +5,7 @@ import MessageToolbar from './MessageToolbar';
 import AttachmentPreview from './AttachmentPreview';
 import VoiceRecorder from './VoiceRecorder';
 import { FiMic } from 'react-icons/fi';
+import { useTheme } from '../../context/ThemeContext';
 
 const MessageInput = ({
   placeholder = "Type a message...",
@@ -23,6 +24,9 @@ const MessageInput = ({
   conversation = null,
   mobileLayout = false
 }) => {
+  const { themeMode } = useTheme();
+  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+
   const [attachments, setAttachments] = useState([]);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [localMentions, setLocalMentions] = useState([]);
@@ -200,7 +204,10 @@ const MessageInput = ({
   const emojis = ['😀', '😊', '😍', '🤔', '😂', '👍', '❤️', '🎉', '😎', '🤗', '😢', '😡', '👎', '🤝', '✨', '🔥'];
 
   return (
-    <div className={`bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 transition-colors duration-300 ${className} ${mobileLayout ? 'bg-gray-50' : ''}`}>
+    <div className={`border-t transition-colors duration-300 ${className} ${isPremiumTheme
+      ? 'bg-transparent border-white/10'
+      : `bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 ${mobileLayout ? 'bg-gray-50' : ''}`
+      }`}>
       {/* Typing Indicator */}
       <AnimatePresence>
         {showTypingIndicator && (
@@ -240,7 +247,7 @@ const MessageInput = ({
 
       {mobileLayout ? (
         // Mobile Layout
-        <div className="p-3 bg-white">
+        <div className={`p-3 ${isPremiumTheme ? 'bg-transparent' : 'bg-white'}`}>
           {/* Emoji Picker for Mobile */}
           <AnimatePresence>
             {showEmojiPicker && (

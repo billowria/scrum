@@ -5,22 +5,6 @@ import { useTheme } from '../context/ThemeContext';
 
 const THEME_CORES = [
     {
-        id: 'light',
-        name: 'Sun',
-        icon: FiSun,
-        gradient: 'from-amber-400 to-orange-500',
-        color: 'text-amber-500',
-        glow: 'shadow-[0_0_15px_rgba(245,158,11,0.3)]'
-    },
-    {
-        id: 'dark',
-        name: 'Moon',
-        icon: FiMoon,
-        gradient: 'from-indigo-500 to-blue-700',
-        color: 'text-indigo-400',
-        glow: 'shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-    },
-    {
         id: 'space',
         name: 'Stars',
         icon: FiStar,
@@ -44,21 +28,13 @@ const THEME_CORES = [
         color: 'text-lime-400',
         glow: 'shadow-[0_0_15px_rgba(132,204,22,0.3)]'
     },
-    {
-        id: 'system',
-        name: 'Auto',
-        icon: FiZap,
-        gradient: 'from-slate-400 to-zinc-600',
-        color: 'text-slate-400',
-        glow: 'shadow-[0_0_15px_rgba(148,163,184,0.3)]'
-    },
 ];
 
 const CompactThemeToggle = () => {
     const { theme, themeMode, setThemeMode } = useTheme();
     const [isHovered, setIsHovered] = useState(false);
 
-    const activeCore = THEME_CORES.find(c => c.id === themeMode) || THEME_CORES[3];
+    const activeCore = THEME_CORES.find(c => c.id === themeMode) || THEME_CORES[0];
     const ActiveIcon = activeCore.icon;
 
     // Theme-aware text/icon colors

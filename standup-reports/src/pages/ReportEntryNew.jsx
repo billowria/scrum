@@ -117,40 +117,66 @@ const processContentForSave = (html) => {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
 
-  // 1. Process Tasks
-  // Look for any span that has data-id or data-task-id or specific classes
+  // 1. Process Tasks - convert spans to #TASK-id format
   const taskSpans = tempDiv.querySelectorAll('span[data-id], span[data-task-id], .task-ref');
   taskSpans.forEach(span => {
     const id = span.getAttribute('data-id') || span.getAttribute('data-task-id');
     if (id) {
-      span.replaceWith(`#TASK-${id}`);
+      const textNode = document.createTextNode(`#TASK-${id}`);
+      span.replaceWith(textNode);
     }
   });
 
-  // 2. Process Mentions
+  // 2. Process Mentions - convert spans to @uuid format
   const mentionSpans = tempDiv.querySelectorAll('span[data-user-id], .mention-ref');
   mentionSpans.forEach(span => {
     const id = span.getAttribute('data-user-id');
     if (id) {
-      span.replaceWith(`@${id}`);
+      const textNode = document.createTextNode(`@${id}`);
+      span.replaceWith(textNode);
     }
   });
 
-  // 3. Fallback: Regex for any spans that might have been missed by the DOM parser
-  // (e.g. if TipTap did something weird with the structure)
-  let result = tempDiv.innerHTML;
+  // 3. Preserve list structure but convert to clean format
+  // Convert <li> items to proper format with markers
+  const orderedLists = tempDiv.querySelectorAll('ol');
+  orderedLists.forEach(ol => {
+    const items = ol.querySelectorAll('li');
+    let listText = '';
+    items.forEach((li, index) => {
+      listText += `${index + 1}. ${li.textContent}\n`;
+    });
+    ol.replaceWith(document.createTextNode(listText.trim()));
+  });
 
-  // Clean up remaining HTML tags but keep the text
-  // We want to preserve basic structure like newlines if possible
-  // Using innerText on a temporary element is usually safer for this
-  const cleanText = tempDiv.innerText || tempDiv.textContent || '';
+  const unorderedLists = tempDiv.querySelectorAll('ul');
+  unorderedLists.forEach(ul => {
+    const items = ul.querySelectorAll('li');
+    let listText = '';
+    items.forEach(li => {
+      listText += `- ${li.textContent}\n`;
+    });
+    ul.replaceWith(document.createTextNode(listText.trim()));
+  });
 
-  // Final safety check: if for some reason spans survived (e.g. if innerText didn't replace them)
-  // we do a final regex pass on the result string
-  return cleanText
-    .replace(/<span[^>]*data-id="([a-f0-9-]+|\d+)"[^>]*>.*?<\/span>/g, '#TASK-$1')
-    .replace(/<span[^>]*data-user-id="([a-f0-9-]{36})"[^>]*>.*?<\/span>/g, '@$1')
-    .trim();
+  // 4. Convert <p> and <br> to newlines, then get clean text
+  tempDiv.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+  tempDiv.querySelectorAll('p').forEach(p => {
+    const text = p.textContent;
+    if (text.trim()) {
+      p.replaceWith(document.createTextNode(text + '\n'));
+    } else {
+      p.remove();
+    }
+  });
+
+  // 5. Get final text content
+  let result = tempDiv.textContent || tempDiv.innerText || '';
+
+  // Clean up multiple newlines and trim
+  result = result.replace(/\n{3,}/g, '\n\n').trim();
+
+  return result;
 };
 
 const ReportEntryNew = () => {
@@ -907,6 +933,15 @@ const PremiumEditor = ({ title, subtitle, icon, editor, isActive, accentColor, i
     rose: "ring-4 ring-rose-500/30 border-rose-400/50 shadow-[0_8px_30px_rgb(244,63,94,0.12)]",
   };
 
+  // Formatting button styles
+  const formatBtnClass = (isActive) => `
+    p-2 rounded-lg transition-all duration-200
+    ${isActive
+      ? 'bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-white'
+      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+    }
+  `;
+
   return (
     <div
       className={`
@@ -934,6 +969,51 @@ const PremiumEditor = ({ title, subtitle, icon, editor, isActive, accentColor, i
             <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">{subtitle}</p>
           </div>
         </div>
+
+        {/* Formatting Toolbar */}
+        {editor && (
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-1">
+            {/* Bold Button */}
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={formatBtnClass(editor.isActive('bold'))}
+              title="Bold (Ctrl+B)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+              </svg>
+            </button>
+
+            {/* Numbered List Button */}
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={formatBtnClass(editor.isActive('orderedList'))}
+              title="Numbered List"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                <text x="1" y="8" fontSize="6" fill="currentColor" fontWeight="bold">1</text>
+                <text x="1" y="14" fontSize="6" fill="currentColor" fontWeight="bold">2</text>
+                <text x="1" y="20" fontSize="6" fill="currentColor" fontWeight="bold">3</text>
+              </svg>
+            </button>
+
+            {/* Bullet List Button */}
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={formatBtnClass(editor.isActive('bulletList'))}
+              title="Bullet List"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Visual Indicator for Active State */}
         <div className={`

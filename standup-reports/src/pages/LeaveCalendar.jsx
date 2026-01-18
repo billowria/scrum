@@ -129,6 +129,14 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   // Animation controls
   const controls = useAnimation();
 
+  // Auto-dismiss messages
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   useEffect(() => {
     fetchCurrentUser();
   }, []);
@@ -413,29 +421,10 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   };
 
   const handleRequestLeave = () => {
-    if (selectedLeaveDates.length === 0) {
-      setMessage({ type: 'warning', text: 'Select dates first' });
-      return;
-    }
-
-    // Sort dates to find range
-    const sorted = [...selectedLeaveDates].sort();
-    const start = new Date(sorted[0]);
-    const end = new Date(sorted[sorted.length - 1]);
-
-    // Check for gaps if strict range is needed, but for now just pass min/max
-    // The LeaveRequestForm likely takes { start, end }
-    // We'll set the range state that the form uses, constructed on the fly
-    // Note: LeaveRequestForm logic might need a range object passed to it.
-    // We can just use the state setter expected by the form or pass props?
-    // Looking at previous code, `selectedDates` prop was passed `selectedLeaveRange`.
-    // We will construct a temporary object to pass.
-
-    // Actually, `selectedDates` prop on Form is controlled? 
-    // Previous: `selectedDates={selectedLeaveRange}` -> {start, end}
-    // So we need to emulate that.
     setShowLeaveForm(true);
   };
+
+
 
   const handleBatchLogTime = () => {
     // If only 1 date selected, check if it has entry => Edit Mode
@@ -988,12 +977,32 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         }}
         selectedDates={(() => {
           if (selectedLeaveDates.length === 0) return { start: null, end: null };
+          // If only one date is in the array, it's a partial selection (start only)
+          if (selectedLeaveDates.length === 1) {
+            return {
+              start: new Date(selectedLeaveDates[0]),
+              end: null
+            };
+          }
           const sorted = [...selectedLeaveDates].sort();
           return {
             start: new Date(sorted[0]),
             end: new Date(sorted[sorted.length - 1])
           };
         })()}
+        setSelectedDates={(dates) => {
+          if (!dates.start) {
+            setSelectedLeaveDates([]);
+            return;
+          }
+          if (!dates.end) {
+            setSelectedLeaveDates([format(dates.start, 'yyyy-MM-dd')]);
+          } else {
+            // Generate all dates in between
+            const days = eachDayOfInterval({ start: dates.start, end: dates.end });
+            setSelectedLeaveDates(days.map(d => format(d, 'yyyy-MM-dd')));
+          }
+        }}
         onSuccess={() => {
           fetchLeaveData();
           setShowLeaveForm(false);

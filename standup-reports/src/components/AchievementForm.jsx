@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
-import { FiAward, FiSave, FiUserPlus, FiX, FiCheck, FiCamera } from 'react-icons/fi';
+import { FiAward, FiSave, FiUserPlus, FiX, FiCheck, FiCamera, FiSearch, FiInfo, FiTrendingUp, FiZap } from 'react-icons/fi';
 import { notifyAchievement } from '../utils/notificationHelper';
+import { useTheme } from '../context/ThemeContext';
 
 // Animation variants
 const formVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
   visible: {
     opacity: 1,
     scale: 1,
+    y: 0,
     transition: { type: 'spring', stiffness: 300, damping: 30 }
   },
   exit: {
     opacity: 0,
     scale: 0.95,
+    y: 20,
     transition: { duration: 0.2 }
   }
-};
-
-const inputFocusVariants = {
-  rest: { scale: 1, borderColor: 'rgba(209, 213, 219, 1)' },
-  focus: { scale: 1.01, borderColor: 'rgba(79, 70, 229, 1)' }
 };
 
 const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
@@ -35,7 +33,8 @@ const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
   const [message, setMessage] = useState({ type: '', text: '' });
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
-  
+  const { themeMode, isAnimatedTheme } = useTheme();
+
   // Award type options
   const awardTypeOptions = [
     { value: 'promotion', label: 'Promotion' },
@@ -49,21 +48,30 @@ const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
     { value: 'technical', label: 'Technical Excellence' },
     { value: 'other', label: 'Other' }
   ];
-  
+
   // Fetch users when the form opens
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
+    } else {
+      // Reset form on close
+      setTitle('');
+      setDescription('');
+      setSelectedUser(null);
+      setSearchTerm('');
+      setMessage({ type: '', text: '' });
+      setPhoto(null);
+      setPhotoPreview(null);
     }
   }, [isOpen]);
-  
+
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email, role')
+        .select('id, name, email, avatar_url, role')
         .order('name');
-      
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -71,26 +79,26 @@ const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
       setMessage({ type: 'error', text: 'Failed to load users' });
     }
   };
-  
+
   // Filter users based on search term
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   // Handle photo upload
   const handlePhotoChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Check file size (limit to 2MB)
       if (file.size > 2 * 1024 * 1024) {
         setMessage({ type: 'error', text: 'Image size should be less than 2MB' });
         return;
       }
-      
+
       setPhoto(file);
-      
+
       // Create a preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -99,349 +107,322 @@ const AchievementForm = ({ isOpen, onClose, onSuccess }) => {
       reader.readAsDataURL(file);
     }
   };
-  
-  // Reset form
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setAwardType('recognition');
-    setSelectedUser(null);
-    setSearchTerm('');
-    setPhoto(null);
-    setPhotoPreview(null);
-    setMessage({ type: '', text: '' });
-  };
-  
-  // Handle form submission
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!selectedUser) {
-      setMessage({ type: 'error', text: 'Please select an employee' });
+    if (!title || !selectedUser) {
+      setMessage({ type: 'error', text: 'Please fill in required fields' });
       return;
     }
-    
+
     setLoading(true);
     setMessage({ type: '', text: '' });
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('You must be logged in to post achievements');
-      }
-      
+      if (!user) throw new Error('Not authenticated');
+
+      // 1. Get current user's company_id
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) throw userError;
+
+      // 2. Upload photo if exists
       let imageUrl = null;
-      
-      // Upload photo if provided
       if (photo) {
         const fileExt = photo.name.split('.').pop();
-        const fileName = `${selectedUser.id}-${Date.now()}.${fileExt}`;
-        const filePath = `achievement-photos/${fileName}`;
-        
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `achievements/${fileName}`;
+
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, photo);
-        
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        // Get the public URL
-        const { data } = supabase.storage
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
-        
-        imageUrl = data.publicUrl;
+
+        imageUrl = publicUrl;
       }
-      
-      // Create achievement record
-      const { error } = await supabase
+
+      // 3. Create achievement
+      const { data: achievement, error: achievementError } = await supabase
         .from('achievements')
-        .insert([{
-          user_id: selectedUser.id,
+        .insert({
           title,
           description,
           award_type: awardType,
+          user_id: selectedUser.id,
           created_by: user.id,
+          company_id: userData.company_id,
           image_url: imageUrl,
-          awarded_at: new Date().toISOString(), // Add current date as award date
-        }]);
-      
-      if (error) throw error;
-      
-      // Notify the user about their achievement
-      const { data: creatorData } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', user.id)
+          awarded_at: new Date().toISOString()
+        })
+        .select()
         .single();
-      
-      await notifyAchievement(
-        selectedUser.id,
-        title,
-        creatorData?.name || 'Someone'
-      );
-      
-      // Success
+
+      if (achievementError) throw achievementError;
+
+      // 4. Send notification
+      await notifyAchievement(achievement.id, selectedUser.id);
+
       setMessage({ type: 'success', text: 'Achievement posted successfully!' });
-      
-      // Reset form and close after delay
       setTimeout(() => {
-        resetForm();
-        if (onSuccess) onSuccess();
-        if (onClose) onClose();
+        onSuccess(achievement);
+        onClose();
       }, 1500);
-      
     } catch (error) {
-      console.error('Error posting achievement:', error);
-      setMessage({ 
-        type: 'error', 
-        text: `Error: ${error.message || 'Failed to post achievement'}`
-      });
+      console.error('Error creating achievement:', error.message);
+      setMessage({ type: 'error', text: error.message });
     } finally {
       setLoading(false);
     }
   };
-  
-  if (!isOpen) return null;
-  
+
   return (
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-        {/* Animated background blobs */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-gradient-to-br from-primary-400 via-indigo-400 to-blue-300 opacity-30 blur-2xl rounded-full animate-pulse" />
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tr from-blue-400 via-indigo-300 to-primary-300 opacity-20 blur-2xl rounded-full animate-pulse delay-2000" />
-        </div>
+      {isOpen && (
         <motion.div
-          className="relative bg-white/80 backdrop-blur-2xl rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md mx-auto overflow-hidden border border-white/30 z-10 p-0"
-          variants={formVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          {/* Floating close button */}
-          <motion.button
-            className="absolute top-3 right-3 bg-white/60 backdrop-blur-lg rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-white/90 transition-all z-20"
-            onClick={onClose}
-            whileHover={{ scale: 1.15, rotate: 90 }}
-            whileTap={{ scale: 0.95 }}
+          {/* Form Modal */}
+          <motion.div
+            className={`relative w-full max-w-xl ${isAnimatedTheme ? 'bg-transparent' : 'bg-slate-900'} ${!isAnimatedTheme ? 'backdrop-blur-xl' : ''} border border-white/10 rounded-[2.5rem] shadow-3xl overflow-hidden flex flex-col max-h-[90vh] transition-all duration-700`}
+            variants={formVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <FiX className="w-5 h-5 text-primary-700" />
-          </motion.button>
-          {/* Floating icon header */}
-          <div className="flex flex-col items-center pt-7 pb-2 px-6 relative">
-            <div className="relative mb-2">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 via-indigo-500 to-blue-400 flex items-center justify-center shadow-xl ring-4 ring-white/60">
-                <FiAward className="w-8 h-8 text-white drop-shadow-lg" />
+            {/* Ambient background glows */}
+            <div className={`absolute -top-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-600/10 blur-3xl`} />
+            <div className={`absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-gradient-to-tr from-rose-500/10 to-indigo-600/10 blur-3xl`} />
+
+            {/* Header */}
+            <div className="p-8 pb-4 relative z-10">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-500/20">
+                    <FiAward className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white leading-none tracking-tight">Create Achievement</h2>
+                    <p className="text-white/40 text-xs font-black uppercase tracking-widest mt-1 italic">Official Sync Broadcast</p>
+                  </div>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center border border-white/5 transition-all"
+                >
+                  <FiX size={20} />
+                </button>
               </div>
             </div>
-            <h3 className="text-xl font-extrabold text-primary-900 text-center tracking-tight mb-1">Post New Achievement</h3>
-            <p className="text-xs text-primary-500 text-center mb-2">Celebrate and recognize your team</p>
-          </div>
-          <form onSubmit={handleSubmit} className="px-6 pb-6 pt-2 flex flex-col gap-4">
-            {/* Success/Error message */}
-            <AnimatePresence>
-              {message.text && (
-                <motion.div 
-                  className={`p-2 mb-2 rounded-md text-xs flex items-center gap-2 ${
-                    message.type === 'success' 
-                      ? 'bg-green-50 text-green-800 border border-green-100' 
-                      : 'bg-red-50 text-red-800 border border-red-100'
-                  }`}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  {message.type === 'success' && <FiCheck className="inline-block" />}
-                  {message.type === 'error' && <FiX className="inline-block" />}
-                  {message.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {/* Employee Selection */}
-            <div className="relative group">
-              <label className="block text-xs font-bold text-primary-700 mb-1 ml-1">Employee <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <input 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search for an employee..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all"
-                />
-                {searchTerm && (
-                  <div className="absolute z-10 mt-1 w-full bg-white rounded-xl shadow-lg max-h-60 overflow-auto border border-gray-200">
-                    {filteredUsers.length === 0 ? (
-                      <div className="px-4 py-2 text-xs text-gray-500">No users found</div>
-                    ) : (
-                      filteredUsers.map(user => (
-                        <div 
-                          key={user.id}
-                          className="px-4 py-2 hover:bg-primary-50 cursor-pointer flex items-center rounded-xl"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setSearchTerm(user.name);
-                          }}
-                        >
-                          <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-2">
-                            <span className="font-medium text-sm">{user.name.charAt(0).toUpperCase()}</span>
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold">{user.name}</div>
-                            <div className="text-xs text-gray-500">{user.email}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
+
+            {/* Scrollable Form Body */}
+            <div className="flex-1 overflow-y-auto px-8 py-4 custom-scrollbar relative z-10">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {message.text && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 rounded-2xl border ${message.type === 'error' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                      } text-sm font-bold flex items-center gap-2`}
+                  >
+                    {message.type === 'error' ? <FiInfo /> : <FiCheck />}
+                    {message.text}
+                  </motion.div>
                 )}
-                {selectedUser && (
-                  <div className="mt-2 flex items-center bg-primary-50 rounded-xl p-2">
-                    <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 mr-2">
-                      <span className="font-medium text-sm">{selectedUser.name.charAt(0).toUpperCase()}</span>
+
+                {/* Recipient Selection */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1 italic">Target Recipient</label>
+                  {!selectedUser ? (
+                    <div className="relative group">
+                      <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-indigo-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Search team members..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl pl-11 pr-4 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all font-bold"
+                      />
+                      {searchTerm && filteredUsers.length > 0 && (
+                        <motion.div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-3xl z-50 overflow-hidden max-h-60 overflow-y-auto custom-scrollbar">
+                          {filteredUsers.map(user => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => setSelectedUser(user)}
+                              className="w-full text-left p-4 hover:bg-white/5 flex items-center gap-3 transition-colors border-b border-white/5 last:border-none"
+                            >
+                              {user.avatar_url ? (
+                                <img src={user.avatar_url} className="w-10 h-10 rounded-xl object-cover" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 font-black italic">{user.name[0]}</div>
+                              )}
+                              <div>
+                                <p className="text-sm font-bold text-white leading-none mb-1">{user.name}</p>
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">{user.role || 'Member'}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <div className="text-xs font-bold">{selectedUser.name}</div>
-                      <div className="text-xs text-gray-500">{selectedUser.email}</div>
-                    </div>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setSelectedUser(null);
-                        setSearchTerm('');
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
+                  ) : (
+                    <motion.div
+                      layout
+                      className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex items-center justify-between"
                     >
-                      <FiX />
-                    </button>
+                      <div className="flex items-center gap-3">
+                        {selectedUser.avatar_url ? (
+                          <img src={selectedUser.avatar_url} className="w-12 h-12 rounded-xl object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-black italic">{selectedUser.name[0]}</div>
+                        )}
+                        <div>
+                          <p className="text-base font-black text-white leading-none mb-1">{selectedUser.name}</p>
+                          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{selectedUser.email}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUser(null)}
+                        className="p-2 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all"
+                      >
+                        <FiX />
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Achievement Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label htmlFor="award-type" className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1 italic">Award Type</label>
+                    <div className="relative">
+                      <select
+                        id="award-type"
+                        value={awardType}
+                        onChange={(e) => setAwardType(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 font-bold appearance-none transition-all cursor-pointer"
+                      >
+                        {awardTypeOptions.map(option => (
+                          <option key={option.value} value={option.value} className="bg-slate-900 text-white">
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <FiZap className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-            {/* Title */}
-            <div className="relative group">
-              <label htmlFor="title" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Achievement Title <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <input
-                  id="title"
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 font-bold shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all"
-                  placeholder="Enter achievement title"
-                />
-              </div>
-            </div>
-            {/* Description */}
-            <div className="relative group">
-              <label htmlFor="description" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Description</label>
-              <div className="relative">
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all"
-                  placeholder="Describe the achievement..."
-                  rows="3"
-                />
-              </div>
-            </div>
-            {/* Award Type */}
-            <div className="relative group">
-              <label htmlFor="award-type" className="block text-xs font-bold text-primary-700 mb-1 ml-1">Award Type <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  id="award-type"
-                  value={awardType}
-                  onChange={(e) => setAwardType(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 rounded-xl border-2 border-primary-200 bg-white/80 text-primary-800 shadow focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition-all"
-                >
-                  {awardTypeOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {/* Photo Upload */}
-            <div className="relative group">
-              <label className="block text-xs font-bold text-primary-700 mb-1 ml-1">Photo (Optional)</label>
-              <div className="flex items-center gap-4">
-                {photoPreview ? (
-                  <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-primary-100 bg-white/70 shadow">
-                    <img 
-                      src={photoPreview} 
-                      alt="Preview" 
-                      className="h-full w-full object-cover"
+                  <div className="space-y-2">
+                    <label htmlFor="title" className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1 italic">Achievement Title</label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g. Q4 Performance Leader"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all font-bold placeholder:text-white/10"
+                      required
                     />
                   </div>
-                ) : (
-                  <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
-                    <FiCamera className="text-gray-400" size={24} />
-                  </div>
-                )}
-                <div>
-                  <label htmlFor="photo-upload" className="cursor-pointer bg-white px-3 py-2 border border-gray-300 rounded-xl shadow-sm text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">
-                    Upload Photo
-                  </label>
-                  <input 
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="hidden"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    PNG, JPG, GIF up to 2MB
-                  </p>
                 </div>
-              </div>
+
+                {/* Citation */}
+                <div className="space-y-2">
+                  <label htmlFor="description" className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1 italic">Citation & Description</label>
+                  <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe the achievement and its impact..."
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition-all font-bold min-h-[120px] placeholder:text-white/10"
+                  />
+                </div>
+
+                {/* Visual Proof */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-1 italic">Visual Asset (Optional)</label>
+                  <div className="flex items-center gap-6 p-4 bg-white/5 border border-white/10 rounded-2xl">
+                    {photoPreview ? (
+                      <div className="relative h-20 w-20 rounded-2xl overflow-hidden border border-white/20 group">
+                        <img src={photoPreview} className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => { setPhoto(null); setPhotoPreview(null); }}
+                          className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <FiX className="text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-2xl bg-white/5 flex items-center justify-center border-2 border-dashed border-white/10 text-white/20 group-hover:text-white/40 transition-colors">
+                        <FiCamera size={32} />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <label htmlFor="photo-upload" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest cursor-pointer border border-white/10 transition-all">
+                        <FiSave className="w-3.5 h-3.5" />
+                        Upload Reference
+                      </label>
+                      <input
+                        id="photo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                      <p className="mt-2 text-[10px] text-white/20 font-bold italic">High-res PNG or JPG (Max 2MB)</p>
+                    </div>
+                  </div>
+                </div>
+              </form>
             </div>
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2 mt-2">
+
+            {/* Footer */}
+            <div className="p-8 bg-slate-950/40 border-t border-white/5 flex gap-4 relative z-10">
               <motion.button
                 type="button"
-                className="w-full py-3 bg-white/70 text-primary-700 rounded-2xl font-bold shadow hover:bg-primary-50 transition-all border border-primary-100"
                 onClick={onClose}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                className="flex-1 py-4 px-6 rounded-2xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-black uppercase tracking-widest border border-white/10 transition-all"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 disabled={loading}
               >
-                Cancel
+                Dismiss
               </motion.button>
               <motion.button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-primary-600 via-indigo-600 to-blue-600 text-white rounded-2xl font-extrabold shadow-xl hover:from-primary-700 hover:to-blue-700 flex items-center justify-center gap-2 text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                onClick={handleSubmit}
+                className={`flex-[2] py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-2`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 disabled={loading || !title || !selectedUser}
               >
                 {loading ? (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <FiSave className="mr-2" /> Post Achievement
+                    <FiTrendingUp className="w-5 h-5" />
+                    Broadcast Achievement
                   </>
                 )}
               </motion.button>
             </div>
-          </form>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };

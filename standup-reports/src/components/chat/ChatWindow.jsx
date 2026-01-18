@@ -11,6 +11,7 @@ import ChatHeader from './ChatHeader';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import UserPresence from './UserPresence';
+import { useTheme } from '../../context/ThemeContext';
 
 const ChatWindow = ({
   conversation,
@@ -44,6 +45,9 @@ const ChatWindow = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [messageInput, setMessageInput] = useState("");
+
+  const { themeMode } = useTheme();
+  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -170,7 +174,7 @@ const ChatWindow = ({
 
   if (!conversation) {
     return (
-      <div className={`flex-1 flex items-center justify-center bg-gray-50 dark:bg-slate-950/40 ${className}`}>
+      <div className={`flex-1 flex items-center justify-center ${isPremiumTheme ? 'bg-transparent' : 'bg-gray-50 dark:bg-slate-950/40'} ${className}`}>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -189,7 +193,7 @@ const ChatWindow = ({
   }
 
   return (
-    <div className={`flex-1 flex flex-col min-h-0 bg-white/60 dark:bg-slate-950/60 backdrop-blur-sm ${className}`}>
+    <div className={`flex-1 flex flex-col min-h-0 ${isPremiumTheme ? 'bg-transparent' : 'bg-white/60 dark:bg-slate-950/60 backdrop-blur-sm'} ${className}`}>
 
 
       {/* Search Bar */}
@@ -227,7 +231,10 @@ const ChatWindow = ({
 
       {/* Enhanced Compact Modern Header */}
       {!mobileLayout ? (
-        <div className="flex-shrink-0 px-6 py-4 bg-white/80 dark:bg-slate-900/80 border-b border-gray-200/50 dark:border-white/10 backdrop-blur-md shadow-sm z-10">
+        <div className={`flex-shrink-0 px-6 py-4 border-b shadow-sm z-10 ${isPremiumTheme
+          ? 'bg-transparent border-white/10'
+          : 'bg-white/80 dark:bg-slate-900/80 border-gray-200/50 dark:border-white/10 backdrop-blur-md'
+          }`}>
           <div className="flex items-center justify-between">
             {/* Left Section - Back Button, Avatar, and Title */}
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -453,7 +460,10 @@ const ChatWindow = ({
         </div>
       ) : (
         // Mobile Header (Now unified style)
-        <div className="flex-shrink-0 px-4 py-3 bg-white/90 dark:bg-slate-900/90 border-b border-gray-200/50 dark:border-white/10 backdrop-blur-md sticky top-0 z-20 shadow-sm">
+        <div className={`flex-shrink-0 px-4 py-3 border-b sticky top-0 z-20 shadow-sm ${isPremiumTheme
+          ? 'bg-transparent border-white/10'
+          : 'bg-white/90 dark:bg-slate-900/90 border-gray-200/50 dark:border-white/10 backdrop-blur-md'
+          }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {onBack && (

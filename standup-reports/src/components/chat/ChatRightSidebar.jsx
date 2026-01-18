@@ -5,6 +5,7 @@ import {
     FiClock, FiLink, FiDownload, FiChevronRight
 } from 'react-icons/fi';
 import Avatar from '../shared/Avatar';
+import { useTheme } from '../../context/ThemeContext';
 
 const ChatRightSidebar = ({
     conversation,
@@ -12,6 +13,9 @@ const ChatRightSidebar = ({
     onClose,
     currentUser
 }) => {
+    const { themeMode } = useTheme();
+    const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+
     const [activeTab, setActiveTab] = useState('overview');
 
     const tabs = [
@@ -41,24 +45,27 @@ const ChatRightSidebar = ({
                     animate={{ width: 320, opacity: 1 }}
                     exit={{ width: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="h-full bg-white/80 backdrop-blur-xl border-l border-white/20 shadow-xl flex flex-col overflow-hidden relative z-20"
-                    style={{ boxShadow: '-4px 0 15px rgba(0,0,0,0.02)' }}
+                    className={`h-full flex flex-col overflow-hidden relative z-20 ${isPremiumTheme
+                        ? 'bg-transparent border-l border-white/10'
+                        : 'bg-white/80 backdrop-blur-xl border-l border-white/20 shadow-xl'
+                        }`}
+                    style={{ boxShadow: isPremiumTheme ? 'none' : '-4px 0 15px rgba(0,0,0,0.02)' }}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-800">Directory</h3>
+                    <div className={`flex items-center justify-between p-5 ${isPremiumTheme ? 'border-b border-white/10' : 'border-b border-gray-100'}`}>
+                        <h3 className={`font-semibold ${isPremiumTheme ? 'text-white' : 'text-gray-800'}`}>Directory</h3>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+                            className={`p-2 rounded-full transition-colors ${isPremiumTheme ? 'hover:bg-white/10 text-white/70' : 'hover:bg-gray-100 text-gray-500'}`}
                         >
                             <FiX className="w-5 h-5" />
                         </button>
                     </div>
 
                     {/* User/Group Info Header */}
-                    <div className="p-6 flex flex-col items-center border-b border-gray-50 bg-gradient-to-b from-transparent to-gray-50/50">
+                    <div className={`p-6 flex flex-col items-center ${isPremiumTheme ? 'border-b border-white/10' : 'border-b border-gray-50 bg-gradient-to-b from-transparent to-gray-50/50'}`}>
                         <div className="mb-4 relative">
-                            <div className="w-20 h-20 rounded-full p-1 bg-white shadow-sm ring-1 ring-gray-100">
+                            <div className={`w-20 h-20 rounded-full p-1 shadow-sm ${isPremiumTheme ? 'bg-white/10 ring-1 ring-white/20' : 'bg-white ring-1 ring-gray-100'}`}>
                                 {conversation?.type === 'direct' ? (
                                     <Avatar user={conversation.otherUser} size="lg" className="w-full h-full" />
                                 ) : (
@@ -71,21 +78,23 @@ const ChatRightSidebar = ({
                                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                             )}
                         </div>
-                        <h2 className="text-lg font-bold text-gray-900 text-center">
+                        <h2 className={`text-lg font-bold text-center ${isPremiumTheme ? 'text-white' : 'text-gray-900'}`}>
                             {conversation?.type === 'direct' ? conversation.otherUser?.name : conversation?.name}
                         </h2>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className={`text-sm mt-1 ${isPremiumTheme ? 'text-white/60' : 'text-gray-500'}`}>
                             {conversation?.type === 'direct' ? conversation.otherUser?.email : `${conversation?.participants?.length || 0} members`}
                         </p>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex px-4 pt-4 border-b border-gray-100">
+                    <div className={`flex px-4 pt-4 ${isPremiumTheme ? 'border-b border-white/10' : 'border-b border-gray-100'}`}>
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex-1 pb-3 text-sm font-medium flex justify-center items-center gap-2 relative transition-colors ${activeTab === tab.id ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'
+                                className={`flex-1 pb-3 text-sm font-medium flex justify-center items-center gap-2 relative transition-colors ${activeTab === tab.id
+                                    ? (isPremiumTheme ? 'text-white' : 'text-indigo-600')
+                                    : (isPremiumTheme ? 'text-white/50 hover:text-white/70' : 'text-gray-500 hover:text-gray-700')
                                     }`}
                             >
                                 <tab.icon className="w-4 h-4" />
@@ -93,7 +102,7 @@ const ChatRightSidebar = ({
                                 {activeTab === tab.id && (
                                     <motion.div
                                         layoutId="activeTab"
-                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full"
+                                        className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full ${isPremiumTheme ? 'bg-white' : 'bg-indigo-600'}`}
                                     />
                                 )}
                             </button>

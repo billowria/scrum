@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { supabase } from '../supabaseClient';
@@ -734,93 +735,8 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
   );
 };
 
-// --- Spacious Header (Redesigned Compact) ---
-const QUOTES = [
-  "The only way to do great work is to love what you do.",
-  "Innovation distinguishes between a leader and a follower.",
-  "Stay hungry, stay foolish.",
-  "Your time is limited, so don't waste it living someone else's life.",
-  "The best way to predict the future is to create it.",
-  "Believe you can and you're halfway there.",
-  "Do what you can, with what you have, where you are.",
-  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-  "The future belongs to those who believe in the beauty of their dreams.",
-  "It does not matter how slowly you go as long as you do not stop.",
-  "Everything you've ever wanted is on the other side of fear.",
-  "Success usually comes to those who are too busy to be looking for it.",
-  "Don't watch the clock; do what it does. Keep going.",
-  "The secret of getting ahead is getting started.",
-  "Quality is not an act, it is a habit.",
-  "Well done is better than well said.",
-  "Optimism is the faith that leads to achievement.",
-  "It always seems impossible until it's done.",
-  "Setting goals is the first step in turning the invisible into the visible.",
-  "You miss 100% of the shots you don't take.",
-  "Talent wins games, but teamwork and intelligence win championships.",
-  "Alone we can do so little; together we can do so much.",
-  "Productivity is never an accident. It is always the result of a commitment to excellence.",
-  "Focus on being productive instead of busy.",
-  "Simplicity is the ultimate sophistication.",
-  "Creativity is intelligence having fun.",
-  "The best way out is always through.",
-  "Action is the foundational key to all success.",
-  "Small daily improvements over time lead to stunning results.",
-  "Don't count the days, make the days count.",
-  "The power of imagination makes us infinite."
-];
-
-// Separate component for animated quote to prevent re-renders
-const AnimatedQuote = React.memo(({ quote }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        delay: 1.0,
-        duration: 1.2,
-        type: "spring",
-        stiffness: 80,
-        damping: 12
-      }}
-      className="relative max-w-2xl"
-    >
-      <div className="flex items-start gap-4">
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: '3rem', opacity: 1 }}
-          transition={{
-            delay: 1.5,
-            duration: 1.0,
-            type: "spring",
-            stiffness: 100,
-            damping: 15
-          }}
-          style={{ transformOrigin: 'top' }}
-          className="hidden sm:block w-1 bg-gradient-to-b from-amber-300 to-orange-500 rounded-full"
-        />
-        <motion.blockquote
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 1.0,
-            duration: 1.2,
-            type: "spring",
-            stiffness: 80,
-            damping: 12
-          }}
-          className="font-serif text-xl sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-orange-100 to-amber-50 italic leading-relaxed drop-shadow-sm"
-        >
-          "{quote}"
-        </motion.blockquote>
-      </div>
-    </motion.div>
-  );
-});
-
-AnimatedQuote.displayName = 'AnimatedQuote';
-
-// Isolated Clock Component - prevents parent re-renders
-const LiveClock = React.memo(() => {
+// --- Simplified Clock Component ---
+const LiveClock = React.memo(({ theme }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -828,19 +744,23 @@ const LiveClock = React.memo(() => {
     return () => clearInterval(timer);
   }, []);
 
+  const textColor = theme === 'light' ? 'text-slate-900' : 'text-white';
+  const subTextColor = theme === 'light' ? 'text-slate-500' : 'text-white/60';
+
   return (
     <div className="text-right">
-      <div className="font-mono text-4xl sm:text-5xl font-bold tracking-tighter text-white drop-shadow-xl tabular-nums">
-        {format(time, 'HH:mm:ss')}
+      <div className={`font-mono text-2xl font-bold tracking-tight tabular-nums ${textColor}`}>
+        {format(time, 'HH:mm')}
       </div>
-      <div className="text-xs text-indigo-300 font-bold uppercase tracking-widest mt-1 opacity-80">
-        {format(time, 'EEEE, MMM d')}
+      <div className={`text-[10px] font-semibold uppercase tracking-wide ${subTextColor}`}>
+        {format(time, 'EEE, MMM d')}
       </div>
     </div>
   );
 });
 LiveClock.displayName = 'LiveClock';
 
+// --- Theme-Aware Glassmorphic Header ---
 const DashboardHeader = ({
   userName,
   userAvatarUrl,
@@ -852,312 +772,259 @@ const DashboardHeader = ({
   onCreateReport,
   hasSubmittedToday,
   subscription = null,
-  navigate
+  navigate,
+  theme = 'dark',
+  themeMode = 'dark'
 }) => {
-  // Live clock state
-  const [currentTime, setCurrentTime] = useState(new Date());
+  // Theme-aware glassmorphic styles
+  const getGlassStyles = () => {
+    const baseGlass = 'backdrop-blur-xl border-b';
 
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    const themeStyles = {
+      light: `${baseGlass} bg-white/80 border-slate-200/60`,
+      dark: `${baseGlass} bg-slate-900/70 border-white/10`,
+      space: `${baseGlass} bg-slate-900/60 border-purple-500/20`,
+      ocean: `${baseGlass} bg-slate-900/60 border-cyan-500/20`,
+      forest: `${baseGlass} bg-slate-900/60 border-emerald-500/20`,
+    };
 
-  const dayOfMonth = new Date().getDate();
-  const quote = QUOTES[dayOfMonth - 1] || QUOTES[0];
+    return themeStyles[themeMode] || themeStyles.dark;
+  };
 
-  const { scrollY } = useScroll();
-  // Using a slightly more responsive spring for tighter sync
-  const springScroll = useSpring(scrollY, { stiffness: 150, damping: 20 });
+  // Theme accent colors
+  const getAccentColor = () => {
+    const accents = {
+      light: 'from-indigo-500 to-purple-600',
+      dark: 'from-indigo-400 to-purple-500',
+      space: 'from-purple-400 to-fuchsia-500',
+      ocean: 'from-cyan-400 to-blue-500',
+      forest: 'from-emerald-400 to-green-500',
+    };
+    return accents[themeMode] || accents.dark;
+  };
 
-  // --- Master Transitions ---
-  const scrollThreshold = 140;
-  const range = [0, scrollThreshold];
-
-  // Container height sync: From expanded height to compact sticky height
-  const height = useTransform(springScroll, range, ['280px', '72px']);
-  const borderRadius = useTransform(springScroll, range, ['48px', '0px']);
-  const marginBot = useTransform(springScroll, range, ['32px', '16px']);
-  const backdropBlur = useTransform(springScroll, range, ['0px', '20px']);
-
-  // Content Fading Sync
-  // Content fades out very quickly as you start scrolling
-  const expandedOpacity = useTransform(springScroll, [0, 50], [1, 0]);
-  const expandedY = useTransform(springScroll, [0, 50], [0, -20]);
-  const expandedPointer = useTransform(springScroll, (v) => v > 40 ? 'none' : 'auto');
-
-  // Compact content enters later as things settle
-  const compactOpacity = useTransform(springScroll, [80, 130], [0, 1]);
-  const compactY = useTransform(springScroll, [80, 130], [10, 0]);
-  const compactPointer = useTransform(springScroll, (v) => v < 70 ? 'none' : 'auto');
+  const isLight = theme === 'light';
+  const textPrimary = isLight ? 'text-slate-900' : 'text-white';
+  const textSecondary = isLight ? 'text-slate-600' : 'text-white/70';
+  const textMuted = isLight ? 'text-slate-500' : 'text-white/50';
 
   return (
-    <motion.div
-      className="sticky top-0 z-40 w-full"
-      style={{
-        height,
-        marginTop: 0,
-        marginBottom: marginBot
-      }}
-    >
-      <motion.div
-        className="relative w-full h-full overflow-hidden bg-slate-900 border-b border-white/5 shadow-2xl"
-        style={{
-          borderBottomLeftRadius: borderRadius,
-          borderBottomRightRadius: borderRadius,
-          backdropFilter: useTransform(backdropBlur, v => `blur(${v})`),
-        }}
-      >
-        {/* Background Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 z-0" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 z-0 mix-blend-overlay"></div>
+    <header className={`sticky top-0 z-40 w-full ${getGlassStyles()}`}>
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-[76px] gap-4">
 
-        {/* --- EXPANDED CONTENT --- */}
-        <motion.div
-          className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end z-10"
-          style={{
-            opacity: expandedOpacity,
-            y: expandedY,
-            pointerEvents: expandedPointer
-          }}
-        >
-          <div className="flex flex-col md:flex-row items-end justify-between gap-6 pb-2">
-            <div className="flex-1 min-w-0">
-              {/* Team & Status Chips */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center gap-2 px-3 py-1 bg-white/10 border border-white/10 rounded-full backdrop-blur-md">
-                  <FiUsers className="w-3.5 h-3.5 text-indigo-300" />
-                  <span className="text-xs font-bold tracking-wide uppercase text-indigo-100">{teamName || 'No Team'}</span>
-                </div>
-
-                <div className="flex items-center gap-4 text-xs font-semibold text-slate-300">
-                  <button
-                    onClick={() => onOpenUserList('available')}
-                    className="group flex items-center gap-2 hover:text-emerald-300 transition-colors"
-                  >
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    {availableMembers.length} Online
-                  </button>
-                  <div className="w-[1px] h-3 bg-white/20"></div>
-                  <button
-                    onClick={() => onOpenUserList('onLeave')}
-                    className="flex items-center gap-2 hover:text-amber-300 transition-colors"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-amber-500/80 border border-amber-500/50" />
-                    {onLeaveMembers.length} Away
-                  </button>
-                </div>
-              </div>
-
-              {/* Greeting */}
-              <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
-                Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-white to-purple-200">{userName}</span>
-              </h1>
-
-              {/* Quote Component */}
-              <div className="max-w-2xl opacity-90">
-                <AnimatedQuote quote={quote} />
-              </div>
-            </div>
-
-            {/* Right Side: Subscription & Clock & Action */}
-            <div className="flex flex-col items-end gap-5 mb-1">
-              {/* Subscription badge (Expanded Right) */}
-              <button
-                onClick={() => navigate('/subscription')}
-                className="group flex flex-col items-end gap-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all backdrop-blur-xl"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="text-right">
-                    <span className="block text-[10px] font-black uppercase tracking-[0.15em] text-white/60">Membership</span>
-                    <span className="text-sm font-extrabold text-white tracking-wide">
-                      {subscription?.plan?.name || 'Free'} Plan
-                    </span>
-                  </div>
-                  <div className={`p-2 rounded-xl ${subscription?.plan?.name === 'Pro' ? 'bg-amber-400/20 text-amber-400' : 'bg-white/10 text-slate-400'}`}>
-                    <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Pro' ? 'fill-current animate-pulse' : ''}`} />
-                  </div>
-                </div>
-
-                {/* Space Usage Bar */}
-                <div className="flex flex-col items-end gap-1 w-full mt-1">
-                  <div className="flex items-center justify-between w-full gap-8">
-                    <span className="text-[9px] font-bold text-indigo-300/80 uppercase">Occupancy</span>
-                    <span className="text-[9px] font-black text-white">{availableMembers.length + onLeaveMembers.length}/{subscription?.plan?.max_users || 5}</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(((availableMembers.length + onLeaveMembers.length) / (subscription?.plan?.max_users || 5)) * 100, 100)}%` }}
-                      className={`h-full bg-gradient-to-r ${subscription?.plan?.name === 'Pro' ? 'from-amber-400 to-orange-500' : 'from-indigo-400 to-purple-500'}`}
-                    />
-                  </div>
-                </div>
-              </button>
-
-              <LiveClock />
-
-              {!hasSubmittedToday && (
-                <button
-                  onClick={onCreateReport}
-                  className="group relative flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold shadow-lg hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all border border-white/20 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-white/10 skew-x-12 translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700"></div>
-                  <div className="relative flex items-center gap-1.5">
-                    <div className="relative">
-                      <FiEdit3 className="w-4 h-4" />
-                      <motion.div
-                        className="absolute -top-1.5 -right-1.5"
-                        animate={{ scale: [1, 1.2, 1], opacity: [1, 0.4, 1] }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                      >
-                        <FiAlertCircle className="w-3 h-3 text-white fill-orange-600 shadow-sm" />
-                      </motion.div>
-                    </div>
-                    <span className="text-xs uppercase tracking-widest font-black">Report</span>
-                  </div>
-                </button>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-
-        {/* --- COMPACT CONTENT (Sticky) --- */}
-        <motion.div
-          className="absolute inset-0 flex items-center justify-between px-6 sm:px-8 z-20"
-          style={{
-            opacity: compactOpacity,
-            y: compactY,
-            pointerEvents: compactPointer
-          }}
-        >
-          {/* Left: Identity */}
-          <div className="flex items-center gap-4">
+          {/* Left Section: User Identity */}
+          <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+            {/* Avatar with Status */}
             <div className="relative">
               {userAvatarUrl ? (
-                <img src={userAvatarUrl} alt={userName} className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/10 shadow-lg" />
+                <img
+                  src={userAvatarUrl}
+                  alt={userName}
+                  className={`w-11 h-11 rounded-xl object-cover ring-2 shadow-lg ${isLight ? 'ring-slate-200' : 'ring-white/20'
+                    }`}
+                />
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {userName.charAt(0)}
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${getAccentColor()} flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                  {userName?.charAt(0) || 'U'}
                 </div>
               )}
-              <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-slate-900 shadow-sm ${isUserOnLeave ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              {/* Status Indicator */}
+              <div
+                className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 shadow-sm ${isLight ? 'border-white' : 'border-slate-900'
+                  } ${isUserOnLeave ? 'bg-amber-500' : 'bg-emerald-500'}`}
+              />
             </div>
 
-            <div className="flex flex-col">
-              <div className="flex items-center gap-3">
-                <h3 className="text-lg font-black text-white tracking-tight">{userName}</h3>
-
-                {/* Compact Tags */}
-                <div className="flex items-center gap-1.5">
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${isUserOnLeave ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
-                    {isUserOnLeave ? 'Away' : 'Online'}
-                  </span>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => navigate('/subscription')}
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/20 backdrop-blur-md ${subscription?.plan?.name === 'Pro' ? 'bg-amber-400 text-slate-900' : 'bg-white/10 text-white'}`}
-                  >
-                    <FiStar className={`w-2.5 h-2.5 ${subscription?.plan?.name === 'Pro' ? 'fill-current' : ''}`} />
-                    {subscription?.plan?.name || 'Free'}
-                  </motion.button>
-                </div>
+            {/* Name & Team */}
+            <div className="hidden sm:flex flex-col min-w-0">
+              <h2 className={`text-base font-bold truncate ${textPrimary}`}>
+                {userName}
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-medium truncate ${textSecondary}`}>
+                  {teamName || 'No Team'}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isUserOnLeave
+                  ? 'bg-amber-500/20 text-amber-500'
+                  : 'bg-emerald-500/20 text-emerald-500'
+                  }`}>
+                  {isUserOnLeave ? 'Away' : 'Active'}
+                </span>
               </div>
-              <span className="text-[10px] text-indigo-300/80 font-bold uppercase tracking-tight tabular-nums">
-                {format(currentTime, 'h:mm a')} • {format(currentTime, 'EEEE, MMM d')}
-              </span>
             </div>
           </div>
 
-          {/* Right: Actions (Compact) */}
-          <div className="flex items-center gap-4">
-            {!hasSubmittedToday && (
-              <button
-                onClick={onCreateReport}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-[11px] font-black uppercase tracking-widest transition-all"
-              >
-                <FiEdit3 className="w-4 h-4" />
-                <span>Report</span>
-              </button>
-            )}
+          {/* Center Section: Team Stats (Desktop) */}
+          <div className="hidden lg:flex items-center gap-4">
+            <button
+              onClick={() => onOpenUserList?.('available')}
+              className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isLight
+                ? 'hover:bg-emerald-50 text-slate-600 hover:text-emerald-600'
+                : 'hover:bg-emerald-500/10 text-white/70 hover:text-emerald-400'
+                }`}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-sm font-semibold">{availableMembers.length}</span>
+              <span className="text-xs font-medium">Online</span>
+            </button>
+
+            <div className={`w-px h-5 ${isLight ? 'bg-slate-200' : 'bg-white/10'}`} />
 
             <button
-              onClick={() => onOpenUserList('available')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-xs"
+              onClick={() => onOpenUserList?.('onLeave')}
+              className={`group flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isLight
+                ? 'hover:bg-amber-50 text-slate-600 hover:text-amber-600'
+                : 'hover:bg-amber-500/10 text-white/70 hover:text-amber-400'
+                }`}
             >
-              <FiUsers className="w-3.5 h-3.5" />
-              <span>{availableMembers.length}</span>
+              <div className="w-2 h-2 rounded-full bg-amber-500" />
+              <span className="text-sm font-semibold">{onLeaveMembers.length}</span>
+              <span className="text-xs font-medium">Away</span>
             </button>
           </div>
-        </motion.div>
 
-      </motion.div>
-    </motion.div>
+          {/* Right Section: Clock, Subscription & Actions */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+
+            {/* Subscription Badge */}
+            <button
+              onClick={() => navigate?.('/subscription')}
+              className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all ${isLight
+                ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
+                : 'bg-white/5 hover:bg-white/10 border border-white/10'
+                }`}
+            >
+              <FiStar className={`w-4 h-4 ${subscription?.plan?.name === 'Pro'
+                ? 'text-amber-500 fill-amber-500'
+                : textMuted
+                }`} />
+              <span className={`text-xs font-bold ${textSecondary}`}>
+                {subscription?.plan?.name || 'Free'}
+              </span>
+            </button>
+
+            {/* Live Clock */}
+            <div className="hidden sm:block">
+              <LiveClock theme={theme} />
+            </div>
+
+            {/* Create Report Button */}
+            {!hasSubmittedToday && (
+              <motion.button
+                onClick={onCreateReport}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm shadow-lg transition-all ${themeMode === 'ocean'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-cyan-500/25'
+                  : themeMode === 'forest'
+                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:shadow-emerald-500/25'
+                    : themeMode === 'space'
+                      ? 'bg-gradient-to-r from-purple-500 to-fuchsia-600 hover:shadow-purple-500/25'
+                      : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-amber-500/25'
+                  } text-white`}
+              >
+                <FiEdit3 className="w-4 h-4" />
+                <span className="hidden sm:inline">Report</span>
+              </motion.button>
+            )}
+
+            {/* Mobile: Team count button */}
+            <button
+              onClick={() => onOpenUserList?.('available')}
+              className={`lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all ${isLight
+                ? 'bg-slate-100 text-slate-600'
+                : 'bg-white/10 text-white/70'
+                }`}
+            >
+              <FiUsers className="w-4 h-4" />
+              <span className="text-xs font-bold">{availableMembers.length + onLeaveMembers.length}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
   );
 };
 
+
+
+
+
+
+
+
+
 const HeroActionTile = ({ action, index }) => {
+  const { isAnimatedTheme } = useTheme();
+
   // Map theme colors to specific Tailwind classes - using gradient colors for text
   const themeStyles = {
     violet: {
       hoverBg: 'hover:bg-violet-50',
-      hoverBorder: 'hover:border-violet-200',
-      titleColor: 'group-hover:text-violet-600',
-      descColor: 'group-hover:text-violet-500',
-      arrowBg: 'group-hover:bg-violet-100',
-      arrowColor: 'group-hover:text-violet-600'
+      hoverBorder: 'hover:border-violet-200 dark:hover:border-violet-400',
+      titleColor: 'group-hover:!text-violet-600 dark:group-hover:!text-violet-400',
+      descColor: 'group-hover:!text-violet-500 dark:group-hover:!text-violet-300',
+      arrowBg: 'group-hover:bg-violet-100 dark:group-hover:bg-violet-900',
+      arrowColor: 'group-hover:text-violet-600 dark:group-hover:text-violet-300',
+      premiumBorder: 'border-violet-500/20'
     },
     amber: {
       hoverBg: 'hover:bg-amber-50',
-      hoverBorder: 'hover:border-amber-200',
-      titleColor: 'group-hover:text-amber-600',
-      descColor: 'group-hover:text-amber-500',
-      arrowBg: 'group-hover:bg-amber-100',
-      arrowColor: 'group-hover:text-amber-600'
+      hoverBorder: 'hover:border-amber-200 dark:hover:border-amber-400',
+      titleColor: 'group-hover:!text-amber-600 dark:group-hover:!text-amber-400',
+      descColor: 'group-hover:!text-amber-500 dark:group-hover:!text-amber-300',
+      arrowBg: 'group-hover:bg-amber-100 dark:group-hover:bg-amber-900',
+      arrowColor: 'group-hover:text-amber-600 dark:group-hover:text-amber-300',
+      premiumBorder: 'border-amber-500/20'
     },
     blue: {
       hoverBg: 'hover:bg-blue-50',
-      hoverBorder: 'hover:border-blue-200',
-      titleColor: 'group-hover:text-blue-600',
-      descColor: 'group-hover:text-blue-500',
-      arrowBg: 'group-hover:bg-blue-100',
-      arrowColor: 'group-hover:text-blue-600'
+      hoverBorder: 'hover:border-blue-200 dark:hover:border-blue-400',
+      titleColor: 'group-hover:!text-blue-600 dark:group-hover:!text-blue-400',
+      descColor: 'group-hover:!text-blue-500 dark:group-hover:!text-blue-300',
+      arrowBg: 'group-hover:bg-blue-100 dark:group-hover:bg-blue-900',
+      arrowColor: 'group-hover:text-blue-600 dark:group-hover:text-blue-300',
+      premiumBorder: 'border-blue-500/20'
     },
     emerald: {
       hoverBg: 'hover:bg-emerald-50',
-      hoverBorder: 'hover:border-emerald-200',
-      titleColor: 'group-hover:text-emerald-600',
-      descColor: 'group-hover:text-emerald-500',
-      arrowBg: 'group-hover:bg-emerald-100',
-      arrowColor: 'group-hover:text-emerald-600'
+      hoverBorder: 'hover:border-emerald-200 dark:hover:border-emerald-400',
+      titleColor: 'group-hover:!text-emerald-600 dark:group-hover:!text-emerald-400',
+      descColor: 'group-hover:!text-emerald-500 dark:group-hover:!text-emerald-300',
+      arrowBg: 'group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900',
+      arrowColor: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-300',
+      premiumBorder: 'border-emerald-500/20'
     },
     cyan: {
       hoverBg: 'hover:bg-cyan-50',
-      hoverBorder: 'hover:border-cyan-200',
-      titleColor: 'group-hover:text-cyan-600',
-      descColor: 'group-hover:text-cyan-500',
-      arrowBg: 'group-hover:bg-cyan-100',
-      arrowColor: 'group-hover:text-cyan-600'
+      hoverBorder: 'hover:border-cyan-200 dark:hover:border-cyan-400',
+      titleColor: 'group-hover:!text-cyan-600 dark:group-hover:!text-cyan-400',
+      descColor: 'group-hover:!text-cyan-500 dark:group-hover:!text-cyan-300',
+      arrowBg: 'group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900',
+      arrowColor: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-300',
+      premiumBorder: 'border-cyan-500/20'
     },
     pink: {
       hoverBg: 'hover:bg-pink-50',
-      hoverBorder: 'hover:border-pink-200',
-      titleColor: 'group-hover:text-pink-600',
-      descColor: 'group-hover:text-pink-500',
-      arrowBg: 'group-hover:bg-pink-100',
-      arrowColor: 'group-hover:text-pink-600'
+      hoverBorder: 'hover:border-pink-200 dark:hover:border-pink-400',
+      titleColor: 'group-hover:!text-pink-600 dark:group-hover:!text-pink-400',
+      descColor: 'group-hover:!text-pink-500 dark:group-hover:!text-pink-300',
+      arrowBg: 'group-hover:bg-pink-100 dark:group-hover:bg-pink-900',
+      arrowColor: 'group-hover:text-pink-600 dark:group-hover:text-pink-300',
+      premiumBorder: 'border-pink-500/20'
     },
     red: {
       hoverBg: 'hover:bg-red-50',
-      hoverBorder: 'hover:border-red-200',
-      titleColor: 'group-hover:text-red-600',
-      descColor: 'group-hover:text-red-500',
-      arrowBg: 'group-hover:bg-red-100',
-      arrowColor: 'group-hover:text-red-600'
+      hoverBorder: 'hover:border-red-200 dark:hover:border-red-400',
+      titleColor: 'group-hover:!text-red-600 dark:group-hover:!text-red-400',
+      descColor: 'group-hover:!text-red-500 dark:group-hover:!text-red-300',
+      arrowBg: 'group-hover:bg-red-100 dark:group-hover:bg-red-900',
+      arrowColor: 'group-hover:text-red-600 dark:group-hover:text-red-300',
+      premiumBorder: 'border-red-500/20'
     }
   };
 
@@ -1171,7 +1038,7 @@ const HeroActionTile = ({ action, index }) => {
       whileHover="hover"
       whileTap={{ scale: 0.98 }}
       onClick={action.onClick}
-      className={`group relative overflow-hidden p-6 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm transition-all duration-300 text-left h-full flex flex-col justify-between ${style.hoverBg} dark:hover:bg-slate-700 ${style.hoverBorder} dark:hover:border-slate-600`}
+      className={`group relative overflow-hidden p-6 rounded-3xl bg-white dark:bg-slate-800 border-2 ${isAnimatedTheme ? style.premiumBorder : 'border-transparent'} shadow-sm transition-all duration-300 text-left h-full flex flex-col justify-between ${style.hoverBg} dark:hover:bg-slate-700 ${style.hoverBorder}`}
     >
       <div className="flex justify-between items-start mb-4">
         {/* Animated Icon Container */}
@@ -1219,6 +1086,8 @@ const HeroActionTile = ({ action, index }) => {
   );
 };
 const QuickActionsHero = ({ navigate, userRole }) => {
+  const { isAnimatedTheme } = useTheme();
+
   const actions = [
     {
       label: 'Team Chat',
@@ -1285,7 +1154,7 @@ const QuickActionsHero = ({ navigate, userRole }) => {
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-6 px-2">
         <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Quick Actions</h2>
+        <h2 className={`text-xl font-bold ${isAnimatedTheme ? '!text-white drop-shadow-md' : 'text-gray-900 dark:text-white'}`}>Quick Actions</h2>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-5">
         {actions.map((action, index) => (
@@ -1301,6 +1170,7 @@ const QuickActionsHero = ({ navigate, userRole }) => {
 
 export default function Dashboard({ sidebarOpen, sidebarMode }) {
   const navigate = useNavigate();
+  const { theme, themeMode, isAnimatedTheme } = useTheme();
   const { currentCompany, loading: companyLoading } = useCompany();
 
   // State
@@ -1684,6 +1554,8 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         onCreateReport={() => navigate('/report')}
         hasSubmittedToday={hasSubmittedToday}
         subscription={subscription}
+        theme={theme}
+        themeMode={themeMode}
       />
 
 
@@ -1695,7 +1567,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         {/* Dashboard Section Header */}
         <div className="flex items-center gap-3 mb-6 px-2">
           <div className="w-1.5 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+          <h2 className={`text-xl font-bold ${isAnimatedTheme ? '!text-white drop-shadow-md' : 'text-gray-900 dark:text-white'}`}>Dashboard</h2>
         </div>
 
         {/* Main Content Grid - 4 Equal Columns */}

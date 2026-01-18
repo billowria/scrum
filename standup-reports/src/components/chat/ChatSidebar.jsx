@@ -25,6 +25,7 @@ import {
 } from 'react-icons/fi';
 import ConversationCard from './ConversationCard';
 import UserPresence from './UserPresence';
+import { useTheme } from '../../context/ThemeContext';
 
 const ChatSidebar = ({
   conversations = [],
@@ -42,6 +43,9 @@ const ChatSidebar = ({
   className = "",
   mobileLayout = false
 }) => {
+  const { themeMode } = useTheme();
+  const isPremiumTheme = ['space', 'ocean', 'forest'].includes(themeMode);
+
   const [showUserList, setShowUserList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
@@ -254,10 +258,10 @@ const ChatSidebar = ({
         animate={{ width: 64 }}
         exit={{ width: 320 }}
         transition={{ duration: 0.3 }}
-        className="bg-white border-r border-gray-200 h-full flex flex-col"
+        className={`h-full flex flex-col ${isPremiumTheme ? 'bg-transparent border-r border-white/10' : 'bg-white border-r border-gray-200'}`}
       >
         {/* Header */}
-        <div className="p-3 border-b border-gray-200">
+        <div className={`p-3 ${isPremiumTheme ? 'border-b border-white/10' : 'border-b border-gray-200'}`}>
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -293,7 +297,7 @@ const ChatSidebar = ({
         </div>
 
         {/* Online status */}
-        <div className="p-3 border-t border-gray-200">
+        <div className={`p-3 ${isPremiumTheme ? 'border-t border-white/10' : 'border-t border-gray-200'}`}>
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -314,7 +318,7 @@ const ChatSidebar = ({
       animate={mobileLayout ? { opacity: 1 } : { width: 320 }}
       exit={mobileLayout ? { opacity: 0 } : { width: 64 }}
       transition={{ duration: 0.3 }}
-      className={`h-full flex flex-col ${className} ${mobileLayout ? 'bg-white' : ''}`}
+      className={`h-full flex flex-col ${className} ${mobileLayout ? (isPremiumTheme ? 'bg-transparent' : 'bg-white') : ''}`}
     >
       {/* Header */}
       <div className={`${mobileLayout ? 'p-4 pb-0' : 'p-4 pt-6'}`}>
@@ -364,7 +368,10 @@ const ChatSidebar = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 hover:bg-white/80 border border-gray-100 hover:border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all shadow-sm"
+            className={`w-full pl-10 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm ${isPremiumTheme
+              ? 'bg-white/10 hover:bg-white/15 border border-white/10 hover:border-white/20 text-white placeholder-white/50 focus:bg-white/15'
+              : 'bg-gray-50/50 hover:bg-white/80 border border-gray-100 hover:border-indigo-200 focus:bg-white'
+              }`}
             autoComplete="off"
             data-form-type="other"
           />
@@ -452,7 +459,7 @@ const ChatSidebar = ({
 
       {/* Quick actions */}
       {!mobileLayout && (
-        <div className="px-4 py-3 border-b border-gray-200">
+        <div className={`px-4 py-3 ${isPremiumTheme ? 'border-b border-white/10' : 'border-b border-gray-200'}`}>
           <div className="flex gap-2">
             <motion.button
               whileHover={{ scale: 1.02, y: -1 }}

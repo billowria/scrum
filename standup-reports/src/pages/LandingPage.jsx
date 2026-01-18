@@ -1575,7 +1575,7 @@ export default function LandingPage() {
                             Testimonials
                         </span>
                         <h2 className="text-3xl md:text-5xl font-black mb-4 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                            Voices from the Cosmos
+                            What our users say
                         </h2>
                         <p className="text-lg text-slate-400 max-w-xl mx-auto">
                             Trusted by thousands of high-performing teams worldwide.

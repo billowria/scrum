@@ -795,8 +795,11 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 
   // Initial fetch and real-time subscription using debounced values
   useEffect(() => {
-    // Only fetch tasks if we have user data
-    if (currentUser && userRole) {
+    // Only fetch tasks if we have user data AND a valid project selected
+    // This prevents the initial "all tasks" fetch before project is set
+    const hasValidProject = debouncedSelectedProjectId && debouncedSelectedProjectId !== 'all';
+
+    if (currentUser && userRole && hasValidProject) {
       fetchTasks();
     }
 
@@ -811,8 +814,9 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
         },
         (payload) => {
           console.log('Change received!', payload);
-          // Only refetch if we have user data
-          if (currentUser && userRole) {
+          // Only refetch if we have user data and valid project
+          const hasProject = debouncedSelectedProjectId && debouncedSelectedProjectId !== 'all';
+          if (currentUser && userRole && hasProject) {
             // Debounce real-time updates too
             setTimeout(() => {
               fetchTasks();
@@ -1425,15 +1429,8 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div
-        className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth"
-        style={{
-          marginLeft: headerStyles.left,
-          width: headerStyles.width,
-          transition: 'margin-left 300ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1)'
-        }}
-      >
-        <div className={`w-full space-y-4 px-4 transition-all duration-500 ease-out ${showHeader ? 'pt-24' : 'pt-2'}`}>
+      <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth">
+        <div className={`w-full space-y-6 px-2 transition-all duration-500 ease-out ${showHeader ? 'pt-32' : 'pt-4'}`}>
           {/* Show Header Button - Icon Only, Clean Design */}
           <AnimatePresence>
             {!showHeader && (

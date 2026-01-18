@@ -44,8 +44,8 @@ const NotesSidebar = ({ selectedFolder, setSelectedFolder, isOpen, setIsOpen, th
                             key={folder.id}
                             onClick={() => setSelectedFolder(folder.id)}
                             className={`w-full flex items-center ${isOpen ? 'px-3' : 'justify-center'} py-2.5 rounded-xl transition-all duration-200 group relative ${isActive
-                                    ? `bg-${accentColor}-500/10 text-${accentColor}-${themeMode === 'light' ? '600' : '400'}`
-                                    : `hover:${theme.card} ${themeMode === 'light' ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-slate-200'}`
+                                ? `bg-${accentColor}-500/10 text-${accentColor}-${themeMode === 'light' ? '600' : '400'}`
+                                : `hover:${theme.card} ${themeMode === 'light' ? 'text-slate-600 hover:text-slate-900' : 'text-slate-400 hover:text-slate-200'}`
                                 }`}
                             title={!isOpen ? folder.label : ''}
                         >
