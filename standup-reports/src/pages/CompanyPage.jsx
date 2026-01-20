@@ -121,7 +121,8 @@ const Leadership = () => {
             avatar: utkarshAvatar,
             bio: "The creative force behind the SquadSync experience. Utkarsh bridges the gap between complex backend protocols and intuitive, beautiful user interfaces.",
             linkedin: "#",
-            twitter: "#"
+            twitter: "#",
+            portfolio: "https://portfolio-utkarsh-bansal.vercel.app/"
         }
 
     ];
@@ -136,7 +137,11 @@ const Leadership = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     {leaders.map((leader, i) => (
-                        <div key={i} className="group p-12 border border-white/5 rounded-[3rem] bg-white/[0.01] hover:bg-white/[0.04] transition-all duration-500 flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
+                        <div
+                            key={i}
+                            onClick={() => leader.portfolio && window.open(leader.portfolio, '_blank')}
+                            className={`group p-12 border border-white/5 rounded-[3rem] bg-white/[0.01] hover:bg-white/[0.04] transition-all duration-500 flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left ${leader.portfolio ? 'cursor-pointer hover:border-indigo-500/30 shadow-2xl shadow-transparent hover:shadow-indigo-500/10' : ''}`}
+                        >
                             <div className="relative flex-shrink-0">
                                 <div className="w-32 h-32 rounded-3xl overflow-hidden border-2 border-indigo-500/20 group-hover:border-indigo-500/50 transition-colors p-1">
                                     <img
@@ -152,16 +157,27 @@ const Leadership = () => {
                             </div>
 
                             <div className="flex-1">
-                                <h3 className="text-4xl font-black mb-2 uppercase tracking-tight">{leader.name}</h3>
+                                <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
+                                    <h3 className="text-4xl font-black uppercase tracking-tight">{leader.name}</h3>
+                                    {leader.portfolio && <FiExternalLink className="text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                </div>
                                 <p className="font-mono text-sm text-indigo-500 mb-8 font-bold tracking-widest">{leader.role}</p>
                                 <p className="text-slate-400 text-lg leading-relaxed mb-10 font-light">
                                     {leader.bio}
                                 </p>
                                 <div className="flex justify-center md:justify-start gap-4">
-                                    <a href={leader.linkedin} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                                    <a
+                                        href={leader.linkedin}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"
+                                    >
                                         <FiLinkedin />
                                     </a>
-                                    <a href={leader.twitter} className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                                    <a
+                                        href={leader.twitter}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"
+                                    >
                                         <FiTwitter />
                                     </a>
                                 </div>

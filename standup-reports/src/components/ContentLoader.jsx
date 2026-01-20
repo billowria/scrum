@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FiBell, FiMessageSquare, FiCalendar, FiClock, FiSearch, FiGrid, FiList } from 'react-icons/fi';
+import ThemeLoader from './shared/ThemeLoader';
 
 const ContentLoader = ({ type = "projects" }) => {
   const getConfig = () => {
@@ -159,7 +160,7 @@ const ContentLoader = ({ type = "projects" }) => {
                 </p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-xl">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="text-center">
@@ -180,14 +181,14 @@ const ContentLoader = ({ type = "projects" }) => {
             <div className="relative w-full sm:w-96">
               <div className="w-full h-12 bg-gray-100 rounded-xl animate-pulse" />
             </div>
-            
+
             <div className="flex items-center gap-2">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="px-4 py-2.5 bg-gray-100 rounded-xl animate-pulse" />
               ))}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="px-4 py-2.5 bg-gray-100 rounded-xl animate-pulse" />
             <div className="px-4 py-2.5 bg-gray-100 rounded-xl animate-pulse" />
@@ -213,7 +214,7 @@ const ContentLoader = ({ type = "projects" }) => {
             <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center">
               <div className="w-6 h-6 bg-blue-200 rounded-full" />
             </div>
-            
+
             {/* Content placeholder */}
             <div className="flex-1">
               <div className="flex items-start justify-between mb-2">
@@ -224,7 +225,7 @@ const ContentLoader = ({ type = "projects" }) => {
                 </div>
                 <div className="w-6 h-6 bg-gray-200 rounded-full ml-4" />
               </div>
-              
+
               <div className="flex items-center gap-4 mt-3">
                 <div className="h-3 bg-gray-100 rounded-full w-24" />
                 <div className="h-3 bg-gray-100 rounded-full w-20" />
@@ -259,13 +260,13 @@ const ContentLoader = ({ type = "projects" }) => {
               </div>
               <div className="w-16 h-6 bg-gray-200 rounded-full animate-pulse" />
             </div>
-            
+
             <div className="space-y-2 mb-4">
               <div className="h-3 bg-gray-100 rounded-full animate-pulse" />
               <div className="h-3 bg-gray-100 rounded-full animate-pulse w-5/6" />
               <div className="h-3 bg-gray-100 rounded-full animate-pulse w-3/4" />
             </div>
-            
+
             <div className="flex justify-between items-center">
               <div className="h-3 bg-gray-100 rounded-full animate-pulse w-1/3" />
               <div className="w-20 h-8 bg-gray-200 rounded-lg animate-pulse" />
@@ -282,8 +283,13 @@ const ContentLoader = ({ type = "projects" }) => {
       {config.variant === "notifications" ? <NotificationHeaderLoader /> : <ProjectHeaderLoader />}
 
       {/* Content Area with Animated Skeleton */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="p-6">
+      <div className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-slate-700/50 overflow-hidden relative">
+        {/* Themed Loader Overlay */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[2px]">
+          <ThemeLoader size="xl" />
+          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 animate-pulse">Loading...</p>
+        </div>
+        <div className="p-6 opacity-50">
           {config.variant === "notifications" ? <NotificationLoader /> : <ProjectLoader />}
         </div>
       </div>

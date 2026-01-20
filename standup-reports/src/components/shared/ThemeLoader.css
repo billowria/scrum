@@ -1,0 +1,625 @@
+/* ===============================================
+   THEME LOADER - CSS Animations & Styles
+   =============================================== */
+
+/* --- Base Container --- */
+.theme-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Size Variants */
+.theme-loader--sm {
+    width: 24px;
+    height: 24px;
+}
+
+.theme-loader--md {
+    width: 48px;
+    height: 48px;
+}
+
+.theme-loader--lg {
+    width: 80px;
+    height: 80px;
+}
+
+.theme-loader--xl {
+    width: 120px;
+    height: 120px;
+}
+
+/* ===============================================
+   DEFAULT LOADER - Pulse Ring
+   =============================================== */
+.loader-default {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.loader-default .ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #6366f1;
+    animation: default-spin 1s linear infinite;
+}
+
+.loader-default .ring:nth-child(2) {
+    border-top-color: #8b5cf6;
+    animation-duration: 1.5s;
+    animation-direction: reverse;
+    opacity: 0.7;
+}
+
+.loader-default .ring:nth-child(3) {
+    border-top-color: #a78bfa;
+    animation-duration: 2s;
+    opacity: 0.4;
+}
+
+@keyframes default-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===============================================
+   SPACE THEME - Galaxy Spiral with Shooting Stars
+   =============================================== */
+.loader-space {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+}
+
+/* Central glowing star core */
+.loader-space .core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20%;
+    height: 20%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #fff 0%, #c4b5fd 40%, #a855f7 80%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 10px #fff,
+        0 0 20px #a855f7,
+        0 0 40px rgba(168, 85, 247, 0.6),
+        0 0 60px rgba(139, 92, 246, 0.4);
+    animation: space-core-pulse 2s ease-in-out infinite;
+}
+
+/* Spiral arms (orbits) */
+.loader-space .orbit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-top-color: rgba(168, 85, 247, 0.7);
+    border-right-color: rgba(139, 92, 246, 0.4);
+    border-radius: 50%;
+    animation: space-spiral 2s linear infinite;
+}
+
+.loader-space .orbit:nth-child(2) {
+    width: 75%;
+    height: 75%;
+    top: 12.5%;
+    left: 12.5%;
+    border-top-color: rgba(196, 181, 253, 0.6);
+    border-right-color: rgba(167, 139, 250, 0.3);
+    animation-duration: 1.6s;
+    animation-direction: reverse;
+}
+
+.loader-space .orbit:nth-child(3) {
+    width: 50%;
+    height: 50%;
+    top: 25%;
+    left: 25%;
+    border-top-color: rgba(221, 214, 254, 0.5);
+    animation-duration: 1.2s;
+}
+
+/* Shooting stars */
+.loader-space .star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #fff, 0 0 10px #a855f7;
+    animation: space-shoot 1.5s ease-out infinite;
+}
+
+.loader-space .star:nth-child(4) {
+    top: 10%;
+    left: 80%;
+    animation-delay: 0s;
+}
+
+.loader-space .star:nth-child(5) {
+    top: 70%;
+    left: 15%;
+    animation-delay: 0.5s;
+}
+
+.loader-space .star:nth-child(6) {
+    top: 30%;
+    left: 5%;
+    animation-delay: 1s;
+}
+
+@keyframes space-spiral {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes space-core-pulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(0.9);
+        box-shadow: 0 0 10px #fff, 0 0 20px #a855f7, 0 0 40px rgba(168, 85, 247, 0.6);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 0 15px #fff, 0 0 30px #a855f7, 0 0 60px rgba(168, 85, 247, 0.8);
+    }
+}
+
+@keyframes space-shoot {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-30px, 30px) scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* ===============================================
+   OCEAN THEME - Rising Bubbles
+   =============================================== */
+.loader-ocean {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.loader-ocean .bubble {
+    position: absolute;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(6, 182, 212, 0.6));
+    border-radius: 50%;
+    animation: ocean-rise 1.8s ease-in-out infinite;
+}
+
+.loader-ocean .bubble:nth-child(1) {
+    width: 25%;
+    height: 25%;
+    left: 15%;
+    animation-delay: 0s;
+}
+
+.loader-ocean .bubble:nth-child(2) {
+    width: 20%;
+    height: 20%;
+    left: 45%;
+    animation-delay: 0.3s;
+}
+
+.loader-ocean .bubble:nth-child(3) {
+    width: 30%;
+    height: 30%;
+    left: 70%;
+    animation-delay: 0.6s;
+}
+
+.loader-ocean .bubble:nth-child(4) {
+    width: 15%;
+    height: 15%;
+    left: 30%;
+    animation-delay: 0.9s;
+}
+
+@keyframes ocean-rise {
+    0% {
+        transform: translateY(0) scale(0.3);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-120%) scale(1);
+        opacity: 0;
+    }
+}
+
+/* ===============================================
+   FOREST THEME - Enchanted Firefly Swarm
+   =============================================== */
+.loader-forest {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: visible;
+}
+
+/* Central leaf/nature element */
+.loader-forest .leaf {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30%;
+    height: 30%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at 40% 30%, #a3e635 0%, #65a30d 60%, #3f6212 100%);
+    border-radius: 50% 0 50% 0;
+    box-shadow:
+        0 0 10px rgba(163, 230, 53, 0.4),
+        inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+    animation: forest-leaf-pulse 3s ease-in-out infinite;
+}
+
+/* Fireflies with trails */
+.loader-forest .firefly {
+    position: absolute;
+    width: 6%;
+    height: 6%;
+    background: radial-gradient(circle, #fff 0%, #bef264 50%, #84cc16 100%);
+    border-radius: 50%;
+    box-shadow:
+        0 0 6px #bef264,
+        0 0 12px #84cc16,
+        0 0 20px rgba(132, 204, 22, 0.5);
+    animation: forest-fly 3s ease-in-out infinite;
+}
+
+.loader-forest .firefly::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(190, 242, 100, 0.6), transparent);
+    transform: translate(-50%, -50%) rotate(-45deg);
+    animation: forest-trail 0.3s ease-out infinite;
+}
+
+.loader-forest .firefly:nth-child(1) {
+    animation-name: forest-fly-1;
+    animation-delay: 0s;
+}
+
+.loader-forest .firefly:nth-child(2) {
+    animation-name: forest-fly-2;
+    animation-delay: 0.4s;
+}
+
+.loader-forest .firefly:nth-child(3) {
+    animation-name: forest-fly-3;
+    animation-delay: 0.8s;
+}
+
+.loader-forest .firefly:nth-child(4) {
+    animation-name: forest-fly-4;
+    animation-delay: 1.2s;
+}
+
+.loader-forest .firefly:nth-child(5) {
+    animation-name: forest-fly-5;
+    animation-delay: 1.6s;
+}
+
+.loader-forest .firefly:nth-child(6) {
+    animation-name: forest-fly-6;
+    animation-delay: 2s;
+}
+
+@keyframes forest-leaf-pulse {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
+    }
+}
+
+@keyframes forest-fly-1 {
+
+    0%,
+    100% {
+        top: 10%;
+        left: 20%;
+        opacity: 0.3;
+    }
+
+    25% {
+        top: 5%;
+        left: 40%;
+        opacity: 1;
+    }
+
+    50% {
+        top: 15%;
+        left: 60%;
+        opacity: 0.8;
+    }
+
+    75% {
+        top: 25%;
+        left: 35%;
+        opacity: 0.5;
+    }
+}
+
+@keyframes forest-fly-2 {
+
+    0%,
+    100% {
+        top: 70%;
+        left: 75%;
+        opacity: 0.4;
+    }
+
+    25% {
+        top: 60%;
+        left: 85%;
+        opacity: 1;
+    }
+
+    50% {
+        top: 55%;
+        left: 70%;
+        opacity: 0.7;
+    }
+
+    75% {
+        top: 65%;
+        left: 60%;
+        opacity: 0.5;
+    }
+}
+
+@keyframes forest-fly-3 {
+
+    0%,
+    100% {
+        top: 80%;
+        left: 25%;
+        opacity: 0.5;
+    }
+
+    25% {
+        top: 85%;
+        left: 15%;
+        opacity: 0.8;
+    }
+
+    50% {
+        top: 75%;
+        left: 30%;
+        opacity: 1;
+    }
+
+    75% {
+        top: 70%;
+        left: 10%;
+        opacity: 0.6;
+    }
+}
+
+@keyframes forest-fly-4 {
+
+    0%,
+    100% {
+        top: 30%;
+        left: 80%;
+        opacity: 0.3;
+    }
+
+    25% {
+        top: 20%;
+        left: 90%;
+        opacity: 1;
+    }
+
+    50% {
+        top: 35%;
+        left: 75%;
+        opacity: 0.6;
+    }
+
+    75% {
+        top: 40%;
+        left: 85%;
+        opacity: 0.4;
+    }
+}
+
+@keyframes forest-fly-5 {
+
+    0%,
+    100% {
+        top: 45%;
+        left: 5%;
+        opacity: 0.4;
+    }
+
+    25% {
+        top: 55%;
+        left: 15%;
+        opacity: 0.9;
+    }
+
+    50% {
+        top: 40%;
+        left: 20%;
+        opacity: 1;
+    }
+
+    75% {
+        top: 50%;
+        left: 8%;
+        opacity: 0.5;
+    }
+}
+
+@keyframes forest-fly-6 {
+
+    0%,
+    100% {
+        top: 15%;
+        left: 70%;
+        opacity: 0.5;
+    }
+
+    25% {
+        top: 25%;
+        left: 80%;
+        opacity: 1;
+    }
+
+    50% {
+        top: 10%;
+        left: 65%;
+        opacity: 0.7;
+    }
+
+    75% {
+        top: 20%;
+        left: 55%;
+        opacity: 0.4;
+    }
+}
+
+@keyframes forest-trail {
+    0% {
+        opacity: 0.8;
+        transform: translate(-50%, -50%) rotate(-45deg) scaleX(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-45deg) scaleX(0.5);
+    }
+}
+
+/* ===============================================
+   DIWALI THEME - Sparkle Burst
+   =============================================== */
+.loader-diwali {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.loader-diwali .core {
+    width: 20%;
+    height: 20%;
+    background: linear-gradient(135deg, #f97316, #fbbf24);
+    border-radius: 50%;
+    box-shadow: 0 0 15px #f97316, 0 0 30px rgba(251, 191, 36, 0.6);
+    animation: diwali-pulse 1.2s ease-in-out infinite;
+    z-index: 2;
+}
+
+.loader-diwali .rays {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation: diwali-spin 3s linear infinite;
+}
+
+.loader-diwali .ray {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    transform-origin: center center;
+}
+
+.loader-diwali .ray::before,
+.loader-diwali .ray::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    width: 4px;
+    height: 15%;
+    background: linear-gradient(to bottom, #fbbf24, transparent);
+    border-radius: 2px;
+}
+
+.loader-diwali .ray::before {
+    top: 0;
+}
+
+.loader-diwali .ray::after {
+    bottom: 0;
+    transform: rotate(180deg);
+}
+
+.loader-diwali .ray:nth-child(1) {
+    transform: rotate(0deg);
+}
+
+.loader-diwali .ray:nth-child(2) {
+    transform: rotate(45deg);
+}
+
+.loader-diwali .ray:nth-child(3) {
+    transform: rotate(90deg);
+}
+
+.loader-diwali .ray:nth-child(4) {
+    transform: rotate(135deg);
+}
+
+@keyframes diwali-pulse {
+
+    0%,
+    100% {
+        transform: scale(0.9);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+@keyframes diwali-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

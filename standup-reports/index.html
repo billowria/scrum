@@ -1,18 +1,68 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Sync - Where Teams Thrive Together. Modern team collaboration and standup reporting platform" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-    <title>Sync</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Sync - Where Teams Thrive Together. Modern team collaboration and standup reporting platform" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <title>Sync</title>
+</head>
+
+<body>
+  <div id="global-loader">
+    <div class="loader-content">
+      <div class="loader-pulse"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      try {
+        const loader = document.getElementById('global-loader');
+        const content = loader.querySelector('.loader-content');
+        const storedTheme = localStorage.getItem('themeMode');
+        const validThemes = ['space', 'ocean', 'forest', 'diwali'];
+
+        if (storedTheme && validThemes.includes(storedTheme)) {
+          loader.classList.add(storedTheme);
+          document.documentElement.classList.add(storedTheme);
+          document.documentElement.classList.add('dark');
+
+          // Inject specific loader HTML based on theme
+          if (storedTheme === 'space') {
+            content.innerHTML = '<div class="space-orbit"></div><div class="space-orbit"></div><div class="space-orbit"></div><div class="space-core"></div><div class="space-star"></div><div class="space-star"></div><div class="space-star"></div>';
+          } else if (storedTheme === 'ocean') {
+            content.innerHTML = '<div class="ocean-bubbles"><div class="ocean-bubble"></div><div class="ocean-bubble"></div><div class="ocean-bubble"></div></div>';
+          } else if (storedTheme === 'forest') {
+            content.innerHTML = '<div class="forest-fireflies"><div class="forest-leaf"></div><div class="forest-firefly"></div><div class="forest-firefly"></div><div class="forest-firefly"></div><div class="forest-firefly"></div><div class="forest-firefly"></div><div class="forest-firefly"></div></div>';
+          } else if (storedTheme === 'diwali') {
+            content.innerHTML = '<div class="diwali-sparkle"><div class="diwali-rays"><div class="diwali-ray"></div><div class="diwali-ray"></div><div class="diwali-ray"></div><div class="diwali-ray"></div></div><div class="diwali-core"></div></div>';
+          }
+        }
+
+        window.addEventListener('load', () => {
+          // Artificial delay to ensure loader is visible for a moment and resources are ready
+          setTimeout(() => {
+            loader.classList.add('loader-hidden');
+            setTimeout(() => {
+              if (loader.parentNode) loader.parentNode.removeChild(loader);
+            }, 500);
+          }, 800);
+        });
+      } catch (e) {
+        console.error('Loader error:', e);
+      }
+    })();
+  </script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

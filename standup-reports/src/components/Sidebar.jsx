@@ -477,7 +477,7 @@ export default function Sidebar({ mode, setMode, user }) {
 
 
 
-      <nav className="relative flex-1 px-4 py-2 space-y-3 overflow-y-auto custom-scrollbar">
+      <nav className="relative flex-1 px-4 py-2 space-y-3 overflow-y-auto no-scrollbar">
         {navLinks.map((link, index) => {
           if (link.isDivider) {
             return (
@@ -509,8 +509,12 @@ export default function Sidebar({ mode, setMode, user }) {
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
                   background: isActiveLink
-                    ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))' : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
-                    : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
+                    ? (isDark
+                      ? (isPremiumTheme ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))' : 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))')
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
+                    : (isDark
+                      ? (isPremiumTheme ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))' : 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))')
+                      : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
                 }}
               >
                 {/* Enhanced icon container */}
@@ -518,7 +522,7 @@ export default function Sidebar({ mode, setMode, user }) {
                   flex items-center justify-center ${open ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl transition-all duration-300
                   ${isActiveLink
                     ? `${link.colors.iconBg} ${link.colors.iconText} shadow-lg scale-110`
-                    : `bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:scale-105 group-hover:shadow-md`
+                    : `${isPremiumTheme ? 'bg-white/10 dark:bg-white/5 backdrop-blur-md' : 'bg-white/80 dark:bg-slate-800'} text-slate-600 dark:text-slate-400 group-hover:scale-105 group-hover:shadow-md`
                   }
                 `}>
                   <span className={`${open ? 'text-lg' : 'text-xl'} relative transition-all duration-300`}>
@@ -593,15 +597,19 @@ export default function Sidebar({ mode, setMode, user }) {
             onMouseLeave={() => setHoveredItem(null)}
             style={{
               background: location.pathname === '/chat'
-                ? (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))' : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
-                : (isDark ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
+                ? (isDark
+                  ? (isPremiumTheme ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))' : 'linear-gradient(135deg, rgba(30, 41, 59, 0.3), rgba(15, 23, 42, 0.4))')
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.2))')
+                : (isDark
+                  ? (isPremiumTheme ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02))' : 'linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(15, 23, 42, 0.2))')
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))')
             }}
           >
             <div className={`
               flex items-center justify-center ${open ? 'w-10 h-10' : 'w-12 h-12'} rounded-xl transition-all duration-300
               ${location.pathname === '/chat'
                 ? 'bg-cyan-500 text-white shadow-lg scale-110'
-                : 'bg-white/80 text-slate-600 group-hover:scale-105 group-hover:shadow-md'
+                : `${isPremiumTheme ? 'bg-white/10 dark:bg-white/5 backdrop-blur-md' : 'bg-white/80 dark:bg-slate-800'} text-slate-600 dark:text-slate-400 group-hover:scale-105 group-hover:shadow-md`
               }
             `}>
               <span className={`${open ? 'text-lg' : 'text-xl'} relative transition-all duration-300`}>

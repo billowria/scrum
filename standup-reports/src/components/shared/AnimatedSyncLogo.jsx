@@ -1,14 +1,72 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
- * AnimatedSyncLogo - "Static Grid Sync" Theme-Aware Edition
- * Features a high-intensity photon tracing a relay path.
- * Corner L-brackets are permanently visible and adapt to light/dark themes.
+ * AnimatedSyncLogo - Premium Theme-Aware Edition
+ * Features dynamic colors and animations based on active theme.
  */
-const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
+const AnimatedSyncLogo = ({ size = 'md', className = '', showText = true }) => {
     const [isHovered, setIsHovered] = useState(false);
     const controls = useAnimation();
+    const { themeMode, theme } = useTheme();
+
+    // Theme-specific color configurations
+    const themeConfigs = {
+        space: {
+            primary: '#a855f7',
+            secondary: '#c4b5fd',
+            accent: '#e879f9',
+            glow: 'rgba(168, 85, 247, 0.6)',
+            textGradient: 'linear-gradient(135deg, #a855f7, #e879f9, #c4b5fd)',
+            photonShadow: '0 0 6px #fff, 0 0 12px #a855f7, 0 0 20px rgba(168, 85, 247, 0.5)',
+            bracketBorder: 'border-purple-500 dark:border-purple-400',
+            dotColor: 'bg-purple-500',
+        },
+        ocean: {
+            primary: '#06b6d4',
+            secondary: '#67e8f9',
+            accent: '#22d3ee',
+            glow: 'rgba(6, 182, 212, 0.6)',
+            textGradient: 'linear-gradient(135deg, #06b6d4, #22d3ee, #67e8f9)',
+            photonShadow: '0 0 6px #fff, 0 0 12px #06b6d4, 0 0 20px rgba(6, 182, 212, 0.5)',
+            bracketBorder: 'border-cyan-500 dark:border-cyan-400',
+            dotColor: 'bg-cyan-500',
+        },
+        forest: {
+            primary: '#84cc16',
+            secondary: '#bef264',
+            accent: '#a3e635',
+            glow: 'rgba(132, 204, 22, 0.6)',
+            textGradient: 'linear-gradient(135deg, #84cc16, #a3e635, #bef264)',
+            photonShadow: '0 0 6px #fff, 0 0 12px #84cc16, 0 0 20px rgba(132, 204, 22, 0.5)',
+            bracketBorder: 'border-lime-500 dark:border-lime-400',
+            dotColor: 'bg-lime-500',
+        },
+        diwali: {
+            primary: '#f97316',
+            secondary: '#fbbf24',
+            accent: '#fb923c',
+            glow: 'rgba(249, 115, 22, 0.6)',
+            textGradient: 'linear-gradient(135deg, #f97316, #fbbf24, #fb923c)',
+            photonShadow: '0 0 6px #fff, 0 0 12px #f97316, 0 0 20px rgba(249, 115, 22, 0.5)',
+            bracketBorder: 'border-orange-500 dark:border-orange-400',
+            dotColor: 'bg-orange-500',
+        },
+        default: {
+            primary: '#3b82f6',
+            secondary: '#60a5fa',
+            accent: '#93c5fd',
+            glow: 'rgba(59, 130, 246, 0.6)',
+            textGradient: 'linear-gradient(135deg, #3b82f6, #60a5fa, #93c5fd)',
+            photonShadow: '0 0 4px #fff, 0 0 8px #3b82f6',
+            bracketBorder: 'border-blue-600 dark:border-blue-400',
+            dotColor: 'bg-blue-500',
+        }
+    };
+
+    const currentConfig = themeConfigs[themeMode] || themeConfigs.default;
+    const isDark = theme === 'dark';
 
     const sizes = {
         sm: { text: 'text-[10px]', padding: '0.4rem 1.1rem', radius: 4, starSize: 2, tracking: '0.35em' },
@@ -18,20 +76,15 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
     };
 
     const cfg = sizes[size] || sizes.md;
-    const CYCLE_DURATION = 3;
+
+    // Faster cycle for premium themes, slower for default
+    const CYCLE_DURATION = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode) ? 2.5 : 3;
 
     useEffect(() => {
-        // Start both star and bracket sequences simultaneously
-        const startAnimations = async () => {
-            // Photon Star Journey
-            controls.start("star");
-            // Bracket Pulses (Individual delays handled via custom prop)
-            controls.start("bracket");
-        };
-        startAnimations();
-    }, [controls]);
+        controls.start("star");
+        controls.start("bracket");
+    }, [controls, themeMode]);
 
-    // Define the synchronized variants
     const variants = {
         star: {
             left: ["0%", "100%", "100%", "0%", "0%"],
@@ -44,25 +97,25 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
         },
         bracket: (delay) => ({
             opacity: [0, 1, 0],
-            scale: [1, 1.25, 1],
-            x: [0, -2, 0],
-            y: [0, -2, 0],
+            scale: [1, 1.3, 1],
+            x: [0, -3, 0],
+            y: [0, -3, 0],
             boxShadow: [
                 '0px 0px 0px transparent',
-                '0px 0px 8px rgba(59, 130, 246, 0.4)',
+                `0px 0px 10px ${currentConfig.glow}`,
                 '0px 0px 0px transparent'
             ],
             transition: {
-                duration: 0.6,
+                duration: 0.5,
                 repeat: Infinity,
-                repeatDelay: CYCLE_DURATION - 0.6,
+                repeatDelay: CYCLE_DURATION - 0.5,
                 delay: delay,
                 ease: "easeInOut"
             }
         }),
         dot: (delay) => ({
-            opacity: [0.1, 0.8, 0.1],
-            scale: [1, 1.5, 1],
+            opacity: [0.2, 1, 0.2],
+            scale: [1, 1.8, 1],
             transition: {
                 duration: 0.4,
                 repeat: Infinity,
@@ -72,48 +125,58 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
         })
     };
 
+    // Calculate corner delays based on cycle
+    const cornerDelays = [0, CYCLE_DURATION / 4, CYCLE_DURATION / 2, (3 * CYCLE_DURATION) / 4];
+
     return (
         <motion.div
             className={`relative inline-flex items-center justify-center ${className} cursor-pointer group select-none`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.03 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         >
-            {/* Premium Glass Container (Theme Aware) */}
+            {/* Premium Glass Container */}
             <div
-                className="relative flex items-center justify-center transition-all duration-700
-          bg-white/60 dark:bg-slate-900/40 backdrop-blur-md
-          border border-slate-200 dark:border-white/10"
+                className={`relative flex items-center justify-center transition-[background-color,border-color] duration-500
+                    ${isDark ? 'bg-slate-900/50' : 'bg-white/70'} backdrop-blur-md
+                    border ${isDark ? 'border-white/10' : 'border-slate-200'}`}
                 style={{
                     padding: cfg.padding,
                     borderRadius: cfg.radius,
                 }}
             >
-                {/* The SYNC Text (Theme Aware) */}
-                <span
-                    className={`${cfg.text} font-black relative z-10 transition-all duration-300
-            text-slate-800 dark:text-white/90`}
-                    style={{ letterSpacing: cfg.tracking }}
-                >
-                    SYNC
-                </span>
+                {/* The SYNC Text with Theme Gradient */}
+                {showText && (
+                    <span
+                        key={themeMode}
+                        className={`${cfg.text} font-black relative z-10`}
+                        style={{
+                            letterSpacing: cfg.tracking,
+                            backgroundImage: currentConfig.textGradient,
+                            WebkitBackgroundClip: 'text',
+                            backgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            color: 'transparent',
+                            display: 'inline-block',
+                        }}
+                    >
+                        SYNC
+                    </span>
+                )}
 
-                {/* The Animation Layer */}
+                {/* Animation Layer */}
                 <div className="absolute inset-0 pointer-events-none">
 
-                    {/* 1. Precision Photon Star */}
+                    {/* Photon Star with Theme Colors */}
                     <motion.div
                         className="absolute z-20"
                         style={{
                             width: cfg.starSize,
                             height: cfg.starSize,
-                            background: '#3b82f6', // Use a consistent primary blue for visibility
+                            background: currentConfig.primary,
                             borderRadius: '50%',
-                            boxShadow: `
-                0 0 4px #fff, 
-                0 0 8px #3b82f6
-              `,
+                            boxShadow: currentConfig.photonShadow,
                             top: 0,
                             left: 0,
                             x: '-50%',
@@ -122,15 +185,35 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
                         initial={{ left: "0%", top: "0%" }}
                         animate={controls}
                         variants={{ star: variants.star }}
-                        custom="star" // Not actually used for star but good for structure
                     />
 
-                    {/* 2. Permanent L-Brackets with Theme Intelligence */}
+                    {/* Comet Tail for Premium Themes */}
+                    {['space', 'ocean', 'forest', 'diwali'].includes(themeMode) && (
+                        <motion.div
+                            className="absolute z-19"
+                            style={{
+                                width: cfg.starSize * 4,
+                                height: cfg.starSize * 0.8,
+                                background: `linear-gradient(90deg, transparent, ${currentConfig.primary}40, ${currentConfig.primary}80)`,
+                                borderRadius: cfg.starSize,
+                                top: 0,
+                                left: 0,
+                                x: '-100%',
+                                y: '-50%',
+                                opacity: 0.7,
+                            }}
+                            initial={{ left: "0%", top: "0%" }}
+                            animate={controls}
+                            variants={{ star: variants.star }}
+                        />
+                    )}
+
+                    {/* L-Brackets with Theme Colors */}
                     {[
-                        { top: "0%", left: "0%", delay: 0, rot: 0 },         // Corner A (0s)
-                        { top: "0%", left: "100%", delay: 0.75, rot: 90 },   // Corner B (0.75s)
-                        { top: "100%", left: "100%", delay: 1.5, rot: 180 }, // Corner C (1.5s)
-                        { top: "100%", left: "0%", delay: 2.25, rot: 270 },  // Corner D (2.25s)
+                        { top: "0%", left: "0%", delay: cornerDelays[0], rot: 0 },
+                        { top: "0%", left: "100%", delay: cornerDelays[1], rot: 90 },
+                        { top: "100%", left: "100%", delay: cornerDelays[2], rot: 180 },
+                        { top: "100%", left: "0%", delay: cornerDelays[3], rot: 270 },
                     ].map((pos, i) => (
                         <div
                             key={i}
@@ -141,23 +224,23 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
                                 transform: `translate(-50%, -50%) rotate(${pos.rot}deg)`
                             }}
                         >
-                            {/* The Static Base Bracket - Uses Tailwind for Theme Support */}
+                            {/* Static Base Bracket */}
                             <div
-                                className="absolute w-full h-full border-t border-l 
-                  border-slate-300 dark:border-white/20"
+                                className={`absolute w-full h-full border-t border-l
+                                    ${isDark ? 'border-white/20' : 'border-slate-300'}`}
                                 style={{
                                     width: cfg.starSize * 3,
                                     height: cfg.starSize * 3,
                                 }}
                             />
 
-                            {/* The Active Animated Overlay (Theme Aware) */}
+                            {/* Animated Overlay with Theme Color */}
                             <motion.div
-                                className="absolute border-t border-l
-                  border-blue-600 dark:border-white"
+                                className={`absolute border-t-2 border-l-2 ${currentConfig.bracketBorder}`}
                                 style={{
                                     width: cfg.starSize * 3,
                                     height: cfg.starSize * 3,
+                                    borderColor: currentConfig.primary,
                                 }}
                                 initial={{ opacity: 0, scale: 1 }}
                                 animate={controls}
@@ -167,9 +250,12 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
 
                             {/* Synced Micro-Dot */}
                             <motion.div
-                                className="absolute w-1 h-1 bg-blue-500 rounded-full"
-                                style={{ opacity: 0.1 }}
-                                initial={{ opacity: 0.1, scale: 1 }}
+                                className={`absolute w-1.5 h-1.5 rounded-full ${currentConfig.dotColor}`}
+                                style={{
+                                    opacity: 0.2,
+                                    boxShadow: `0 0 4px ${currentConfig.primary}`
+                                }}
+                                initial={{ opacity: 0.2, scale: 1 }}
                                 animate={controls}
                                 custom={pos.delay}
                                 variants={{ dot: variants.dot(pos.delay) }}
@@ -180,8 +266,16 @@ const AnimatedSyncLogo = ({ size = 'md', className = '' }) => {
                 </div>
             </div>
 
-            {/* Subtle outer glow on hover */}
-            <div className="absolute inset-0 rounded-lg bg-blue-500/5 blur-xl group-hover:opacity-100 opacity-0 transition-opacity duration-700 pointer-events-none" />
+            {/* Outer Glow on Hover - Theme Colored */}
+            <motion.div
+                className="absolute inset-0 rounded-lg blur-xl pointer-events-none"
+                style={{
+                    background: currentConfig.glow,
+                    opacity: isHovered ? 0.3 : 0
+                }}
+                animate={{ opacity: isHovered ? 0.3 : 0 }}
+                transition={{ duration: 0.5 }}
+            />
         </motion.div>
     );
 };

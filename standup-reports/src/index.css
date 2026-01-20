@@ -803,3 +803,597 @@ html.diwali .text-gray-500,
 html.diwali .text-slate-400 {
   color: rgba(255, 255, 255, 0.7) !important;
 }
+
+/* --- Global Launcher & Loaders --- */
+#global-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-primary);
+  transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+}
+
+#global-loader.loader-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Default / System Loader (Pulse) */
+.loader-content {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.loader-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--confluence-blue-500);
+  opacity: 0.6;
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+.loader-pulse::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--confluence-blue-500);
+  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  animation-delay: 0.5s;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.33);
+    opacity: 0.8;
+  }
+
+  80%,
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* --- Space Theme Loader (Galaxy Spiral with Shooting Stars) --- */
+#global-loader.space {
+  background-color: #0a0a12;
+}
+
+#global-loader.space .loader-content {
+  width: 120px;
+  height: 120px;
+}
+
+/* Central glowing star core */
+.space-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #fff 0%, #c4b5fd 40%, #a855f7 80%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 10px #fff,
+    0 0 20px #a855f7,
+    0 0 40px rgba(168, 85, 247, 0.6),
+    0 0 60px rgba(139, 92, 246, 0.4);
+  animation: space-core-pulse 2s ease-in-out infinite;
+}
+
+/* Spiral orbits */
+.space-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 2px solid transparent;
+  border-top-color: rgba(168, 85, 247, 0.7);
+  border-right-color: rgba(139, 92, 246, 0.4);
+  border-radius: 50%;
+  animation: space-spiral 2s linear infinite;
+}
+
+.space-orbit:nth-child(2) {
+  width: 75%;
+  height: 75%;
+  top: 12.5%;
+  left: 12.5%;
+  border-top-color: rgba(196, 181, 253, 0.6);
+  border-right-color: rgba(167, 139, 250, 0.3);
+  animation-duration: 1.6s;
+  animation-direction: reverse;
+}
+
+.space-orbit:nth-child(3) {
+  width: 50%;
+  height: 50%;
+  top: 25%;
+  left: 25%;
+  border-top-color: rgba(221, 214, 254, 0.5);
+  animation-duration: 1.2s;
+}
+
+/* Shooting stars */
+.space-star {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #fff, 0 0 10px #a855f7;
+  animation: space-shoot 1.5s ease-out infinite;
+}
+
+.space-star:nth-child(4) {
+  top: 10%;
+  left: 80%;
+  animation-delay: 0s;
+}
+
+.space-star:nth-child(5) {
+  top: 70%;
+  left: 15%;
+  animation-delay: 0.5s;
+}
+
+.space-star:nth-child(6) {
+  top: 30%;
+  left: 5%;
+  animation-delay: 1s;
+}
+
+@keyframes space-spiral {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes space-core-pulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.9);
+    box-shadow: 0 0 10px #fff, 0 0 20px #a855f7, 0 0 40px rgba(168, 85, 247, 0.6);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 15px #fff, 0 0 30px #a855f7, 0 0 60px rgba(168, 85, 247, 0.8);
+  }
+}
+
+@keyframes space-shoot {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-30px, 30px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* --- Ocean Theme Loader (Rising Bubbles) --- */
+#global-loader.ocean {
+  background-color: #0c1929;
+}
+
+.ocean-bubbles {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.ocean-bubble {
+  position: absolute;
+  background: rgba(6, 182, 212, 0.6);
+  border-radius: 50%;
+  animation: bubble-rise 2s ease-in infinite;
+}
+
+.ocean-bubble:nth-child(1) {
+  width: 12px;
+  height: 12px;
+  left: 10%;
+  animation-duration: 1.5s;
+  animation-delay: 0s;
+}
+
+.ocean-bubble:nth-child(2) {
+  width: 16px;
+  height: 16px;
+  left: 50%;
+  animation-duration: 2.2s;
+  animation-delay: 0.2s;
+}
+
+.ocean-bubble:nth-child(3) {
+  width: 10px;
+  height: 10px;
+  left: 80%;
+  animation-duration: 1.8s;
+  animation-delay: 0.4s;
+}
+
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(40px) scale(0.5);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-40px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* --- Forest Theme Loader (Enchanted Firefly Swarm) --- */
+#global-loader.forest {
+  background-color: #041f1e;
+}
+
+#global-loader.forest .loader-content {
+  width: 120px;
+  height: 120px;
+}
+
+.forest-fireflies {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Central leaf element */
+.forest-leaf {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 30%, #a3e635 0%, #65a30d 60%, #3f6212 100%);
+  border-radius: 50% 0 50% 0;
+  box-shadow: 0 0 10px rgba(163, 230, 53, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+  animation: forest-leaf-pulse 3s ease-in-out infinite;
+}
+
+/* Fireflies */
+.forest-firefly {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #fff 0%, #bef264 50%, #84cc16 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 6px #bef264, 0 0 12px #84cc16, 0 0 20px rgba(132, 204, 22, 0.5);
+}
+
+.forest-firefly:nth-child(1) {
+  animation: forest-fly-1 3s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.forest-firefly:nth-child(2) {
+  animation: forest-fly-2 3s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+.forest-firefly:nth-child(3) {
+  animation: forest-fly-3 3s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.forest-firefly:nth-child(4) {
+  animation: forest-fly-4 3s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+.forest-firefly:nth-child(5) {
+  animation: forest-fly-5 3s ease-in-out infinite;
+  animation-delay: 1.6s;
+}
+
+.forest-firefly:nth-child(6) {
+  animation: forest-fly-6 3s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+@keyframes forest-leaf-pulse {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
+  }
+}
+
+@keyframes forest-fly-1 {
+
+  0%,
+  100% {
+    top: 10%;
+    left: 20%;
+    opacity: 0.3;
+  }
+
+  25% {
+    top: 5%;
+    left: 40%;
+    opacity: 1;
+  }
+
+  50% {
+    top: 15%;
+    left: 60%;
+    opacity: 0.8;
+  }
+
+  75% {
+    top: 25%;
+    left: 35%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes forest-fly-2 {
+
+  0%,
+  100% {
+    top: 70%;
+    left: 75%;
+    opacity: 0.4;
+  }
+
+  25% {
+    top: 60%;
+    left: 85%;
+    opacity: 1;
+  }
+
+  50% {
+    top: 55%;
+    left: 70%;
+    opacity: 0.7;
+  }
+
+  75% {
+    top: 65%;
+    left: 60%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes forest-fly-3 {
+
+  0%,
+  100% {
+    top: 80%;
+    left: 25%;
+    opacity: 0.5;
+  }
+
+  25% {
+    top: 85%;
+    left: 15%;
+    opacity: 0.8;
+  }
+
+  50% {
+    top: 75%;
+    left: 30%;
+    opacity: 1;
+  }
+
+  75% {
+    top: 70%;
+    left: 10%;
+    opacity: 0.6;
+  }
+}
+
+@keyframes forest-fly-4 {
+
+  0%,
+  100% {
+    top: 30%;
+    left: 80%;
+    opacity: 0.3;
+  }
+
+  25% {
+    top: 20%;
+    left: 90%;
+    opacity: 1;
+  }
+
+  50% {
+    top: 35%;
+    left: 75%;
+    opacity: 0.6;
+  }
+
+  75% {
+    top: 40%;
+    left: 85%;
+    opacity: 0.4;
+  }
+}
+
+@keyframes forest-fly-5 {
+
+  0%,
+  100% {
+    top: 45%;
+    left: 5%;
+    opacity: 0.4;
+  }
+
+  25% {
+    top: 55%;
+    left: 15%;
+    opacity: 0.9;
+  }
+
+  50% {
+    top: 40%;
+    left: 20%;
+    opacity: 1;
+  }
+
+  75% {
+    top: 50%;
+    left: 8%;
+    opacity: 0.5;
+  }
+}
+
+@keyframes forest-fly-6 {
+
+  0%,
+  100% {
+    top: 15%;
+    left: 70%;
+    opacity: 0.5;
+  }
+
+  25% {
+    top: 25%;
+    left: 80%;
+    opacity: 1;
+  }
+
+  50% {
+    top: 10%;
+    left: 65%;
+    opacity: 0.7;
+  }
+
+  75% {
+    top: 20%;
+    left: 55%;
+    opacity: 0.4;
+  }
+}
+
+/* --- Diwali Theme Loader (Sparkles) --- */
+#global-loader.diwali {
+  background-color: #0F0518;
+}
+
+.diwali-sparkle {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.diwali-core {
+  width: 12px;
+  height: 12px;
+  background: #f97316;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #f97316, 0 0 40px #f97316;
+  animation: diwali-pulse 1.5s ease-in-out infinite;
+}
+
+.diwali-rays {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  animation: diwali-spin 4s linear infinite;
+}
+
+.diwali-ray {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: transparent;
+}
+
+.diwali-ray::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 2px;
+  height: 12px;
+  background: #fbbf24;
+  border-radius: 2px;
+}
+
+.diwali-ray::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -1px;
+  width: 2px;
+  height: 12px;
+  background: #fbbf24;
+  border-radius: 2px;
+}
+
+.diwali-ray:nth-child(1) {
+  transform: rotate(0deg);
+}
+
+.diwali-ray:nth-child(2) {
+  transform: rotate(45deg);
+}
+
+.diwali-ray:nth-child(3) {
+  transform: rotate(90deg);
+}
+
+.diwali-ray:nth-child(4) {
+  transform: rotate(135deg);
+}
+
+@keyframes diwali-pulse {
+
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes diwali-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
