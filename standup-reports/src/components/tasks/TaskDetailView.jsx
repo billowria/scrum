@@ -15,6 +15,7 @@ import { format, formatDistanceToNow, isPast, parseISO } from 'date-fns';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { uuidToShortId } from '../../utils/taskIdUtils';
+import { useTheme } from '../../context/ThemeContext';
 import Badge from '../shared/Badge';
 import Avatar from '../shared/Avatar';
 import LoadingSkeleton from '../shared/LoadingSkeleton';
@@ -173,8 +174,9 @@ const TaskDetailView = ({
   const [toastMessage, setToastMessage] = useState('');
   const [toastUser, setToastUser] = useState(null);
 
-  // Navigation
+  // Navigation & Theme
   const navigate = useNavigate();
+  const { isAnimatedTheme } = useTheme();
   const location = useLocation();
 
   // Inputs
@@ -499,14 +501,14 @@ _Shared from Task Management System_`;
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative bg-white dark:bg-slate-900 w-full max-w-[95vw] h-[95vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-white/50 dark:border-slate-800"
+          className={`relative w-full max-w-[95vw] h-[95vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col border ${isAnimatedTheme ? 'bg-slate-900 border-slate-700' : 'bg-white dark:bg-slate-900 border-white/50 dark:border-slate-800'}`}
         >
           {loading ? (
             <LoadingContent />
           ) : (
             <>
               {/* --- HEADER: The "Control Deck" --- */}
-              <div className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-6 z-20">
+              <div className={`border-b p-6 flex flex-col gap-6 z-20 ${isAnimatedTheme ? 'bg-slate-900 border-slate-800' : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800'}`}>
 
                 {/* Top Row: Breadcrumbs & Actions */}
                 <div className="flex items-start justify-between">
@@ -672,10 +674,10 @@ _Shared from Task Management System_`;
               </div>
 
               {/* --- MAIN GRID: "The Lab" Workspace --- */}
-              <div className="flex-1 overflow-hidden flex flex-col md:flex-row bg-gray-50/30 dark:bg-slate-950/30">
+              <div className={`flex-1 overflow-hidden flex flex-col md:flex-row ${isAnimatedTheme ? 'bg-slate-950' : 'bg-gray-50/30 dark:bg-slate-950/30'}`}>
 
                 {/* COL 1: Content (Description, Tasks, Activity) - WIDER */}
-                <div className="w-full md:w-[80%] overflow-y-auto px-8 py-8 border-r border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className={`w-full md:w-[80%] overflow-y-auto px-8 py-8 border-r ${isAnimatedTheme ? 'bg-slate-900 border-slate-800' : 'bg-white dark:bg-slate-900 border-gray-100 dark:border-slate-800'}`}>
                   <div className="space-y-12">
 
                     {/* Description - Rich Text Editor */}
@@ -994,7 +996,7 @@ _Shared from Task Management System_`;
                 </div>
 
                 {/* COL 2: Sidebar (Properties Panel) - NARROWER */}
-                <div className="w-full md:w-[20%] bg-gray-50 dark:bg-slate-950/50 p-4 overflow-y-auto border-l border-gray-100 dark:border-slate-800">
+                <div className={`w-full md:w-[20%] p-4 overflow-y-auto border-l ${isAnimatedTheme ? 'bg-slate-900 border-slate-800' : 'bg-gray-50 dark:bg-slate-950/50 border-gray-100 dark:border-slate-800'}`}>
                   <div className="space-y-8">
 
                     {/* DETAILS GROUP */}

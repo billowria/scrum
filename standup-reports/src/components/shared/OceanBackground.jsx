@@ -115,7 +115,7 @@ class Ripple {
     }
 }
 
-const OceanBackground = () => {
+const OceanBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
     const ripplesRef = useRef([]);
@@ -186,35 +186,42 @@ const OceanBackground = () => {
                 r.draw(ctx);
             });
 
-            // 3. Update & Draw Particles
-            particlesRef.current.forEach(p => {
-                p.update(t, ripplesRef.current);
-                p.draw(ctx);
-            });
-
-            // 4. Mouse Trail / Ripple spawning logic
-            // Only spawn ripple on movement
-            const mx = mouseRef.current.x;
-            const my = mouseRef.current.y;
-            const lmx = lastMouseRef.current.x;
-            const lmy = lastMouseRef.current.y;
-
-            if (mx > 0 && lmx > 0) {
-                const dist = Math.hypot(mx - lmx, my - lmy);
-                // If moved enough, spawn ripple
-                if (dist > 30) {
-                    ripplesRef.current.push(new Ripple(mx, my));
-                    lastMouseRef.current = { x: mx, y: my };
-                }
-            } else if (mx > 0) {
-                lastMouseRef.current = { x: mx, y: my };
+            // 3. Update & Draw Particles (skip if hideParticles)
+            if (!hideParticles) {
+                particlesRef.current.forEach(p => {
+                    p.update(t, ripplesRef.current);
+                    p.draw(ctx);
+                });
             }
 
-            frameIdRef.current = requestAnimationFrame(render);
+            // 4. Mouse Trail / Ripple spawning logic (only if enabled)
+            if (!disableMouseInteraction) {
+                const mx = mouseRef.current.x;
+                const my = mouseRef.current.y;
+                const lmx = lastMouseRef.current.x;
+                const lmy = lastMouseRef.current.y;
+
+                if (mx > 0 && lmx > 0) {
+                    const dist = Math.hypot(mx - lmx, my - lmy);
+                    // If moved enough, spawn ripple
+                    if (dist > 30) {
+                        ripplesRef.current.push(new Ripple(mx, my));
+                        lastMouseRef.current = { x: mx, y: my };
+                    }
+                } else if (mx > 0) {
+                    lastMouseRef.current = { x: mx, y: my };
+                }
+            }
+
+            // Only continue animating if not paused
+            if (!paused) {
+                frameIdRef.current = requestAnimationFrame(render);
+            }
         };
 
         const handleResize = () => init();
         const handleMouseMove = (e) => {
+            if (disableMouseInteraction) return;
             const rect = canvas.getBoundingClientRect();
             mouseRef.current = {
                 x: e.clientX - rect.left,
@@ -227,8 +234,10 @@ const OceanBackground = () => {
         };
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseout', handleMouseLeave);
+        if (!disableMouseInteraction) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseout', handleMouseLeave);
+        }
 
         init();
         frameIdRef.current = requestAnimationFrame(render);
@@ -236,10 +245,12 @@ const OceanBackground = () => {
         return () => {
             cancelAnimationFrame(frameIdRef.current);
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseout', handleMouseLeave);
+            if (!disableMouseInteraction) {
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseout', handleMouseLeave);
+            }
         };
-    }, []);
+    }, [disableMouseInteraction, paused, hideParticles]);
 
     return (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#020617]">

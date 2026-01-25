@@ -303,14 +303,25 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
 
 
 // 2. Modern Task Progress - Donut Chart with Rich Stats
-const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
+const TaskAnalyticsWidget = ({ taskStats, loading, navigate, currentUserId }) => {
   const total = taskStats.total || 1;
   const completionRate = Math.round((taskStats.completed / total) * 100) || 0;
 
   // Calculate percentages for each status
   const completedPercent = Math.round((taskStats.completed / total) * 100);
   const inProgressPercent = Math.round((taskStats.inProgress / total) * 100);
+  const reviewPercent = Math.round((taskStats.review / total) * 100);
   const todoPercent = Math.round((taskStats.todo / total) * 100);
+
+  // Navigate to tasks page with status filter
+  const handleStatusClick = (status) => {
+    const params = new URLSearchParams();
+    params.set('status', status);
+    if (currentUserId) {
+      params.set('assignee', currentUserId);
+    }
+    navigate(`/tasks?${params.toString()}`);
+  };
 
   return (
     <motion.div
@@ -327,8 +338,8 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Analytics</h3>
-            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Monthly breakdown</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{taskStats.total} total tasks</p>
           </div>
         </div>
       </div>
@@ -390,19 +401,20 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
               </div>
             </div>
 
-            {/* Detailed Stats Cards */}
-            <div className="space-y-2 mb-4 flex-1">
+            {/* Detailed Stats Cards - Scrollable */}
+            <div className="space-y-2 mb-4 flex-1 overflow-y-auto custom-scrollbar">
               {/* Completed */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="group relative p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+                onClick={() => handleStatusClick('Completed')}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-800/30 hover:shadow-md transition-all cursor-pointer overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                       <FiCheckCircle className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -410,9 +422,12 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <span className="text-[10px] text-emerald-600 font-bold">{completedPercent}% of total</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.completed}</span>
-                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                  <div className="text-right flex items-center gap-2">
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.completed}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               </motion.div>
@@ -422,12 +437,13 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="group relative p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+                onClick={() => handleStatusClick('In Progress')}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-100 dark:border-blue-800/30 hover:shadow-md transition-all cursor-pointer overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                       <FiActivity className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -435,9 +451,41 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <span className="text-[10px] text-blue-600 font-bold">{inProgressPercent}% of total</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.inProgress}</span>
-                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                  <div className="text-right flex items-center gap-2">
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.inProgress}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Review */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25 }}
+                onClick={() => handleStatusClick('Review')}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800/30 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                      <FiStar className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-slate-400 block">In Review</span>
+                      <span className="text-[10px] text-amber-600 font-bold">{reviewPercent}% of total</span>
+                    </div>
+                  </div>
+                  <div className="text-right flex items-center gap-2">
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.review}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               </motion.div>
@@ -447,12 +495,13 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
-                className="group relative p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 hover:shadow-md transition-all cursor-pointer overflow-hidden"
+                onClick={() => handleStatusClick('To Do')}
+                className="group relative p-3 rounded-xl bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/30 dark:to-slate-800/30 border border-gray-200 dark:border-gray-700/50 hover:shadow-md transition-all cursor-pointer overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-slate-400 opacity-0 group-hover:opacity-5 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-slate-400 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-400 to-slate-400 flex items-center justify-center shadow-md">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-400 to-slate-400 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                       <FiLayers className="w-5 h-5 text-white" />
                     </div>
                     <div>
@@ -460,9 +509,12 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate }) => {
                       <span className="text-[10px] text-gray-600 dark:text-slate-400 font-bold">{todoPercent}% of total</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.todo}</span>
-                    <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                  <div className="text-right flex items-center gap-2">
+                    <div>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">{taskStats.todo}</span>
+                      <span className="text-xs text-gray-500 dark:text-slate-400 block">tasks</span>
+                    </div>
+                    <FiArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               </motion.div>
@@ -1310,11 +1362,11 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
         setProjects(projectsData || []);
 
-        // 3. Fetch Tasks (for analytics)
+        // 3. Fetch Tasks for current user (for analytics)
         const { data: tasksData } = await supabase
           .from('tasks')
-          .select('id, status')
-          .eq('company_id', currentCompany.id);
+          .select('id, status, due_date, priority')
+          .eq('assignee_id', user.id);
 
         setTasks(tasksData || []);
 
@@ -1660,7 +1712,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
           {/* Column 4: Task Progress */}
           <div className="lg:col-span-1 h-[700px]">
-            <TaskAnalyticsWidget taskStats={taskStats} loading={loading} navigate={navigate} />
+            <TaskAnalyticsWidget taskStats={taskStats} loading={loading} navigate={navigate} currentUserId={currentUserId} />
           </div>
         </div>
       </div>

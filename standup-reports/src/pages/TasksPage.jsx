@@ -919,6 +919,26 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
     }
   }, [urlTaskId, currentUser]);
 
+  // Handle URL-based filter parameters (e.g., from Dashboard analytics)
+  useEffect(() => {
+    const urlStatus = searchParams.get('status');
+    const urlAssignee = searchParams.get('assignee');
+
+    if (urlStatus || urlAssignee) {
+      setFilters(prev => ({
+        ...prev,
+        status: urlStatus || prev.status,
+        assignee: urlAssignee || prev.assignee
+      }));
+
+      // Clear the URL params after applying
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('status');
+      newParams.delete('assignee');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams]);
+
   const fetchProjects = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();

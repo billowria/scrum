@@ -164,7 +164,7 @@ class Firefly {
  * FOREST BACKGROUND
  * Pure Canvas Implementation with "Burst" Effect.
  */
-const ForestBackground = () => {
+const ForestBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     const canvasRef = useRef(null);
     const firefliesRef = useRef([]);
     const frameIdRef = useRef(0);
@@ -211,8 +211,8 @@ const ForestBackground = () => {
                 seekCooldownRef.current -= dt;
             }
 
-            // Gathering Logic: If mouse is active, accumulate time. After 3s, burst.
-            if (mouseRef.current.x > 0) {
+            // Gathering Logic (only if mouse interaction enabled)
+            if (!disableMouseInteraction && mouseRef.current.x > 0) {
                 gatheringDurationRef.current += dt;
                 if (gatheringDurationRef.current > 3.0) {
                     burstRef.current = {
@@ -253,21 +253,27 @@ const ForestBackground = () => {
             ctx.fill();
             ctx.restore();
 
-            // Update & Draw
-            // If cooldown is active, fireflies don't see the mouse
-            const effectiveMouse = seekCooldownRef.current > 0 ? { x: -1000, y: -1000 } : mouseRef.current;
+            // Update & Draw fireflies (skip if hideParticles)
+            if (!hideParticles) {
+                // If cooldown is active or mouse interaction disabled, fireflies don't see the mouse
+                const effectiveMouse = (disableMouseInteraction || seekCooldownRef.current > 0) ? { x: -1000, y: -1000 } : mouseRef.current;
 
-            firefliesRef.current.forEach(fly => {
-                fly.update(effectiveMouse, burstRef.current, width, height);
-                fly.draw(ctx, t);
-            });
+                firefliesRef.current.forEach(fly => {
+                    fly.update(effectiveMouse, burstRef.current, width, height);
+                    fly.draw(ctx, t);
+                });
+            }
 
-            frameIdRef.current = requestAnimationFrame(render);
+            // Only continue animating if not paused
+            if (!paused) {
+                frameIdRef.current = requestAnimationFrame(render);
+            }
         };
 
         const handleResize = () => init();
 
         const handleMouseMove = (e) => {
+            if (disableMouseInteraction) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -303,8 +309,10 @@ const ForestBackground = () => {
         };
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseout', handleMouseLeave);
+        if (!disableMouseInteraction) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseout', handleMouseLeave);
+        }
 
         init();
         frameIdRef.current = requestAnimationFrame(render);
@@ -312,10 +320,12 @@ const ForestBackground = () => {
         return () => {
             cancelAnimationFrame(frameIdRef.current);
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseout', handleMouseLeave);
+            if (!disableMouseInteraction) {
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseout', handleMouseLeave);
+            }
         };
-    }, []);
+    }, [disableMouseInteraction, paused, hideParticles]);
 
     return (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#022c22]">

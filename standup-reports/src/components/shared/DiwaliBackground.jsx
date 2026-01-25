@@ -235,7 +235,7 @@ class Firework {
     }
 }
 
-const DiwaliBackground = () => {
+const DiwaliBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     const canvasRef = useRef(null);
     const fireworksRef = useRef([]);
     const sparklesRef = useRef([]);
@@ -336,25 +336,32 @@ const DiwaliBackground = () => {
             ctx.clearRect(0, 0, w, h);
             starsRef.current.forEach(star => star.draw(ctx, t));
 
-            fireworksRef.current.forEach(fw => fw.update());
-            fireworksRef.current.forEach(fw => fw.draw(ctx));
-            fireworksRef.current = fireworksRef.current.filter(fw => !fw.exploded || fw.particles.length > 0);
+            // Fireworks rendering (skip if hideParticles)
+            if (!hideParticles) {
+                fireworksRef.current.forEach(fw => fw.update());
+                fireworksRef.current.forEach(fw => fw.draw(ctx));
+                fireworksRef.current = fireworksRef.current.filter(fw => !fw.exploded || fw.particles.length > 0);
 
-            if (sparklesRef.current.length > 0) {
-                ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
-                sparklesRef.current.forEach(sp => sp.update());
-                sparklesRef.current.forEach(sp => sp.draw(ctx));
-                ctx.restore();
-                sparklesRef.current = sparklesRef.current.filter(sp => sp.alpha > 0);
+                if (sparklesRef.current.length > 0) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'lighter';
+                    sparklesRef.current.forEach(sp => sp.update());
+                    sparklesRef.current.forEach(sp => sp.draw(ctx));
+                    ctx.restore();
+                    sparklesRef.current = sparklesRef.current.filter(sp => sp.alpha > 0);
+                }
             }
 
-            frameIdRef.current = requestAnimationFrame(render);
+            // Only continue animating if not paused
+            if (!paused) {
+                frameIdRef.current = requestAnimationFrame(render);
+            }
         };
 
         const handleResize = () => init();
 
         const handleMouseMove = (e) => {
+            if (disableMouseInteraction) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -365,6 +372,7 @@ const DiwaliBackground = () => {
         };
 
         const handleClick = (e) => {
+            if (disableMouseInteraction) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -375,8 +383,10 @@ const DiwaliBackground = () => {
         };
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mousedown', handleClick);
+        if (!disableMouseInteraction) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mousedown', handleClick);
+        }
 
         init();
         frameIdRef.current = requestAnimationFrame(render);
@@ -384,10 +394,12 @@ const DiwaliBackground = () => {
         return () => {
             cancelAnimationFrame(frameIdRef.current);
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mousedown', handleClick);
+            if (!disableMouseInteraction) {
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mousedown', handleClick);
+            }
         };
-    }, []);
+    }, [disableMouseInteraction, paused, hideParticles]);
 
     return (
         <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#0F0518]">

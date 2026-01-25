@@ -331,15 +331,15 @@ function AppContent({ session, userRole, sidebarMode }) {
   const location = useLocation();
   const background = location.state && location.state.background;
   const sidebarOpen = sidebarMode === 'expanded';
-  const { themeMode } = useTheme();
+  const { themeMode, staticBackground, noMouseInteraction, hideParticles } = useTheme();
 
   return (
     <div className={session ? "min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30 dark:from-slate-950 dark:via-slate-950 dark:to-slate-950" : "min-h-screen"}>
-      {/* Animated Theme Backgrounds */}
-      {themeMode === 'space' && <StarsBackground />}
-      {themeMode === 'ocean' && <OceanBackground />}
-      {themeMode === 'forest' && <ForestBackground />}
-      {themeMode === 'diwali' && <DiwaliBackground />}
+      {/* Animated Theme Backgrounds - paused/hideParticles controlled via props */}
+      {themeMode === 'space' && <StarsBackground paused={staticBackground} hideParticles={hideParticles} disableMouseInteraction={noMouseInteraction} />}
+      {themeMode === 'ocean' && <OceanBackground paused={staticBackground} hideParticles={hideParticles} disableMouseInteraction={noMouseInteraction} />}
+      {themeMode === 'forest' && <ForestBackground paused={staticBackground} hideParticles={hideParticles} disableMouseInteraction={noMouseInteraction} />}
+      {themeMode === 'diwali' && <DiwaliBackground paused={staticBackground} hideParticles={hideParticles} disableMouseInteraction={noMouseInteraction} />}
 
       {/* NavbarPro is removed, so we'll keep the original Navbar for now */}
       {/* <NavbarPro session={session} /> */}

@@ -455,11 +455,7 @@ const BossMessageBanner = ({ userRole, className = '' }) => {
                                 <div className="flex-1 max-w-2xl relative group/message">
                                     <div className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-100 leading-relaxed italic max-h-32 overflow-y-auto overflow-x-hidden break-words scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent pr-2">
                                         {currentMessage ? (
-                                            <TypewriterText
-                                                text={currentMessage.content}
-                                                onComplete={() => setHasAnimated(true)}
-                                                delay={500}
-                                            />
+                                            <span>{currentMessage.content}</span>
                                         ) : (
                                             <span className="text-gray-400 opacity-50">No active announcements. {isAdmin && 'Create one to notify your team.'}</span>
                                         )}

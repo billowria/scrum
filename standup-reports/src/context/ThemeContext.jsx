@@ -16,6 +16,41 @@ export const ThemeProvider = ({ children }) => {
 
     const [theme, setThemeState] = useState('light');
 
+    // Visual Preferences
+    const [staticBackground, setStaticBackground] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('staticBackground') === 'true';
+        }
+        return false;
+    });
+
+    const [noMouseInteraction, setNoMouseInteraction] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('noMouseInteraction') === 'true';
+        }
+        return false;
+    });
+
+    const [hideParticles, setHideParticles] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('hideParticles') === 'true';
+        }
+        return false;
+    });
+
+    // Persist visual preferences
+    useEffect(() => {
+        localStorage.setItem('staticBackground', staticBackground);
+    }, [staticBackground]);
+
+    useEffect(() => {
+        localStorage.setItem('noMouseInteraction', noMouseInteraction);
+    }, [noMouseInteraction]);
+
+    useEffect(() => {
+        localStorage.setItem('hideParticles', hideParticles);
+    }, [hideParticles]);
+
     useEffect(() => {
         const root = window.document.documentElement;
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -67,7 +102,21 @@ export const ThemeProvider = ({ children }) => {
     const isAnimatedTheme = ANIMATED_THEMES.includes(themeMode);
 
     return (
-        <ThemeContext.Provider value={{ theme, themeMode, toggleTheme, setThemeMode, isAnimatedTheme, ANIMATED_THEMES }}>
+        <ThemeContext.Provider value={{
+            theme,
+            themeMode,
+            toggleTheme,
+            setThemeMode,
+            isAnimatedTheme,
+            ANIMATED_THEMES,
+            // Visual Preferences
+            staticBackground,
+            setStaticBackground,
+            noMouseInteraction,
+            setNoMouseInteraction,
+            hideParticles,
+            setHideParticles,
+        }}>
             {children}
         </ThemeContext.Provider>
     );
@@ -80,3 +129,4 @@ export const useTheme = () => {
     }
     return context;
 };
+

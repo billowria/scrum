@@ -64,7 +64,7 @@ const ShootingStar = ({ delay }) => (
 );
 
 // --- Starfield Canvas ---
-const Starfield = () => {
+const Starfield = ({ disableMouseInteraction = false, paused = false }) => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -118,10 +118,13 @@ const Starfield = () => {
         initStars();
 
         const handleMouseMove = (e) => {
+            if (disableMouseInteraction) return;
             mouse.x = e.clientX;
             mouse.y = e.clientY;
         };
-        window.addEventListener('mousemove', handleMouseMove);
+        if (!disableMouseInteraction) {
+            window.addEventListener('mousemove', handleMouseMove);
+        }
 
         let time = 0;
         const animate = () => {
@@ -129,17 +132,19 @@ const Starfield = () => {
             time += 0.016;
 
             stars.forEach(star => {
-                // Physics
-                const dx = mouse.x - star.x;
-                const dy = mouse.y - star.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                // Physics - only apply mouse interaction if enabled
+                if (!disableMouseInteraction) {
+                    const dx = mouse.x - star.x;
+                    const dy = mouse.y - star.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
 
-                // Mouse interaction - stars flee from cursor
-                if (dist < MOUSE_RADIUS) {
-                    const force = (1 - dist / MOUSE_RADIUS) * REPEL_FORCE;
-                    const angle = Math.atan2(dy, dx);
-                    star.vx -= Math.cos(angle) * force;
-                    star.vy -= Math.sin(angle) * force;
+                    // Mouse interaction - stars flee from cursor
+                    if (dist < MOUSE_RADIUS) {
+                        const force = (1 - dist / MOUSE_RADIUS) * REPEL_FORCE;
+                        const angle = Math.atan2(dy, dx);
+                        star.vx -= Math.cos(angle) * force;
+                        star.vy -= Math.sin(angle) * force;
+                    }
                 }
 
                 // Spring return
@@ -160,7 +165,10 @@ const Starfield = () => {
 
                 // Speed-based glow
                 const speed = Math.sqrt(star.vx * star.vx + star.vy * star.vy);
-                const activeGlow = dist < MOUSE_RADIUS;
+                const dx = mouse.x - star.x;
+                const dy = mouse.y - star.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const activeGlow = !disableMouseInteraction && dist < MOUSE_RADIUS;
 
                 // Draw star
                 ctx.beginPath();
@@ -185,17 +193,27 @@ const Starfield = () => {
                 ctx.fill();
             });
 
-            rafId = requestAnimationFrame(animate);
+            // Only continue animating if not paused
+            if (!paused) {
+                rafId = requestAnimationFrame(animate);
+            }
         };
 
-        rafId = requestAnimationFrame(animate);
+        if (!paused) {
+            rafId = requestAnimationFrame(animate);
+        } else {
+            // Draw once when paused so background is visible
+            animate();
+        }
 
         return () => {
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('mousemove', handleMouseMove);
+            if (!disableMouseInteraction) {
+                window.removeEventListener('mousemove', handleMouseMove);
+            }
             if (rafId) cancelAnimationFrame(rafId);
         };
-    }, []);
+    }, [disableMouseInteraction, paused]);
 
     return <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none" />;
 };
@@ -222,7 +240,7 @@ const MilkyWayBand = () => (
 );
 
 // --- Main Galaxy Background Component ---
-const StarsBackground = () => {
+const StarsBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     return (
         <div className="fixed inset-0 z-0 bg-[#0a0a12] overflow-hidden pointer-events-none">
             {/* Deep space base gradient */}
@@ -240,8 +258,8 @@ const StarsBackground = () => {
             {/* Milky Way band effect */}
             <MilkyWayBand />
 
-            {/* Interactive starfield */}
-            <Starfield />
+            {/* Interactive starfield - hidden when hideParticles is true */}
+            {!hideParticles && <Starfield disableMouseInteraction={disableMouseInteraction} paused={paused} />}
 
             {/* Nebula clouds - cosmic gas and dust */}
             <NebulaCloud
