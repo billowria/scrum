@@ -9,21 +9,19 @@ import { useTheme } from '../context/ThemeContext';
 
 const PublicLayout = () => {
     const location = useLocation();
-    const { themeMode } = useTheme();
+    const { themeMode, setThemeMode, ANIMATED_THEMES } = useTheme();
 
-    // Determine background color based on theme
-    const bgColor = themeMode === 'light' ? 'bg-gradient-to-br from-slate-50 via-white to-blue-50' : 'bg-[#0a0b14]';
-    const textColor = themeMode === 'light' ? 'text-slate-900' : 'text-white';
+    // Force premium theme on public pages
+    React.useEffect(() => {
+        if (!ANIMATED_THEMES.includes(themeMode)) {
+            // Default to ocean if current theme is not premium
+            setThemeMode('ocean');
+        }
+    }, [themeMode, setThemeMode, ANIMATED_THEMES]);
 
     return (
-        <div className={`relative min-h-screen ${bgColor} overflow-x-hidden ${textColor} selection:bg-indigo-500/30`}>
-            {/* Animated Theme Backgrounds */}
-            {(themeMode === 'space' || themeMode === 'dark') && <StarsBackground />}
-            {themeMode === 'ocean' && <OceanBackground />}
-            {themeMode === 'forest' && <ForestBackground />}
-            {themeMode === 'diwali' && <DiwaliBackground />}
-
-            {/* Content Area */}
+        <div className="relative min-h-screen overflow-x-hidden selection:bg-indigo-500/30">
+            {/* Content Area - Backgrounds are handled globally in App.jsx */}
             <div className="relative z-10 w-full min-h-screen">
                 <AnimatePresence mode="popLayout">
                     <Outlet />

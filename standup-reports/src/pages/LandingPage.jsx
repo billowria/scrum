@@ -411,7 +411,7 @@ const MockCalendar = () => (
             </div>
         </div>
         <div className="grid grid-cols-7 gap-2 mb-2 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d}>{d}</div>)}
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => <div key={`${d}-${i}`}>{d}</div>)}
         </div>
         <div className="grid grid-cols-7 gap-2 mb-6">
             {Array.from({ length: 31 }).map((_, i) => {

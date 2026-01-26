@@ -354,12 +354,21 @@ export default function AuthPage({ mode = "login" }) {
         if (!selectedPlan) throw new Error("Please select a valid plan.");
 
         const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-        const { error: signUpError, data } = await supabase.auth.signUp({ email, password });
+        const { error: signUpError, data } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+              role: 'admin'
+            }
+          }
+        });
         if (signUpError) throw signUpError;
 
         if (data?.user) {
           const randomAvatarUrl = 'https://zfyxudmjeytmdtigxmfc.supabase.co/storage/v1/object/public/avatars/6ACAFD4D-DA6A-4FE8-A482-CEF6299AF104_1_105_c.jpeg';
-          await supabase.from("users").insert([{ id: data.user.id, name, email, role: 'manager', avatar_url: randomAvatarUrl }]);
+          await supabase.from("users").insert([{ id: data.user.id, name, email, role: 'admin', avatar_url: randomAvatarUrl }]);
           const { data: company } = await supabase.from('companies').insert([{ name: companyName, slug, created_by: data.user.id }]).select().single();
           await supabase.from('users').update({ company_id: company.id }).eq('id', data.user.id);
 

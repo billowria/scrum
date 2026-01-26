@@ -72,7 +72,7 @@ const GlassmorphicToast = ({
             damping: 25,
             mass: 0.8
           }}
-          className="fixed top-6 right-6 z-[9999] pointer-events-auto"
+          className="fixed top-6 right-6 z-[99999] pointer-events-auto"
         >
           <motion.div
             className="relative group"

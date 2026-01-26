@@ -321,7 +321,7 @@ function App() {
           </>
         </CompanyProvider>
       ) : (
-        <div className="min-h-screen bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/30">
+        <div className="min-h-screen bg-[#0a0b14]">
           <AppContent session={session} userRole={userRole} sidebarMode={sidebarMode} />
         </div>
       )}

@@ -9,9 +9,9 @@ export const ThemeProvider = ({ children }) => {
     const [themeMode, setThemeMode] = useState(() => {
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('themeMode');
-            return stored || 'system';
+            return stored || 'ocean';
         }
-        return 'system';
+        return 'ocean';
     });
 
     const [theme, setThemeState] = useState('light');

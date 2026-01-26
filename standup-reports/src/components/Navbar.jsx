@@ -19,6 +19,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setThemeMode('ocean');
     navigate('/login');
   };
 

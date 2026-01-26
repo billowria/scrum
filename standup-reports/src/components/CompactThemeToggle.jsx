@@ -168,18 +168,13 @@ const CompactThemeToggle = () => {
                     </AnimatePresence>
 
                     {/* Gear icon on hover */}
-                    <AnimatePresence>
-                        {(pillHovered || settingsOpen) && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <FiSettings className="w-3 h-3 text-white/80" />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <FiSettings className="w-3 h-3 text-white/80" />
+                    </motion.div>
                 </motion.button>
 
                 {/* Theme Icons - Expanded */}

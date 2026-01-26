@@ -6,11 +6,11 @@ import {
     FiArrowRight, FiGrid, FiFileText, FiActivity, FiBarChart2, FiClock, FiCheckCircle,
     FiInfo, FiLock, FiGlobe, FiCpu, FiAward
 } from 'react-icons/fi';
-import { FaCcVisa, FaCcMastercard, FaCcAmex } from 'react-icons/fa';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import GlassmorphicToast from '../components/GlassmorphicToast';
 
 /**
  * SubscriptionPage - A high-end, premium billing management experience.
@@ -27,6 +27,7 @@ export default function SubscriptionPage({ sidebarMode }) {
     const [billingCycle, setBillingCycle] = useState('monthly'); // monthly, yearly
     const [plans, setPlans] = useState([]);
     const [currentPlan, setCurrentPlan] = useState(null);
+    const [subscription, setSubscription] = useState(null); // Active subscription data
     const [userCount, setUserCount] = useState(0);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -34,36 +35,96 @@ export default function SubscriptionPage({ sidebarMode }) {
     const [processing, setProcessing] = useState(false);
     const [toast, setToast] = useState({ show: false, type: '', message: '' });
 
-    const [paymentMethods, setPaymentMethods] = useState([
-        { id: 1, type: 'visa', last4: '4242', expiry: '12/26', isDefault: true, holder: 'Akhil Billowria' },
-    ]);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethods[0]);
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
-    // Data mocks
-    const billingHistory = [
-        { id: 1, date: '2026-01-01', amount: 29.00, status: 'paid', invoice: 'INV-2026-001', method: '•••• 4242' },
-        { id: 2, date: '2025-12-01', amount: 29.00, status: 'paid', invoice: 'INV-2025-012', method: '•••• 4242' },
-        { id: 3, date: '2025-11-01', amount: 0.00, status: 'paid', invoice: 'INV-2025-011', method: 'Free' },
-    ];
+    // Real Billing State
+    const [billingDetails, setBillingDetails] = useState({ name: '', taxId: '', address: '' });
+    const [billingHistory, setBillingHistory] = useState([]);
 
-    const usageTrend = [
-        { month: 'Sep', users: 3, activity: 45 },
-        { month: 'Oct', users: 4, activity: 52 },
-        { month: 'Nov', users: 5, activity: 48 },
-        { month: 'Dec', users: 5, activity: 65 },
-        { month: 'Jan', users: 8, activity: 89 },
-    ];
+    // Real Usage Stats
+    const [usageStats, setUsageStats] = useState({
+        teamMembers: 0,
+        reportsThisMonth: 0,
+        totalReports: 0,
+        activeDays: 0
+    });
+    const [usageTrend, setUsageTrend] = useState([]);
 
     const faqs = [
         { q: "Can I change plans at any time?", a: "Yes, you can upgrade or downgrade your plan instantly. Changes are prorated to your next billing cycle." },
-        { q: "Do you offer a free trial?", a: "Every team starts on our Free plan which includes all essential features for up to 5 members." },
+        { q: "Do you offer a free trial?", a: "Every team starts on our Free plan which includes all essential features for up to 3 members." },
         { q: "What counts as a user?", a: "Any account joined to your company workspace is counted as a user, including admins and managers." },
         { q: "Is my payment information secure?", a: "We never store your full card details. All payments are processed through industry-leading secure providers." }
     ];
 
+    // ... (rest of code) ...
+
+    {/* Quick Info (Right) */ }
+    <div className="hidden lg:flex items-center gap-6">
+        <div className="text-right">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Plan</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{currentPlan?.name}</p>
+        </div>
+        <div className="h-8 w-px bg-white/10" />
+        <div className="text-right">
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Next Invoice</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {subscription?.current_period_end
+                    ? new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })
+                    : '---'}
+            </p>
+        </div>
+    </div>
+
     useEffect(() => {
         if (currentCompany) fetchSubscriptionData();
     }, [currentCompany]);
+
+    const saveBillingDetails = async () => {
+        setProcessing(true);
+        try {
+            const { error } = await supabase
+                .from('companies')
+                .update({ billing_details: billingDetails })
+                .eq('id', currentCompany.id);
+            if (error) throw error;
+            setToast({ show: true, type: 'success', message: 'Billing details updated' });
+        } catch (err) {
+            setToast({ show: true, type: 'error', message: err.message });
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const downloadInvoice = async (paymentId) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zfyxudmjeytmdtigxmfc.supabase.co';
+
+            const response = await fetch(`${projectUrl}/functions/v1/generate-invoice?payment_id=${paymentId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to generate invoice');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${paymentId.slice(0, 8)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            setToast({ show: true, type: 'success', message: 'Invoice downloaded!' });
+        } catch (err) {
+            setToast({ show: true, type: 'error', message: err.message });
+        }
+    };
 
     const fetchSubscriptionData = async () => {
         setLoading(true);
@@ -88,11 +149,13 @@ export default function SubscriptionPage({ sidebarMode }) {
                 .maybeSingle();
 
             if (subData) {
+                setSubscription(subData); // Store full subscription data
                 setCurrentPlan({
                     ...subData.plan,
                     features: Array.isArray(subData.plan.features) ? subData.plan.features : []
                 });
             } else {
+                setSubscription(null);
                 const freePlan = formattedPlans.find(p => p.name === 'Free') || formattedPlans[0];
                 setCurrentPlan(freePlan);
             }
@@ -102,6 +165,93 @@ export default function SubscriptionPage({ sidebarMode }) {
                 .select('*', { count: 'exact', head: true })
                 .eq('company_id', currentCompany.id);
             setUserCount(count || 0);
+
+            // Fetch Billing History
+            const { data: payments } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('company_id', currentCompany.id)
+                .order('created_at', { ascending: false });
+            setBillingHistory(payments || []);
+
+            // Fetch Company Billing Details
+            const { data: companyData } = await supabase
+                .from('companies')
+                .select('billing_details')
+                .eq('id', currentCompany.id)
+                .single();
+            if (companyData?.billing_details) {
+                setBillingDetails(companyData.billing_details);
+            }
+
+            // Fetch Usage Stats
+            const now = new Date();
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+            // Total reports this month
+            const { count: reportsThisMonth } = await supabase
+                .from('daily_reports')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', currentCompany.id)
+                .gte('created_at', firstOfMonth);
+
+            // Total reports all time
+            const { count: totalReports } = await supabase
+                .from('daily_reports')
+                .select('*', { count: 'exact', head: true })
+                .eq('company_id', currentCompany.id);
+
+            // Active days (unique days with reports this month)
+            const { data: reportsData } = await supabase
+                .from('daily_reports')
+                .select('created_at')
+                .eq('company_id', currentCompany.id)
+                .gte('created_at', firstOfMonth);
+
+            const uniqueDays = new Set(
+                (reportsData || []).map(r => new Date(r.created_at).toDateString())
+            ).size;
+
+            setUsageStats({
+                teamMembers: count || 0,
+                reportsThisMonth: reportsThisMonth || 0,
+                totalReports: totalReports || 0,
+                activeDays: uniqueDays
+            });
+
+            // Calculate Usage Trend (Last 6 Months)
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+            sixMonthsAgo.setDate(1); // Start of that month
+
+            const { data: trendData } = await supabase
+                .from('daily_reports')
+                .select('created_at')
+                .eq('company_id', currentCompany.id)
+                .gte('created_at', sixMonthsAgo.toISOString());
+
+            const monthlyCounts = {};
+            // Initialize last 6 months with 0
+            for (let i = 0; i < 6; i++) {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                const key = d.toLocaleString('default', { month: 'short' });
+                monthlyCounts[key] = 0;
+            }
+
+            (trendData || []).forEach(r => {
+                const month = new Date(r.created_at).toLocaleString('default', { month: 'short' });
+                if (monthlyCounts.hasOwnProperty(month)) {
+                    monthlyCounts[month]++;
+                }
+            });
+
+            const trendChartData = Object.entries(monthlyCounts)
+                .map(([month, activity]) => ({ month, activity }))
+                .reverse(); // Oldest first
+
+            setUsageTrend(trendChartData);
+
         } catch (error) {
             console.error('Biling fetch error:', error);
         } finally {
@@ -109,30 +259,139 @@ export default function SubscriptionPage({ sidebarMode }) {
         }
     };
 
+    const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+    useEffect(() => {
+        const loadRazorpay = () => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => setRazorpayLoaded(true);
+            script.onerror = () => setToast({ show: true, type: 'error', message: 'Razorpay SDK failed to load' });
+            document.body.appendChild(script);
+        };
+        loadRazorpay();
+    }, []);
+
     const handleUpgrade = async () => {
         if (!selectedPlan) return;
+        if (!razorpayLoaded) {
+            setToast({ show: true, type: 'error', message: 'Payment gateway is initializing...' });
+            return;
+        }
+
         setProcessing(true);
-        // Simulate payment provider delay
-        await new Promise(r => setTimeout(r, 2000));
-
         try {
-            const { error } = await supabase
-                .from('subscriptions')
-                .upsert({
-                    company_id: currentCompany.id,
+            // 1. Create Order via Edge Function
+            const { data: { session } } = await supabase.auth.getSession();
+
+            // Use env var or fallback
+            const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://zfyxudmjeytmdtigxmfc.supabase.co';
+            const endpoint = `${projectUrl}/functions/v1/create-payment-order`;
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
                     plan_id: selectedPlan.id,
-                    status: 'active',
-                    current_period_start: new Date().toISOString(),
-                    current_period_end: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString()
-                }, { onConflict: 'company_id' });
+                    company_id: currentCompany.id,
+                    billing_cycle: billingCycle
+                })
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create order');
+            }
 
-            setToast({ show: true, type: 'success', message: `Welcome to the ${selectedPlan.name} tier!` });
-            setShowUpgradeModal(false);
-            fetchSubscriptionData();
+            const activeOrder = await response.json();
+
+            // Handle Free Plan or 100% discount immediately
+            if (activeOrder.amount === 0) {
+                await verifyPayment({
+                    order_id: activeOrder.order_id,
+                    payment_id: 'free_plan',
+                    signature: 'free_plan', // specific signature for free plan
+                    plan_id: selectedPlan.id,
+                    company_id: currentCompany.id,
+                    billing_cycle: billingCycle
+                });
+                return;
+            }
+
+            // 2. Open Razorpay Checkout
+            const options = {
+                key: activeOrder.key_id,
+                amount: activeOrder.amount * 100, // already in paise from backend? check backed logic. 
+                // Ah backend returns native amount, and `amount` in options should be paise if previously converted? 
+                // Let's re-read backend: returned `{ amount: amount }` where `amount` was raw (e.g. 29). 
+                // Wait, backend response: `amount` is raw. `amountInPaise` was used for order creation.
+                // Checkout options expects amount in subunits (paise). 
+                // Let's ensure consistency.
+                currency: activeOrder.currency,
+                name: "SYNC",
+                description: `Upgrade to ${selectedPlan.name} Plan`,
+                order_id: activeOrder.order_id,
+                handler: async function (response) {
+                    await verifyPayment({
+                        order_id: response.razorpay_order_id,
+                        payment_id: response.razorpay_payment_id,
+                        signature: response.razorpay_signature,
+                        plan_id: selectedPlan.id,
+                        company_id: currentCompany.id,
+                        billing_cycle: billingCycle
+                    });
+                },
+                prefill: {
+                    name: userRole?.name || 'User', // User name if available
+                    email: session.user.email,
+                },
+                theme: {
+                    color: isDark ? '#3b82f6' : '#2563eb'
+                },
+                modal: {
+                    ondismiss: function () {
+                        setProcessing(false);
+                        setToast({ show: true, type: 'info', message: 'Payment cancelled' });
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                setToast({ show: true, type: 'error', message: response.error.description });
+                setProcessing(false);
+            });
+            rzp.open();
+
         } catch (err) {
+            console.error('Payment error:', err);
             setToast({ show: true, type: 'error', message: err.message });
+            setProcessing(false);
+        }
+    };
+
+    const verifyPayment = async (paymentData) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const verifyRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(paymentData)
+            });
+
+            if (!verifyRes.ok) throw new Error('Payment verification failed');
+
+            setToast({ show: true, type: 'success', message: `Successfully upgraded to ${selectedPlan.name}!` });
+            setShowUpgradeModal(false);
+            fetchSubscriptionData(); // Refresh UI
+        } catch (error) {
+            setToast({ show: true, type: 'error', message: error.message });
         } finally {
             setProcessing(false);
         }
@@ -145,6 +404,21 @@ export default function SubscriptionPage({ sidebarMode }) {
         if (themeMode === 'space') return 'from-indigo-400 to-purple-600';
         return 'from-blue-500 to-indigo-600';
     }, [themeMode]);
+
+    const maxUsers = currentPlan?.max_users || 5;
+    const progressPercent = Math.min((userCount / maxUsers) * 100, 100);
+
+    const renewalDate = useMemo(() => {
+        const lastSuccess = (billingHistory || []).find(p => p.status === 'success');
+        if (lastSuccess) {
+            const d = new Date(lastSuccess.created_at);
+            d.setMonth(d.getMonth() + 1);
+            return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        return subscription?.current_period_end
+            ? new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '---';
+    }, [billingHistory, subscription]);
 
     if (loading || companyLoading) {
         return (
@@ -162,9 +436,6 @@ export default function SubscriptionPage({ sidebarMode }) {
             </div>
         );
     }
-
-    const maxUsers = currentPlan?.max_users || 5;
-    const progressPercent = Math.min((userCount / maxUsers) * 100, 100);
 
     return (
         <div className="w-full min-h-[calc(100vh-4rem)] flex flex-col relative overflow-x-hidden pt-20 pb-12 transition-all duration-700">
@@ -244,89 +515,90 @@ export default function SubscriptionPage({ sidebarMode }) {
             {/* MAIN CONTENT Area */}
             <main className="max-w-7xl mx-auto px-6 w-full relative z-10">
 
-                {/* TOAST Notification */}
-                <AnimatePresence>
-                    {toast.show && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                            className="fixed bottom-8 right-8 z-[100]"
-                        >
-                            <div className={`px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border ${toast.type === 'success' ? 'bg-emerald-500/90 border-emerald-400' : 'bg-rose-500/90 border-rose-400'
-                                } text-white flex items-center gap-3`}>
-                                {toast.type === 'success' ? <FiCheckCircle className="w-5 h-5" /> : <FiInfo className="w-5 h-5" />}
-                                <p className="font-bold">{toast.message}</p>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                <GlassmorphicToast
+                    isVisible={toast.show}
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(prev => ({ ...prev, show: false }))}
+                />
 
                 {/* TAB: PLANS & PRICING */}
                 {activeTab === 'plans' && (
                     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {/* Current Plan Billboard */}
+                        {/* Current Plan Billboard Redesign */}
                         <motion.section
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="relative group rounded-[2.5rem] overflow-hidden bg-slate-900 border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)]"
+                            className="relative group rounded-[2.5rem] overflow-hidden bg-[#0f1129] border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]"
                         >
-                            <div className={`absolute inset-0 opacity-20 bg-gradient-to-br ${accentColor}`} />
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
+                            {/* Deep Purple Gradient Overlays */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1c3d] via-[#2d1b4e] to-[#0f1129] opacity-90" />
+                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
+                            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
 
-                            <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-12">
-                                <div className="flex-1 space-y-6">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <div className="relative p-8 md:p-14 flex flex-col lg:flex-row items-center justify-between gap-12">
+                                <div className="flex-1 space-y-8">
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
                                         Your Active Plan
                                     </div>
-                                    <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter">
-                                        Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{currentPlan?.name}</span> Plan
-                                    </h2>
-                                    <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed">
-                                        Empowering your workspace with advanced resource management, real-time sync, and premium security protocols.
-                                    </p>
 
-                                    {/* Resource Progress */}
-                                    <div className="max-w-md bg-white/5 border border-white/5 rounded-3xl p-6 backdrop-blur-md">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-slate-400 text-sm font-bold uppercase">Team Capacity</span>
-                                            <span className="text-white font-black">{userCount} <span className="text-slate-500">/ {maxUsers || '∞'}</span></span>
+                                    <div className="space-y-4">
+                                        <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+                                            Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Pro</span> Plan
+                                        </h2>
+                                        <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed opacity-80">
+                                            Empowering your workspace with advanced resource management, real-time sync, and premium security protocols.
+                                        </p>
+                                    </div>
+
+                                    {/* Resource Progress - Custom Styled */}
+                                    <div className="max-w-md bg-white/5 border border-white/5 rounded-[2rem] p-8 backdrop-blur-2xl relative overflow-hidden group/progress">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Team Capacity</span>
+                                            <span className="text-white text-lg font-black">{userCount} <span className="text-slate-600">/ {maxUsers || '∞'}</span></span>
                                         </div>
-                                        <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                                        <div className="w-full h-4 bg-slate-800/50 rounded-full overflow-hidden p-1 border border-white/5 shadow-inner">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${progressPercent}%` }}
                                                 transition={{ duration: 1.5, ease: "circOut" }}
-                                                className={`h-full bg-gradient-to-r ${accentColor} rounded-full`}
+                                                className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-full shadow-[0_0_15px_rgba(79,70,229,0.4)]"
                                             />
                                         </div>
-                                        <p className="mt-3 text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1.5">
-                                            <FiInfo className="w-3 h-3" /> {maxUsers - userCount} Slots remaining in current cycle
+                                        <p className="mt-4 text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
+                                            <FiInfo className="w-3.5 h-3.5" /> {(maxUsers || 0) - userCount} Slots remaining in current cycle
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="shrink-0 flex flex-col items-center md:items-end gap-2">
-                                    <div className="relative">
-                                        <div className={`absolute inset-0 blur-3xl opacity-30 bg-gradient-to-br ${accentColor}`} />
-                                        <div className="relative px-8 py-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md text-center md:text-right">
-                                            <p className="text-slate-500 text-xs font-bold uppercase">Plan Price</p>
-                                            <div className="flex items-baseline gap-1 justify-center md:justify-end">
-                                                <span className="text-5xl font-black text-white">${currentPlan?.price_monthly || 0}</span>
-                                                <span className="text-slate-500 font-bold">/mo</span>
-                                            </div>
-                                            <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-center md:justify-end gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-300">
-                                                    <FiDollarSign className="w-5 h-5" />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-[10px] text-slate-500 font-bold">Auto-Renewal</p>
-                                                    <p className="text-sm font-bold text-white">Mar 01, 2026</p>
-                                                </div>
+                                {/* Glassmorphic Price Card */}
+                                <div className="shrink-0 relative w-full lg:w-auto">
+                                    <div className="absolute inset-0 blur-[60px] opacity-40 bg-indigo-500 animate-pulse" />
+                                    <motion.div
+                                        whileHover={{ y: -5, scale: 1.02 }}
+                                        className="relative p-10 rounded-[3rem] bg-white/5 border border-white/20 backdrop-blur-3xl shadow-2xl flex flex-col items-center lg:items-end gap-6"
+                                    >
+                                        <div className="text-center lg:text-right">
+                                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Plan Price</p>
+                                            <div className="flex items-baseline gap-1 justify-center lg:justify-end">
+                                                <span className="text-7xl font-black text-white tracking-tighter">₹{currentPlan?.price_monthly || 0}</span>
+                                                <span className="text-slate-500 font-black text-xl">/mo</span>
                                             </div>
                                         </div>
-                                    </div>
+
+                                        <div className="w-full h-px bg-white/10" />
+
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-blue-400 shadow-xl">
+                                                <FiCalendar className="w-7 h-7" />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Auto-Renewal</p>
+                                                <p className="text-xl font-black text-white">{renewalDate}</p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
                                 </div>
                             </div>
                         </motion.section>
@@ -438,77 +710,134 @@ export default function SubscriptionPage({ sidebarMode }) {
 
                 {/* TAB: BILLING & PAYMENTS */}
                 {activeTab === 'billing' && (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                            {/* Card Display Container */}
-                            <section className="space-y-6">
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        {/* Billing Overview Header */}
+                        <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 border border-white/5 shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl" />
+                            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Current Subscription</p>
+                                    <h2 className="text-3xl font-black text-white">{currentPlan?.name || 'Free'} Plan</h2>
+                                    <p className="text-slate-400 mt-1">
+                                        {subscription?.current_period_end
+                                            ? `Renews ${new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                            : 'No active billing cycle'}
+                                    </p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
+                                        <p className="text-3xl font-black text-white">₹{currentPlan?.price_monthly || 0}</p>
+                                        <p className="text-xs text-slate-400 font-bold uppercase">/month</p>
+                                    </div>
+                                    <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
+                                        <p className="text-3xl font-black text-emerald-400">{billingHistory.filter(p => p.status === 'success').length}</p>
+                                        <p className="text-xs text-slate-400 font-bold uppercase">Invoices</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Billing Details Form */}
+                            <section className="lg:col-span-1 space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white">Payment Methods</h3>
-                                        <p className="text-slate-500 font-medium">Manage your saved credit cards.</p>
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Billing Details</h3>
+                                </div>
+                                <div className="p-6 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase text-slate-500">Company Name</label>
+                                        <input
+                                            value={billingDetails.name || ''}
+                                            onChange={e => setBillingDetails({ ...billingDetails, name: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Acme Corp"
+                                        />
                                     </div>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => setShowPaymentModal(true)}
-                                        className={`p-3 rounded-2xl bg-gradient-to-br ${accentColor} text-white shadow-lg`}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase text-slate-500">Tax ID / GSTIN</label>
+                                        <input
+                                            value={billingDetails.taxId || ''}
+                                            onChange={e => setBillingDetails({ ...billingDetails, taxId: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="GSTIN12345"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase text-slate-500">Billing Address</label>
+                                        <textarea
+                                            value={billingDetails.address || ''}
+                                            onChange={e => setBillingDetails({ ...billingDetails, address: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] resize-none"
+                                            placeholder="123 Business Park, Mumbai"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={saveBillingDetails}
+                                        disabled={processing}
+                                        className={`w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r ${accentColor} shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50`}
                                     >
-                                        <FiPlus className="w-6 h-6" />
-                                    </motion.button>
+                                        {processing ? 'Saving...' : 'Save Details'}
+                                    </button>
                                 </div>
 
-                                <div className="grid gap-6">
-                                    {paymentMethods.map(method => (
-                                        <HolographicCard key={method.id} method={method} accentColor={accentColor} />
-                                    ))}
-                                </div>
-
-                                {/* Security Banner */}
-                                <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 flex items-start gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
-                                        <FiLock className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-emerald-900 dark:text-emerald-400">Military-Grade Security</p>
-                                        <p className="text-sm text-emerald-800/60 dark:text-emerald-400/60 font-medium">Your data is encrypted using AES-256 standards. We never store CVV or full PAN details.</p>
-                                    </div>
+                                {/* Security Badge */}
+                                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-3">
+                                    <FiShield className="w-5 h-5 text-emerald-500" />
+                                    <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Payments secured by Razorpay</p>
                                 </div>
                             </section>
 
-                            {/* Billing History Section */}
-                            <section className="space-y-6">
-                                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Billing History</h3>
-                                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-xl">
-                                    <div className="divide-y divide-slate-100 dark:divide-white/5">
-                                        {billingHistory.map(invoice => (
-                                            <div key={invoice.id} className="p-6 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                                        <FiFileText className="w-6 h-6" />
+                            {/* Invoice History */}
+                            <section className="lg:col-span-2 space-y-6">
+                                <h3 className="text-xl font-black text-slate-900 dark:text-white">Invoice History</h3>
+                                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-xl">
+                                    {billingHistory.length === 0 ? (
+                                        <div className="p-12 text-center">
+                                            <FiFileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                                            <p className="text-slate-500 font-medium">No invoices yet</p>
+                                            <p className="text-xs text-slate-400 mt-1">Your payment history will appear here</p>
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                            {billingHistory.map(invoice => (
+                                                <div key={invoice.id} className="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${invoice.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                            {invoice.status === 'success' ? <FiCheckCircle className="w-5 h-5" /> : <FiClock className="w-5 h-5" />}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-900 dark:text-white">
+                                                                INV-{String(invoice.invoice_number || 1).padStart(6, '0')}
+                                                            </p>
+                                                            <p className="text-xs text-slate-500">
+                                                                {new Date(invoice.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                {invoice.billing_cycle && ` • ${invoice.billing_cycle}`}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-black text-slate-900 dark:text-white">{invoice.invoice}</p>
-                                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{invoice.date} • {invoice.method}</p>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="text-right">
+                                                            <p className="font-bold text-slate-900 dark:text-white">₹{Number(invoice.amount).toFixed(2)}</p>
+                                                            <span className={`text-xs font-bold uppercase ${invoice.status === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                                                {invoice.status}
+                                                            </span>
+                                                        </div>
+                                                        {invoice.status === 'success' && (
+                                                            <motion.button
+                                                                whileHover={{ scale: 1.1 }}
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => downloadInvoice(invoice.id)}
+                                                                className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                                                title="Download Invoice"
+                                                            >
+                                                                <FiDownload className="w-4 h-4" />
+                                                            </motion.button>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-6">
-                                                    <div className="text-right">
-                                                        <p className="font-black text-slate-900 dark:text-white">${invoice.amount.toFixed(2)}</p>
-                                                        <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase border border-emerald-500/20">{invoice.status}</span>
-                                                    </div>
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.1 }}
-                                                        className="p-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100"
-                                                    >
-                                                        <FiDownload className="w-5 h-5" />
-                                                    </motion.button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <button className="w-full py-4 bg-slate-50 dark:bg-white/5 text-slate-500 font-bold text-sm uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors">
-                                        Download All Invoices
-                                    </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </section>
                         </div>
@@ -521,10 +850,10 @@ export default function SubscriptionPage({ sidebarMode }) {
                         {/* Stats Summary Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {[
-                                { label: "Total Sessions", val: "1,204", delta: "+12%", icon: <FiGlobe />, color: "blue" },
-                                { label: "Compute Usage", val: "4.2 TB", delta: "+5.1%", icon: <FiCpu />, color: "purple" },
-                                { label: "Reports Sync", val: "892", delta: "-2%", icon: <FiZap />, color: "emerald" },
-                                { label: "Uptime SLA", val: "99.98%", delta: "Live", icon: <FiShield />, color: "cyan" },
+                                { label: "Team Members", val: usageStats.teamMembers.toString(), icon: <FiUsers />, color: "blue" },
+                                { label: "Reports This Month", val: usageStats.reportsThisMonth.toString(), icon: <FiFileText />, color: "purple" },
+                                { label: "Total Reports", val: usageStats.totalReports.toString(), icon: <FiZap />, color: "emerald" },
+                                { label: "Active Days", val: usageStats.activeDays.toString(), icon: <FiCalendar />, color: "cyan" },
                             ].map((stat, i) => (
                                 <motion.div
                                     key={i}
@@ -537,7 +866,6 @@ export default function SubscriptionPage({ sidebarMode }) {
                                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
                                     <div className="flex items-baseline justify-between mt-1">
                                         <p className="text-2xl font-black text-slate-900 dark:text-white">{stat.val}</p>
-                                        <span className={`text-xs font-bold ${stat.delta.startsWith('+') ? 'text-emerald-500' : 'text-slate-400'}`}>{stat.delta}</span>
                                     </div>
                                 </motion.div>
                             ))}
@@ -701,8 +1029,19 @@ export default function SubscriptionPage({ sidebarMode }) {
  */
 function ModernPlanCard({ plan, index, currentPlanId, billingCycle, accentColor, onSelect }) {
     const isCurrent = plan.id === currentPlanId;
-    const isPremium = plan.name === 'Pro';
-    const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_monthly * 0.8);
+    const isPremium = plan.name === 'Pro' || plan.name === 'Super-Pro';
+    const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_monthly * 0.8 * 12);
+
+    const getPlanDesc = (name) => {
+        switch (name) {
+            case 'Free': return "Perfect for individuals and small teams starting out.";
+            case 'Intermediate': return "Advanced features for growing teams needing more power.";
+            case 'Pro': return "Professional scale with high performance and priority support.";
+            case 'Super-Pro': return "Supercharged capabilities for large scale organizations.";
+            case 'Enterprise': return "Maximum scalability and custom infrastructure for the elite.";
+            default: return "A tailored plan for your organization's unique needs.";
+        }
+    }
 
     return (
         <motion.div
@@ -718,10 +1057,18 @@ function ModernPlanCard({ plan, index, currentPlanId, billingCycle, accentColor,
                 <div className={`absolute inset-0 rounded-[3rem] opacity-20 bg-gradient-to-br ${accentColor}`} />
             )}
 
-            {isPremium && (
+            {plan.name === 'Super-Pro' && (
+                <div className="absolute top-0 right-12 -translate-y-1/2">
+                    <span className={`px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-600 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
+                        Ultimate Power
+                    </span>
+                </div>
+            )}
+
+            {plan.name === 'Pro' && (
                 <div className="absolute top-0 right-12 -translate-y-1/2">
                     <span className={`px-4 py-1.5 rounded-full bg-gradient-to-r ${accentColor} text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
-                        Highest Demand
+                        Best Value
                     </span>
                 </div>
             )}
@@ -729,17 +1076,28 @@ function ModernPlanCard({ plan, index, currentPlanId, billingCycle, accentColor,
             <div className="relative space-y-8">
                 <div className="space-y-2">
                     <h4 className={`text-xl font-black tracking-tight ${isPremium ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{plan.name}</h4>
-                    <p className={`text-sm font-medium ${isPremium ? 'text-slate-400 font-medium' : 'text-slate-500'}`}>Perfect for {plan.name === 'Free' ? 'exploring' : plan.name === 'Pro' ? 'performing teams' : 'mission-critical ops'}.</p>
+                    <p className={`text-sm font-medium ${isPremium ? 'text-slate-400 font-medium' : 'text-slate-500'}`}>{getPlanDesc(plan.name)}</p>
                 </div>
 
                 <div className="flex items-baseline gap-1">
-                    <span className={`text-5xl font-black ${isPremium ? 'text-white' : 'text-slate-900 dark:text-white'} tracking-tighter`}>${price}</span>
+                    <span className={`text-5xl font-black ${isPremium ? 'text-white' : 'text-slate-900 dark:text-white'} tracking-tighter`}>₹{billingCycle === 'monthly' ? price : Math.round(price / 12)}</span>
                     <span className="text-slate-500 font-bold">/mo</span>
+                    {billingCycle === 'yearly' && (
+                        <span className="text-xs text-emerald-500 font-bold ml-2">Billed Annually</span>
+                    )}
                 </div>
 
                 <div className="h-px bg-slate-100 dark:bg-white/10" />
 
                 <ul className="space-y-4">
+                    <li className="flex items-start gap-3">
+                        <div className={`mt-1 p-0.5 rounded-full ${isPremium ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500'}`}>
+                            <FiUsers className="w-3.5 h-3.5" />
+                        </div>
+                        <span className={`text-sm font-bold tracking-tight ${isPremium ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                            Up to {plan.max_users} Users
+                        </span>
+                    </li>
                     {plan.features?.map((f, i) => (
                         <li key={i} className="flex items-start gap-3">
                             <div className={`mt-1 p-0.5 rounded-full ${isPremium ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500'}`}>

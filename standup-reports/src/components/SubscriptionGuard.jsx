@@ -39,13 +39,27 @@ const SubscriptionGuard = ({ children }) => {
                 .eq('company_id', currentCompany.id);
 
             const planName = subData?.plan?.name || 'Free';
-            const maxUsers = subData?.plan?.max_users || (subData ? 9999 : 5); // Default limit 5 for Free/No Plan
+            let maxUsers = subData?.plan?.max_users || 5;
 
-            // Check if Free plan AND over limit
-            const isFree = planName === 'Free';
+            // CHECK EXPIRY
+            // If we have a subscription but it has expired, fallback to Free limits
+            if (subData?.current_period_end) {
+                const expiry = new Date(subData.current_period_end);
+                if (expiry < new Date()) {
+                    // Subscription Expired
+                    // In a real app, you might show a generic "Your Plan Expired" banner globally
+                    // For guarding, we treat limits as Free tier limits now
+                    maxUsers = 5;
+                }
+            } else if (!subData) {
+                maxUsers = 5; // explicit fallback
+            }
+
+            // Check if (Explicitly Free OR Expired/NoPlan) AND over limit
             const isOverLimit = count > maxUsers;
+            const isFreeOrExpired = planName === 'Free' || (subData?.current_period_end && new Date(subData.current_period_end) < new Date());
 
-            if (isFree && isOverLimit) {
+            if (isFreeOrExpired && isOverLimit) {
                 setIsBlocked(true);
                 // If not already on subscription page, redirect ONLY if admin
                 if (location.pathname !== '/subscription' && userRole === 'admin') {
