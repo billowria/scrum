@@ -24,9 +24,11 @@ export const fetchUserContext = async () => {
 
         const { data: profile } = await supabase
             .from('users')
-            .select('id, name, email, role, team_id, company_id')
+            .select('id, name, email, role, team_id, company_id, avatar_url')
             .eq('id', user.id)
             .single();
+
+        if (!profile) return null;
 
         // Parallel fetch for Company and Team names
         const promises = [];
@@ -84,7 +86,7 @@ const validateAndSecureQuery = (sql, user) => {
     const table = match ? match[1].toLowerCase() : '';
 
     const companyTables = ['users', 'teams', 'projects', 'tasks', 'daily_reports', 'leave_plans',
-        'timesheets', 'announcements', 'achievements', 'holidays', 'sprints', 'project_members'];
+        'timesheets', 'announcements', 'achievements', 'holidays', 'sprints', 'project_assignments'];
 
     // Check if the query is touching a protected table
     let touchesProtectedTable = false;
@@ -127,11 +129,11 @@ const validateAndSecureQuery = (sql, user) => {
 
         if (targetTable) {
             // Add subquery filter for project access
-            // Logic: AND project_id IN (SELECT project_id FROM project_members WHERE user_id = 'USER_ID')
-            // Special case: 'projects' table uses 'id' instead of 'project_id' usually, but let's check context
+            // Logic: AND project_id IN (SELECT project_id FROM project_assignments WHERE user_id = 'USER_ID')
+            // Special case: 'projects' table uses 'id' instead of 'project_id' usually
 
-            const projectFilter = `project_id IN (SELECT project_id FROM project_members WHERE user_id = '${user.id}')`;
-            const idFilter = `id IN (SELECT project_id FROM project_members WHERE user_id = '${user.id}')`;
+            const projectFilter = `project_id IN (SELECT project_id FROM project_assignments WHERE user_id = '${user.id}')`;
+            const idFilter = `id IN (SELECT project_id FROM project_assignments WHERE user_id = '${user.id}')`;
 
             const filterToAdd = targetTable === 'projects' ? idFilter : projectFilter;
 
@@ -158,7 +160,7 @@ const executeSecureQuery = async (sql, user) => {
     try {
         const securedSql = validateAndSecureQuery(sql, user);
 
-        // Try RPC first
+        // Execute via RPC function
         const { data, error } = await supabase.rpc('execute_readonly_query', { query_text: securedSql });
 
         if (error) {
@@ -175,7 +177,13 @@ const executeSecureQuery = async (sql, user) => {
             }
             return { error: error.message };
         }
-        return { data };
+
+        // Check if RPC returned an error object
+        if (data && data.error) {
+            return { error: data.error };
+        }
+
+        return { data: data || [] };
     } catch (err) {
         return { error: err.message };
     }
@@ -306,51 +314,68 @@ NOTE: Prioritize this item in your response. If the user asks for help, analyze 
     }
 
     // Build security-aware system prompt
-    const systemPrompt = `You are Sync, an AI assistant for SquadSync.
+    const systemPrompt = `You are Sync, an AI assistant for SquadSync - a project management and team collaboration platform.
 ${contextPrompt}
 
-CURRENT USER:
+===== CURRENT USER CONTEXT =====
+- User ID: ${user.id}
 - Name: ${user.name}
+- Email: ${user.email || 'N/A'}
 - Role: ${user.role}
 - Company: ${user.company_name}
 - Company ID: ${user.company_id}
 - Team: ${user.team_name || 'None'}
 - Team ID: ${user.team_id || 'None'}
 
-TODAY: ${today}
+TODAY'S DATE: ${today}
 
-SECURITY RULES (CRITICAL):
-1. ALWAYS filter by company_id = '${user.company_id}'
-2. Show NAMES not IDs - join users table
-3. **ACCESS CONTROL**:
-   - Admins/Managers: Can see ALL company data.
-   - Members: Can ONLY see Projects/Tasks they are assigned to (via project_members).
-   - If a member asks for "all tasks", only show THEIR project tasks.
+===== CRITICAL SECURITY RULES =====
+1. ALWAYS filter by company_id = '${user.company_id}' on ALL queries
+2. For "my" questions (my tasks, my reports, my leaves), filter by user_id/assignee_id = '${user.id}'
+3. Show NAMES not UUIDs - always JOIN users table to get names
+4. ACCESS CONTROL:
+   - Admins/Managers: Can see ALL company data
+   - Members: Can ONLY see Projects/Tasks they are assigned to
 
-DATABASE:
+===== DATABASE SCHEMA =====
 ${FULL_SCHEMA}
 
+===== RELATIONSHIPS =====
 ${RELATIONSHIPS}
 
-ANALYTICS CAPABILITIES (Managers/Admins Only):
-- You can aggregate data (COUNT, AVG, SUM) for tasks, reports, and time.
-- Example: "Average task completion time", "Count of high priority tasks".
+===== RESPONSE GUIDELINES =====
+1. If data is needed, write a SELECT query in a \`\`\`sql code block
+2. ALWAYS use JOINs to show names instead of IDs
+3. For personal queries like "my tasks", use: WHERE assignee_id = '${user.id}'
+4. For personal reports: WHERE user_id = '${user.id}'
+5. Limit results to 20 rows max
+6. Answer in 1-2 natural sentences after getting data
+7. **CASE-INSENSITIVE**: When filtering by names (project name, user name), use ILIKE or LOWER() for case-insensitive matching
 
-HOW TO RESPOND:
-1. If date/analytics needed, write SQL in \`\`\`sql block.
-2. For Members, write standard queries; the system will auto-restrict to their projects.
-3. Answer in 1-2 business sentences.`;
+===== QUERY EXAMPLES =====
+- "My tasks": SELECT t.title, t.status, t.priority, t.due_date FROM tasks t WHERE t.assignee_id = '${user.id}' AND t.company_id = '${user.company_id}' AND t.status != 'Completed'
+- "Team members": SELECT u.name, u.email, u.role FROM users u WHERE u.company_id = '${user.company_id}'
+- "Who is on leave": SELECT u.name, lp.start_date, lp.end_date, lp.type FROM leave_plans lp JOIN users u ON u.id = lp.user_id WHERE lp.company_id = '${user.company_id}' AND lp.status = 'approved' AND lp.start_date <= CURRENT_DATE AND lp.end_date >= CURRENT_DATE
+- "Tasks in project Carnival": SELECT COUNT(*) FROM tasks t JOIN projects p ON p.id = t.project_id WHERE t.assignee_id = '${user.id}' AND t.company_id = '${user.company_id}' AND LOWER(p.name) ILIKE '%carnival%'`;
 
     try {
+        // Build conversation context from chat history (keep more messages for context)
+        const recentHistory = chatHistory.slice(-8).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content
+        }));
+
+        // Add conversation awareness to system prompt if there's history
+        const conversationContext = recentHistory.length > 0
+            ? `\n===== CONVERSATION CONTEXT =====\nYou are in an ongoing conversation. When the user says "it", "those", "them", "that project", "those tasks", etc., refer back to the most recent context from the conversation. Use previous answers to inform your current response.\n`
+            : '';
+
         // Step 1: Get AI to decide if SQL needed
         const response1 = await openai.chat.completions.create({
             model: 'google/gemini-2.0-flash-001',
             messages: [
-                { role: 'system', content: systemPrompt },
-                ...chatHistory.slice(-4).map(m => ({
-                    role: m.role === 'user' ? 'user' : 'assistant',
-                    content: m.content
-                })),
+                { role: 'system', content: systemPrompt + conversationContext },
+                ...recentHistory,
                 { role: 'user', content: userQuery }
             ],
             temperature: 0.3
@@ -368,7 +393,9 @@ HOW TO RESPOND:
             if (result.error) {
                 dataForAI = `Error: ${result.error}`;
             } else {
-                dataForAI = JSON.stringify(formatDataForAI(result.data), null, 2);
+                // CRITICAL: await the async function!
+                const formattedData = await formatDataForAI(result.data);
+                dataForAI = JSON.stringify(formattedData, null, 2);
             }
 
             // Step 2: Answer with data
