@@ -13,147 +13,137 @@ class Firefly {
         this.x = Math.random() * canvasWidth;
         this.y = Math.random() * canvasHeight;
 
-        // Velocity & Acceleration
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.ax = 0;
-        this.ay = 0;
+        // Velocity - Ultra slow, fluid drift
+        this.vx = (Math.random() - 0.5) * 0.15;
+        this.vy = (Math.random() - 0.5) * 0.15;
 
         // Properties
-        this.size = Math.random() * 2.5 + 1.5;
-        this.maxSpeed = 3.0;
-        this.maxForce = 0.15;
+        this.size = Math.random() * 2 + 1.5; // 1.5-3.5px (Slightly larger core)
 
-        // Oscillation for "natural" feel
-        this.angle = Math.random() * Math.PI * 2;
-        this.angleSpeed = Math.random() * 0.05 - 0.025;
-        this.hue = 35 + Math.random() * 15; // 35-50 range
+        // Blink Cycle
+        this.blinkPhase = Math.random() * Math.PI * 2;
+        this.blinkSpeed = Math.random() * 0.015 + 0.005; // Very slow, breathing cycle
+
+        this.hue = 42 + Math.random() * 8; // 42-50 (Golden Amber)
     }
 
-    applyForce(fx, fy) {
-        this.ax += fx;
-        this.ay += fy;
-    }
-
-    update(mouse, burst, width, height) {
+    update(width, height) {
         this.canvasWidth = width;
         this.canvasHeight = height;
 
-        // 1. BEHAVIOR: Wander
-        this.angle += (Math.random() - 0.5) * 0.2;
-        const wanderX = Math.cos(this.angle) * 0.05;
-        const wanderY = Math.sin(this.angle) * 0.05;
-        this.applyForce(wanderX, wanderY);
-
-        // 2. BEHAVIOR: Burst Repulsion (Startle Effect)
-        // If burst is active, and we are near the burst source (previous mouse pos)
-        if (burst && burst.active) {
-            const bdx = this.x - burst.x;
-            const bdy = this.y - burst.y;
-            const distSq = bdx * bdx + bdy * bdy;
-
-            // "Blast Radius": 200px
-            if (distSq < 40000) {
-                const dist = Math.sqrt(distSq);
-                // Strong outward force
-                // Stronger if closer
-                const strength = (200 - dist) / 200; // 0 to 1
-                const force = strength * 1.5; // Reduced explosion strength for smoother burst
-
-                // Direction away from burst center
-                const dirX = bdx / dist;
-                const dirY = bdy / dist;
-
-                this.applyForce(dirX * force, dirY * force);
-            }
-        }
-
-        // 3. BEHAVIOR: Seek Mouse (Gentle attraction)
-        if (mouse.x > 0 && mouse.y > 0) {
-            const dx = mouse.x - this.x;
-            const dy = mouse.y - this.y;
-            const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq);
-
-            // "Arrive" behavior: Slow down when close
-            if (dist < 400) {
-                const speed = dist < 100
-                    ? (dist / 100) * this.maxSpeed * 2.0
-                    : this.maxSpeed * 2.5;
-
-                const desiredX = (dx / dist) * speed;
-                const desiredY = (dy / dist) * speed;
-
-                const steerX = desiredX - this.vx;
-                const steerY = desiredY - this.vy;
-
-                this.applyForce(steerX * 0.2, steerY * 0.2);
-            }
-        }
-
-        // Physics step
-        this.vx += this.ax;
-        this.vy += this.ay;
-
-        // Speed Limit - Allow momentary burst speed but decay back
-        // If speed is very high (burst), don't clamp immediately, let damping handle it
-        const speedSq = this.vx * this.vx + this.vy * this.vy;
+        // Fluid Wander (Perlin-noise like smoothness via low random acceleration)
+        this.vx += (Math.random() - 0.5) * 0.005; // Very low accel
+        this.vy += (Math.random() - 0.5) * 0.005;
 
         // Soft speed limit
-        if (speedSq > this.maxSpeed * this.maxSpeed) {
-            // Drag/Friction to slow down after burst
-            this.vx *= 0.95;
-            this.vy *= 0.95;
-        }
+        const maxSpeed = 0.2; // Slower cap
+        if (Math.abs(this.vx) > maxSpeed) this.vx *= 0.98;
+        if (Math.abs(this.vy) > maxSpeed) this.vy *= 0.98;
 
         // Move
         this.x += this.vx;
         this.y += this.vy;
 
-        // Reset accel
-        this.ax = 0;
-        this.ay = 0;
+        // Update Blink Phase
+        this.blinkPhase += this.blinkSpeed;
 
-        // Wrap around screen
-        if (this.x < -50) this.x = width + 50;
-        if (this.x > width + 50) this.x = -50;
-        if (this.y < -50) this.y = height + 50;
-        if (this.y > height + 50) this.y = -50;
+        // Wrap around screen with buffer
+        const buffer = 100;
+        if (this.x < -buffer) this.x = width + buffer;
+        if (this.x > width + buffer) this.x = -buffer;
+        if (this.y < -buffer) this.y = height + buffer;
+        if (this.y > height + buffer) this.y = -buffer;
     }
 
-    draw(ctx, time) {
-        const pulse = Math.sin(time * 2 + this.x * 0.01) * 0.5 + 0.5;
-        const alpha = 0.4 + pulse * 0.6; // Slightly less base alpha
+    draw(ctx) {
+        // Calculate Blink Opacity
+        // Use Sin^2 for a smoother "always positive" pulse that feels like breathing
+        const sine = Math.sin(this.blinkPhase);
+        const normalized = (sine + 1) / 2;
+
+        // Smooth breathing curve: (x^2) creates a nice ease-in/ease-out
+        // Base alpha of 0.15 so it never fully disappears
+        const alpha = Math.pow(normalized, 2) * 0.85 + 0.15;
+
+        if (alpha < 0.05) return;
 
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.globalCompositeOperation = 'screen';
 
-        // 1. Outer Soft Glow (Large, very faint)
-        const outerGlowRad = this.size * (12 + pulse * 6);
-        const outerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, outerGlowRad);
-        outerGrad.addColorStop(0, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.15})`);
-        outerGrad.addColorStop(0.5, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.05})`);
-        outerGrad.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
-        ctx.fillStyle = outerGrad;
+        // 1. Atmosphere Bloom (Large, soft halo)
+        // Dynamic size based on brightness
+        const glowSize = this.size * (6 + alpha * 8);
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+        gradient.addColorStop(0, `hsla(${this.hue}, 100%, 50%, ${alpha * 0.5})`); // More opacity in center
+        gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(0, 0, outerGlowRad, 0, Math.PI * 2);
+        ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. Inner Core Glow (Tight, warmer hue shift)
-        const innerGlowRad = this.size * (5 + pulse * 2);
-        const innerGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, innerGlowRad);
-        innerGrad.addColorStop(0, `hsla(${this.hue + 5}, 100%, 60%, ${alpha * 0.4})`);
-        innerGrad.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
-        ctx.fillStyle = innerGrad;
+        // 2. The Bulb Core (Solid, bright center)
+        // High lightness (85-95%) for "hot" filament look
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 90%, ${alpha})`;
         ctx.beginPath();
-        ctx.arc(0, 0, innerGlowRad, 0, Math.PI * 2);
+        ctx.arc(0, 0, this.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // 3. Central Nucleus (The "body")
-        ctx.fillStyle = `hsla(${this.hue + 10}, 100%, 95%, ${alpha})`;
+        // 3. Lens Flare / Sparkle (Optional subtle detail)
+        if (alpha > 0.8) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${(alpha - 0.8) * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+}
+
+class TrailParticle {
+    constructor(x, y) {
+        this.x = x + (Math.random() - 0.5) * 15;
+        this.y = y + (Math.random() - 0.5) * 15;
+        this.vx = (Math.random() - 0.5) * 1.5;
+        this.vy = (Math.random() - 0.5) * 1.5;
+        this.size = Math.random() * 2 + 1; // 1-3px
+        this.life = 1.0;
+        this.decay = Math.random() * 0.02 + 0.015;
+        this.hue = 35 + Math.random() * 20; // Golden/Greenish
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.95;
+        this.vy *= 0.95;
+        this.life -= this.decay;
+    }
+
+    draw(ctx) {
+        if (this.life <= 0) return;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+
+        const alpha = this.life;
+
+        // Glow
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 4);
+        gradient.addColorStop(0, `hsla(${this.hue}, 100%, 60%, ${alpha * 0.8})`);
+        gradient.addColorStop(1, `hsla(${this.hue}, 100%, 50%, 0)`);
+
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(0, 0, this.size * 0.8, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.size * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cores
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 90%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -167,14 +157,13 @@ class Firefly {
 const ForestBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     const canvasRef = useRef(null);
     const firefliesRef = useRef([]);
+    const trailRef = useRef([]); // New trail particles
     const frameIdRef = useRef(0);
     const mouseRef = useRef({ x: -1000, y: -1000 });
     const lastMouseRef = useRef({ x: -1000, y: -1000 });
-    const burstRef = useRef({ active: false, x: 0, y: 0, frame: 0 }); // Burst state
-    const timeRef = useRef(0);
-    const gatheringDurationRef = useRef(0);
+    const lastSpawnTime = useRef(0);
     const lastTimestampRef = useRef(0);
-    const seekCooldownRef = useRef(0);
+    const timeRef = useRef(0);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -199,40 +188,34 @@ const ForestBackground = ({ disableMouseInteraction = false, paused = false, hid
         const render = (timestamp) => {
             if (lastTimestampRef.current === 0) lastTimestampRef.current = timestamp;
             let dt = (timestamp - lastTimestampRef.current) / 1000;
-            // Cap dt to prevent massive jumps after tab inactivity
             if (dt > 0.1) dt = 0.016;
             lastTimestampRef.current = timestamp;
 
             timeRef.current = timestamp / 1000;
             const t = timeRef.current;
 
-            // Cooldown Logic: Decrement timer
-            if (seekCooldownRef.current > 0) {
-                seekCooldownRef.current -= dt;
-            }
-
-            // Gathering Logic (only if mouse interaction enabled)
+            // Spawn Trails if mouse moving
             if (!disableMouseInteraction && mouseRef.current.x > 0) {
-                gatheringDurationRef.current += dt;
-                if (gatheringDurationRef.current > 3.0) {
-                    burstRef.current = {
-                        active: true,
-                        x: mouseRef.current.x,
-                        y: mouseRef.current.y,
-                        frame: 0
-                    };
-                    gatheringDurationRef.current = 0;
-                    seekCooldownRef.current = 2.0; // Disable seeking for 2s so they fly apart
-                }
-            } else {
-                gatheringDurationRef.current = 0;
-            }
+                const mx = mouseRef.current.x;
+                const my = mouseRef.current.y;
+                const lmx = lastMouseRef.current.x;
+                const lmy = lastMouseRef.current.y;
 
-            // Reset burst after a few frames
-            if (burstRef.current.active) {
-                burstRef.current.frame++;
-                if (burstRef.current.frame > 5) {
-                    burstRef.current.active = false;
+                if (lmx > 0) {
+                    const dist = Math.hypot(mx - lmx, my - lmy);
+                    if (dist > 5) {
+                        // Rate limit spawn
+                        if (timestamp - lastSpawnTime.current > 20) {
+                            trailRef.current.push(new TrailParticle(mx, my));
+                            lastSpawnTime.current = timestamp;
+                            lastMouseRef.current = { x: mx, y: my };
+                        }
+                    } else {
+                        // Keep evaluating position even if slow
+                        lastMouseRef.current = { x: mx, y: my };
+                    }
+                } else {
+                    lastMouseRef.current = { x: mx, y: my };
                 }
             }
 
@@ -255,14 +238,18 @@ const ForestBackground = ({ disableMouseInteraction = false, paused = false, hid
 
             // Update & Draw fireflies (skip if hideParticles)
             if (!hideParticles) {
-                // If cooldown is active or mouse interaction disabled, fireflies don't see the mouse
-                const effectiveMouse = (disableMouseInteraction || seekCooldownRef.current > 0) ? { x: -1000, y: -1000 } : mouseRef.current;
-
                 firefliesRef.current.forEach(fly => {
-                    fly.update(effectiveMouse, burstRef.current, width, height);
+                    fly.update(width, height);
                     fly.draw(ctx, t);
                 });
             }
+
+            // Update & Draw Trail
+            trailRef.current = trailRef.current.filter(p => p.life > 0);
+            trailRef.current.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
 
             // Only continue animating if not paused
             if (!paused) {
@@ -278,28 +265,7 @@ const ForestBackground = ({ disableMouseInteraction = false, paused = false, hid
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            const prev = lastMouseRef.current;
-
-            // Calculate speed
-            if (prev.x > 0) {
-                const dx = x - prev.x;
-                const dy = y - prev.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                // Burst Trigger: High speed movement (e.g. > 30px per event)
-                if (dist > 30) {
-                    burstRef.current = {
-                        active: true,
-                        x: prev.x, // Burst from WHERE we were
-                        y: prev.y,
-                        frame: 0
-                    };
-                    gatheringDurationRef.current = 0;
-                    seekCooldownRef.current = 2.0;
-                }
-            }
-
-            lastMouseRef.current = { x, y };
+            // Just update ref, spawning happens in render
             mouseRef.current = { x, y };
         };
 

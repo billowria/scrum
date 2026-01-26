@@ -66,7 +66,6 @@ const LandingNavbar = ({ activeSection = '' }) => {
                     <div className="h-4 w-px bg-white/10 mx-2" />
 
                     <button onClick={() => navigate('/login')} className="text-white hover:text-indigo-400 transition-colors">Sign In</button>
-                    <button onClick={() => navigate('/signup')} className="px-5 py-2 rounded-full bg-white text-black hover:scale-105 transition-transform font-bold">Get Started</button>
                     <CompactThemeToggle />
                 </div>
             </div>

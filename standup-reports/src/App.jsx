@@ -43,7 +43,8 @@ import ProjectDetailPage from './projects/pages/ProjectDetailPage';
 import ChatPage from './pages/ChatPage';
 import NotesPage from './pages/NotesPage';
 
-import FloatingAIButton from './components/ai/FloatingAIButton';
+import { useAI } from './context/AIContext';
+import AIOverlay from './components/ai/AIOverlay';
 
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import SubscriptionGuard from './components/SubscriptionGuard';
@@ -287,6 +288,8 @@ function App() {
     }
   };
 
+  const { isAIOpen, closeAI } = useAI();
+
   return (
     <Router>
       {session ? (
@@ -298,7 +301,7 @@ function App() {
                 sidebarMode={sidebarMode}
                 setSidebarMode={setSidebarMode}
               />
-              <FloatingAIButton />
+              <AIOverlay isOpen={isAIOpen} onClose={closeAI} />
               <div className="flex pt-14 md:pt-16 bg-gray-50 dark:bg-slate-950 min-h-screen">
                 <Sidebar
                   mode={sidebarMode}

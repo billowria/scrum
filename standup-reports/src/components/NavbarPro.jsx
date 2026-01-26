@@ -13,6 +13,9 @@ const navLinks = [
 ];
 
 
+import { useAI } from '../context/AIContext';
+import { AIButton } from './ai/FloatingAIButton';
+
 const NavbarPro = ({ session }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ const NavbarPro = ({ session }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [pillOpen, setPillOpen] = useState(false);
   const pillMenuRef = useRef(null);
+  const { isAIOpen, toggleAI } = useAI();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -226,8 +230,9 @@ const NavbarPro = ({ session }) => {
           </ul>
         </div>
 
-        {/* Right Side: Notification, Profile, Manager Portal */}
+        {/* Right Side: Notification, Profile, AI, Manager Portal */}
         <div className="flex items-center gap-4">
+          <AIButton isOpen={isAIOpen} onClick={toggleAI} />
           {session && userProfile && (
             <NotificationBell userRole={userProfile?.role} />
           )}

@@ -6,8 +6,10 @@ import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
+import { useAI } from '../context/AIContext';
 import CompactThemeToggle from './CompactThemeToggle';
 import AnimatedSyncLogo from './shared/AnimatedSyncLogo';
+import { AIButton } from './ai/FloatingAIButton';
 
 export default function Navbar({ user = { name: '', role: '', avatar: null, avatar_url: null }, sidebarMode, setSidebarMode }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -16,6 +18,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
   const navigate = useNavigate();
   const { currentCompany } = useCompany();
   const { theme, themeMode, setThemeMode } = useTheme();
+  const { isAIOpen, toggleAI } = useAI();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -135,6 +138,7 @@ export default function Navbar({ user = { name: '', role: '', avatar: null, avat
 
         {/* Right Side - Actions & User */}
         <div className="relative flex items-center gap-3">
+          <AIButton isOpen={isAIOpen} onClick={toggleAI} />
           <NotificationBell userRole={user.role} />
 
           <motion.button

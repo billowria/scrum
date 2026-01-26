@@ -32,7 +32,7 @@ class Particle {
         this.waveOffset = Math.random() * Math.PI * 2;
     }
 
-    update(time, ripples) {
+    update(time, interactionItems) {
         // 1. Natural Flow (Left to Right, with sine wave bobbing)
         // x moves steady
         // y moves based on sine of x + time
@@ -42,27 +42,13 @@ class Particle {
         this.x += this.baseSpeed;
         this.y += waveY;
 
-        // 2. Interaction (Ripples)
-        ripples.forEach(ripple => {
-            const dx = this.x - ripple.x;
-            const dy = this.y - ripple.y;
-            const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq);
-
-            // If particle intersects with the ripple ring thickness
-            // Ripple expands from 0 to maxRadius
-            // We verify if particle is near the current "wavefront" radius
-            const distFromWavefront = Math.abs(dist - ripple.radius);
-
-            if (dist < ripple.radius && distFromWavefront < 30) {
-                // Approximate "Push" force
-                const force = (30 - distFromWavefront) / 30; // 0 to 1 strength
-
-                const angle = Math.atan2(dy, dx);
-                this.vx += Math.cos(angle) * force * 0.5;
-                this.vy += Math.sin(angle) * force * 0.5;
-            }
+        // 2. Interaction (Optional - currently disabled for small bubble trail)
+        // You can re-enable particle interaction with bubbles if desired
+        /*
+        interactionItems.forEach(item => {
+            // Logic for interaction if needed
         });
+        */
 
         // Apply disturbance velocity
         this.x += this.vx;
@@ -87,42 +73,68 @@ class Particle {
     }
 }
 
-class Ripple {
+class Bubble {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.radius = 0;
-        this.maxRadius = 200;
-        this.life = 1.0; // Opacity
-        this.speed = 3;
+        this.x = x + (Math.random() - 0.5) * 10; // Tighter offset
+        this.y = y + (Math.random() - 0.5) * 10;
+        this.size = Math.random() * 4 + 4; // Larger bubbles: 4-8px
+        this.life = 1.0;
+        this.decay = Math.random() * 0.02 + 0.015; // Faster decay for trail effect
+        this.vx = (Math.random() - 0.5) * 0.8; // Slight horizontal drift
+        this.vy = -(Math.random() * 1.5 + 0.5); // Rise upward
+        this.wobble = Math.random() * Math.PI * 2; // Phase for wobble
+        this.wobbleSpeed = Math.random() * 0.1 + 0.05;
     }
 
     update() {
-        this.radius += this.speed;
-        this.life -= 0.015; // Decay
+        // Wobble horizontally as it rises
+        this.wobble += this.wobbleSpeed;
+        this.x += this.vx + Math.sin(this.wobble) * 0.3;
+        this.y += this.vy;
+
+        // Slow down as it rises
+        this.vy *= 0.995;
+
+        // Shrink slightly
+        this.size *= 0.995;
+
+        this.life -= this.decay;
     }
 
     draw(ctx) {
-        if (this.life <= 0) return;
+        if (this.life <= 0 || this.size < 0.5) return;
 
-        ctx.save();
+        const alpha = this.life * 0.6;
+
+        // Outer glow
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(165, 243, 252, ${this.life * 0.3})`; // Cyan-200
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
+        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(6, 182, 212, ${alpha * 0.2})`;
+        ctx.fill();
+
+        // Inner bubble
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(165, 243, 252, ${alpha * 0.8})`;
+        ctx.fill();
+
+        // Highlight
+        ctx.beginPath();
+        ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+        ctx.fill();
     }
 }
 
 const OceanBackground = ({ disableMouseInteraction = false, paused = false, hideParticles = false }) => {
     const canvasRef = useRef(null);
     const particlesRef = useRef([]);
-    const ripplesRef = useRef([]);
+    const bubblesRef = useRef([]); // Changed from ripplesRef
     const frameIdRef = useRef(0);
     const timeRef = useRef(0);
     const mouseRef = useRef({ x: -1000, y: -1000 });
-    const lastMouseRef = useRef({ x: -1000, y: -1000 });
+    const lastMouseRef = useRef({ x: -1000, y: -1000 }); // Track previous position
+    const lastSpawnTime = useRef(0); // For rate limiting bubble spawn
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -138,8 +150,8 @@ const OceanBackground = ({ disableMouseInteraction = false, paused = false, hide
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             ctx.scale(dpr, dpr);
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
+            canvas.style.width = `100%`; // Ensure it fills container
+            canvas.style.height = `100%`;
 
             // Spawn Particles
             const count = Math.floor((width * height) / 8000);
@@ -178,38 +190,44 @@ const OceanBackground = ({ disableMouseInteraction = false, paused = false, hide
             // 1. Draw Background Flow Lines
             drawBackgroundWaves(ctx, t);
 
-            // 2. Update & Draw Ripples
-            // Filter out dead ripples
-            ripplesRef.current = ripplesRef.current.filter(r => r.life > 0);
-            ripplesRef.current.forEach(r => {
-                r.update();
-                r.draw(ctx);
+            // 2. Update & Draw Bubbles (was Ripples)
+            bubblesRef.current = bubblesRef.current.filter(b => b.life > 0);
+            bubblesRef.current.forEach(b => {
+                b.update();
+                b.draw(ctx);
             });
 
             // 3. Update & Draw Particles (skip if hideParticles)
             if (!hideParticles) {
                 particlesRef.current.forEach(p => {
-                    p.update(t, ripplesRef.current);
+                    p.update(t, bubblesRef.current);
                     p.draw(ctx);
                 });
             }
 
-            // 4. Mouse Trail / Ripple spawning logic (only if enabled)
+            // 4. Mouse Trail / Bubble spawning logic (only if enabled)
             if (!disableMouseInteraction) {
                 const mx = mouseRef.current.x;
                 const my = mouseRef.current.y;
                 const lmx = lastMouseRef.current.x;
                 const lmy = lastMouseRef.current.y;
 
-                if (mx > 0 && lmx > 0) {
+                if (mx > 0) {
                     const dist = Math.hypot(mx - lmx, my - lmy);
-                    // If moved enough, spawn ripple
-                    if (dist > 30) {
-                        ripplesRef.current.push(new Ripple(mx, my));
+
+                    // Only spawn if mouse has moved significantly (> 5px)
+                    if (dist > 5) {
+                        // Rate limit: max 1 bubble every 20ms
+                        if (timestamp - lastSpawnTime.current > 20) {
+                            bubblesRef.current.push(new Bubble(mx, my));
+                            lastSpawnTime.current = timestamp;
+                            lastMouseRef.current = { x: mx, y: my }; // Update last position only on spawn/movement check
+                        }
+                    }
+                    // Always update tracking if we have valid coordinates
+                    if (dist > 0) {
                         lastMouseRef.current = { x: mx, y: my };
                     }
-                } else if (mx > 0) {
-                    lastMouseRef.current = { x: mx, y: my };
                 }
             }
 

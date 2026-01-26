@@ -5,83 +5,98 @@ import { HiSparkles } from 'react-icons/hi2';
 import AIOverlay from './AIOverlay';
 
 /**
- * Minimal Expandable AI Button
- * - Minimal circle when idle
- * - Expands to pill with "Ask Sync AI" on hover
+ * AI Button for Navbar - Transparent, Unique, Premium
+ * - Transparent background with subtle glass effect
+ * - Always visible text "Ask Sync AI"
+ * - Advanced "Border Beam" animation
  */
-const FloatingAIButton = () => {
-    const [isOpen, setIsOpen] = useState(false);
+const AIButton = ({ isOpen, onClick }) => {
     const [isHovered, setIsHovered] = useState(false);
 
     return (
-        <>
-            <div className="fixed bottom-6 right-6 z-[99999]">
-                <motion.button
-                    onClick={() => setIsOpen(!isOpen)}
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
+        <div className="relative group">
+            <motion.button
+                onClick={onClick}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                layout
+                className="relative h-9 px-4 flex items-center gap-3 rounded-full transition-all duration-500 bg-transparent group-hover:scale-[1.02] active:scale-[0.98]"
+            >
+                {/* 1. Transparent Glass Background */}
+                <div
+                    className={`absolute inset-0 rounded-full border bg-white/0 backdrop-blur-[0px] transition-all duration-500
+                    ${isHovered
+                            ? 'border-cyan-500/30 bg-white/5 dark:bg-white/5 backdrop-blur-sm shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+                            : 'border-slate-200/40 dark:border-white/10'
+                        }
+                    ${isOpen ? 'border-cyan-500/50 bg-cyan-500/10 dark:bg-cyan-500/10' : ''}
+                    `}
+                />
+
+                {/* 2. Breathing Blue Glow Border - Always Active */}
+                <motion.div
+                    className="absolute inset-0 rounded-full pointer-events-none"
                     animate={{
-                        width: isHovered && !isOpen ? 140 : 48,
-                        borderRadius: isHovered && !isOpen ? 24 : 24,
+                        boxShadow: [
+                            '0 0 0px rgba(6, 182, 212, 0)',
+                            '0 0 12px rgba(6, 182, 212, 0.4)',
+                            '0 0 0px rgba(6, 182, 212, 0)'
+                        ],
+                        borderWidth: '1px',
+                        borderColor: [
+                            'rgba(6, 182, 212, 0.1)',
+                            'rgba(6, 182, 212, 0.6)',
+                            'rgba(6, 182, 212, 0.1)'
+                        ]
                     }}
                     transition={{
-                        type: 'spring',
-                        stiffness: 400,
-                        damping: 25,
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
                     }}
-                    className="h-12 bg-gray-900 dark:bg-white shadow-lg hover:shadow-xl flex items-center justify-center overflow-hidden focus:outline-none"
-                    style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
-                >
-                    {/* Icon */}
-                    <AnimatePresence mode="wait">
-                        {isOpen ? (
-                            <motion.div
-                                key="close"
-                                initial={{ rotate: -90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: 90, opacity: 0 }}
-                                transition={{ duration: 0.15 }}
-                                className="flex items-center justify-center"
-                            >
-                                <FiX size={20} className="text-white dark:text-gray-900" strokeWidth={2} />
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="icon"
-                                className="flex items-center gap-2 px-1"
-                                initial={false}
-                            >
-                                <motion.div
-                                    animate={{ rotate: isHovered ? 360 : 0 }}
-                                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                                >
-                                    <HiSparkles size={20} className="text-white dark:text-gray-900" />
-                                </motion.div>
+                />
 
-                                {/* Expanding Text */}
-                                <AnimatePresence>
-                                    {isHovered && (
-                                        <motion.span
-                                            initial={{ opacity: 0, width: 0 }}
-                                            animate={{ opacity: 1, width: 'auto' }}
-                                            exit={{ opacity: 0, width: 0 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="text-sm font-medium text-white dark:text-gray-900 whitespace-nowrap pr-2"
-                                        >
-                                            Ask Sync AI
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.button>
-            </div>
+                {/* 3. Content - Always Visible Text */}
+                <div className="relative z-10 flex items-center gap-2.5">
+                    <div className="relative flex items-center justify-center">
+                        <HiSparkles
+                            size={16}
+                            className={`text-cyan-500 transition-all duration-500 
+                             ${isHovered ? 'rotate-12 scale-110 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'opacity-80'}
+                             ${isOpen ? 'animate-pulse' : ''}`}
+                        />
+                    </div>
 
-            {/* Chat Overlay */}
+                    <span className={`text-[13px] font-[600] tracking-wide transition-all duration-500 whitespace-nowrap text-gray-900 dark:text-white opacity-100
+                        ${isOpen ? '!text-cyan-500' : ''}
+                    `}>
+                        Ask Sync AI
+                    </span>
+                </div>
+
+                {/* 4. Bottom Active Indicator Line (Premium Touch) */}
+                {isOpen && (
+                    <motion.div
+                        layoutId="active-ai-indicator"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500"
+                    />
+                )}
+            </motion.button>
+        </div>
+    );
+};
+
+const FloatingAIButton = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <>
+            {/* The overlay is now controlled centrally or we can keep it here but the button is rendered in the navbar */}
+            {/* We will export AIButton separately for its use in Navbar */}
             <AIOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
         </>
     );
 };
 
+export { AIButton };
 export default FloatingAIButton;

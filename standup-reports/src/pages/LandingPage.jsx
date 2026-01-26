@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import AnimatedSyncLogo from '../components/shared/AnimatedSyncLogo';
 import CompactThemeToggle from '../components/CompactThemeToggle';
 import LandingNavbar from '../components/LandingNavbar';
+import { supabase } from '../supabaseClient';
 import Lenis from '@studio-freight/lenis';
 import {
     FiArrowRight, FiCheck, FiMessageCircle, FiCheckSquare, FiCalendar, FiEdit3,
@@ -1166,6 +1167,25 @@ export default function LandingPage() {
     const lastScrollY = useRef(0);
     const [menuOpen, setMenuOpen] = useState(false);
     const { scrollY } = useScroll();
+    const [pricingPlans, setPricingPlans] = useState([]);
+
+    // Fetch subscription plans from database
+    useEffect(() => {
+        const fetchPlans = async () => {
+            const { data } = await supabase
+                .from('subscription_plans')
+                .select('*')
+                .order('price_monthly', { ascending: true });
+
+            if (data) {
+                setPricingPlans(data.map(p => ({
+                    ...p,
+                    features: Array.isArray(p.features) ? p.features : []
+                })));
+            }
+        };
+        fetchPlans();
+    }, []);
 
     // AuthPage Logic for Hero Animation
     // AuthPage Logic for Hero Animation
@@ -1297,16 +1317,44 @@ export default function LandingPage() {
 
                         {/* Buttons */}
                         <MaskedReveal delay={1.8}>
-                            <div className="flex gap-4">
-                                <button onClick={() => navigate('/signup')} className="group relative px-8 py-4 bg-white text-black rounded-sm font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
-                                    <span className="relative z-10 flex items-center gap-2">
-                                        Start Enterprise <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                                    </span>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </button>
-                                <button className="px-8 py-4 text-white border-b border-white/20 hover:border-white transition-colors font-mono text-sm uppercase tracking-wider">
-                                    Book Demo
-                                </button>
+                            <div className="flex flex-col gap-6">
+                                {/* Primary Row: Signup & Login */}
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    {/* Primary CTA - Get Started */}
+                                    <motion.button
+                                        onClick={() => navigate('/signup')}
+                                        className="group px-8 py-4 rounded-full border border-white/20 text-white font-medium text-base hover:border-white/40 hover:bg-white/5 transition-all duration-200"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        <span className="flex items-center justify-center gap-2">
+                                            Get Started Free
+                                            <FiArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                        </span>
+                                    </motion.button>
+
+                                    {/* Secondary CTA - Sign In */}
+                                    <motion.button
+                                        onClick={() => navigate('/login')}
+                                        className="group px-8 py-4 rounded-full border border-white/20 text-white font-medium text-base hover:border-white/40 hover:bg-white/5 transition-all duration-200"
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        Sign In
+                                    </motion.button>
+                                </div>
+
+                                {/* Trust Indicators */}
+                                <div className="flex items-center gap-5 text-sm text-slate-400">
+                                    <div className="flex items-center gap-2">
+                                        <FiCheck className="w-4 h-4 text-emerald-400" />
+                                        <span>Free forever for small teams</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <FiCheck className="w-4 h-4 text-emerald-400" />
+                                        <span>No credit card</span>
+                                    </div>
+                                </div>
                             </div>
                         </MaskedReveal>
                     </div>
@@ -1456,91 +1504,84 @@ export default function LandingPage() {
                         </p>
                     </motion.div>
 
-                    {/* Pricing Cards - Cleaner design */}
+                    {/* Pricing Cards - Dynamic from Supabase */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            {
-                                name: 'Free',
-                                price: '$0',
-                                period: '/month',
-                                desc: 'For small teams getting started',
-                                features: ['5 team members', '7-day history', 'Basic reports', 'Community support'],
-                                popular: false,
-                                cta: 'Get Started'
-                            },
-                            {
-                                name: 'Pro',
-                                price: '$12',
-                                period: '/user/mo',
-                                desc: 'For teams that need more power',
-                                features: ['Unlimited members', 'Unlimited history', 'Advanced analytics', 'Priority support', 'Integrations', 'Admin controls'],
-                                popular: true,
-                                cta: 'Start Free Trial'
-                            },
-                            {
-                                name: 'Enterprise',
-                                price: 'Custom',
-                                period: '',
-                                desc: 'For large organizations',
-                                features: ['Everything in Pro', 'SSO & SAML', 'SLA guarantee', 'Dedicated manager', 'Custom onboarding'],
-                                popular: false,
-                                cta: 'Contact Sales'
-                            }
-                        ].map((plan, i) => (
-                            <motion.div
-                                key={i}
-                                className={`relative rounded-2xl p-6 ${plan.popular
-                                    ? 'bg-gradient-to-b from-indigo-500/10 to-purple-500/10 border-2 border-indigo-500/30'
-                                    : 'bg-slate-800/30 border border-slate-700/50'
-                                    }`}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            >
-                                {/* Popular badge */}
-                                {plan.popular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full text-xs font-bold">
-                                        RECOMMENDED
-                                    </div>
-                                )}
+                        {pricingPlans.length > 0 ? pricingPlans.map((plan, i) => {
+                            const isPopular = plan.name === 'Pro' || plan.is_popular;
+                            const price = plan.price_monthly === 0 ? 'Free' : `₹${plan.price_monthly}`;
+                            const period = plan.price_monthly === 0 ? '' : '/month';
 
-                                {/* Plan name */}
-                                <div className="text-sm font-medium text-slate-400 mb-2">{plan.name}</div>
-
-                                {/* Price */}
-                                <div className="flex items-baseline gap-1 mb-3">
-                                    <span className="text-4xl font-bold">{plan.price}</span>
-                                    <span className="text-slate-500 text-sm">{plan.period}</span>
-                                </div>
-
-                                {/* Description */}
-                                <p className="text-sm text-slate-400 mb-6">{plan.desc}</p>
-
-                                {/* CTA Button */}
-                                <motion.button
-                                    onClick={() => navigate('/signup')}
-                                    className={`w-full py-3 rounded-lg font-semibold text-sm mb-6 transition-all ${plan.popular
-                                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:opacity-90'
-                                        : 'bg-slate-700/50 text-white hover:bg-slate-700'
+                            return (
+                                <motion.div
+                                    key={plan.id || i}
+                                    className={`relative rounded-2xl p-6 ${isPopular
+                                        ? 'bg-gradient-to-b from-indigo-500/10 to-purple-500/10 border-2 border-indigo-500/30'
+                                        : 'bg-slate-800/30 border border-slate-700/50'
                                         }`}
-                                    whileTap={{ scale: 0.98 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.1 }}
+                                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
                                 >
-                                    {plan.cta}
-                                </motion.button>
+                                    {/* Popular badge */}
+                                    {isPopular && (
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full text-xs font-bold">
+                                            RECOMMENDED
+                                        </div>
+                                    )}
 
-                                {/* Features */}
-                                <ul className="space-y-3">
-                                    {plan.features.map((f, j) => (
-                                        <li key={j} className="flex items-center gap-2 text-sm text-slate-300">
-                                            <FiCheck className={`w-4 h-4 ${plan.popular ? 'text-indigo-400' : 'text-slate-500'}`} />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </motion.div>
-                        ))}
+                                    {/* Plan name */}
+                                    <div className="text-sm font-medium text-slate-400 mb-2">{plan.name}</div>
+
+                                    {/* Price */}
+                                    <div className="flex items-baseline gap-1 mb-3">
+                                        <span className="text-4xl font-bold">{price}</span>
+                                        <span className="text-slate-500 text-sm">{period}</span>
+                                    </div>
+
+                                    {/* Description */}
+                                    <p className="text-sm text-slate-400 mb-6">{plan.description || `Perfect for ${plan.name.toLowerCase()} teams`}</p>
+
+                                    {/* CTA Button */}
+                                    <motion.button
+                                        onClick={() => navigate('/signup')}
+                                        className={`w-full py-3 rounded-lg font-semibold text-sm mb-6 transition-all ${isPopular
+                                            ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:opacity-90'
+                                            : 'bg-slate-700/50 text-white hover:bg-slate-700'
+                                            }`}
+                                        whileTap={{ scale: 0.98 }}
+                                    >
+                                        {plan.price_monthly === 0 ? 'Get Started' : 'Start Free Trial'}
+                                    </motion.button>
+
+                                    {/* Features */}
+                                    <ul className="space-y-3">
+                                        {plan.features.map((f, j) => (
+                                            <li key={j} className="flex items-center gap-2 text-sm text-slate-300">
+                                                <FiCheck className={`w-4 h-4 ${isPopular ? 'text-indigo-400' : 'text-slate-500'}`} />
+                                                {f}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </motion.div>
+                            );
+                        }) : (
+                            // Fallback loading skeleton
+                            [1, 2, 3].map((i) => (
+                                <div key={i} className="rounded-2xl p-6 bg-slate-800/30 border border-slate-700/50 animate-pulse">
+                                    <div className="h-4 bg-slate-700 rounded w-16 mb-4" />
+                                    <div className="h-10 bg-slate-700 rounded w-24 mb-3" />
+                                    <div className="h-3 bg-slate-700 rounded w-full mb-6" />
+                                    <div className="h-10 bg-slate-700 rounded w-full mb-6" />
+                                    <div className="space-y-3">
+                                        {[1, 2, 3, 4].map(j => (
+                                            <div key={j} className="h-3 bg-slate-700 rounded w-3/4" />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
 
                     {/* Bottom text */}
