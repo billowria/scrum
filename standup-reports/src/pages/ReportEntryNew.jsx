@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
+import { useTheme } from '../context/ThemeContext';
 import './ReportEntryNew.css'; // Create this file or add styles inline if preferred, but for now we inject style
 import { supabase } from '../supabaseClient';
 import { EditorContent, useEditor, Node, mergeAttributes } from '@tiptap/react';
@@ -182,6 +183,11 @@ const processContentForSave = (html) => {
 const ReportEntryNew = () => {
   const navigate = useNavigate();
   const { currentCompany: selectedCompany } = useCompany();
+  const { themeMode } = useTheme();
+
+  // Premium themes have animated backgrounds that should show through
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
+
   const [loading, setLoading] = useState(false);
   const [fetchingTasks, setFetchingTasks] = useState(false);
   const [myTasks, setMyTasks] = useState([]);
@@ -577,7 +583,7 @@ const ReportEntryNew = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 flex flex-col lg:flex-row font-sans text-slate-800 dark:text-slate-200 antialiased overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+    <div className={`h-screen w-full flex flex-col lg:flex-row font-sans text-slate-800 dark:text-slate-200 antialiased overflow-hidden selection:bg-indigo-100 selection:text-indigo-700 ${isPremiumTheme ? 'bg-transparent' : 'bg-slate-50 dark:bg-slate-950'}`}>
 
       {/* Main Workspace */}
       <main className="flex-1 flex overflow-hidden">
@@ -703,7 +709,7 @@ const ReportEntryNew = () => {
         )}
 
         {/* Center: Wizard Experience */}
-        <div className="flex-1 bg-slate-50/50 dark:bg-slate-900/50 relative flex flex-col items-center justify-center p-4 lg:p-8 overflow-hidden">
+        <div className={`flex-1 relative flex flex-col items-center justify-center p-4 lg:p-8 overflow-hidden ${isPremiumTheme ? 'bg-transparent' : 'bg-slate-50/50 dark:bg-slate-900/50'}`}>
 
           {/* Mobile Header */}
           {isMobile && (

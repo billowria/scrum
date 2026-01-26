@@ -8,7 +8,7 @@ import {
   FiMinus, FiMoreVertical, FiShare2, FiBell, FiBellOff,
   FiGitBranch, FiXCircle, FiSearch, FiTrendingUp, FiBarChart2,
   FiLayers, FiFileText, FiChevronDown, FiChevronUp, FiSend,
-  FiDownload, FiTarget, FiHash, FiBold, FiItalic, FiList,
+  FiDownload, FiCpu, FiTarget, FiHash, FiBold, FiItalic, FiList,
   FiCode, FiUnderline
 } from 'react-icons/fi';
 import { format, formatDistanceToNow, isPast, parseISO } from 'date-fns';
@@ -24,6 +24,8 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import { getOrCreateDirectConversation, sendMessage } from '../../services/chatService';
+import AITaskAssistant from './AITaskAssistant';
+import { marked } from 'marked';
 
 // --- EINSTEIN DESIGN SYSTEM ---
 // "Precision" Color Palette & Utilities
@@ -161,6 +163,9 @@ const TaskDetailView = ({
   const [sprintOpen, setSprintOpen] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isAIPreview, setIsAIPreview] = useState(false);
+  const [previousDescription, setPreviousDescription] = useState('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isEditingEffort, setIsEditingEffort] = useState(false);
   const [effortValue, setEffortValue] = useState('');
 
@@ -479,6 +484,68 @@ _Shared from Task Management System_`;
     }
   };
 
+  const handleAIEnhance = (aiData) => {
+    console.log('🎨 handleAIEnhance called with:', aiData);
+
+    // Store current description for potential cancel
+    if (descriptionEditor) {
+      setPreviousDescription(descriptionEditor.getHTML());
+    }
+
+    // Update title immediately (lightweight)
+    if (aiData.title && aiData.title !== task.title) {
+      console.log('📝 Updating title:', aiData.title);
+      setTask(prev => ({ ...prev, title: aiData.title }));
+    }
+
+    // Convert markdown to HTML and inject into editor
+    if (aiData.description && descriptionEditor) {
+      console.log('📄 Converting markdown to HTML...');
+      // Configure marked to output clean HTML
+      marked.setOptions({
+        breaks: true,
+        gfm: true
+      });
+
+      const htmlContent = marked.parse(aiData.description);
+      console.log('✅ HTML content generated, injecting into editor');
+      descriptionEditor.commands.setContent(htmlContent);
+      descriptionEditor.setEditable(true);
+    }
+
+    // Enter preview mode
+    console.log('🔄 Entering preview mode');
+    setIsAIPreview(true);
+    setIsEditingDescription(true);
+  };
+
+  const handleAISave = async () => {
+    // Persist to database
+    if (descriptionEditor) {
+      await updateTask({
+        title: task.title,
+        description: descriptionEditor.getHTML()
+      });
+    }
+    setIsAIPreview(false);
+    setIsEditingDescription(false);
+    setToastMessage("✨ Task enhanced with AI!");
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const handleAICancel = () => {
+    // Restore previous content
+    if (descriptionEditor && previousDescription) {
+      descriptionEditor.commands.setContent(previousDescription);
+    }
+    // Re-fetch original task to restore title
+    fetchAllData();
+    setIsAIPreview(false);
+    setIsEditingDescription(false);
+    setPreviousDescription('');
+  };
+
   // --- Render Helpers ---
 
   if (!isOpen) return null;
@@ -685,6 +752,16 @@ _Shared from Task Management System_`;
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-2">
                           <FiFileText className="text-gray-300 dark:text-gray-600" /> Description
+
+                          {/* Compact AI Enhancement - positioned right after heading */}
+                          {!isAIPreview && (
+                            <AITaskAssistant
+                              onEnhance={handleAIEnhance}
+                              task={task}
+                              isGenerating={isGeneratingAI}
+                              setIsGenerating={setIsGeneratingAI}
+                            />
+                          )}
                         </h3>
                         <div className="flex items-center gap-3">
                           {task.description && task.description.length > 100 && (
@@ -701,6 +778,16 @@ _Shared from Task Management System_`;
                           >
                             {isEditingDescription ? <><FiCheck className="w-3 h-3" /> Save</> : <><FiEdit2 className="w-3 h-3" /> Edit</>}
                           </button>
+
+                          {/* AI Preview Mode: Cancel Button Only */}
+                          {isAIPreview && (
+                            <button
+                              onClick={handleAICancel}
+                              className="text-xs font-bold flex items-center gap-1 px-2 py-1 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                              <FiX className="w-3 h-3" /> Cancel AI
+                            </button>
+                          )}
                         </div>
                       </div>
 

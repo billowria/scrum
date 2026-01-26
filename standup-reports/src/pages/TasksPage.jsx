@@ -1179,7 +1179,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       <AnimatePresence>
         {showHeader && (
           <motion.div
-            className="fixed top-16 right-0 z-50 px-6 py-4 pointer-events-none"
+            className="fixed top-16 right-0 z-30 px-6 py-4 pointer-events-none"
             id="tasks-header"
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
