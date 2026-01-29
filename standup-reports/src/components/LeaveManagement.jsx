@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, getMonth, getYear, differenceInDays } from 'date-fns';
-import { FiCalendar, FiUser, FiFilter, FiDownload, FiClock, FiCheck, FiX, FiSearch, 
-  FiChevronLeft, FiChevronRight, FiInfo, FiSliders, FiRefreshCw, FiClipboard, FiTarget } from 'react-icons/fi';
+import {
+  FiCalendar, FiUser, FiFilter, FiDownload, FiClock, FiCheck, FiX, FiSearch,
+  FiChevronLeft, FiChevronRight, FiInfo, FiSliders, FiRefreshCw, FiClipboard, FiTarget
+} from 'react-icons/fi';
 import { supabase } from '../supabaseClient';
 import { notifyLeaveStatus, approveLeaveRequestFromNotification, rejectLeaveRequestFromNotification } from '../utils/notificationHelper';
 
@@ -22,11 +24,11 @@ const itemVariants = {
   visible: (i) => ({
     opacity: 1,
     y: 0,
-    transition: { 
+    transition: {
       delay: i * 0.05,
-      type: 'spring', 
-      stiffness: 300, 
-      damping: 24 
+      type: 'spring',
+      stiffness: 300,
+      damping: 24
     }
   })
 };
@@ -36,22 +38,20 @@ const ViewToggle = ({ activeView, setActiveView }) => {
   return (
     <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
       <button
-        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-all ${
-          activeView === 'requests' 
-            ? 'bg-white shadow-sm text-primary-700' 
+        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-all ${activeView === 'requests'
+            ? 'bg-white shadow-sm text-primary-700'
             : 'text-gray-600 hover:text-gray-800'
-        }`}
+          }`}
         onClick={() => setActiveView('requests')}
       >
         <FiClipboard className={activeView === 'requests' ? 'text-primary-600' : ''} />
         Pending Requests
       </button>
       <button
-        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-all ${
-          activeView === 'history' 
-            ? 'bg-white shadow-sm text-primary-700' 
+        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-all ${activeView === 'history'
+            ? 'bg-white shadow-sm text-primary-700'
             : 'text-gray-600 hover:text-gray-800'
-        }`}
+          }`}
         onClick={() => setActiveView('history')}
       >
         <FiClock className={activeView === 'history' ? 'text-primary-700' : ''} />
@@ -69,16 +69,16 @@ const LeaveManagement = () => {
   const [teams, setTeams] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [paginatedItems, setPaginatedItems] = useState([]);
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Filter states
   const [filters, setFilters] = useState({
     month: 'all',
@@ -87,7 +87,7 @@ const LeaveManagement = () => {
     user: 'all',
     status: 'all'
   });
-  
+
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ const LeaveManagement = () => {
   // Memoized filter function to prevent the initialization error
   const getFilteredData = useCallback(() => {
     let filtered = [...allLeaveData];
-    
+
     // Filter based on active view
     if (activeView === 'requests') {
       filtered = filtered.filter(item => item.status === 'pending');
@@ -111,7 +111,7 @@ const LeaveManagement = () => {
       // For history view, we show approved/rejected items
       filtered = filtered.filter(item => item.status !== 'pending');
     }
-    
+
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -123,54 +123,54 @@ const LeaveManagement = () => {
         );
       });
     }
-    
+
     // Filter by year
     if (filters.year !== 'all') {
-      filtered = filtered.filter(item => 
-        getYear(parseISO(item.start_date)) === parseInt(filters.year) || 
+      filtered = filtered.filter(item =>
+        getYear(parseISO(item.start_date)) === parseInt(filters.year) ||
         getYear(parseISO(item.end_date)) === parseInt(filters.year)
       );
     }
-    
+
     // Filter by month
     if (filters.month !== 'all') {
-      filtered = filtered.filter(item => 
-        getMonth(parseISO(item.start_date)) === parseInt(filters.month) - 1 || 
+      filtered = filtered.filter(item =>
+        getMonth(parseISO(item.start_date)) === parseInt(filters.month) - 1 ||
         getMonth(parseISO(item.end_date)) === parseInt(filters.month) - 1
       );
     }
-    
+
     // Filter by team
     if (filters.team !== 'all') {
       filtered = filtered.filter(item => item.users?.teams?.id === filters.team);
     }
-    
+
     // Filter by user
     if (filters.user !== 'all') {
       filtered = filtered.filter(item => item.users?.id === filters.user);
     }
-    
+
     // Filter by status
     if (filters.status !== 'all') {
       filtered = filtered.filter(item => item.status === filters.status);
     }
-    
+
     return filtered;
   }, [allLeaveData, activeView, searchQuery, filters]);
 
 
-  
+
   useEffect(() => {
     // Update pagination when filtered items change
     const filteredData = getFilteredData();
     const total = Math.ceil(filteredData.length / itemsPerPage);
     setTotalPages(total || 1);
-    
+
     // Reset to first page when filters change
     if (currentPage > total) {
       setCurrentPage(1);
     }
-    
+
     updatePaginatedItems();
   }, [allLeaveData, activeView, searchQuery, filters, currentPage, itemsPerPage, getFilteredData]); // Use function reference instead of calling it
 
@@ -224,27 +224,27 @@ const LeaveManagement = () => {
       const { data, error } = await supabase
         .from('users')
         .select('id, name, teams:team_id(id, name)');
-        
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error.message);
     }
   };
-  
+
   const fetchTeams = async () => {
     try {
       const { data, error } = await supabase
         .from('teams')
         .select('id, name');
-        
+
       if (error) throw error;
       setTeams(data || []);
     } catch (error) {
       console.error('Error fetching teams:', error.message);
     }
   };
-  
+
   const fetchLeaveData = async () => {
     try {
       let query = supabase
@@ -254,33 +254,27 @@ const LeaveManagement = () => {
           users:user_id (id, name, team_id, teams:team_id(id, name))
         `)
         .order('created_at', { ascending: false });
-      
+
       // Filter data based on user role
       if (userRole === 'admin') {
         // Admins see all leave requests
       } else if (userRole === 'manager') {
-        // Managers see all leave requests for their teams
-        let managedTeamIds = [];
-        const { data: teamsData } = await supabase.rpc('get_managed_team_ids', { manager_id_param: currentUser.id });
-        managedTeamIds = teamsData.map(t => t.team_id);
-        
-        if (managedTeamIds.length > 0) {
-          query = query.filter('users.team_id', 'in', `(${managedTeamIds.join(',')})`);
-        }
+        // Managers see all leave requests for their direct reportees
+        query = query.eq('manager_id', currentUser.id);
       } else {
         // Regular users only see their own leave requests
         query = query.eq('user_id', currentUser.id);
       }
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
       setAllLeaveData(data || []);
     } catch (error) {
       console.error('Error fetching leave data:', error.message);
     }
   };
-  
+
   const handleLeaveAction = async (leaveId, status) => {
     // Only allow managers and admins to approve/reject leave requests
     if (userRole !== 'manager' && userRole !== 'admin') {
@@ -331,14 +325,14 @@ const LeaveManagement = () => {
       console.error('Error updating leave request:', error.message);
     }
   };
-  
+
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({
       ...prev,
       [name]: value
     }));
   };
-  
+
   // Generate month options
   const months = [
     { value: '1', label: 'January' },
@@ -354,11 +348,11 @@ const LeaveManagement = () => {
     { value: '11', label: 'November' },
     { value: '12', label: 'December' }
   ];
-  
+
   // Generate year options (last 5 years and current year)
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-  
+
   // Status badge color helper
   const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -371,7 +365,7 @@ const LeaveManagement = () => {
         return 'bg-yellow-100 border-yellow-200 text-yellow-700';
     }
   };
-  
+
   // Leave type badge color helper
   const getLeaveTypeBadgeClass = (type) => {
     switch (type) {
@@ -388,43 +382,43 @@ const LeaveManagement = () => {
         return 'bg-teal-100 border-teal-200 text-teal-700';
     }
   };
-  
+
   // Get formatted leave type
   const getFormattedLeaveType = (type) => {
     return 'Vacation'; // Default to Vacation for all leave requests
   };
-  
+
   // Status filter options based on active view
-  const statusOptions = activeView === 'requests' 
+  const statusOptions = activeView === 'requests'
     ? [
-        { value: 'all', label: 'All Statuses' },
-        { value: 'pending', label: 'Pending' }
-      ]
+      { value: 'all', label: 'All Statuses' },
+      { value: 'pending', label: 'Pending' }
+    ]
     : [
-        { value: 'all', label: 'All Statuses' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'rejected', label: 'Rejected' }
-      ];
+      { value: 'all', label: 'All Statuses' },
+      { value: 'approved', label: 'Approved' },
+      { value: 'rejected', label: 'Rejected' }
+    ];
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-  
+
   const handleItemsPerPageChange = (e) => {
     const value = parseInt(e.target.value);
     setItemsPerPage(value);
     setCurrentPage(1); // Reset to first page when changing items per page
   };
-  
+
   const generateCSV = () => {
     const filteredData = getFilteredData();
-    
+
     // Check if there's data to export
     if (filteredData.length === 0) return;
-    
+
     // Create CSV header
     const headers = ['Employee', 'Team', 'Start Date', 'End Date', 'Days', 'Type', 'Status', 'Reason', 'Created At'];
-    
+
     // Create CSV rows
     const rows = filteredData.map(item => [
       item.users?.name || 'Unknown',
@@ -437,13 +431,13 @@ const LeaveManagement = () => {
       item.reason || '',
       format(parseISO(item.created_at), 'yyyy-MM-dd HH:mm')
     ]);
-    
+
     // Combine headers and rows
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\n');
-    
+
     // Create download link
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -470,7 +464,7 @@ const LeaveManagement = () => {
             {activeView === 'requests' ? 'Leave Requests' : 'Leave History'}
           </h2>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -482,7 +476,7 @@ const LeaveManagement = () => {
             />
             <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
-          
+
           <motion.button
             className="px-3 py-2 border border-gray-300 rounded-lg flex items-center gap-1 text-sm hover:bg-gray-50"
             onClick={() => setShowFilters(!showFilters)}
@@ -495,7 +489,7 @@ const LeaveManagement = () => {
               <span className="w-2 h-2 bg-primary-500 rounded-full ml-1"></span>
             )}
           </motion.button>
-          
+
           <motion.button
             className="px-3 py-2 bg-primary-600 text-white rounded-lg flex items-center gap-1 text-sm hover:bg-primary-700 transition-colors"
             onClick={generateCSV}
@@ -506,7 +500,7 @@ const LeaveManagement = () => {
             <FiDownload />
             Export
           </motion.button>
-          
+
           <motion.button
             className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
             onClick={fetchLeaveData}
@@ -518,12 +512,12 @@ const LeaveManagement = () => {
           </motion.button>
         </div>
       </div>
-      
+
       {/* Toggle between requests and history */}
       <div className="px-6 pt-4">
         <ViewToggle activeView={activeView} setActiveView={setActiveView} />
       </div>
-      
+
       {/* Filters */}
       <AnimatePresence>
         {showFilters && (
@@ -548,7 +542,7 @@ const LeaveManagement = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                 <select
@@ -562,7 +556,7 @@ const LeaveManagement = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
                 <select
@@ -576,7 +570,7 @@ const LeaveManagement = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
                 <select
@@ -590,7 +584,7 @@ const LeaveManagement = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
@@ -604,7 +598,7 @@ const LeaveManagement = () => {
                 </select>
               </div>
             </div>
-            
+
             <div className="flex justify-end mt-4">
               <button
                 className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1"
@@ -626,7 +620,7 @@ const LeaveManagement = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
@@ -662,9 +656,9 @@ const LeaveManagement = () => {
                   const startDate = parseISO(leave.start_date);
                   const endDate = parseISO(leave.end_date);
                   const leaveDays = differenceInDays(endDate, startDate) + 1;
-                  
+
                   return (
-                    <motion.tr 
+                    <motion.tr
                       key={leave.id}
                       className="hover:bg-gray-50 transition-colors"
                       custom={index}
@@ -732,7 +726,7 @@ const LeaveManagement = () => {
                             >
                               <FiCheck />
                             </motion.button>
-                            
+
                             <motion.button
                               className="p-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
                               onClick={() => handleLeaveAction(leave.id, 'rejected')}
@@ -751,7 +745,7 @@ const LeaveManagement = () => {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
             <div className="flex-1 flex justify-between sm:hidden">
@@ -794,7 +788,7 @@ const LeaveManagement = () => {
                   <option value={25}>25 / page</option>
                   <option value={50}>50 / page</option>
                 </select>
-                
+
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                   <button
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
@@ -804,7 +798,7 @@ const LeaveManagement = () => {
                     <span className="sr-only">Previous</span>
                     <FiChevronLeft className="h-5 w-5" />
                   </button>
-                  
+
                   {/* Page numbers */}
                   {[...Array(totalPages)].map((_, index) => (
                     <button
@@ -819,7 +813,7 @@ const LeaveManagement = () => {
                       {index + 1}
                     </button>
                   ))}
-                  
+
                   <button
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}

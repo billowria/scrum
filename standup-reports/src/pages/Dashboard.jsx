@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -536,15 +536,14 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate, currentUserId }) =>
 };
 
 const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarClick, onStartChat, missingReportIds = [] }) => {
-  const myTeamMembers = teamMembers.filter(member => member.team_id === userTeamId);
+  const myTeamMembers = useMemo(() =>
+    teamMembers.filter(member => member.team_id === userTeamId),
+    [teamMembers, userTeamId]
+  );
   const [leaveStatus, setLeaveStatus] = useState({});
   const [loadingLeave, setLoadingLeave] = useState(true);
 
-  useEffect(() => {
-    fetchLeaveStatus();
-  }, [myTeamMembers]);
-
-  const fetchLeaveStatus = async () => {
+  const fetchLeaveStatus = useCallback(async () => {
     if (myTeamMembers.length === 0) {
       setLoadingLeave(false);
       return;
@@ -572,7 +571,11 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
     } finally {
       setLoadingLeave(false);
     }
-  };
+  }, [myTeamMembers]);
+
+  useEffect(() => {
+    fetchLeaveStatus();
+  }, [fetchLeaveStatus]);
 
   return (
     <motion.div

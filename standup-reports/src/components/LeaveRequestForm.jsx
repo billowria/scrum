@@ -316,6 +316,7 @@ const LeaveRequestForm = ({
           {
             user_id: user.id,
             company_id: currentCompany.id,
+            manager_id: userData?.manager_id,
             start_date: startDate,
             end_date: endDate,
             reason: reason,

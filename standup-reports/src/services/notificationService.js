@@ -198,11 +198,11 @@ class NotificationService {
         .gte('expiry_date', today)
         .order('created_at', { ascending: false });
 
-      // Apply Team Filter (Global or Team specific)
+      // Apply Team and Target User Filter
       if (teamId) {
-        query = query.or(`team_id.eq.${teamId},team_id.is.null`);
+        query = query.or(`team_id.eq.${teamId},team_id.is.null,target_user_id.eq.${userId}`);
       } else {
-        query = query.is('team_id', null);
+        query = query.or(`team_id.is.null,target_user_id.eq.${userId}`);
       }
 
       // Execute query for announcements
@@ -388,6 +388,7 @@ class NotificationService {
         companyId,
         userId, // creator
         taskId,
+        targetUserId,
         metadata = {},
         expiryDays = 30
       } = data;
@@ -405,6 +406,7 @@ class NotificationService {
           team_id: teamId,
           company_id: companyId,
           created_by: userId,
+          target_user_id: targetUserId,
           task_id: taskId,
           metadata,
           expiry_date: expiryDate.toISOString()
@@ -828,7 +830,7 @@ class NotificationService {
   // Handle leave request action (approve/reject)
   async handleLeaveAction(leaveId, action) {
     try {
-      const status = action === 'approve' ? 'approved' : 'rejected';
+      const status = (action === 'approve' || action === 'approved') ? 'approved' : 'rejected';
       const { error } = await supabase
         .from('leave_plans')
         .update({ status: status })
@@ -838,6 +840,115 @@ class NotificationService {
       return true;
     } catch (error) {
       console.error(`Error handling leave request ${action}:`, error);
+      return false;
+    }
+  }
+
+  // Implementation for lead request notifications
+  async createLeaveRequestNotification(leaveId) {
+    try {
+      const { data: leave, error } = await supabase
+        .from('leave_plans')
+        .select('*, users!user_id(name, manager_id, team_id, company_id)')
+        .eq('id', leaveId)
+        .single();
+
+      if (error || !leave) throw error || new Error('Leave request not found');
+
+      const startDate = format(parseISO(leave.start_date), 'MMM dd');
+      const endDate = format(parseISO(leave.end_date), 'MMM dd');
+      const days = differenceInDays(parseISO(leave.end_date), parseISO(leave.start_date)) + 1;
+
+      // Create notification (announcement) for the manager
+      if (leave.manager_id) {
+        await this.createNotification({
+          title: 'New Leave Request',
+          message: `${leave.users.name} requested ${days} ${days === 1 ? 'day' : 'days'} off (${startDate} - ${endDate})`,
+          type: NOTIFICATION_TYPES.LEAVE_REQUEST,
+          priority: NOTIFICATION_PRIORITIES.NORMAL,
+          teamId: null, // Make it private to the manager
+          targetUserId: leave.manager_id,
+          companyId: leave.users.company_id,
+          userId: leave.user_id, // Creator is the employee
+          metadata: { leaveId: leave.id, requesterId: leave.user_id }
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error in createLeaveRequestNotification:', error);
+      return false;
+    }
+  }
+
+  async approveLeaveRequestFromNotification(leaveId, managerId) {
+    try {
+      const { data: leave, error: fetchError } = await supabase
+        .from('leave_plans')
+        .select('*, users!user_id(name, team_id)')
+        .eq('id', leaveId)
+        .single();
+
+      if (fetchError || !leave) throw fetchError || new Error('Leave request not found');
+
+      const { error: updateError } = await supabase
+        .from('leave_plans')
+        .update({ status: 'approved', approved_by: managerId, approved_at: new Date().toISOString() })
+        .eq('id', leaveId);
+
+      if (updateError) throw updateError;
+
+      // Create notification for the user
+      await this.createNotification({
+        title: 'Leave Request Approved',
+        message: `Your leave request for ${format(parseISO(leave.start_date), 'MMM dd')} - ${format(parseISO(leave.end_date), 'MMM dd')} has been approved.`,
+        type: NOTIFICATION_TYPES.LEAVE_REQUEST,
+        priority: NOTIFICATION_PRIORITIES.NORMAL,
+        teamId: null, // Make it private to the user
+        targetUserId: leave.user_id,
+        userId: managerId, // Creator is the manager
+        metadata: { leaveId: leave.id, status: 'approved' }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error in approveLeaveRequestFromNotification:', error);
+      return false;
+    }
+  }
+
+  async rejectLeaveRequestFromNotification(leaveId, managerId, rejectionReason = '') {
+    try {
+      const { data: leave, error: fetchError } = await supabase
+        .from('leave_plans')
+        .select('*, users!user_id(name, team_id)')
+        .eq('id', leaveId)
+        .single();
+
+      if (fetchError || !leave) throw fetchError || new Error('Leave request not found');
+
+      const { error: updateError } = await supabase
+        .from('leave_plans')
+        .update({ status: 'rejected', approved_by: managerId, approved_at: new Date().toISOString() })
+        .eq('id', leaveId);
+
+      if (updateError) throw updateError;
+
+      // Create notification for the user
+      await this.createNotification({
+        title: 'Leave Request Rejected',
+        message: `Your leave request for ${format(parseISO(leave.start_date), 'MMM dd')} - ${format(parseISO(leave.end_date), 'MMM dd')} has been rejected. ${rejectionReason ? 'Reason: ' + rejectionReason : ''}`,
+        type: NOTIFICATION_TYPES.LEAVE_REQUEST,
+        priority: NOTIFICATION_PRIORITIES.NORMAL,
+        teamId: null, // Make it private to the user
+        targetUserId: leave.user_id,
+        userId: managerId,
+        metadata: { leaveId: leave.id, status: 'rejected' }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error in rejectLeaveRequestFromNotification:', error);
       return false;
     }
   }

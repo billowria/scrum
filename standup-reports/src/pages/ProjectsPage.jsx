@@ -1475,24 +1475,42 @@ const AssignmentModal = ({
   onClose,
   project,
   availableUsers,
-  onAssignUser,
+  onAssignUsers,
   loading
 }) => {
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [error, setError] = useState('');
+  const [selectedUserIds, setSelectedUserIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredUsers = availableUsers.filter(user =>
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleUser = (userId) => {
+    const newSelected = new Set(selectedUserIds);
+    if (newSelected.has(userId)) {
+      newSelected.delete(userId);
+    } else {
+      newSelected.add(userId);
+    }
+    setSelectedUserIds(newSelected);
+  };
+
+  const selectAll = () => {
+    if (selectedUserIds.size === filteredUsers.length) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(filteredUsers.map(u => u.id)));
+    }
+  };
 
   const handleAssign = async () => {
-    if (!selectedUserId) {
-      setError('Please select a user to assign');
-      return;
-    }
-
+    if (selectedUserIds.size === 0) return;
     try {
-      await onAssignUser(selectedUserId);
-      setSelectedUserId(null);
-      setError('');
+      await onAssignUsers(Array.from(selectedUserIds));
+      setSelectedUserIds(new Set());
     } catch (err) {
-      setError('Failed to assign user');
+      console.error(err);
     }
   };
 
@@ -1504,92 +1522,101 @@ const AssignmentModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[100] px-4"
+        onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800"
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 flex flex-col max-h-[80vh]"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Assign Users</h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">to {project.name}</p>
+          {/* Header */}
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Assign Team</h2>
+                <p className="text-slate-500 text-sm font-medium">To {project.name}</p>
+              </div>
+              <motion.button
+                onClick={onClose}
+                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <FiX />
+              </motion.button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <FiX className="w-5 h-5" />
-            </button>
+
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Find teammate..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                />
+              </div>
+              <button
+                onClick={selectAll}
+                className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+              >
+                {selectedUserIds.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
           </div>
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {availableUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Available Users</h3>
-                <p className="text-gray-500 dark:text-gray-400">All users are already assigned to this project</p>
+          {/* User Grid */}
+          <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 gap-3 custom-scrollbar">
+            {filteredUsers.length === 0 ? (
+              <div className="col-span-2 text-center py-20 grayscale opacity-50">
+                <FiUsers className="w-12 h-12 mx-auto mb-4" />
+                <p className="font-bold">No results found</p>
               </div>
             ) : (
-              availableUsers.map((user) => (
+              filteredUsers.map((user) => (
                 <motion.div
                   key={user.id}
-                  className={`flex items-center justify-between p-4 border-2 rounded-xl cursor-pointer transition-all ${selectedUserId === user.id
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800'
+                  className={`flex items-center gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${selectedUserIds.has(user.id)
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 shadow-sm'
+                    : 'border-slate-50 dark:border-slate-800 hover:border-slate-100 dark:hover:border-slate-700 bg-white/50 dark:bg-slate-800/30'
                     }`}
-                  onClick={() => setSelectedUserId(user.id)}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  onClick={() => toggleUser(user.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar user={user} size="md" />
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{user.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
-                      {user.role}
-                    </span>
-                    {selectedUserId === user.id && (
-                      <FiCheck className="w-5 h-5 text-blue-600" />
+                  <div className="relative flex-shrink-0">
+                    <Avatar user={user} size="sm" />
+                    {selectedUserIds.has(user.id) && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                        <FiCheck className="w-2 h-2 text-white" />
+                      </div>
                     )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{user.name}</p>
+                    <p className="text-slate-400 text-[10px] font-medium uppercase tracking-wider">{user.role}</p>
                   </div>
                 </motion.div>
               ))
             )}
           </div>
 
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
-            >
-              Cancel
-            </button>
+          {/* Footer */}
+          <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <p className="text-xs font-bold text-slate-500">
+              {selectedUserIds.size} teammate{selectedUserIds.size !== 1 ? 's' : ''} selected
+            </p>
             <button
               onClick={handleAssign}
-              disabled={!selectedUserId || loading}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50"
+              disabled={selectedUserIds.size === 0 || loading}
+              className="px-8 py-3 bg-indigo-600 text-white font-black text-sm rounded-xl hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 disabled:grayscale transition-all flex items-center gap-2"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <FiLoader className="w-4 h-4 animate-spin" />
-                  Assigning...
-                </span>
-              ) : (
-                'Assign User'
-              )}
+              {loading ? <FiLoader className="animate-spin" /> : <FiUserPlus />}
+              Assign Selected
             </button>
           </div>
         </motion.div>
@@ -1607,6 +1634,13 @@ const AssignedMembersModal = ({
   onRemoveUser,
   loading
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredMembers = members.filter(member =>
+    member.users?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.users?.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (!isOpen || !project) return null;
 
   return (
@@ -1615,79 +1649,88 @@ const AssignedMembersModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[100] px-4"
+        onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-hidden shadow-2xl border border-gray-100 dark:border-slate-800"
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl border border-white/20 dark:border-white/10 flex flex-col max-h-[80vh]"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Team Members</h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">of {project.name}</p>
+          {/* Header */}
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">Project Squad</h2>
+                <p className="text-slate-500 text-sm font-medium">{project.name}</p>
+              </div>
+              <motion.button
+                onClick={onClose}
+                className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <FiX />
+              </motion.button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              <FiX className="w-5 h-5" />
-            </button>
+
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Find teammate..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800/50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              />
+            </div>
           </div>
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {members.length === 0 ? (
-              <div className="text-center py-12">
-                <FiUsers className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Members Yet</h3>
-                <p className="text-gray-500 dark:text-gray-400">Start by assigning users to this project</p>
+          {/* Members Grid */}
+          <div className="flex-1 overflow-y-auto p-6 grid grid-cols-2 gap-3 custom-scrollbar">
+            {filteredMembers.length === 0 ? (
+              <div className="col-span-2 text-center py-20 grayscale opacity-50">
+                <FiUsers className="w-12 h-12 mx-auto mb-4" />
+                <p className="font-bold">No teammates found</p>
               </div>
             ) : (
-              members.map((member, index) => (
+              filteredMembers.map((member) => (
                 <motion.div
                   key={member.user_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 border-2 border-gray-200 dark:border-slate-700 rounded-xl hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all"
+                  className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-800/30 hover:border-slate-200 dark:hover:border-slate-700 transition-all group"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar user={member.users} size="md" />
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{member.users.name}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{member.users.email}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar user={member.users} size="sm" className="flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 dark:text-white text-sm truncate">{member.users?.name}</p>
+                      <span className={`text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md ${member.role_in_project === 'manager'
+                          ? 'bg-purple-100 dark:bg-purple-500/20 text-purple-600'
+                          : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600'
+                        }`}>
+                        {member.role_in_project}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${member.role_in_project === 'manager' ? 'bg-purple-100 text-purple-800' :
-                      member.role_in_project === 'admin' ? 'bg-red-100 text-red-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                      {member.role_in_project}
-                    </span>
-                    <button
-                      onClick={() => onRemoveUser(member.user_id)}
-                      disabled={loading}
-                      className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-                      title="Remove from project"
-                    >
-                      {loading ? (
-                        <FiLoader className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <FiTrash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
+                  <motion.button
+                    onClick={() => onRemoveUser(member.user_id)}
+                    disabled={loading}
+                    className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <FiTrash2 size={14} />
+                  </motion.button>
                 </motion.div>
               ))
             )}
           </div>
 
-          <div className="flex gap-3 mt-6">
+          {/* Footer */}
+          <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
             <button
               onClick={onClose}
-              className="flex-auto px-4 py-3 border-2 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+              className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-sm rounded-xl hover:opacity-90 transition-all active:scale-95 shadow-xl"
             >
               Close
             </button>
@@ -2216,25 +2259,27 @@ export default function ProjectsPage() {
     }
   };
 
-  // Handle assign user to project
-  const handleAssignUser = async (userId) => {
+  // Handle assign users to project
+  const handleAssignUsersAction = async (userIds) => {
     setModalLoading(true);
     try {
+      const assignments = userIds.map(userId => ({
+        project_id: selectedProject.id,
+        user_id: userId,
+        role_in_project: 'member'
+      }));
+
       const { error } = await supabase
         .from('project_assignments')
-        .insert({
-          project_id: selectedProject.id,
-          user_id: userId,
-          role_in_project: 'member'
-        });
+        .insert(assignments);
 
       if (error) throw error;
 
       setShowAssignmentModal(false);
       await fetchProjects();
     } catch (err) {
-      console.error('Error assigning user:', err);
-      alert('Failed to assign user to project');
+      console.error('Error assigning users:', err);
+      alert('Failed to assign users to project');
     } finally {
       setModalLoading(false);
     }
@@ -2535,7 +2580,7 @@ export default function ProjectsPage() {
                             onDeleteProject={handleDeleteProject}
                             onAssignUsers={handleAssignUsers}
                             onViewMembers={handleViewMembers}
-                            canManageProject={userRole === 'manager' || userProjectRoles[project.id] === 'manager'}
+                            canManageProject={userRole === 'manager' || userRole === 'admin' || userProjectRoles[project.id] === 'manager'}
                             onProjectClick={(id) => setActiveProjectId(id)}
                           />
                         </motion.div>
@@ -2564,7 +2609,7 @@ export default function ProjectsPage() {
         onClose={() => setShowAssignmentModal(false)}
         project={selectedProject}
         availableUsers={availableUsers}
-        onAssignUser={handleAssignUser}
+        onAssignUsers={handleAssignUsersAction}
         loading={modalLoading}
       />
 

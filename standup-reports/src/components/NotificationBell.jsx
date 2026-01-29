@@ -264,16 +264,30 @@ const NotificationBell = ({ userRole }) => {
       let announcements = [];
       let announcementError = null;
 
-      // Only fetch team announcements if user belongs to a team
+      // Get announcements for user's team or targeted to them that haven't expired
       if (userData.team_id) {
         const result = await supabase
           .from('announcements')
           .select(`
-            id, title, content, created_at, expiry_date, created_by,
+            id, title, content, created_at, expiry_date, created_by, target_user_id,
             teams:team_id (id, name),
             manager:created_by (id, name)
           `)
-          .eq('team_id', userData.team_id)
+          .or(`team_id.eq.${userData.team_id},target_user_id.eq.${user.id}`)
+          .gte('expiry_date', today)
+          .order('created_at', { ascending: false });
+
+        announcements = result.data || [];
+        announcementError = result.error;
+      } else {
+        // If user not in a team, still fetch targeted announcements
+        const result = await supabase
+          .from('announcements')
+          .select(`
+            id, title, content, created_at, expiry_date, created_by, target_user_id,
+            manager:created_by (id, name)
+          `)
+          .eq('target_user_id', user.id)
           .gte('expiry_date', today)
           .order('created_at', { ascending: false });
 
@@ -533,14 +547,14 @@ const NotificationBell = ({ userRole }) => {
             />
 
             <motion.div
-              className="fixed inset-x-4 top-[70px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 bg-white dark:bg-slate-900 rounded-xl shadow-2xl dark:shadow-slate-950/80 border border-gray-200 dark:border-slate-800 z-50 overflow-hidden"
+              className="fixed inset-x-4 top-[70px] sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-xl shadow-2xl dark:shadow-slate-950/80 border border-gray-200 dark:border-slate-800 z-50 overflow-hidden"
               variants={dropdownVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
               ref={dropdownRef}
             >
-              <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-gradient-to-r from-primary-50 to-white dark:from-slate-800 dark:to-slate-900 flex justify-between items-center">
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-800 bg-gradient-to-r from-primary-50/50 to-white/50 dark:from-slate-800/50 dark:to-slate-900/50 flex justify-between items-center">
                 <h3 className="font-semibold text-gray-800 dark:text-white">Notifications</h3>
                 {notifications.length > 0 && (
                   <button
