@@ -1,9 +1,27 @@
 import React from 'react';
-import { FiSearch, FiPlus, FiChevronLeft } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiChevronLeft, FiShare2, FiTrash2, FiCheckCircle, FiCircle } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import NoteCard from './NoteCard';
 
-const NotesList = ({ notes, selectedNote, setSelectedNote, searchQuery, setSearchQuery, onNewNote, theme, themeMode, onToggleCollapse, onShareNote, onDeleteNote }) => {
+const NotesList = ({
+    notes,
+    selectedNote,
+    setSelectedNote,
+    selectedNoteIds,
+    toggleNoteSelection,
+    toggleSelectAll,
+    clearSelection,
+    onBulkDelete,
+    onBulkShare,
+    searchQuery,
+    setSearchQuery,
+    onNewNote,
+    theme,
+    themeMode,
+    onToggleCollapse,
+    onShareNote,
+    onDeleteNote
+}) => {
     return (
         <div className={`flex flex-col h-full w-80 border-r ${theme.border} ${theme.card} transition-colors duration-300`}>
             {/* Header */}
@@ -19,13 +37,26 @@ const NotesList = ({ notes, selectedNote, setSelectedNote, searchQuery, setSearc
                         </button>
                         <h2 className="text-lg font-bold tracking-tight">Library</h2>
                     </div>
-                    <button
-                        onClick={onNewNote}
-                        className={`p-2.5 rounded-xl bg-gradient-to-br ${themeMode === 'space' ? 'from-purple-500 to-fuchsia-600' : 'from-indigo-500 to-blue-600'} text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all`}
-                        title="Create New Note"
-                    >
-                        <FiPlus className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        {notes.length > 0 && (
+                            <button
+                                onClick={toggleSelectAll}
+                                className={`p-2 rounded-xl transition-all ${selectedNoteIds.length === notes.length
+                                    ? 'text-indigo-500 bg-indigo-500/10'
+                                    : `text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/5`}`}
+                                title={selectedNoteIds.length === notes.length ? "Deselect All" : "Select All"}
+                            >
+                                {selectedNoteIds.length === notes.length ? <FiCheckCircle className="w-5 h-5" /> : <FiCircle className="w-5 h-5" />}
+                            </button>
+                        )}
+                        <button
+                            onClick={onNewNote}
+                            className={`p-2.5 rounded-xl bg-gradient-to-br ${themeMode === 'space' ? 'from-purple-500 to-fuchsia-600' : 'from-indigo-500 to-blue-600'} text-white shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all`}
+                            title="Create New Note"
+                        >
+                            <FiPlus className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Search */}
@@ -42,6 +73,44 @@ const NotesList = ({ notes, selectedNote, setSelectedNote, searchQuery, setSearc
                             }`}
                     />
                 </div>
+
+                {/* Bulk Actions Bar */}
+                <AnimatePresence>
+                    {selectedNoteIds.length > 0 && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                            animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
+                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                            className={`overflow-hidden flex items-center justify-between p-2 rounded-xl border ${theme.border} ${themeMode === 'light' ? 'bg-indigo-50/50' : 'bg-white/5'}`}
+                        >
+                            <div className="flex items-center gap-2 pl-2">
+                                <span className="text-xs font-bold">{selectedNoteIds.length} selected</span>
+                                <button
+                                    onClick={clearSelection}
+                                    className="text-[10px] uppercase tracking-wider font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                            <div className="flex gap-1">
+                                <button
+                                    onClick={onBulkShare}
+                                    className={`p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition-colors text-indigo-500`}
+                                    title="Share selected"
+                                >
+                                    <FiShare2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={onBulkDelete}
+                                    className={`p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition-colors text-red-500`}
+                                    title="Delete selected"
+                                >
+                                    <FiTrash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Notes List */}
@@ -52,6 +121,8 @@ const NotesList = ({ notes, selectedNote, setSelectedNote, searchQuery, setSearc
                             key={note.id}
                             note={note}
                             isSelected={selectedNote?.id === note.id}
+                            isMultiSelected={selectedNoteIds.includes(note.id)}
+                            onToggleSelection={() => toggleNoteSelection(note.id)}
                             onClick={() => setSelectedNote(note)}
                             theme={theme}
                             themeMode={themeMode}

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     FiInbox, FiAlertCircle, FiMessageSquare, FiCheckSquare,
     FiBriefcase, FiLayers, FiStar, FiSettings, FiArchive,
-    FiChevronLeft, FiChevronRight, FiMenu
+    FiChevronLeft, FiChevronRight, FiMenu, FiAtSign
 } from 'react-icons/fi';
 
 const NotificationSidebar = ({
@@ -20,7 +20,7 @@ const NotificationSidebar = ({
         { id: 'all', label: 'Inbox', icon: FiInbox, count: counts.unread },
         { id: 'unread', label: 'Unread Only', icon: FiAlertCircle, count: counts.unread },
         { type: 'separator' },
-        { id: 'mention', label: 'Mentions', icon: FiMessageSquare, count: counts.mention },
+        { id: 'mention', label: 'Mentions', icon: FiAtSign, count: counts.mention },
         { id: 'task', label: 'Tasks', icon: FiCheckSquare, count: counts.task },
         { id: 'project', label: 'Projects', icon: FiBriefcase, count: counts.project },
         { id: 'system', label: 'System', icon: FiLayers, count: counts.system },

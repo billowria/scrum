@@ -1,9 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { FiMapPin, FiStar, FiShare2, FiTrash2 } from 'react-icons/fi';
+import { FiMapPin, FiStar, FiShare2, FiTrash2, FiCheck } from 'react-icons/fi';
 
-const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare, onDelete }) => {
+const NoteCard = ({
+    note,
+    isSelected,
+    isMultiSelected,
+    onToggleSelection,
+    onClick,
+    theme,
+    themeMode,
+    index,
+    onShare,
+    onDelete
+}) => {
     const getSnippet = (html) => {
         if (!html) return 'No content yet...';
         const tmp = document.createElement('DIV');
@@ -24,6 +35,11 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
         if (onDelete) onDelete(note.id);
     };
 
+    const handleToggleSelect = (e) => {
+        e.stopPropagation();
+        if (onToggleSelection) onToggleSelection();
+    };
+
     return (
         <motion.div
             layout
@@ -34,9 +50,21 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
             onClick={onClick}
             className={`relative p-4 rounded-2xl cursor-pointer transition-all duration-300 border group ${isSelected
                 ? `${themeMode === 'light' ? 'bg-indigo-50 border-indigo-200' : `bg-${accentColor}-500/10 border-${accentColor}-500/30`} shadow-lg`
-                : `${themeMode === 'light' ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}`
+                : (isMultiSelected
+                    ? `${themeMode === 'light' ? 'bg-indigo-50/50 border-indigo-200' : 'bg-white/10 border-indigo-500/50'}`
+                    : `${themeMode === 'light' ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-md' : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'}`)
                 }`}
         >
+            {/* Multi-select indicator */}
+            <div
+                className={`absolute top-3 right-3 z-20 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isMultiSelected
+                    ? `bg-indigo-500 border-indigo-500`
+                    : `opacity-0 group-hover:opacity-100 ${themeMode === 'light' ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`
+                    }`}
+                onClick={handleToggleSelect}
+            >
+                {isMultiSelected && <FiCheck className="w-3 h-3 text-white" />}
+            </div>
             {/* Selection Glow */}
             {isSelected && (
                 <motion.div
@@ -47,14 +75,8 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
             )}
 
             {/* Header */}
-            <div className="flex justify-between items-start mb-2 relative z-10">
-                <h3 className={`font-semibold text-sm truncate pr-2 transition-colors flex-1 ${isSelected
-                    ? (themeMode === 'light' ? 'text-indigo-900' : 'text-white')
-                    : (themeMode === 'light' ? 'text-slate-800 group-hover:text-slate-900' : 'text-slate-300 group-hover:text-white')
-                    }`}>
-                    {note.title || 'Untitled Note'}
-                </h3>
-                <div className="flex gap-1 flex-shrink-0 items-center">
+            <div className="flex items-start mb-2 relative z-10">
+                <div className="flex gap-1 flex-shrink-0 items-center mr-2 pt-0.5">
                     {note.is_pinned && (
                         <FiMapPin className={`w-3.5 h-3.5 ${themeMode === 'space' ? 'text-purple-400' : 'text-indigo-400'}`} />
                     )}
@@ -65,6 +87,12 @@ const NoteCard = ({ note, isSelected, onClick, theme, themeMode, index, onShare,
                         <FiShare2 className="w-3.5 h-3.5 text-emerald-400" />
                     )}
                 </div>
+                <h3 className={`font-semibold text-sm truncate transition-colors flex-1 pr-8 ${isSelected
+                    ? (themeMode === 'light' ? 'text-indigo-900' : 'text-white')
+                    : (themeMode === 'light' ? 'text-slate-800 group-hover:text-slate-900' : 'text-slate-300 group-hover:text-white')
+                    }`}>
+                    {note.title || 'Untitled Note'}
+                </h3>
             </div>
 
             {/* Snippet */}

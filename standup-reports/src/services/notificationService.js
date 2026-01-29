@@ -18,7 +18,8 @@ export const NOTIFICATION_TYPES = {
   MEETING: 'meeting',
   ACHIEVEMENT: 'achievement',
   URGENT: 'urgent',
-  TEAM_COMMUNICATION: 'team_communication'
+  TEAM_COMMUNICATION: 'team_communication',
+  MENTION: 'mention'
 };
 
 // Notification priority levels (matching database schema)
@@ -63,7 +64,8 @@ class NotificationService {
       [NOTIFICATION_TYPES.MEETING]: 'FiCalendar',
       [NOTIFICATION_TYPES.ACHIEVEMENT]: 'FiStar',
       [NOTIFICATION_TYPES.URGENT]: 'FiAlertCircle',
-      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: 'FiMessageCircle'
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: 'FiMessageCircle',
+      [NOTIFICATION_TYPES.MENTION]: 'FiAtSign'
     };
     return iconMap[type] || 'FiBell';
   }
@@ -81,7 +83,8 @@ class NotificationService {
       [NOTIFICATION_TYPES.PROJECT_UPDATE]: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
       [NOTIFICATION_TYPES.SPRINT_UPDATE]: { bg: 'bg-rose-50', border: 'border-rose-200', text: 'text-rose-700' },
       [NOTIFICATION_TYPES.SYSTEM_ALERT]: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700' },
-      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700' }
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700' },
+      [NOTIFICATION_TYPES.MENTION]: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' }
     };
 
     let colors = baseColors[type] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700' };
@@ -117,7 +120,8 @@ class NotificationService {
       [NOTIFICATION_TYPES.MEETING]: NOTIFICATION_CATEGORIES.COMMUNICATION,
       [NOTIFICATION_TYPES.ACHIEVEMENT]: NOTIFICATION_CATEGORIES.ACHIEVEMENT,
       [NOTIFICATION_TYPES.URGENT]: NOTIFICATION_CATEGORIES.SYSTEM,
-      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: NOTIFICATION_CATEGORIES.COMMUNICATION
+      [NOTIFICATION_TYPES.TEAM_COMMUNICATION]: NOTIFICATION_CATEGORIES.COMMUNICATION,
+      [NOTIFICATION_TYPES.MENTION]: NOTIFICATION_CATEGORIES.COMMUNICATION
     };
     return categoryMap[type] || NOTIFICATION_CATEGORIES.SYSTEM;
   }

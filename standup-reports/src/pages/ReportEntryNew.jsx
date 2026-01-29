@@ -4,6 +4,7 @@ import { useCompany } from '../contexts/CompanyContext';
 import { useTheme } from '../context/ThemeContext';
 import './ReportEntryNew.css'; // Create this file or add styles inline if preferred, but for now we inject style
 import { supabase } from '../supabaseClient';
+import notificationService from '../services/notificationService';
 import { EditorContent, useEditor, Node, mergeAttributes } from '@tiptap/react';
 import { createPortal } from 'react-dom';
 import StarterKit from '@tiptap/starter-kit';
@@ -518,12 +519,49 @@ const ReportEntryNew = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    await handleDraftSave();
-    setTimeout(() => {
+    try {
+      await handleDraftSave();
+
+      // Handle Mentions for "Today" and "Blockers"
+      const currentToday = processContentForSave(todayContent);
+      const currentBlockers = processContentForSave(blockersContent);
+      const combinedContent = `${currentToday} ${currentBlockers}`;
+
+      // Extract unique user IDs from @[uuid] format
+      const mentionRegex = /@([a-f0-9-]{36})/g;
+      const mentionedUserIds = [...new Set([...combinedContent.matchAll(mentionRegex)].map(m => m[1]))];
+
+      if (mentionedUserIds.length > 0 && currentUser) {
+        for (const targetId of mentionedUserIds) {
+          // Don't notify self
+          if (targetId === currentUser.id) continue;
+
+          await notificationService.createNotification({
+            title: 'Mentioned in Standup',
+            message: `${currentUser.name} mentioned you: "${combinedContent.substring(0, 100)}${combinedContent.length > 100 ? '...' : ''}"`,
+            type: 'mention',
+            priority: 'Medium',
+            companyId: selectedCompany.id,
+            userId: currentUser.id,
+            targetUserId: targetId,
+            metadata: {
+              report_date: reportDate,
+              report_user_id: currentUser.id,
+              report_user_name: currentUser.name,
+              full_content: combinedContent
+            }
+          });
+        }
+      }
+
+      setTimeout(() => {
+        setLoading(false);
+        navigate('/standup-reports');
+      }, 800);
+    } catch (error) {
+      console.error('Error submitting report:', error);
       setLoading(false);
-      // Optional: Add a toast notification here
-      navigate('/standup-reports');
-    }, 800);
+    }
   };
 
   // Template insertion

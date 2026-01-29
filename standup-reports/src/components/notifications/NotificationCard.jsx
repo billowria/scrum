@@ -4,7 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   FiMessageSquare, FiCheckSquare, FiAlertCircle, FiInfo,
   FiClock, FiTrash2, FiCheck, FiArrowRight, FiStar, FiCalendar, FiFileText,
-  FiCheckCircle, FiXCircle, FiZap
+  FiCheckCircle, FiXCircle, FiZap, FiAtSign
 } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -29,6 +29,7 @@ const NotificationCard = ({
       case 'task_comment':
         return FiCheckSquare;
       case 'mention':
+        return FiAtSign;
       case 'message':
         return FiMessageSquare;
       case 'alert':
@@ -62,6 +63,7 @@ const NotificationCard = ({
         case 'task_comment':
           return { bg: 'bg-emerald-500/20', color: 'text-emerald-300', border: 'border-emerald-400/30' };
         case 'mention':
+          return { bg: 'bg-amber-500/20', color: 'text-amber-300', border: 'border-amber-400/30' };
         case 'message':
           return { bg: 'bg-blue-500/20', color: 'text-blue-300', border: 'border-blue-400/30' };
         case 'alert':
@@ -89,6 +91,7 @@ const NotificationCard = ({
       case 'task_comment':
         return { bg: 'bg-emerald-100', color: 'text-emerald-600', border: 'border-emerald-200' };
       case 'mention':
+        return { bg: 'bg-amber-100', color: 'text-amber-600', border: 'border-amber-200' };
       case 'message':
         return { bg: 'bg-blue-100', color: 'text-blue-600', border: 'border-blue-200' };
       case 'alert':

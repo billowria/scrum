@@ -1223,10 +1223,9 @@ const QuickActionsHero = ({ navigate, userRole }) => {
           onClick={scrollRight}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          whileHover="hover"
           className="flex items-center gap-4 group cursor-pointer"
         >
-          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50 group-hover:text-indigo-400 transition-colors duration-300">
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 transition-colors duration-300">
             Scroll for more
           </span>
 
@@ -1239,10 +1238,9 @@ const QuickActionsHero = ({ navigate, userRole }) => {
               />
             </div>
             <motion.div
-              className="text-indigo-400/80 group-hover:text-indigo-400 ml-2"
-              variants={{
-                hover: { x: [0, 5, 0], transition: { duration: 0.8, repeat: Infinity } }
-              }}
+              className="text-indigo-400 ml-2"
+              animate={{ x: [0, 5, 0] }}
+              transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
             >
               <FiArrowRight size={14} />
             </motion.div>

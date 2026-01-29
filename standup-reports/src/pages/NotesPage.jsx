@@ -17,6 +17,7 @@ const NotesPage = () => {
     // --- State: Selection & Navigation ---
     const [selectedFolder, setSelectedFolder] = useState('all');
     const [selectedNote, setSelectedNote] = useState(null);
+    const [selectedNoteIds, setSelectedNoteIds] = useState([]); // Multi-select
     const [searchQuery, setSearchQuery] = useState('');
 
     // --- State: Editor ---
@@ -150,10 +151,31 @@ const NotesPage = () => {
 
             setNotes([data, ...notes]);
             setSelectedNote(data);
+            setSelectedNoteIds([]); // Clear selection on new note
             showToast('New note created', 'success');
         } catch (error) {
             console.error('Error creating note:', error);
             showToast('Failed to create note', 'error');
+        }
+    };
+
+    const toggleNoteSelection = (noteId) => {
+        setSelectedNoteIds(prev =>
+            prev.includes(noteId)
+                ? prev.filter(id => id !== noteId)
+                : [...prev, noteId]
+        );
+    };
+
+    const clearSelection = () => {
+        setSelectedNoteIds([]);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedNoteIds.length === filteredNotes.length && filteredNotes.length > 0) {
+            setSelectedNoteIds([]);
+        } else {
+            setSelectedNoteIds(filteredNotes.map(n => n.id));
         }
     };
 
@@ -193,10 +215,29 @@ const NotesPage = () => {
 
             setNotes(prev => prev.filter(n => n.id !== noteId));
             if (selectedNote?.id === noteId) setSelectedNote(null);
+            setSelectedNoteIds(prev => prev.filter(id => id !== noteId));
             showToast('Note deleted', 'success');
         } catch (error) {
             console.error('Error deleting:', error);
             showToast('Failed to delete', 'error');
+        }
+    };
+
+    const bulkDeleteNotes = async () => {
+        if (selectedNoteIds.length === 0) return;
+        if (!confirm(`Are you sure you want to delete ${selectedNoteIds.length} notes?`)) return;
+
+        try {
+            const { error } = await supabase.from('notes').delete().in('id', selectedNoteIds);
+            if (error) throw error;
+
+            setNotes(prev => prev.filter(n => !selectedNoteIds.includes(n.id)));
+            if (selectedNote && selectedNoteIds.includes(selectedNote.id)) setSelectedNote(null);
+            setSelectedNoteIds([]);
+            showToast(`${selectedNoteIds.length} notes deleted`, 'success');
+        } catch (error) {
+            console.error('Error in bulk delete:', error);
+            showToast('Failed to delete notes', 'error');
         }
     };
 
@@ -236,32 +277,40 @@ const NotesPage = () => {
         setShowShareModal(true);
     };
 
+    const handleBulkShare = () => {
+        if (selectedNoteIds.length === 0) return;
+        const notesToShare = notes.filter(n => selectedNoteIds.includes(n.id));
+        setShareNote(notesToShare); // Pass array instead of single note
+        setShowShareModal(true);
+    };
+
     const handleShareSuccess = (sharedUsers) => {
-        if (shareNote) {
-            setNotes(prevNotes =>
-                prevNotes.map(n =>
-                    n.id === shareNote.id
-                        ? {
-                            ...n,
-                            is_shared: true,
-                            shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
-                            shared_at: new Date().toISOString()
-                        }
-                        : n
-                )
-            );
+        // ... updates state as before, but handles array
+        const sharedIds = Array.isArray(shareNote) ? shareNote.map(n => n.id) : [shareNote.id];
 
-            if (selectedNote?.id === shareNote.id) {
-                setSelectedNote(prev => ({
-                    ...prev,
-                    is_shared: true,
-                    shared_with: [...(prev.shared_with || []), ...sharedUsers.map(u => u.userId)],
-                    shared_at: new Date().toISOString()
-                }));
-            }
+        setNotes(prevNotes =>
+            prevNotes.map(n =>
+                sharedIds.includes(n.id)
+                    ? {
+                        ...n,
+                        is_shared: true,
+                        shared_with: [...(n.shared_with || []), ...sharedUsers.map(u => u.userId)],
+                        shared_at: new Date().toISOString()
+                    }
+                    : n
+            )
+        );
 
-            showToast(`Note shared with ${sharedUsers.length} member${sharedUsers.length > 1 ? 's' : ''}`, 'success');
+        if (selectedNote && sharedIds.includes(selectedNote.id)) {
+            setSelectedNote(prev => ({
+                ...prev,
+                is_shared: true,
+                shared_with: [...(prev.shared_with || []), ...sharedUsers.map(u => u.userId)],
+                shared_at: new Date().toISOString()
+            }));
         }
+
+        showToast(`Shared with ${sharedUsers.length} member${sharedUsers.length > 1 ? 's' : ''}`, 'success');
     };
 
     // --- Filter Logic ---
@@ -311,6 +360,12 @@ const NotesPage = () => {
                             notes={filteredNotes}
                             selectedNote={selectedNote}
                             setSelectedNote={setSelectedNote}
+                            selectedNoteIds={selectedNoteIds}
+                            toggleNoteSelection={toggleNoteSelection}
+                            toggleSelectAll={toggleSelectAll}
+                            clearSelection={clearSelection}
+                            onBulkDelete={bulkDeleteNotes}
+                            onBulkShare={handleBulkShare}
                             searchQuery={searchQuery}
                             setSearchQuery={setSearchQuery}
                             onNewNote={createNewNote}

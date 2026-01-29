@@ -124,14 +124,22 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
 
     setLoading(true);
     try {
-      const results = await notesService.shareNote(note.id, selectedUsers, permission);
+      const notesToShare = Array.isArray(note) ? note : [note];
+      let allResults = [];
 
-      const successful = results.filter(r => r.success);
-      const failed = results.filter(r => !r.success);
+      for (const n of notesToShare) {
+        const results = await notesService.shareNote(n.id, selectedUsers, permission);
+        allResults = [...allResults, ...results];
+      }
+
+      const successful = allResults.filter(r => r.success);
+      const failed = allResults.filter(r => !r.success);
 
       if (successful.length > 0) {
         onShareSuccess?.(successful);
-        await loadShareHistory(note.id);
+        if (!Array.isArray(note)) {
+          await loadShareHistory(note.id);
+        }
         setSelectedUsers([]);
         setSearchQuery('');
 
@@ -140,7 +148,7 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
         }
       }
     } catch (error) {
-      console.error('Error sharing note:', error);
+      console.error('Error sharing notes:', error);
     } finally {
       setLoading(false);
     }
@@ -198,9 +206,11 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
                   <FiShare2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className={`text-xl font-bold ${theme.text}`}>Share Note</h2>
+                  <h2 className={`text-xl font-bold ${theme.text}`}>Share Note{Array.isArray(note) ? 's' : ''}</h2>
                   <p className={`text-sm ${theme.textSecondary} truncate max-w-xs`}>
-                    {note?.title || 'Untitled Note'}
+                    {Array.isArray(note)
+                      ? `${note.length} notes selected`
+                      : (note?.title || 'Untitled Note')}
                   </p>
                 </div>
               </div>
@@ -214,36 +224,38 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
           </div>
 
           <div className="p-6 max-h-[55vh] overflow-y-auto custom-scrollbar">
-            {/* Copy Link Section */}
-            <div className={`mb-6 p-4 rounded-2xl ${theme.bgSecondary} border ${theme.border}`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-${theme.accent}-500/10`}>
-                    <FiLink className={`w-4 h-4 text-${theme.accent}-500`} />
+            {/* Copy Link Section - Only for single note */}
+            {!Array.isArray(note) && (
+              <div className={`mb-6 p-4 rounded-2xl ${theme.bgSecondary} border ${theme.border}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg bg-${theme.accent}-500/10`}>
+                      <FiLink className={`w-4 h-4 text-${theme.accent}-500`} />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-medium ${theme.text}`}>Share via link</p>
+                      <p className={`text-xs ${theme.textMuted}`}>Anyone with the link can view</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className={`text-sm font-medium ${theme.text}`}>Share via link</p>
-                    <p className={`text-xs ${theme.textMuted}`}>Anyone with the link can view</p>
-                  </div>
-                </div>
-                <button
-                  onClick={copyLink}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${copied
+                  <button
+                    onClick={copyLink}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${copied
                       ? 'bg-emerald-500 text-white'
                       : `${theme.bgHover} ${theme.text} border ${theme.border}`
-                    }`}
-                >
-                  {copied ? (
-                    <span className="flex items-center gap-2">
-                      <FiCheck className="w-4 h-4" />
-                      Copied!
-                    </span>
-                  ) : (
-                    'Copy Link'
-                  )}
-                </button>
+                      }`}
+                  >
+                    {copied ? (
+                      <span className="flex items-center gap-2">
+                        <FiCheck className="w-4 h-4" />
+                        Copied!
+                      </span>
+                    ) : (
+                      'Copy Link'
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Permission Selection */}
             <div className="mb-6">
@@ -255,8 +267,8 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
                 <button
                   onClick={() => setPermission('read')}
                   className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${permission === 'read'
-                      ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
-                      : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
+                    ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
+                    : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
                     }`}
                 >
                   <FiEye className="w-5 h-5" />
@@ -265,8 +277,8 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
                 <button
                   onClick={() => setPermission('edit')}
                   className={`flex-1 flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all ${permission === 'edit'
-                      ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
-                      : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
+                    ? `border-${theme.accent}-500 bg-${theme.accent}-500/10 text-${theme.accent}-500`
+                    : `${theme.border} ${theme.cardHover} ${theme.textSecondary}`
                     }`}
                 >
                   <FiEdit className="w-5 h-5" />
@@ -313,14 +325,14 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`flex items-center p-3 rounded-xl border cursor-pointer transition-all ${selectedUsers.includes(member.id)
-                          ? `border-${theme.accent}-500 bg-${theme.accent}-500/10`
-                          : `${theme.border} ${theme.cardHover}`
+                        ? `border-${theme.accent}-500 bg-${theme.accent}-500/10`
+                        : `${theme.border} ${theme.cardHover}`
                         }`}
                       onClick={() => handleUserToggle(member.id)}
                     >
                       <div className={`w-5 h-5 rounded-md border-2 mr-3 flex items-center justify-center transition-all ${selectedUsers.includes(member.id)
-                          ? `border-${theme.accent}-500 bg-${theme.accent}-500`
-                          : `${theme.border}`
+                        ? `border-${theme.accent}-500 bg-${theme.accent}-500`
+                        : `${theme.border}`
                         }`}>
                         {selectedUsers.includes(member.id) && (
                           <FiCheck className="w-3 h-3 text-white" />
@@ -350,8 +362,8 @@ const ShareModal = ({ isOpen, onClose, note, onShareSuccess }) => {
               </div>
             </div>
 
-            {/* Share History */}
-            {shareHistory.length > 0 && (
+            {/* Share History - Hide for multiple notes for simplicity */}
+            {!Array.isArray(note) && shareHistory.length > 0 && (
               <div>
                 <h3 className={`text-sm font-medium ${theme.textSecondary} mb-3 flex items-center gap-2`}>
                   <FiClock className="w-4 h-4" />
