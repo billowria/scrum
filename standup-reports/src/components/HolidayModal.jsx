@@ -88,7 +88,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
         }
     };
 
-    const isManager = currentUser?.role === 'manager';
+    const canEdit = currentUser?.role === 'manager' || currentUser?.role === 'admin';
 
     return (
         <AnimatePresence>
@@ -145,7 +145,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                                             placeholder="e.g., Christmas Day"
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition-all bg-gray-50/50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-gray-700 dark:text-white font-medium"
-                                            disabled={!isManager}
+                                            disabled={!canEdit}
                                         />
                                     </div>
 
@@ -161,12 +161,12 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                                             placeholder="Additional notes..."
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-600 focus:border-gray-500 focus:ring-4 focus:ring-gray-500/10 outline-none transition-all bg-gray-50/50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 resize-none text-gray-700 dark:text-white"
-                                            disabled={!isManager}
+                                            disabled={!canEdit}
                                         />
                                     </div>
 
                                     {/* Action Bar */}
-                                    {isManager ? (
+                                    {canEdit ? (
                                         <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-700">
                                             {initialData ? (
                                                 <button
@@ -201,7 +201,7 @@ const HolidayModal = ({ isOpen, onClose, date, currentUser, onSave, onDelete, in
                                         </div>
                                     ) : (
                                         <div className="pt-4 border-t border-gray-100 dark:border-slate-700 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            Only managers can edit holidays.
+                                            Only managers and admins can edit holidays.
                                         </div>
                                     )}
                                 </form>

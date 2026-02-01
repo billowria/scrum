@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from '../supabaseClient';
 import { useCompany } from '../contexts/CompanyContext';
 import notificationService from '../services/notificationService';
@@ -17,6 +17,7 @@ import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import UserListModal from '../components/UserListModal';
 import TaskDetailView from '../components/tasks/TaskDetailView';
 import HolidaysWidget from '../components/dashboard/HolidaysWidget';
+import TodaysMeetingsWidget from '../components/dashboard/TodaysMeetingsWidget';
 import BossMessageBanner from '../components/dashboard/BossMessageBanner';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 
@@ -47,9 +48,9 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
 
   const getPriorityConfig = (idx) => {
     const priorities = [
-      { label: 'Critical', color: 'red', gradient: 'from-red-500 to-rose-500' },
+      { label: 'Crit', color: 'red', gradient: 'from-red-500 to-rose-500' },
       { label: 'High', color: 'orange', gradient: 'from-orange-500 to-amber-500' },
-      { label: 'Medium', color: 'blue', gradient: 'from-blue-500 to-indigo-500' },
+      { label: 'Med', color: 'blue', gradient: 'from-blue-500 to-indigo-500' },
       { label: 'Low', color: 'gray', gradient: 'from-gray-500 to-slate-500' }
     ];
     return priorities[idx % priorities.length];
@@ -58,95 +59,76 @@ const CompactProjectsWidget = ({ projects, loading, navigate }) => {
   return (
     <motion.div
       variants={itemVariants}
-      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500/30"
+      className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[1.5rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-200 dark:hover:border-indigo-500/30"
     >
       {/* Compact Header */}
-      <div className="p-5 border-b border-indigo-100/50 dark:border-slate-700 bg-gradient-to-r from-indigo-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-500/20">
-              <FiBriefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Projects</h3>
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{activeProjects.length} active</p>
-            </div>
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-indigo-100/50 dark:border-slate-700/50 bg-white/30 dark:bg-slate-800/30">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+            <FiBriefcase size={14} />
           </div>
-          <button
-            onClick={() => navigate('/projects')}
-            aria-label="View all projects"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:text-indigo-600 transition-all"
-          >
-            <FiArrowRight className="w-4 h-4" />
-          </button>
+          <div>
+            <h3 className="text-xs font-bold text-gray-900 dark:text-white">Projects</h3>
+            <p className="text-[9px] font-medium text-gray-500 dark:text-gray-400 leading-none mt-0.5">{activeProjects.length} Active</p>
+          </div>
         </div>
+        <button onClick={() => navigate('/projects')} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300">
+          <FiArrowRight size={14} />
+        </button>
       </div>
 
       {
         loading ? (
           <div className="flex-1 flex items-center justify-center">
-            <LoadingSpinner scale={0.6} />
+            <LoadingSpinner scale={0.5} />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
             {activeProjects.length > 0 ? (
-              <div className="divide-y divide-gray-50">
-                {activeProjects.slice(0, 5).map((project, idx) => {
-                  const priority = getPriorityConfig(idx);
-                  const progress = Math.floor(Math.random() * 40) + 30;
+              activeProjects.slice(0, 5).map((project, idx) => {
+                const priority = getPriorityConfig(idx);
+                const progress = Math.floor(Math.random() * 40) + 30;
 
-                  return (
-                    <motion.div
-                      key={project.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      className="group p-4 hover:bg-indigo-50/50 cursor-pointer transition-all relative"
-                    >
-                      <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${priority.gradient} opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                return (
+                  <motion.div
+                    key={project.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                    className="group flex items-center gap-3 p-2 rounded-lg cursor-pointer border border-transparent hover:bg-white dark:hover:bg-zinc-800/50 transition-colors"
+                  >
+                    {/* Avatar / Icon */}
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${priority.gradient} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 shadow-sm`}>
+                      {project.name.substring(0, 2).toUpperCase()}
+                    </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${priority.gradient} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
-                          {project.name.substring(0, 2).toUpperCase()}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors truncate">
-                              {project.name}
-                            </h4>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full bg-${priority.color}-50 text-${priority.color}-700 ml-2`}>
-                              {priority.label}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            <span>Progress: {progress}%</span>
-                            <span className="flex items-center gap-1">
-                              <FiClock className="w-3 h-3" />
-                              {Math.floor(Math.random() * 15) + 5}d
-                            </span>
-                          </div>
-
-                          <div className="relative h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${progress}%` }}
-                              transition={{ duration: 0.8, delay: idx * 0.1 }}
-                              className={`absolute inset-y-0 left-0 bg-gradient-to-r ${priority.gradient} rounded-full`}
-                            />
-                          </div>
-                        </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          {project.name}
+                        </h4>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-${priority.color}-50 text-${priority.color}-600 uppercase`}>
+                          {priority.label}
+                        </span>
                       </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+
+                      {/* Progress Bar */}
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div className={`h-full bg-gradient-to-r ${priority.gradient} rounded-full`} style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-[9px] font-bold text-gray-500">{progress}%</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8">
-                <FiBriefcase className="w-12 h-12 mb-3 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">No active projects</p>
+              <div className="flex flex-col items-center justify-center h-full text-center py-4 opacity-60">
+                <FiBriefcase className="w-8 h-8 mb-2 text-gray-300" />
+                <p className="text-[10px] font-medium text-gray-500">No active projects</p>
               </div>
             )}
           </div>
@@ -185,15 +167,15 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
     >
       {/* Header */}
       {/* Header */}
-      <div className="p-5 border-b border-amber-100/50 dark:border-slate-700 bg-gradient-to-r from-amber-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
+      <div className="px-4 py-3 border-b border-amber-100/50 dark:border-slate-700 bg-gradient-to-r from-amber-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-100 dark:border-amber-500/20">
-              <FiTarget className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-100 dark:border-amber-500/20">
+              <FiTarget className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
                 {incompleteTasks.length} pending
               </p>
             </div>
@@ -201,9 +183,9 @@ const AssignedTasksWidget = ({ tasks = [], loading, currentUserId, onTaskClick, 
           <button
             onClick={() => navigate ? navigate('/tasks') : window.location.href = '/tasks'}
             aria-label="View all tasks"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 hover:text-amber-600 transition-all"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-700 hover:text-amber-600 transition-all"
           >
-            <FiArrowRight className="w-4 h-4" />
+            <FiArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
@@ -329,17 +311,17 @@ const TaskAnalyticsWidget = ({ taskStats, loading, navigate, currentUserId }) =>
       className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/10 hover:border-emerald-200 dark:hover:border-emerald-500/30"
     >
       {/* Header */}
-      <div className="p-5 border-b border-emerald-100/50 dark:border-slate-700 bg-gradient-to-r from-emerald-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
+      <div className="px-4 py-3 border-b border-emerald-100/50 dark:border-slate-700 bg-gradient-to-r from-emerald-50/30 via-white to-transparent dark:from-slate-800/50 dark:via-slate-800 dark:to-transparent">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl blur opacity-20"></div>
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
-              <FiActivity className="w-5 h-5 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg blur opacity-20"></div>
+            <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-sm">
+              <FiActivity className="w-4 h-4 text-white" />
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
-            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{taskStats.total} total tasks</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">My Tasks</h3>
+            <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{taskStats.total} total tasks</p>
           </div>
         </div>
       </div>
@@ -582,22 +564,22 @@ const TeamPulseWidget = ({ teamMembers, loading, navigate, userTeamId, onAvatarC
       variants={itemVariants}
       className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2rem] shadow-sm border border-white/60 dark:border-slate-700 h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-200 dark:hover:border-purple-500/30"
     >
-      <div className="p-5 border-b border-purple-100/50 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white dark:from-slate-800/50 dark:to-slate-800">
+      <div className="px-4 py-3 border-b border-purple-100/50 dark:border-slate-700 flex items-center justify-between bg-gradient-to-r from-purple-50/30 to-white dark:from-slate-800/50 dark:to-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-sm border border-purple-100 dark:border-purple-500/20">
-            <FiUsers className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-sm border border-purple-100 dark:border-purple-500/20">
+            <FiUsers className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">Team Pulse</h3>
-            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">{myTeamMembers.length} members</p>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">Team Pulse</h3>
+            <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{myTeamMembers.length} members</p>
           </div>
         </div>
         <button
           onClick={() => navigate('/team-management')}
           aria-label="Manage team"
-          className="w-8 h-8 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700 hover:text-purple-600 transition-all"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-50 dark:hover:bg-slate-700 hover:text-purple-600 transition-all"
         >
-          <FiArrowRight className="w-4 h-4" />
+          <FiArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
 
@@ -1248,7 +1230,7 @@ const QuickActionsHero = ({ navigate, userRole }) => {
         </motion.button>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
@@ -1310,6 +1292,9 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
 
   // Holidays State
   const [holidays, setHolidays] = useState([]);
+
+  // Meetings State
+  const [meetings, setMeetings] = useState([]);
 
   // Derived Stats
   const [stats, setStats] = useState({
@@ -1380,7 +1365,7 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
         setTeamMembers(teamData || []);
 
         // 5. Fetch Leave Data (Today's status)
-        const today = new Date().toISOString().split('T')[0];
+        const today = format(new Date(), 'yyyy-MM-dd');
         const { data: leaveData } = await supabase
           .from('leave_plans')
           .select('user_id')
@@ -1496,11 +1481,34 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
           console.error('Error fetching holidays:', holidaysError);
         } else {
           console.log('DEBUG: Holidays fetched successfully:', holidaysData);
+          setHolidays(holidaysData || []);
         }
 
-        setHolidays(holidaysData || []);
+        // 9. Fetch Today's Meetings
+        const startOfToday = startOfDay(new Date()).toISOString();
+        const endOfToday = endOfDay(new Date()).toISOString();
 
-        // 9. Fetch Current Subscription
+        const { data: meetingsData, error: meetingsError } = await supabase
+          .from('meetings')
+          .select(`
+            *,
+            meeting_participants(
+              *,
+              user:users(id, name, avatar_url)
+            )
+          `)
+          .eq('company_id', currentCompany.id)
+          .gte('start_time', startOfToday)
+          .lte('start_time', endOfToday)
+          .order('start_time', { ascending: true });
+
+        if (meetingsError) {
+          console.error('Error fetching meetings:', meetingsError);
+        } else {
+          setMeetings(meetingsData || []);
+        }
+
+        // 10. Fetch Current Subscription
         try {
           const { data: subData } = await supabase
             .from('subscriptions')
@@ -1690,12 +1698,15 @@ export default function Dashboard({ sidebarOpen, sidebarMode }) {
             />
           </div>
 
-          {/* Column 2: Projects & Holidays */}
-          <div className="lg:col-span-1 h-[700px] flex flex-col gap-4 py-2">
+          {/* Column 2: Meetings, Projects & Holidays */}
+          <div className="lg:col-span-1 h-[700px] flex flex-col gap-3 py-2">
+            <div className="flex-1 min-h-0">
+              <TodaysMeetingsWidget meetings={meetings} loading={loading} navigate={navigate} />
+            </div>
             <div className="flex-1 min-h-0">
               <CompactProjectsWidget projects={projects} loading={loading} navigate={navigate} />
             </div>
-            <div className="flex-1 min-h-0">
+            <div className="flex-[0.8] min-h-0">
               <HolidaysWidget holidays={holidays} loading={loading} navigate={navigate} />
             </div>
           </div>

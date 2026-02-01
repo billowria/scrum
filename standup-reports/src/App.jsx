@@ -268,27 +268,21 @@ function App() {
     }
   };
 
-  if (loading) {
-    return <AppLoader />;
-  }
-
-
+  const { isAIOpen, closeAI } = useAI();
 
   const getMarginLeft = () => {
     if (isMobile) return '0px';
     switch (sidebarMode) {
-      case 'expanded':
-        return '272px';
-      case 'collapsed':
-        return '100px';
-      case 'hidden':
-        return '0px';
-      default:
-        return '272px';
+      case 'expanded': return '272px';
+      case 'collapsed': return '100px';
+      case 'hidden': return '0px';
+      default: return '272px';
     }
   };
 
-  const { isAIOpen, closeAI } = useAI();
+  if (loading) {
+    return <AppLoader />;
+  }
 
   return (
     <Router>

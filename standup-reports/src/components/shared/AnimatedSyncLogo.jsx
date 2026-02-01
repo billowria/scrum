@@ -9,7 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 const AnimatedSyncLogo = ({ size = 'md', className = '', showText = true }) => {
     const [isHovered, setIsHovered] = useState(false);
     const controls = useAnimation();
-    const { themeMode, theme } = useTheme();
+    const { themeMode, theme, disableLogoAnimation } = useTheme();
 
     // Theme-specific color configurations
     const themeConfigs = {
@@ -81,9 +81,14 @@ const AnimatedSyncLogo = ({ size = 'md', className = '', showText = true }) => {
     const CYCLE_DURATION = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode) ? 2.5 : 3;
 
     useEffect(() => {
-        controls.start("star");
-        controls.start("bracket");
-    }, [controls, themeMode]);
+        if (disableLogoAnimation) {
+            controls.stop();
+        } else {
+            controls.start("star");
+            controls.start("bracket");
+            controls.start("dot");
+        }
+    }, [controls, themeMode, disableLogoAnimation]);
 
     const variants = {
         star: {
@@ -168,27 +173,29 @@ const AnimatedSyncLogo = ({ size = 'md', className = '', showText = true }) => {
                 {/* Animation Layer */}
                 <div className="absolute inset-0 pointer-events-none">
 
-                    {/* Photon Star with Theme Colors */}
-                    <motion.div
-                        className="absolute z-20"
-                        style={{
-                            width: cfg.starSize,
-                            height: cfg.starSize,
-                            background: currentConfig.primary,
-                            borderRadius: '50%',
-                            boxShadow: currentConfig.photonShadow,
-                            top: 0,
-                            left: 0,
-                            x: '-50%',
-                            y: '-50%'
-                        }}
-                        initial={{ left: "0%", top: "0%" }}
-                        animate={controls}
-                        variants={{ star: variants.star }}
-                    />
+                    {/* Photon Star with Theme Colors - Only show if not disabled */}
+                    {!disableLogoAnimation && (
+                        <motion.div
+                            className="absolute z-20"
+                            style={{
+                                width: cfg.starSize,
+                                height: cfg.starSize,
+                                background: currentConfig.primary,
+                                borderRadius: '50%',
+                                boxShadow: currentConfig.photonShadow,
+                                top: 0,
+                                left: 0,
+                                x: '-50%',
+                                y: '-50%'
+                            }}
+                            initial={{ left: "0%", top: "0%" }}
+                            animate={controls}
+                            variants={{ star: variants.star }}
+                        />
+                    )}
 
                     {/* Comet Tail for Premium Themes */}
-                    {['space', 'ocean', 'forest', 'diwali'].includes(themeMode) && (
+                    {['space', 'ocean', 'forest', 'diwali'].includes(themeMode) && !disableLogoAnimation && (
                         <motion.div
                             className="absolute z-19"
                             style={{
@@ -242,24 +249,32 @@ const AnimatedSyncLogo = ({ size = 'md', className = '', showText = true }) => {
                                     height: cfg.starSize * 3,
                                     borderColor: currentConfig.primary,
                                 }}
-                                initial={{ opacity: 0, scale: 1 }}
-                                animate={controls}
+                                initial={false}
+                                animate={disableLogoAnimation ? {
+                                    opacity: 1,
+                                    scale: 1.3,
+                                    boxShadow: `0px 0px 10px ${currentConfig.glow}`,
+                                    x: -3,
+                                    y: -3
+                                } : controls}
                                 custom={pos.delay}
                                 variants={{ bracket: variants.bracket(pos.delay) }}
                             />
 
                             {/* Synced Micro-Dot */}
-                            <motion.div
-                                className={`absolute w-1.5 h-1.5 rounded-full ${currentConfig.dotColor}`}
-                                style={{
-                                    opacity: 0.2,
-                                    boxShadow: `0 0 4px ${currentConfig.primary}`
-                                }}
-                                initial={{ opacity: 0.2, scale: 1 }}
-                                animate={controls}
-                                custom={pos.delay}
-                                variants={{ dot: variants.dot(pos.delay) }}
-                            />
+                            {!disableLogoAnimation && (
+                                <motion.div
+                                    className={`absolute w-1.5 h-1.5 rounded-full ${currentConfig.dotColor}`}
+                                    style={{
+                                        opacity: 0.2,
+                                        boxShadow: `0 0 4px ${currentConfig.primary}`
+                                    }}
+                                    initial={{ opacity: 0.2, scale: 1 }}
+                                    animate={controls}
+                                    custom={pos.delay}
+                                    variants={{ dot: variants.dot(pos.delay) }}
+                                />
+                            )}
                         </div>
                     ))}
 

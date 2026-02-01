@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend, isSameDay, addMonths, subMonths, parseISO, isSameMonth, differenceInDays } from 'date-fns';
-import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend, FiTarget, FiCheckSquare, FiBriefcase, FiLayers, FiFileText, FiEyeOff, FiStar } from 'react-icons/fi';
+import { FiCalendar, FiPlus, FiX, FiUser, FiInfo, FiChevronLeft, FiChevronRight, FiCheck, FiBell, FiUsers, FiClock, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiEye, FiArrowRight, FiEdit3, FiTrash2, FiDownload, FiSend, FiTarget, FiCheckSquare, FiBriefcase, FiLayers, FiFileText, FiEyeOff, FiStar, FiVideo, FiLink, FiExternalLink, FiMoreHorizontal, FiGrid } from 'react-icons/fi';
 import { useCompany } from '../contexts/CompanyContext';
 
 // Import components
@@ -12,6 +12,8 @@ import AnnouncementModal from '../components/AnnouncementModal';
 import UserListModal from '../components/UserListModal';
 import TimesheetModal from '../components/TimesheetModal';
 import HolidayModal from '../components/HolidayModal';
+import MeetingModal from '../components/MeetingModal';
+import DayAgendaModal from '../components/DayAgendaModal';
 
 // Professional color palette
 const colors = {
@@ -89,8 +91,9 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   const { currentCompany } = useCompany();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // View Mode: 'leaves', 'timesheets', or 'holidays'
-  const [viewMode, setViewMode] = useState('leaves');
+  // View Mode: 'meetings', 'leaves', 'timesheets', or 'holidays'
+  const [viewMode, setViewMode] = useState('meetings');
+  const [isTogglesExpanded, setIsTogglesExpanded] = useState(false);
 
   // Selection States
   const [selectedLeaveDates, setSelectedLeaveDates] = useState([]); // Array of strings 'YYYY-MM-DD'
@@ -99,6 +102,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   const [leaveData, setLeaveData] = useState([]);
   const [timesheetData, setTimesheetData] = useState([]);
   const [holidayData, setHolidayData] = useState([]);
+  const [meetingData, setMeetingData] = useState([]);
   const [users, setUsers] = useState([]);
 
   // Holiday Modal State
@@ -106,6 +110,13 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
   const [selectedHolidayDate, setSelectedHolidayDate] = useState(null);
   const [editingHoliday, setEditingHoliday] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+
+  // Meeting Modal State
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [selectedMeetingDate, setSelectedMeetingDate] = useState(null);
+  const [editingMeeting, setEditingMeeting] = useState(null);
+  const [showDayAgendaModal, setShowDayAgendaModal] = useState(false);
+  const [selectedAgendaDate, setSelectedAgendaDate] = useState(null);
 
   // Modals
   const [showLeaveForm, setShowLeaveForm] = useState(false);
@@ -139,15 +150,19 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
 
   useEffect(() => {
     fetchCurrentUser();
+
+    // Check for tab parameter in URL
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['leaves', 'timesheets', 'holidays', 'meetings'].includes(tab)) {
+      setViewMode(tab);
+    }
   }, []);
 
   useEffect(() => {
     if (currentUser && currentCompany?.id) {
       fetchUsers();
       fetchLeaveData();
-      if (viewMode === 'timesheets') {
-        fetchTimesheets();
-      }
       fetchAnnouncements();
     }
   }, [currentUser, currentCompany?.id]);
@@ -168,16 +183,20 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
         fetchTimesheets();
       } else if (viewMode === 'holidays') {
         fetchHolidays();
+      } else if (viewMode === 'meetings') {
+        fetchMeetings();
       }
     }
-  }, [currentMonth, viewMode]);
+  }, [currentMonth, viewMode, currentUser, currentCompany?.id]);
 
   // Derived Stats
   const [stats, setStats] = useState({
     onLeaveToday: 0,
     pendingRequests: 0,
     totalHoursMonth: 0,
-    missingDays: 0
+    missingDays: 0,
+    meetingsToday: 0,
+    meetingsMonth: 0
   });
 
   useEffect(() => {
@@ -211,11 +230,21 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     const loggedDates = new Set(userTimesheets.map(t => t.date));
     const missingDays = workDays.filter(d => !loggedDates.has(format(d, 'yyyy-MM-dd'))).length;
 
+    // Meeting Stats
+    const meetingsTodayCount = meetingData.filter(m => {
+      const meetingDate = format(parseISO(m.start_time), 'yyyy-MM-dd');
+      return meetingDate === todayStr;
+    }).length;
+
+    const meetingsMonthCount = meetingData.length; // meetingData is already filtered by current month in fetchMeetings
+
     setStats({
       onLeaveToday,
       pendingRequests,
       totalHoursMonth: totalHours.toFixed(1),
-      missingDays
+      missingDays,
+      meetingsToday: meetingsTodayCount,
+      meetingsMonth: meetingsMonthCount
     });
   };
 
@@ -377,6 +406,51 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
     }
   };
 
+  const fetchMeetings = async () => {
+    if (!currentUser || !currentCompany?.id) return;
+    try {
+      const start = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+      const end = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+      const { data, error } = await supabase
+        .from('meetings')
+        .select(`
+          *,
+          creator:users!created_by(id, name, avatar_url),
+          meeting_participants(*, user:users(id, name, avatar_url))
+        `)
+        .eq('company_id', currentCompany.id)
+        .gte('start_time', `${start}T00:00:00`)
+        .lte('start_time', `${end}T23:59:59`)
+        .order('start_time');
+
+      if (error) throw error;
+      setMeetingData(data || []);
+    } catch (error) {
+      console.error('Error fetching meetings:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMeeting = async (meetingId) => {
+    if (!confirm('Are you sure you want to delete this meeting?')) return;
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('meetings').delete().eq('id', meetingId);
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: 'Meeting deleted successfully' });
+      fetchMeetings();
+    } catch (error) {
+      console.error('Error deleting meeting:', error);
+      setMessage({ type: 'error', text: 'Failed to delete meeting' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
   // Month Navigation
   const goToPreviousMonth = () => {
     setMonthDirection(-1);
@@ -410,6 +484,11 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
           setEditingHoliday(holidayData.find(h => h.date === dateStr) || null);
         }
       }
+    } else if (viewMode === 'meetings') {
+      const dateStr = format(day, 'yyyy-MM-dd');
+      // Always open Day Agenda view on day click
+      setSelectedAgendaDate(day);
+      setShowDayAgendaModal(true);
     } else {
       // Leaves Mode - same toggle logic
       if (selectedLeaveDates.includes(dateStr)) {
@@ -486,6 +565,73 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
           >
             <FiStar className="w-3 h-3 inline-block mr-1 text-amber-600" />
             <span className="font-bold">{holiday.name}</span>
+          </div>
+        );
+      }
+      return null;
+    }
+
+    if (viewMode === 'meetings') {
+      // Get meetings for this day
+      const dayMeetings = meetingData.filter(m => {
+        const meetingDate = format(parseISO(m.start_time), 'yyyy-MM-dd');
+        return meetingDate === dateStr;
+      });
+
+      if (dayMeetings.length > 0) {
+        return (
+          <div className="mt-1 space-y-1 overflow-hidden">
+            {dayMeetings.slice(0, 2).map((meeting, idx) => {
+              const startTime = parseISO(meeting.start_time);
+              const colorClasses = {
+                blue: 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                purple: 'bg-purple-100/80 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+                pink: 'bg-pink-100/80 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300',
+                green: 'bg-green-100/80 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+                amber: 'bg-amber-100/80 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+                red: 'bg-red-100/80 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+                cyan: 'bg-cyan-100/80 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
+                indigo: 'bg-indigo-100/80 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
+              };
+              const colorClass = colorClasses[meeting.color] || colorClasses.blue;
+
+              return (
+                <div
+                  key={meeting.id}
+                  className={`p-1.5 rounded-lg text-xs font-medium ${colorClass} opacity-90`}
+                >
+                  <div className="flex items-center gap-1">
+                    <FiVideo className="w-3 h-3 flex-shrink-0" />
+                    <span className="font-bold truncate">{format(startTime, 'HH:mm')}</span>
+                  </div>
+                  <div className="truncate font-medium text-[10px] mt-0.5 opacity-80 hidden md:block">
+                    {meeting.title}
+                  </div>
+                  {meeting.meeting_participants?.length > 0 && (
+                    <div className="flex -space-x-1 mt-1 hidden lg:flex">
+                      {meeting.meeting_participants.slice(0, 3).map((p, i) => (
+                        <img
+                          key={p.user?.id || i}
+                          src={p.user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user?.name || 'U')}&background=random`}
+                          alt=""
+                          className="w-4 h-4 rounded-full ring-1 ring-white dark:ring-slate-800 object-cover"
+                        />
+                      ))}
+                      {meeting.meeting_participants.length > 3 && (
+                        <div className="w-4 h-4 rounded-full bg-gray-200 dark:bg-slate-600 ring-1 ring-white dark:ring-slate-800 flex items-center justify-center text-[7px] font-bold">
+                          +{meeting.meeting_participants.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {dayMeetings.length > 2 && (
+              <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400 text-center">
+                +{dayMeetings.length - 2} more
+              </div>
+            )}
           </div>
         );
       }
@@ -603,77 +749,150 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
               <div className="relative group/icon cursor-pointer">
                 <div className={`absolute inset-0 rounded-2xl blur-lg opacity-40 dark:opacity-20 group-hover/icon:opacity-60 transition-opacity ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-500' :
                   viewMode === 'timesheets' ? 'bg-gradient-to-tr from-purple-500 to-pink-500' :
-                    'bg-gradient-to-tr from-amber-500 to-orange-500'
+                    viewMode === 'meetings' ? 'bg-gradient-to-tr from-blue-500 to-indigo-500' :
+                      'bg-gradient-to-tr from-amber-500 to-orange-500'
                   }`}></div>
                 <div className={`relative p-2.5 rounded-2xl text-white shadow-lg ring-1 ring-white/20 dark:ring-white/10 group-hover/icon:scale-105 transition-transform duration-300 ${viewMode === 'leaves' ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-cyan-500/30' :
                   viewMode === 'timesheets' ? 'bg-gradient-to-tr from-purple-500 to-pink-600 shadow-purple-500/30' :
-                    'bg-gradient-to-tr from-amber-500 to-orange-600 shadow-amber-500/30'
+                    viewMode === 'meetings' ? 'bg-gradient-to-tr from-blue-500 to-indigo-600 shadow-blue-500/30' :
+                      'bg-gradient-to-tr from-amber-500 to-orange-600 shadow-amber-500/30'
                   }`}>
                   {viewMode === 'leaves' ? <FiCalendar className="w-5 h-5" /> :
                     viewMode === 'timesheets' ? <FiClock className="w-5 h-5" /> :
-                      <FiStar className="w-5 h-5" />}
+                      viewMode === 'meetings' ? <FiVideo className="w-5 h-5" /> :
+                        <FiStar className="w-5 h-5" />}
                 </div>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
-                  {viewMode === 'leaves' ? 'Team Calendar' : viewMode === 'timesheets' ? 'Timesheets' : 'Holidays'}
+                  {viewMode === 'leaves' ? 'Team Calendar' : viewMode === 'timesheets' ? 'Timesheets' : viewMode === 'meetings' ? 'Meetings' : 'Holidays'}
                 </h1>
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-2">
                   {viewMode === 'leaves' ? 'Manage team availability' :
                     viewMode === 'timesheets' ? 'Track your work hours' :
-                      'Company holidays'}
+                      viewMode === 'meetings' ? 'Schedule team meetings' :
+                        'Company holidays'}
                 </p>
               </div>
             </div>
 
-            {/* Center: Futuristic Toggle - Responsive */}
-            <div className="flex w-full md:w-auto overflow-x-auto md:overflow-visible md:absolute md:left-1/2 md:-translate-x-1/2 bg-transparent md:bg-gray-100/30 md:backdrop-blur-xl p-1.5 rounded-2xl z-20 md:border md:border-white/40 md:shadow-inner no-scrollbar justify-center">
-              {[
-                { id: 'leaves', icon: FiCalendar, label: 'Leaves' },
-                { id: 'timesheets', icon: FiClock, label: 'Timesheet' },
-                { id: 'holidays', icon: FiStar, label: 'Holidays' }
-              ].map((tab) => (
-                <motion.button
-                  key={tab.id}
-                  className={`relative px-3 py-1.5 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-[11px] md:text-sm font-bold transition-all duration-300 flex items-center gap-1.5 md:gap-2 z-10 whitespace-nowrap ${viewMode === tab.id
-                    ? 'text-white shadow-lg'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/40'
-                    }`}
-                  onClick={() => {
-                    setViewMode(tab.id);
-                    setSelectedLeaveDates([]);
-                    setSelectedTimesheetDates([]);
-                    setSelectedHolidayDate(null);
-                  }}
-                  whileHover={{
-                    scale: 1.05,
-                    rotateY: viewMode === tab.id ? 0 : 2,
-                    z: 10
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    perspective: '1000px',
-                    transformStyle: 'preserve-3d'
-                  }}
-                >
-                  {/* Active Indicator Background */}
-                  {viewMode === tab.id && (
-                    <motion.div
-                      className={`absolute inset-0 rounded-xl shadow-lg border border-white/20 ${tab.id === 'leaves' ? 'bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500' :
-                        tab.id === 'timesheets' ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' :
-                          'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'
-                        }`}
-                      layoutId="activeTabCalendar"
-                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    />
-                  )}
+            {/* Center: Futuristic Toggle - Responsive & Collapsible (Compact) */}
+            <div className="flex w-full md:w-auto overflow-x-auto md:overflow-visible md:absolute md:left-1/2 md:-translate-x-1/2 bg-transparent md:bg-gray-100/30 md:backdrop-blur-xl p-1 rounded-2xl z-20 md:border md:border-white/40 md:shadow-inner no-scrollbar justify-center items-center gap-0.5">
+              {/* Primary Visible Tabs */}
+              <div className="flex items-center gap-0.5">
+                {[
+                  { id: 'meetings', icon: FiVideo, label: 'Meetings' },
+                  { id: 'leaves', icon: FiCalendar, label: 'Leaves' }
+                ].map((tab) => (
+                  <motion.button
+                    key={tab.id}
+                    layout="position"
+                    className={`relative px-2 py-1 md:px-3.5 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all duration-300 flex items-center gap-1.5 z-10 whitespace-nowrap ${viewMode === tab.id
+                      ? 'text-white'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/40'
+                      }`}
+                    onClick={() => {
+                      setViewMode(tab.id);
+                      setSelectedLeaveDates([]);
+                      setSelectedTimesheetDates([]);
+                      setSelectedHolidayDate(null);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {viewMode === tab.id && (
+                      <motion.div
+                        className="absolute inset-0 rounded-lg md:rounded-xl shadow-md border border-white/20 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500"
+                        layoutId="activeTabCalendar"
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1 md:gap-1.5 drop-shadow-sm">
+                      <tab.icon className={`w-3 h-3 md:w-3.5 md:h-3.5 ${viewMode === tab.id ? 'text-white' : ''}`} />
+                      {tab.label}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
 
-                  <span className="relative z-10 flex items-center gap-1.5 md:gap-2 drop-shadow-sm">
-                    <tab.icon className={`w-3.5 h-3.5 md:w-4 md:h-4 ${viewMode === tab.id ? 'text-white' : ''}`} />
-                    {tab.label}
-                  </span>
-                </motion.button>
-              ))}
+              <AnimatePresence mode="wait">
+                {!isTogglesExpanded ? (
+                  /* Premium Compact Expansion Trigger */
+                  <motion.button
+                    key="expansion-indicator"
+                    initial={{ opacity: 0, scale: 0.8, x: -5 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, x: -5 }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                    onClick={() => setIsTogglesExpanded(true)}
+                    className="group relative ml-1 px-2 py-1 md:px-2.5 md:py-1.5 rounded-xl bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border border-white/40 dark:border-slate-700/40 hover:border-indigo-500/50 hover:bg-white/60 dark:hover:bg-slate-700/60 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer overflow-hidden"
+                  >
+                    <FiGrid className="w-3 h-3 md:w-3.5 md:h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                    <div className="flex items-center gap-1">
+                      <span className="flex items-center justify-center w-3 h-3 rounded-full bg-indigo-500 text-white text-[7px] font-black shadow-sm shadow-indigo-500/20">2</span>
+                    </div>
+                  </motion.button>
+                ) : (
+                  /* Collapsed Items: Revealed when expanded (Compact) */
+                  <motion.div
+                    key="collapsed-items"
+                    initial={{ opacity: 0, width: 0, x: -10 }}
+                    animate={{ opacity: 1, width: 'auto', x: 0 }}
+                    exit={{ opacity: 0, width: 0, x: -10 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                    className="flex items-center gap-0.5 border-l border-slate-200/50 dark:border-slate-700/50 ml-1 pl-1"
+                  >
+                    {[
+                      { id: 'timesheets', icon: FiClock, label: 'Timesheet' },
+                      { id: 'holidays', icon: FiStar, label: 'Holidays' }
+                    ].map((tab) => (
+                      <motion.button
+                        key={tab.id}
+                        layout="position"
+                        className={`relative px-2 py-1 md:px-3.5 md:py-1.5 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all duration-300 flex items-center gap-1 z-10 whitespace-nowrap ${viewMode === tab.id
+                          ? 'text-white'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-slate-700/40'
+                          }`}
+                        onClick={() => {
+                          setViewMode(tab.id);
+                          setSelectedLeaveDates([]);
+                          setSelectedTimesheetDates([]);
+                          setSelectedHolidayDate(null);
+                        }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {viewMode === tab.id && (
+                          <motion.div
+                            className={`absolute inset-0 rounded-lg md:rounded-xl shadow-md border border-white/20 ${tab.id === 'timesheets' ? 'bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500' :
+                              'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'
+                              }`}
+                            layoutId="activeTabCalendar"
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          />
+                        )}
+                        <span className="relative z-10 flex items-center gap-1 md:gap-1.5 drop-shadow-sm">
+                          <tab.icon className={`w-3 h-3 md:w-3.5 md:h-3.5 ${viewMode === tab.id ? 'text-white' : ''}`} />
+                          {tab.label}
+                        </span>
+                      </motion.button>
+                    ))}
+
+                    {/* Compact Collapse Handle */}
+                    <motion.button
+                      key="collapse-handle"
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.1, textShadow: '0 0 8px rgba(244,63,94,0.4)' }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setIsTogglesExpanded(false)}
+                      className="p-1 ml-0.5 text-slate-400 hover:text-rose-500 transition-colors"
+                    >
+                      <FiX className="w-3.5 h-3.5" />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Right: Actions */}
@@ -688,6 +907,9 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 ] : viewMode === 'timesheets' ? [
                   { value: `${stats.totalHoursMonth}h`, label: 'Logged', colors: ['from-emerald-400', 'to-green-500'], icon: FiClock },
                   { value: stats.missingDays, label: 'Missing', colors: ['from-amber-400', 'to-orange-500'], icon: FiAlertCircle }
+                ] : viewMode === 'meetings' ? [
+                  { value: stats.meetingsToday, label: "Today's Meetings", colors: ['from-blue-400', 'to-indigo-500'], icon: FiVideo },
+                  { value: stats.meetingsMonth, label: 'T       his Month', colors: ['from-cyan-400', 'to-blue-500'], icon: FiLayers }
                 ] : [
                   { value: holidayData.length, label: 'Holidays', colors: ['from-amber-400', 'to-orange-500'], icon: FiStar }
                 ]).map((stat, index) => (
@@ -716,6 +938,7 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 onClick={() => {
                   if (viewMode === 'leaves') fetchLeaveData();
                   else if (viewMode === 'timesheets') fetchTimesheets();
+                  else if (viewMode === 'meetings') fetchMeetings();
                   else fetchHolidays();
                 }}
                 whileHover={{ scale: 1.05 }}
@@ -774,6 +997,21 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                 >
                   <FiPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">{selectedHolidayDate ? (editingHoliday ? 'Edit Holiday' : 'Add Holiday') : 'Select Date'}</span>
+                </motion.button>
+              )}
+              {viewMode === 'meetings' && (
+                <motion.button
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium text-sm shadow-lg shadow-blue-500/25 hover:from-blue-500 hover:to-indigo-500 border border-blue-500/30 transition-all"
+                  onClick={() => {
+                    setSelectedMeetingDate(new Date());
+                    setEditingMeeting(null);
+                    setShowMeetingModal(true);
+                  }}
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <FiVideo className="w-4 h-4" />
+                  <span className="hidden sm:inline">Schedule Meeting</span>
                 </motion.button>
               )}
 
@@ -896,7 +1134,9 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                         relative min-h-[80px] md:min-h-[140px] p-1.5 md:p-3 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer overflow-hidden group
                         ${isSelected
                       ? 'ring-2 ring-blue-500 dark:ring-blue-600 shadow-md bg-blue-50/30 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                      : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800'
+                      : isToday
+                        ? 'bg-indigo-50/20 dark:bg-indigo-900/10 border-indigo-400 dark:border-indigo-500/50 shadow-sm'
+                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800'
                     }
                         ${!isSameMonth(day, currentMonth) ? 'opacity-40 bg-gray-50 dark:bg-slate-950' : ''}
                       `}
@@ -904,10 +1144,17 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
                   {/* Top Row: Date & Status */}
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col">
-                      <span className={`text-xs uppercase font-bold tracking-wide ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>
-                        {format(day, 'EEE')}
-                      </span>
-                      <span className={`text-lg font-bold leading-tight ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] md:text-xs uppercase font-bold tracking-wide ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                          {format(day, 'EEE')}
+                        </span>
+                        {isToday && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-indigo-500 text-white text-[8px] font-black uppercase tracking-tighter shadow-sm shadow-indigo-500/20">
+                            Today
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-lg md:text-xl font-bold leading-tight ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300'}`}>
                         {format(day, 'd')}
                       </span>
                     </div>
@@ -1052,6 +1299,48 @@ export default function LeaveCalendar({ sidebarOpen = false }) {
           fetchHolidays();
           setMessage({ type: 'success', text: 'Holiday deleted' });
           setTimeout(() => setMessage(null), 3000);
+        }}
+      />
+
+      <MeetingModal
+        isOpen={showMeetingModal}
+        onClose={() => {
+          setShowMeetingModal(false);
+          setEditingMeeting(null);
+          setSelectedMeetingDate(null);
+        }}
+        selectedDate={selectedMeetingDate}
+        currentUser={currentUser}
+        initialData={editingMeeting}
+        onSave={() => {
+          fetchMeetings();
+          setMessage({ type: 'success', text: editingMeeting ? 'Meeting updated!' : 'Meeting scheduled!' });
+          setTimeout(() => setMessage(null), 3000);
+        }}
+        onDelete={(id) => {
+          handleDeleteMeeting(id);
+          setShowMeetingModal(false);
+        }}
+      />
+
+      <DayAgendaModal
+        isOpen={showDayAgendaModal}
+        onClose={() => setShowDayAgendaModal(false)}
+        date={selectedAgendaDate}
+        meetings={selectedAgendaDate ? meetingData.filter(m =>
+          format(parseISO(m.start_time), 'yyyy-MM-dd') === format(selectedAgendaDate, 'yyyy-MM-dd')
+        ) : []}
+        onAddMeeting={(date) => {
+          setShowDayAgendaModal(false);
+          setSelectedMeetingDate(date);
+          setEditingMeeting(null);
+          setShowMeetingModal(true);
+        }}
+        onEditMeeting={(meeting) => {
+          setShowDayAgendaModal(false);
+          setEditingMeeting(meeting);
+          setSelectedMeetingDate(parseISO(meeting.start_time));
+          setShowMeetingModal(true);
         }}
       />
 

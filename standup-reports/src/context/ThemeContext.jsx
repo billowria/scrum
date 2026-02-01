@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { supabase } from '../supabaseClient';
 
 const ThemeContext = createContext();
 
@@ -6,17 +7,16 @@ const ThemeContext = createContext();
 const ANIMATED_THEMES = ['space', 'ocean', 'forest', 'diwali'];
 
 export const ThemeProvider = ({ children }) => {
+    // Initial states from localStorage as fallback
     const [themeMode, setThemeMode] = useState(() => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('themeMode');
-            return stored || 'ocean';
+            return localStorage.getItem('themeMode') || 'ocean';
         }
         return 'ocean';
     });
 
     const [theme, setThemeState] = useState('light');
 
-    // Visual Preferences
     const [staticBackground, setStaticBackground] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('staticBackground') === 'true';
@@ -38,18 +38,90 @@ export const ThemeProvider = ({ children }) => {
         return false;
     });
 
-    // Persist visual preferences
+    const [disableLogoAnimation, setDisableLogoAnimation] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('disableLogoAnimation') === 'true';
+        }
+        return false;
+    });
+
+    const [userId, setUserId] = useState(null);
+
+    // Fetch user on mount and subscribe to auth changes
     useEffect(() => {
+        const getInitialUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.id) {
+                setUserId(session.user.id);
+                fetchUserSettings(session.user.id);
+            }
+        };
+
+        getInitialUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user?.id) {
+                setUserId(session.user.id);
+                fetchUserSettings(session.user.id);
+            } else {
+                setUserId(null);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    const fetchUserSettings = async (uid) => {
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('theme_settings')
+                .eq('id', uid)
+                .single();
+
+            if (data?.theme_settings) {
+                const settings = data.theme_settings;
+                if (settings.themeMode) setThemeMode(settings.themeMode);
+                if (settings.staticBackground !== undefined) setStaticBackground(settings.staticBackground);
+                if (settings.noMouseInteraction !== undefined) setNoMouseInteraction(settings.noMouseInteraction);
+                if (settings.hideParticles !== undefined) setHideParticles(settings.hideParticles);
+                if (settings.disableLogoAnimation !== undefined) setDisableLogoAnimation(settings.disableLogoAnimation);
+            }
+        } catch (error) {
+            console.error('Error fetching theme settings:', error);
+        }
+    };
+
+    // Persist to Supabase with debounce
+    useEffect(() => {
+        if (!userId) return;
+
+        const timer = setTimeout(async () => {
+            const settings = {
+                themeMode,
+                staticBackground,
+                noMouseInteraction,
+                hideParticles,
+                disableLogoAnimation
+            };
+
+            await supabase
+                .from('users')
+                .update({ theme_settings: settings })
+                .eq('id', userId);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [userId, themeMode, staticBackground, noMouseInteraction, hideParticles, disableLogoAnimation]);
+
+    // LocalStorage persistence as a secondary fallback
+    useEffect(() => {
+        localStorage.setItem('themeMode', themeMode);
         localStorage.setItem('staticBackground', staticBackground);
-    }, [staticBackground]);
-
-    useEffect(() => {
         localStorage.setItem('noMouseInteraction', noMouseInteraction);
-    }, [noMouseInteraction]);
-
-    useEffect(() => {
         localStorage.setItem('hideParticles', hideParticles);
-    }, [hideParticles]);
+        localStorage.setItem('disableLogoAnimation', disableLogoAnimation);
+    }, [themeMode, staticBackground, noMouseInteraction, hideParticles, disableLogoAnimation]);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -58,22 +130,14 @@ export const ThemeProvider = ({ children }) => {
         const applyTheme = (mode) => {
             let actualTheme = mode;
 
-            // System theme follows OS preference
             if (mode === 'system') {
                 actualTheme = mediaQuery.matches ? 'dark' : 'light';
-            }
-            // All animated themes use dark as base
-            else if (ANIMATED_THEMES.includes(mode)) {
+            } else if (ANIMATED_THEMES.includes(mode)) {
                 actualTheme = 'dark';
             }
 
-            // Remove all theme classes
             root.classList.remove('light', 'dark', ...ANIMATED_THEMES);
-
-            // Add base theme class
             root.classList.add(actualTheme);
-
-            // Add specific animated theme class if applicable
             if (ANIMATED_THEMES.includes(mode)) {
                 root.classList.add(mode);
             }
@@ -82,12 +146,9 @@ export const ThemeProvider = ({ children }) => {
         };
 
         applyTheme(themeMode);
-        localStorage.setItem('themeMode', themeMode);
 
         const listener = () => {
-            if (themeMode === 'system') {
-                applyTheme('system');
-            }
+            if (themeMode === 'system') applyTheme('system');
         };
 
         mediaQuery.addEventListener('change', listener);
@@ -116,6 +177,8 @@ export const ThemeProvider = ({ children }) => {
             setNoMouseInteraction,
             hideParticles,
             setHideParticles,
+            disableLogoAnimation,
+            setDisableLogoAnimation,
         }}>
             {children}
         </ThemeContext.Provider>

@@ -130,14 +130,15 @@ const AchievementsPage = () => {
 
   const accent = getThemeAccent();
 
-  // Dynamic transparency based on theme
+  // Dynamic transparency and background based on theme
   const getGlassBg = (opacity = 0.4) => {
     if (isAnimatedTheme) {
       return 'bg-transparent'; // Full transparency for premium themes
     }
-    return `bg-slate-900/${Math.floor(opacity * 100)}`;
+    return theme === 'dark'
+      ? `bg-slate-900/${Math.floor(opacity * 100)}`
+      : `bg-white/${Math.floor(opacity * 100)}`;
   };
-
 
   // Fetch current user and achievements on component mount
   useEffect(() => {
@@ -383,23 +384,6 @@ const AchievementsPage = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Ambient background glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <motion.div
-          className={`absolute -top-40 -right-40 w-96 h-96 rounded-full bg-gradient-to-br ${accent.primary} opacity-10 blur-3xl`}
-          variants={glowVariants}
-          initial="initial"
-          animate="animate"
-        />
-        <motion.div
-          className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-gradient-to-tr ${accent.secondary} opacity-10 blur-3xl`}
-          variants={glowVariants}
-          initial="initial"
-          animate="animate"
-          style={{ animationDelay: '1.5s' }}
-        />
-      </div>
-
       {/* Main Content Container */}
       <div className="relative z-10 w-full mx-auto">
         {/* Header Section */}
@@ -432,12 +416,12 @@ const AchievementsPage = () => {
               </motion.div>
 
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-1">
                   <span className={`bg-gradient-to-r ${accent.primary} bg-clip-text text-transparent`}>
                     Achievements
                   </span>
                 </h1>
-                <p className="text-white/60 text-sm sm:text-base">
+                <p className="text-slate-600 dark:text-white/60 text-sm sm:text-base">
                   Celebrating our team's successes and milestones
                 </p>
               </div>
@@ -448,16 +432,16 @@ const AchievementsPage = () => {
               {currentUser && (
                 <Link
                   to={`/user-achievements/${currentUser.id}`}
-                  className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 backdrop-blur-xl border ${accent.border} transition-all duration-300 hover:shadow-lg ${accent.glow}`}
+                  className={`group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/5 dark:bg-white/5 hover:bg-slate-900/10 dark:hover:bg-white/10 backdrop-blur-xl border ${theme === 'dark' ? accent.border : 'border-slate-200'} transition-all duration-300 hover:shadow-lg ${accent.glow}`}
                 >
                   <FiAward className={accent.text} />
-                  <span className="text-white font-medium text-sm">My Achievements</span>
+                  <span className="text-slate-900 dark:text-white font-medium text-sm">My Achievements</span>
                   <motion.div
                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                     initial={{ x: -5 }}
                     whileHover={{ x: 0 }}
                   >
-                    <FiChevronRight className="w-4 h-4 text-white/60" />
+                    <FiChevronRight className="w-4 h-4 text-slate-400 dark:text-white/60" />
                   </motion.div>
                 </Link>
               )}
@@ -479,13 +463,13 @@ const AchievementsPage = () => {
 
         {/* Main Glass Container */}
         <motion.div
-          className={`${isAnimatedTheme ? 'bg-transparent' : 'bg-slate-900/40'} ${!isAnimatedTheme ? 'backdrop-blur-[40px]' : ''} rounded-[2.5rem] border ${accent.border} overflow-hidden shadow-2xl transition-all duration-700`}
+          className={`${isAnimatedTheme ? 'bg-transparent' : (theme === 'dark' ? 'bg-slate-900/40' : 'bg-white/70')} ${!isAnimatedTheme ? 'backdrop-blur-[40px]' : ''} rounded-[2.5rem] border ${theme === 'dark' ? accent.border : 'border-slate-200'} overflow-hidden shadow-2xl transition-all duration-700`}
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           {/* Tabs Section */}
-          <div className="p-2 bg-white/5 border-b border-white/10">
+          <div className="p-2 bg-slate-900/5 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
             <div className="flex gap-2">
               {['team', 'personal'].map((tab) => (
                 <motion.button
@@ -493,7 +477,7 @@ const AchievementsPage = () => {
                   onClick={() => setActiveTab(tab)}
                   className={`relative flex-1 py-3 px-6 rounded-xl font-medium text-sm transition-all duration-300 ${activeTab === tab
                     ? 'text-white'
-                    : 'text-white/50 hover:text-white/70 hover:bg-white/5'
+                    : 'text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white/70 hover:bg-slate-900/5 dark:hover:bg-white/5'
                     }`}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -514,17 +498,17 @@ const AchievementsPage = () => {
           </div>
 
           {/* Search, Filter, and Month Navigation */}
-          <div className="p-4 bg-white/5 border-b border-white/10">
+          <div className="p-4 bg-slate-900/5 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
             <div className="flex flex-wrap items-center gap-4">
               {/* Search */}
               <div className="relative flex-1 min-w-[200px]">
-                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 w-4 h-4" />
+                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search achievements..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                  className="w-full pl-11 pr-4 py-2.5 bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 focus:outline-none focus:border-slate-300 dark:focus:border-white/30 focus:bg-slate-900/10 dark:focus:bg-white/10 transition-all"
                 />
               </div>
 
@@ -532,7 +516,7 @@ const AchievementsPage = () => {
               <div className="relative">
                 <button
                   onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/80 hover:bg-white/10 hover:text-white transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-700 dark:text-white/80 hover:bg-slate-900/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all"
                 >
                   <FiFilter className="w-4 h-4" />
                   <span className="text-sm font-medium">
@@ -547,7 +531,7 @@ const AchievementsPage = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full mt-2 right-0 w-56 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                      className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-slate-900 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
                     >
                       {awardTypeOptions.map((option) => {
                         const Icon = option.icon;
@@ -559,8 +543,8 @@ const AchievementsPage = () => {
                               setFilterDropdownOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all ${filter === option.value
-                              ? 'bg-white/10 text-white'
-                              : 'text-white/70 hover:bg-white/5 hover:text-white'
+                              ? 'bg-slate-900/5 dark:bg-white/10 text-slate-900 dark:text-white'
+                              : 'text-slate-600 dark:text-white/70 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                               }`}
                           >
                             <Icon className="w-4 h-4" />
@@ -574,21 +558,21 @@ const AchievementsPage = () => {
               </div>
 
               {/* Month Navigation */}
-              <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-1 bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
                 <motion.button
                   onClick={goToPrevMonth}
-                  className="p-2.5 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                  className="p-2.5 text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/10 dark:hover:bg-white/10 transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <FiChevronLeft className="w-4 h-4" />
                 </motion.button>
-                <span className="px-4 py-2 text-sm font-medium text-white min-w-[140px] text-center">
+                <span className="px-4 py-2 text-sm font-medium text-slate-800 dark:text-white min-w-[140px] text-center">
                   {formatMonthYear(currentMonth)}
                 </span>
                 <motion.button
                   onClick={goToNextMonth}
-                  className="p-2.5 text-white/60 hover:text-white hover:bg-white/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-2.5 text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/10 dark:hover:bg-white/10 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   disabled={addMonths(currentMonth, 1) > new Date()}
@@ -600,7 +584,7 @@ const AchievementsPage = () => {
               {/* Refresh */}
               <motion.button
                 onClick={handleRefresh}
-                className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all"
+                className="p-2.5 bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/10 dark:hover:bg-white/10 transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -611,7 +595,7 @@ const AchievementsPage = () => {
 
           {/* Stats Summary */}
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 bg-white/5 border-b border-white/10"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 bg-slate-900/5 dark:bg-white/5 border-b border-slate-200 dark:border-white/10"
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.5, delay: 0.3 }}
@@ -623,7 +607,7 @@ const AchievementsPage = () => {
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
-                className={`relative p-6 rounded-3xl ${isAnimatedTheme ? 'bg-transparent' : 'bg-white/5'} border border-white/10 overflow-hidden group cursor-pointer hover:bg-white/10 transition-all duration-300`}
+                className={`relative p-6 rounded-3xl ${isAnimatedTheme ? 'bg-transparent' : (theme === 'dark' ? 'bg-white/5' : 'bg-white/80')} border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'} shadow-sm overflow-hidden group cursor-pointer hover:bg-white/10 transition-all duration-300`}
                 whileHover={{ scale: 1.02, y: -4 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               >
@@ -632,15 +616,15 @@ const AchievementsPage = () => {
 
                 <div className="relative z-10 flex items-center justify-between">
                   <div>
-                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2 italic">
+                    <p className="text-slate-500 dark:text-white/40 text-[10px] font-black uppercase tracking-widest mb-2 italic">
                       {stat.label}
                     </p>
-                    <p className="text-4xl font-black text-white tracking-tighter tabular-nums">
+                    <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">
                       {stat.value}
                     </p>
                   </div>
-                  <div className={`w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 transition-all duration-500 group-hover:scale-110 group-hover:bg-gradient-to-br ${stat.gradient} group-hover:shadow-lg`}>
-                    <stat.icon className="w-7 h-7 text-white" />
+                  <div className={`w-14 h-14 rounded-2xl bg-slate-900/5 dark:bg-white/10 backdrop-blur-md flex items-center justify-center border border-slate-200 dark:border-white/10 transition-all duration-500 group-hover:scale-110 group-hover:bg-gradient-to-br ${stat.gradient} group-hover:shadow-lg group-hover:border-transparent`}>
+                    <stat.icon className="w-7 h-7 text-slate-600 dark:text-white group-hover:text-white" />
                   </div>
                 </div>
               </motion.div>
@@ -659,11 +643,11 @@ const AchievementsPage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${accent.primary} flex items-center justify-center mb-6 opacity-50`}>
+                <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${accent.primary} flex items-center justify-center mb-6 opacity-30`}>
                   <FiInfo className="w-10 h-10 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-white/80 mb-2">No achievements found</h3>
-                <p className="text-white/50 text-center max-w-md mb-6">
+                <h3 className="text-xl font-semibold text-slate-800 dark:text-white/80 mb-2">No achievements found</h3>
+                <p className="text-slate-500 dark:text-white/50 text-center max-w-md mb-6">
                   {searchTerm || filter !== 'all'
                     ? 'Try adjusting your search or filter settings.'
                     : `No achievements for ${formatMonthYear(currentMonth)} yet.`}
@@ -699,7 +683,7 @@ const AchievementsPage = () => {
                       onClick={() => handleViewAchievement(achievement)}
                       className="cursor-pointer group"
                     >
-                      <div className={`relative h-full ${isAnimatedTheme ? 'bg-transparent' : 'bg-slate-800/40'} ${!isAnimatedTheme ? 'backdrop-blur-2xl' : ''} rounded-3xl border border-white/5 overflow-hidden transition-all duration-500 hover:border-white/20 group-hover:shadow-2xl ${accent.glow} flex flex-col`}>
+                      <div className={`relative h-full ${isAnimatedTheme ? 'bg-transparent' : (theme === 'dark' ? 'bg-slate-800/40' : 'bg-white')} ${!isAnimatedTheme ? 'backdrop-blur-2xl' : ''} rounded-3xl border ${theme === 'dark' ? 'border-white/5 hover:border-white/20' : 'border-slate-200 hover:border-slate-300 shadow-sm'} overflow-hidden transition-all duration-500 group-hover:shadow-2xl ${accent.glow} flex flex-col`}>
                         {/* Top gradient bar */}
                         <div className={`h-1.5 w-full bg-gradient-to-r ${awardConfig.gradient}`} />
 
@@ -723,10 +707,10 @@ const AchievementsPage = () => {
 
                             {/* Title and type */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1 italic">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1 italic">
                                 Official {achievement.award_type}
                               </p>
-                              <h4 className="text-xl font-black text-white truncate tracking-tight">
+                              <h4 className="text-xl font-black text-slate-900 dark:text-white truncate tracking-tight">
                                 {achievement.title}
                               </h4>
                             </div>
@@ -734,44 +718,44 @@ const AchievementsPage = () => {
 
                           {/* Description */}
                           {achievement.description && (
-                            <p className="text-white/60 text-sm line-clamp-3 mb-6 leading-relaxed flex-grow">
+                            <p className="text-slate-600 dark:text-white/60 text-sm line-clamp-3 mb-6 leading-relaxed flex-grow">
                               {achievement.description}
                             </p>
                           )}
 
                           {/* Footer */}
-                          <div className="flex items-center justify-between pt-5 border-t border-white/5 mt-auto">
+                          <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-white/5 mt-auto">
                             <div className="flex items-center gap-3">
                               {achievement.users?.avatar_url ? (
                                 <div className="relative">
                                   <img
                                     src={achievement.users.avatar_url}
                                     alt={achievement.users.name}
-                                    className="w-10 h-10 rounded-xl object-cover border border-white/10"
+                                    className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10"
                                   />
-                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-900" />
+                                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
                                 </div>
                               ) : (
-                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                  <span className="text-sm font-black text-white/40">
+                                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center">
+                                  <span className="text-sm font-black text-slate-400 dark:text-white/40">
                                     {achievement.users?.name?.[0]?.toUpperCase() || 'T'}
                                   </span>
                                 </div>
                               )}
                               <div>
-                                <p className="text-xs font-bold text-white leading-none mb-1">
+                                <p className="text-xs font-bold text-slate-900 dark:text-white leading-none mb-1">
                                   {achievement.users?.name || 'Sync Team'}
                                 </p>
-                                <p className="text-[10px] text-white/40 uppercase tracking-widest font-black">
+                                <p className="text-[10px] text-slate-500 dark:text-white/40 uppercase tracking-widest font-black">
                                   Recipient
                                 </p>
                               </div>
                             </div>
                             <div className="flex flex-col items-end">
-                              <p className="text-[10px] font-black text-white/30 uppercase tracking-tighter mb-0.5">
+                              <p className="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-tighter mb-0.5">
                                 {achievement.awarded_at ? format(parseISO(achievement.awarded_at), 'MMM yyyy') : '—'}
                               </p>
-                              <div className="flex items-center gap-1 text-white/20">
+                              <div className="flex items-center gap-1 text-slate-300 dark:text-white/20">
                                 <FiCalendar className="w-3 h-3" />
                                 <span className="text-[9px] font-bold">VERIFIED</span>
                               </div>
@@ -808,7 +792,7 @@ const AchievementsPage = () => {
               >
                 <motion.button
                   onClick={() => setShowForm(true)}
-                  className="w-full py-4 rounded-2xl border-2 border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                  className={`w-full py-4 rounded-2xl border-2 border-dashed ${theme === 'dark' ? 'border-white/20 text-white/50 hover:text-white hover:border-white/40 hover:bg-white/5' : 'border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 hover:bg-slate-50'} transition-all flex items-center justify-center gap-2 group`}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
                 >
@@ -839,7 +823,7 @@ const AchievementsPage = () => {
             onClick={() => setExpandedAchievement(null)}
           >
             <motion.div
-              className="bg-slate-900/90 backdrop-blur-2xl rounded-3xl max-w-lg w-full border border-white/10 shadow-2xl overflow-hidden"
+              className={`${theme === 'dark' ? 'bg-slate-900/90' : 'bg-white'} backdrop-blur-2xl rounded-3xl max-w-lg w-full border ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'} shadow-2xl overflow-hidden`}
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -853,7 +837,7 @@ const AchievementsPage = () => {
                 <div className="flex justify-end mb-4">
                   <motion.button
                     onClick={() => setExpandedAchievement(null)}
-                    className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all"
+                    className={`p-2 rounded-full ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900'} transition-all`}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -873,8 +857,8 @@ const AchievementsPage = () => {
                     );
                   })()}
                   <div>
-                    <h3 className="text-xl font-bold text-white mb-2">{expandedAchievement.title}</h3>
-                    <div className="flex items-center gap-3 text-white/60 text-sm">
+                    <h3 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-slate-900'} mb-2`}>{expandedAchievement.title}</h3>
+                    <div className={`flex items-center gap-3 ${theme === 'dark' ? 'text-white/60' : 'text-slate-500'} text-sm`}>
                       <span className="flex items-center gap-1">
                         <FiCalendar className="w-4 h-4" />
                         {expandedAchievement.awarded_at ? format(parseISO(expandedAchievement.awarded_at), 'MMMM d, yyyy') : 'No date'}
@@ -888,8 +872,8 @@ const AchievementsPage = () => {
                 </div>
 
                 {/* Description */}
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/10 mb-6">
-                  <p className="text-white/80 leading-relaxed">
+                <div className={`p-4 rounded-2xl ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'} border mb-6`}>
+                  <p className={`${theme === 'dark' ? 'text-white/80' : 'text-slate-700'} leading-relaxed`}>
                     {expandedAchievement.description || 'No additional details provided.'}
                   </p>
                 </div>
@@ -909,15 +893,15 @@ const AchievementsPage = () => {
                 </div>
 
                 {/* Footer actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-2 text-white/50 text-sm">
+                <div className={`flex items-center justify-between pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-slate-200'}`}>
+                  <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-white/50' : 'text-slate-500'} text-sm`}>
                     <FiThumbsUp className="w-4 h-4" />
                     <span>{expandedAchievement.reactions || 0} reactions</span>
                   </div>
                   <div className="flex gap-2">
                     <motion.button
                       onClick={() => setExpandedAchievement(null)}
-                      className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white text-sm font-medium transition-all"
+                      className={`px-4 py-2 rounded-xl ${theme === 'dark' ? 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'} text-sm font-medium transition-all`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
