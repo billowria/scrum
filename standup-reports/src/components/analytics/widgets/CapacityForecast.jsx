@@ -28,7 +28,7 @@ const CapacityForecast = () => {
         fetchCapacity();
     }, [currentCompany]);
 
-    if (loading || !data) {
+    if (loading || !data || !data.summary) {
         return (
             <div className="w-full h-[400px] bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 flex items-center justify-center">
                 <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
@@ -36,7 +36,9 @@ const CapacityForecast = () => {
         );
     }
 
-    const loadPercentage = ((data.summary.activeEffort / data.summary.totalCapacity) * 100).toFixed(0);
+    const loadPercentage = data.summary.totalCapacity > 0
+        ? ((data.summary.activeEffort / data.summary.totalCapacity) * 100).toFixed(0)
+        : 0;
     const riskLevel = loadPercentage > 85 ? 'High' : loadPercentage > 60 ? 'Medium' : 'Optimal';
 
     return (

@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiMessageSquare, FiCheckSquare, FiAlertCircle, FiInfo,
   FiClock, FiTrash2, FiCheck, FiArrowRight, FiStar, FiCalendar, FiFileText,
-  FiCheckCircle, FiXCircle, FiZap, FiAtSign
+  FiCheckCircle, FiXCircle, FiZap, FiAtSign, FiChevronDown, FiChevronUp
 } from 'react-icons/fi';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -16,6 +16,7 @@ const NotificationCard = ({
   onAction
 }) => {
   const { isAnimatedTheme } = useTheme();
+  const [expanded, setExpanded] = useState(false);
   const {
     id, title, message, type, created_at, read, priority
   } = notification;
@@ -139,7 +140,11 @@ const NotificationCard = ({
         ${priority === 'Critical' ? 'border-l-4 border-l-red-500' : ''}
         ${isMobile ? isAnimatedTheme ? 'active:bg-white/15' : 'active:bg-gray-50 dark:active:bg-slate-700/50' : ''}
       `}
-      onClick={() => onClick && onClick(notification)}
+      onClick={() => {
+        setExpanded(prev => !prev);
+        if (!read && onMarkRead) onMarkRead(id);
+        onClick && onClick(notification);
+      }}
     >
       <div className="flex items-start gap-3 sm:gap-4">
         {/* Icon */}
@@ -161,9 +166,19 @@ const NotificationCard = ({
             </span>
           </div>
 
-          <p className={`text-sm line-clamp-2 leading-tight ${isAnimatedTheme ? (read ? 'text-white/50' : 'text-white/70') : (read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300')}`}>
+          <p className={`text-sm leading-relaxed transition-all duration-300 ${expanded ? '' : 'line-clamp-2'} ${isAnimatedTheme ? (read ? 'text-white/50' : 'text-white/70') : (read ? 'text-gray-500 dark:text-gray-400' : 'text-gray-600 dark:text-gray-300')}`}>
             {message}
           </p>
+
+          {/* Expand/Collapse indicator */}
+          {message && message.length > 100 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded(prev => !prev); }}
+              className={`flex items-center gap-0.5 mt-1 text-[11px] font-medium transition-colors ${isAnimatedTheme ? 'text-white/40 hover:text-white/70' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
+            >
+              {expanded ? <><FiChevronUp className="w-3 h-3" /> Show less</> : <><FiChevronDown className="w-3 h-3" /> Show more</>}
+            </button>
+          )}
 
           {/* Action Buttons for Actionable Types */}
           {isActionable && !read && (

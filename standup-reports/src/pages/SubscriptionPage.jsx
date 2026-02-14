@@ -513,7 +513,7 @@ export default function SubscriptionPage({ sidebarMode }) {
             </div>
 
             {/* MAIN CONTENT Area */}
-            <main className="max-w-7xl mx-auto px-6 w-full relative z-10">
+            <main className="px-6 w-full relative z-10">
 
                 <GlassmorphicToast
                     isVisible={toast.show}
@@ -525,116 +525,471 @@ export default function SubscriptionPage({ sidebarMode }) {
                 {/* TAB: PLANS & PRICING */}
                 {activeTab === 'plans' && (
                     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {/* Current Plan Billboard Redesign */}
-                        <motion.section
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="relative group rounded-[2.5rem] overflow-hidden bg-[#0f1129] border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]"
-                        >
-                            {/* Deep Purple Gradient Overlays */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-[#1a1c3d] via-[#2d1b4e] to-[#0f1129] opacity-90" />
-                            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
-                            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-purple-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+                        {/* Premium Subscription Dashboard - Split Panel Design */}
+                        {(() => {
+                            // Theme-aware styling
+                            const getThemeStyles = () => {
+                                switch (themeMode) {
+                                    case 'ocean':
+                                        return {
+                                            bg: isDark ? 'from-slate-950 via-cyan-950/50 to-slate-950' : 'from-cyan-50 via-blue-50 to-slate-50',
+                                            orb1: 'rgba(6,182,212,0.4)', // cyan
+                                            orb2: 'rgba(59,130,246,0.3)', // blue
+                                            accent: 'from-cyan-400 via-blue-400 to-indigo-400',
+                                            border: isDark ? 'border-cyan-500/20' : 'border-cyan-300/50',
+                                            textPrimary: isDark ? 'text-white' : 'text-slate-900',
+                                            textSecondary: isDark ? 'text-slate-400' : 'text-slate-600',
+                                            textMuted: isDark ? 'text-slate-500' : 'text-slate-400',
+                                            panelBg: isDark ? 'from-white/[0.02] to-transparent' : 'from-white/60 to-white/30',
+                                            statBg: isDark ? 'bg-slate-900/50' : 'bg-white/70',
+                                            bottomLine: 'from-cyan-500 via-blue-500 to-indigo-500'
+                                        };
+                                    case 'forest':
+                                        return {
+                                            bg: isDark ? 'from-slate-950 via-emerald-950/50 to-slate-950' : 'from-emerald-50 via-green-50 to-slate-50',
+                                            orb1: 'rgba(16,185,129,0.4)', // emerald
+                                            orb2: 'rgba(20,184,166,0.3)', // teal
+                                            accent: 'from-emerald-400 via-green-400 to-teal-400',
+                                            border: isDark ? 'border-emerald-500/20' : 'border-emerald-300/50',
+                                            textPrimary: isDark ? 'text-white' : 'text-slate-900',
+                                            textSecondary: isDark ? 'text-slate-400' : 'text-slate-600',
+                                            textMuted: isDark ? 'text-slate-500' : 'text-slate-400',
+                                            panelBg: isDark ? 'from-white/[0.02] to-transparent' : 'from-white/60 to-white/30',
+                                            statBg: isDark ? 'bg-slate-900/50' : 'bg-white/70',
+                                            bottomLine: 'from-emerald-500 via-green-500 to-teal-500'
+                                        };
+                                    case 'space':
+                                        return {
+                                            bg: 'from-slate-950 via-indigo-950/60 to-slate-950',
+                                            orb1: 'rgba(139,92,246,0.4)', // violet
+                                            orb2: 'rgba(236,72,153,0.3)', // pink
+                                            accent: 'from-violet-400 via-purple-400 to-pink-400',
+                                            border: 'border-violet-500/20',
+                                            textPrimary: 'text-white',
+                                            textSecondary: 'text-slate-400',
+                                            textMuted: 'text-slate-500',
+                                            panelBg: 'from-white/[0.02] to-transparent',
+                                            statBg: 'bg-slate-900/50',
+                                            bottomLine: 'from-violet-500 via-purple-500 to-pink-500'
+                                        };
+                                    default: // light or dark
+                                        return {
+                                            bg: isDark ? 'from-slate-950 via-slate-900 to-slate-950' : 'from-slate-100 via-white to-slate-100',
+                                            orb1: isDark ? 'rgba(99,102,241,0.4)' : 'rgba(99,102,241,0.2)', // indigo
+                                            orb2: isDark ? 'rgba(236,72,153,0.3)' : 'rgba(236,72,153,0.15)', // pink
+                                            accent: 'from-indigo-400 via-purple-400 to-pink-400',
+                                            border: isDark ? 'border-white/10' : 'border-slate-200',
+                                            textPrimary: isDark ? 'text-white' : 'text-slate-900',
+                                            textSecondary: isDark ? 'text-slate-400' : 'text-slate-600',
+                                            textMuted: isDark ? 'text-slate-500' : 'text-slate-400',
+                                            panelBg: isDark ? 'from-white/[0.02] to-transparent' : 'from-slate-50/80 to-white/50',
+                                            statBg: isDark ? 'bg-slate-900/50' : 'bg-white/80',
+                                            bottomLine: 'from-blue-500 via-purple-500 to-pink-500'
+                                        };
+                                }
+                            };
+                            const styles = getThemeStyles();
 
-                            <div className="relative p-8 md:p-14 flex flex-col lg:flex-row items-center justify-between gap-12">
-                                <div className="flex-1 space-y-8">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-                                        Your Active Plan
+                            return (
+                                <motion.section
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className={`relative rounded-[2rem] overflow-hidden border ${styles.border} shadow-2xl`}
+                                >
+                                    {/* Theme-aware Background */}
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${styles.bg}`} />
+
+                                    {/* Animated mesh gradient orbs */}
+                                    <div className="absolute inset-0 overflow-hidden">
+                                        <motion.div
+                                            className="absolute -top-1/2 -right-1/4 w-[800px] h-[800px] rounded-full opacity-30"
+                                            style={{ background: `radial-gradient(circle, ${styles.orb1} 0%, transparent 70%)` }}
+                                            animate={{
+                                                scale: [1, 1.2, 1],
+                                                x: [0, 50, 0],
+                                                y: [0, -30, 0]
+                                            }}
+                                            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+                                        />
+                                        <motion.div
+                                            className="absolute -bottom-1/2 -left-1/4 w-[600px] h-[600px] rounded-full opacity-20"
+                                            style={{ background: `radial-gradient(circle, ${styles.orb2} 0%, transparent 70%)` }}
+                                            animate={{
+                                                scale: [1, 1.3, 1],
+                                                x: [0, -30, 0],
+                                                y: [0, 40, 0]
+                                            }}
+                                            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                                        />
+                                        {/* Third subtle orb for depth */}
+                                        <motion.div
+                                            className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full opacity-10"
+                                            style={{ background: `radial-gradient(circle, ${styles.orb1} 0%, transparent 60%)` }}
+                                            animate={{
+                                                scale: [1, 1.1, 1],
+                                                rotate: [0, 180, 360]
+                                            }}
+                                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                        />
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
-                                            Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Pro</span> Plan
-                                        </h2>
-                                        <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed opacity-80">
-                                            Empowering your workspace with advanced resource management, real-time sync, and premium security protocols.
-                                        </p>
-                                    </div>
+                                    {/* Glassmorphic overlay for light mode */}
+                                    {!isDark && (
+                                        <div className="absolute inset-0 backdrop-blur-[2px] bg-white/30" />
+                                    )}
 
-                                    {/* Resource Progress - Custom Styled */}
-                                    <div className="max-w-md bg-white/5 border border-white/5 rounded-[2rem] p-8 backdrop-blur-2xl relative overflow-hidden group/progress">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <span className="text-slate-400 text-xs font-black uppercase tracking-widest">Team Capacity</span>
-                                            <span className="text-white text-lg font-black">{userCount} <span className="text-slate-600">/ {maxUsers || '∞'}</span></span>
+                                    {/* Noise texture overlay */}
+                                    <div className={`absolute inset-0 ${isDark ? 'opacity-[0.015]' : 'opacity-[0.03]'}`} style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} />
+
+                                    <div className="relative">
+                                        {/* Main Content Grid */}
+                                        <div className="grid lg:grid-cols-12 gap-0">
+
+                                            {/* LEFT PANEL - Plan Identity */}
+                                            <div className={`lg:col-span-5 p-8 lg:p-12 flex flex-col justify-between border-r ${isDark ? 'border-white/5' : 'border-slate-200/50'}`}>
+                                                {/* Plan Badge */}
+                                                <div>
+                                                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8 ${isDark ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-emerald-100 border border-emerald-200'}`}>
+                                                        <span className="relative flex h-2 w-2">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                                        </span>
+                                                        <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Active Subscription</span>
+                                                    </div>
+
+                                                    {/* Plan Name - Large Typography */}
+                                                    <h1 className={`text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-4 ${styles.textPrimary}`}>
+                                                        {currentPlan?.name || 'Free'}
+                                                        <span className={`block text-transparent bg-clip-text bg-gradient-to-r ${styles.accent}`}>
+                                                            Plan
+                                                        </span>
+                                                    </h1>
+
+                                                    {/* Price Display */}
+                                                    <div className="flex items-baseline gap-2 mb-8">
+                                                        {currentPlan?.discount_price && Number(currentPlan.discount_price) > Number(currentPlan.price_monthly) && (
+                                                            <span className={`text-xl line-through font-medium ${styles.textMuted}`}>₹{currentPlan.discount_price}</span>
+                                                        )}
+                                                        <span className={`text-5xl font-black ${styles.textPrimary}`}>₹{currentPlan?.price_monthly || 0}</span>
+                                                        <span className={`text-lg font-medium ${styles.textSecondary}`}>/month</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Next Billing Info */}
+                                                <div className="space-y-4">
+                                                    <div className={`flex items-center gap-3 ${styles.textSecondary}`}>
+                                                        <FiCalendar className="w-5 h-5" />
+                                                        <span className="text-sm font-medium">Next billing on</span>
+                                                    </div>
+                                                    <p className={`text-2xl font-bold ${styles.textPrimary}`}>{renewalDate}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT PANEL - Premium Live Metrics */}
+                                            <div className={`lg:col-span-7 p-8 lg:p-12 bg-gradient-to-br ${styles.panelBg}`}>
+
+                                                {/* Premium Circular Gauges */}
+                                                <div className="flex flex-wrap gap-6 lg:gap-8 mb-10">
+
+                                                    {/* Team Capacity Gauge - Premium Card */}
+                                                    <motion.div
+                                                        className="flex-1 min-w-[160px]"
+                                                        whileHover={{ scale: 1.02, y: -4 }}
+                                                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                    >
+                                                        <div className={`relative p-6 rounded-3xl backdrop-blur-xl border transition-all duration-500 group
+                                                            ${isDark
+                                                                ? 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border-white/10 hover:border-cyan-500/30 hover:shadow-[0_0_40px_-10px_rgba(6,182,212,0.3)]'
+                                                                : 'bg-gradient-to-br from-white/80 to-white/40 border-slate-200/50 hover:border-cyan-400/50 hover:shadow-[0_20px_50px_-15px_rgba(6,182,212,0.25)]'
+                                                            }`}
+                                                        >
+                                                            {/* Animated glow pulse */}
+                                                            <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500
+                                                                ${isDark ? 'bg-gradient-to-br from-cyan-500/5 to-blue-500/5' : 'bg-gradient-to-br from-cyan-100/50 to-blue-100/30'}`}
+                                                            />
+
+                                                            <div className="relative">
+                                                                <div className="relative w-24 h-24 mx-auto mb-4">
+                                                                    {/* Outer glow ring */}
+                                                                    <div className="absolute inset-[-4px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md bg-gradient-to-r from-cyan-500 to-blue-500" />
+
+                                                                    <svg className="w-full h-full -rotate-90 relative" viewBox="0 0 100 100">
+                                                                        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className={isDark ? 'text-slate-800/50' : 'text-slate-200'} />
+                                                                        <motion.circle
+                                                                            cx="50" cy="50" r="42" fill="none"
+                                                                            stroke="url(#teamGradient)"
+                                                                            strokeWidth="6"
+                                                                            strokeLinecap="round"
+                                                                            strokeDasharray={`${2 * Math.PI * 42}`}
+                                                                            initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                                                                            animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - (userCount / (maxUsers || 100))) }}
+                                                                            transition={{ duration: 1.5, ease: "circOut", delay: 0.2 }}
+                                                                            style={{ filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.4))' }}
+                                                                        />
+                                                                        <defs>
+                                                                            <linearGradient id="teamGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                                <stop offset="0%" stopColor="#3b82f6" />
+                                                                                <stop offset="100%" stopColor="#06b6d4" />
+                                                                            </linearGradient>
+                                                                        </defs>
+                                                                    </svg>
+
+                                                                    {/* Center content with glass effect */}
+                                                                    <div className={`absolute inset-3 rounded-full flex flex-col items-center justify-center
+                                                                        ${isDark ? 'bg-slate-900/60 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-sm'}`}
+                                                                    >
+                                                                        <span className={`text-xl font-black ${styles.textPrimary}`}>{(maxUsers || 100) - userCount}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="text-center space-y-1">
+                                                                    <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Team Seats</p>
+                                                                    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                                                        ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}
+                                                                    >
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                                                                        {userCount}/{maxUsers || 100}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+
+                                                    {/* Days Remaining Gauge - Premium Card */}
+                                                    {(() => {
+                                                        const today = new Date();
+                                                        const nextBilling = billingHistory[0]?.created_at
+                                                            ? new Date(new Date(billingHistory[0].created_at).setMonth(new Date(billingHistory[0].created_at).getMonth() + 1))
+                                                            : new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+                                                        const daysRemaining = Math.max(0, Math.ceil((nextBilling - today) / (1000 * 60 * 60 * 24)));
+                                                        const progress = daysRemaining / 30;
+
+                                                        return (
+                                                            <motion.div
+                                                                className="flex-1 min-w-[160px]"
+                                                                whileHover={{ scale: 1.02, y: -4 }}
+                                                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                            >
+                                                                <div className={`relative p-6 rounded-3xl backdrop-blur-xl border transition-all duration-500 group
+                                                                    ${isDark
+                                                                        ? 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border-white/10 hover:border-purple-500/30 hover:shadow-[0_0_40px_-10px_rgba(168,85,247,0.3)]'
+                                                                        : 'bg-gradient-to-br from-white/80 to-white/40 border-slate-200/50 hover:border-purple-400/50 hover:shadow-[0_20px_50px_-15px_rgba(168,85,247,0.25)]'
+                                                                    }`}
+                                                                >
+                                                                    <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500
+                                                                        ${isDark ? 'bg-gradient-to-br from-purple-500/5 to-pink-500/5' : 'bg-gradient-to-br from-purple-100/50 to-pink-100/30'}`}
+                                                                    />
+
+                                                                    <div className="relative">
+                                                                        <div className="relative w-24 h-24 mx-auto mb-4">
+                                                                            <div className="absolute inset-[-4px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md bg-gradient-to-r from-purple-500 to-pink-500" />
+
+                                                                            <svg className="w-full h-full -rotate-90 relative" viewBox="0 0 100 100">
+                                                                                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className={isDark ? 'text-slate-800/50' : 'text-slate-200'} />
+                                                                                <motion.circle
+                                                                                    cx="50" cy="50" r="42" fill="none"
+                                                                                    stroke="url(#daysGradient)"
+                                                                                    strokeWidth="6"
+                                                                                    strokeLinecap="round"
+                                                                                    strokeDasharray={`${2 * Math.PI * 42}`}
+                                                                                    initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                                                                                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - progress) }}
+                                                                                    transition={{ duration: 1.5, ease: "circOut", delay: 0.4 }}
+                                                                                    style={{ filter: 'drop-shadow(0 0 6px rgba(168,85,247,0.4))' }}
+                                                                                />
+                                                                                <defs>
+                                                                                    <linearGradient id="daysGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                                        <stop offset="0%" stopColor="#a855f7" />
+                                                                                        <stop offset="100%" stopColor="#ec4899" />
+                                                                                    </linearGradient>
+                                                                                </defs>
+                                                                            </svg>
+
+                                                                            <div className={`absolute inset-3 rounded-full flex flex-col items-center justify-center
+                                                                                ${isDark ? 'bg-slate-900/60 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-sm'}`}
+                                                                            >
+                                                                                <span className={`text-xl font-black ${styles.textPrimary}`}>{daysRemaining}</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="text-center space-y-1">
+                                                                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Days Left</p>
+                                                                            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                                                                ${isDark ? 'bg-purple-500/10 text-purple-400' : 'bg-purple-100 text-purple-700'}`}
+                                                                            >
+                                                                                <FiClock className="w-3 h-3" />
+                                                                                Cycle
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        );
+                                                    })()}
+
+                                                    {/* Reports Quota Gauge - Premium Card */}
+                                                    {(() => {
+                                                        const maxReports = currentPlan?.name === 'Free' ? 50 : 500;
+                                                        const used = usageStats.reportsThisMonth;
+                                                        const remaining = Math.max(0, maxReports - used);
+                                                        const progress = used / maxReports;
+
+                                                        return (
+                                                            <motion.div
+                                                                className="flex-1 min-w-[160px]"
+                                                                whileHover={{ scale: 1.02, y: -4 }}
+                                                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                            >
+                                                                <div className={`relative p-6 rounded-3xl backdrop-blur-xl border transition-all duration-500 group
+                                                                    ${isDark
+                                                                        ? 'bg-gradient-to-br from-white/[0.08] to-white/[0.02] border-white/10 hover:border-emerald-500/30 hover:shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)]'
+                                                                        : 'bg-gradient-to-br from-white/80 to-white/40 border-slate-200/50 hover:border-emerald-400/50 hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.25)]'
+                                                                    }`}
+                                                                >
+                                                                    <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500
+                                                                        ${isDark ? 'bg-gradient-to-br from-emerald-500/5 to-teal-500/5' : 'bg-gradient-to-br from-emerald-100/50 to-teal-100/30'}`}
+                                                                    />
+
+                                                                    <div className="relative">
+                                                                        <div className="relative w-24 h-24 mx-auto mb-4">
+                                                                            <div className="absolute inset-[-4px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md bg-gradient-to-r from-emerald-500 to-teal-500" />
+
+                                                                            <svg className="w-full h-full -rotate-90 relative" viewBox="0 0 100 100">
+                                                                                <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" strokeWidth="6" className={isDark ? 'text-slate-800/50' : 'text-slate-200'} />
+                                                                                <motion.circle
+                                                                                    cx="50" cy="50" r="42" fill="none"
+                                                                                    stroke="url(#reportsGradient)"
+                                                                                    strokeWidth="6"
+                                                                                    strokeLinecap="round"
+                                                                                    strokeDasharray={`${2 * Math.PI * 42}`}
+                                                                                    initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                                                                                    animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - progress) }}
+                                                                                    transition={{ duration: 1.5, ease: "circOut", delay: 0.6 }}
+                                                                                    style={{ filter: 'drop-shadow(0 0 6px rgba(16,185,129,0.4))' }}
+                                                                                />
+                                                                                <defs>
+                                                                                    <linearGradient id="reportsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                                                        <stop offset="0%" stopColor="#10b981" />
+                                                                                        <stop offset="100%" stopColor="#14b8a6" />
+                                                                                    </linearGradient>
+                                                                                </defs>
+                                                                            </svg>
+
+                                                                            <div className={`absolute inset-3 rounded-full flex flex-col items-center justify-center
+                                                                                ${isDark ? 'bg-slate-900/60 backdrop-blur-sm' : 'bg-white/70 backdrop-blur-sm'}`}
+                                                                            >
+                                                                                <span className={`text-xl font-black ${styles.textPrimary}`}>{remaining}</span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="text-center space-y-1">
+                                                                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Reports Left</p>
+                                                                            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                                                                ${isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-100 text-emerald-700'}`}
+                                                                            >
+                                                                                <FiFileText className="w-3 h-3" />
+                                                                                {used}/{maxReports}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        );
+                                                    })()}
+                                                </div>
+
+                                                {/* Premium Quick Stats Strip */}
+                                                <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4`}>
+                                                    {[
+                                                        { label: 'Active Days', value: usageStats.activeDays, suffix: '/30', icon: <FiActivity className="w-4 h-4" />, color: 'blue' },
+                                                        { label: 'Total Reports', value: usageStats.totalReports, suffix: '', icon: <FiBarChart2 className="w-4 h-4" />, color: 'purple' },
+                                                        { label: 'Last Payment', value: billingHistory[0] ? new Date(billingHistory[0].created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'N/A', suffix: '', icon: <FiCreditCard className="w-4 h-4" />, color: 'amber' },
+                                                        { label: 'Plan Status', value: 'Active', suffix: '', icon: <FiShield className="w-4 h-4" />, color: 'emerald', isStatus: true }
+                                                    ].map((item, i) => (
+                                                        <motion.div
+                                                            key={i}
+                                                            className={`relative p-4 lg:p-5 rounded-2xl backdrop-blur-xl border transition-all duration-300 group overflow-hidden
+                                                                ${isDark
+                                                                    ? 'bg-gradient-to-br from-white/[0.06] to-white/[0.02] border-white/10 hover:border-white/20'
+                                                                    : 'bg-gradient-to-br from-white/90 to-white/60 border-slate-200/50 hover:border-slate-300 hover:shadow-lg'
+                                                                }`}
+                                                            whileHover={{ scale: 1.02 }}
+                                                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                                        >
+                                                            {/* Subtle gradient accent on hover */}
+                                                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                                                                ${item.color === 'blue' ? 'bg-gradient-to-br from-blue-500/5 to-cyan-500/5' : ''}
+                                                                ${item.color === 'purple' ? 'bg-gradient-to-br from-purple-500/5 to-pink-500/5' : ''}
+                                                                ${item.color === 'amber' ? 'bg-gradient-to-br from-amber-500/5 to-orange-500/5' : ''}
+                                                                ${item.color === 'emerald' ? 'bg-gradient-to-br from-emerald-500/5 to-teal-500/5' : ''}
+                                                            `} />
+
+                                                            <div className="relative">
+                                                                <div className={`flex items-center gap-2 mb-3 ${styles.textMuted}`}>
+                                                                    <div className={`p-1.5 rounded-lg
+                                                                        ${isDark ? 'bg-white/5' : 'bg-slate-100'}
+                                                                        ${item.color === 'blue' ? 'text-blue-500' : ''}
+                                                                        ${item.color === 'purple' ? 'text-purple-500' : ''}
+                                                                        ${item.color === 'amber' ? 'text-amber-500' : ''}
+                                                                        ${item.color === 'emerald' ? 'text-emerald-500' : ''}
+                                                                    `}>
+                                                                        {item.icon}
+                                                                    </div>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                                                                </div>
+                                                                <p className={`text-2xl font-black ${item.isStatus ? 'text-emerald-500' : styles.textPrimary}`}>
+                                                                    {item.value}{item.suffix && <span className={`text-sm font-bold ml-0.5 ${styles.textMuted}`}>{item.suffix}</span>}
+                                                                </p>
+                                                            </div>
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+
+                                            </div>
                                         </div>
-                                        <div className="w-full h-4 bg-slate-800/50 rounded-full overflow-hidden p-1 border border-white/5 shadow-inner">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${progressPercent}%` }}
-                                                transition={{ duration: 1.5, ease: "circOut" }}
-                                                className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-full shadow-[0_0_15px_rgba(79,70,229,0.4)]"
-                                            />
-                                        </div>
-                                        <p className="mt-4 text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-2">
-                                            <FiInfo className="w-3.5 h-3.5" /> {(maxUsers || 0) - userCount} Slots remaining in current cycle
-                                        </p>
+
+                                        {/* Bottom Accent Line with gradient */}
+                                        <div className={`h-1 bg-gradient-to-r ${styles.bottomLine}`} />
                                     </div>
+                                </motion.section>
+                            );
+                        })()}
+
+                        {/* Pricing Strip - Horizontal Scrollable */}
+                        <section className="space-y-6">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div>
+                                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">Choose Your Plan</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
+                                        Swipe to explore • Hover for details
+                                    </p>
                                 </div>
 
-                                {/* Glassmorphic Price Card */}
-                                <div className="shrink-0 relative w-full lg:w-auto">
-                                    <div className="absolute inset-0 blur-[60px] opacity-40 bg-indigo-500 animate-pulse" />
-                                    <motion.div
-                                        whileHover={{ y: -5, scale: 1.02 }}
-                                        className="relative p-10 rounded-[3rem] bg-white/5 border border-white/20 backdrop-blur-3xl shadow-2xl flex flex-col items-center lg:items-end gap-6"
-                                    >
-                                        <div className="text-center lg:text-right">
-                                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Plan Price</p>
-                                            <div className="flex items-baseline gap-1 justify-center lg:justify-end">
-                                                <span className="text-7xl font-black text-white tracking-tighter">₹{currentPlan?.price_monthly || 0}</span>
-                                                <span className="text-slate-500 font-black text-xl">/mo</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="w-full h-px bg-white/10" />
-
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-blue-400 shadow-xl">
-                                                <FiCalendar className="w-7 h-7" />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Auto-Renewal</p>
-                                                <p className="text-xl font-black text-white">{renewalDate}</p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                </div>
-                            </div>
-                        </motion.section>
-
-                        {/* Tier Selector Section */}
-                        <section className="space-y-12">
-                            <div className="text-center space-y-4">
-                                <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Elevate Your Workflow</h3>
-                                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
-                                    Select the power level that fits your team's ambitions. Scale instantly as your project grows.
-                                </p>
-
-                                {/* Cycle Toggle */}
-                                <div className="flex items-center justify-center gap-4 pt-4">
-                                    <span className={`text-sm font-bold transition-colors ${billingCycle === 'monthly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>Monthly</span>
+                                {/* Cycle Toggle - Compact */}
+                                <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-white/5">
+                                    <span className={`text-xs font-bold transition-colors ${billingCycle === 'monthly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>Monthly</span>
                                     <button
                                         onClick={() => setBillingCycle(c => c === 'monthly' ? 'yearly' : 'monthly')}
-                                        className="w-14 h-7 bg-slate-200 dark:bg-slate-800 rounded-full p-1 relative transition-colors group border border-white/10"
+                                        className="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full p-0.5 relative transition-colors"
                                     >
                                         <motion.div
-                                            animate={{ x: billingCycle === 'monthly' ? 0 : 28 }}
-                                            className={`w-5 h-5 rounded-full bg-gradient-to-br ${accentColor} shadow-md`}
+                                            animate={{ x: billingCycle === 'monthly' ? 0 : 20 }}
+                                            className={`w-4 h-4 rounded-full bg-gradient-to-br ${accentColor} shadow-md`}
                                         />
                                     </button>
-                                    <span className={`text-sm font-bold transition-colors ${billingCycle === 'yearly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
-                                        Yearly <span className="ml-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] border border-emerald-500/20">Save 20%</span>
+                                    <span className={`text-xs font-bold transition-colors flex items-center gap-1.5 ${billingCycle === 'yearly' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                                        Yearly
+                                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[9px] font-black">-20%</span>
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {plans.map((plan, i) => (
-                                    <ModernPlanCard
+                            {/* Full-width Plan Cards Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {plans.map((plan) => (
+                                    <CompactPlanCard
                                         key={plan.id}
                                         plan={plan}
-                                        index={i}
                                         currentPlanId={currentPlan?.id}
                                         billingCycle={billingCycle}
                                         accentColor={accentColor}
@@ -706,235 +1061,240 @@ export default function SubscriptionPage({ sidebarMode }) {
                             </div>
                         </section>
                     </div>
-                )}
+                )
+                }
 
                 {/* TAB: BILLING & PAYMENTS */}
-                {activeTab === 'billing' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {/* Billing Overview Header */}
-                        <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 border border-white/5 shadow-2xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl" />
-                            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Current Subscription</p>
-                                    <h2 className="text-3xl font-black text-white">{currentPlan?.name || 'Free'} Plan</h2>
-                                    <p className="text-slate-400 mt-1">
-                                        {subscription?.current_period_end
-                                            ? `Renews ${new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                                            : 'No active billing cycle'}
-                                    </p>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
-                                        <p className="text-3xl font-black text-white">₹{currentPlan?.price_monthly || 0}</p>
-                                        <p className="text-xs text-slate-400 font-bold uppercase">/month</p>
+                {
+                    activeTab === 'billing' && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {/* Billing Overview Header */}
+                            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 border border-white/5 shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl" />
+                                <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Current Subscription</p>
+                                        <h2 className="text-3xl font-black text-white">{currentPlan?.name || 'Free'} Plan</h2>
+                                        <p className="text-slate-400 mt-1">
+                                            {subscription?.current_period_end
+                                                ? `Renews ${new Date(subscription.current_period_end).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                                : 'No active billing cycle'}
+                                        </p>
                                     </div>
-                                    <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
-                                        <p className="text-3xl font-black text-emerald-400">{billingHistory.filter(p => p.status === 'success').length}</p>
-                                        <p className="text-xs text-slate-400 font-bold uppercase">Invoices</p>
+                                    <div className="flex gap-4">
+                                        <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
+                                            <p className="text-3xl font-black text-white">₹{currentPlan?.price_monthly || 0}</p>
+                                            <p className="text-xs text-slate-400 font-bold uppercase">/month</p>
+                                        </div>
+                                        <div className="text-center px-6 py-4 rounded-2xl bg-white/5 border border-white/10">
+                                            <p className="text-3xl font-black text-emerald-400">{billingHistory.filter(p => p.status === 'success').length}</p>
+                                            <p className="text-xs text-slate-400 font-bold uppercase">Invoices</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Billing Details Form */}
-                            <section className="lg:col-span-1 space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Billing Details</h3>
-                                </div>
-                                <div className="p-6 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-slate-500">Company Name</label>
-                                        <input
-                                            value={billingDetails.name || ''}
-                                            onChange={e => setBillingDetails({ ...billingDetails, name: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Acme Corp"
-                                        />
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Billing Details Form */}
+                                <section className="lg:col-span-1 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-xl font-black text-slate-900 dark:text-white">Billing Details</h3>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-slate-500">Tax ID / GSTIN</label>
-                                        <input
-                                            value={billingDetails.taxId || ''}
-                                            onChange={e => setBillingDetails({ ...billingDetails, taxId: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="GSTIN12345"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold uppercase text-slate-500">Billing Address</label>
-                                        <textarea
-                                            value={billingDetails.address || ''}
-                                            onChange={e => setBillingDetails({ ...billingDetails, address: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] resize-none"
-                                            placeholder="123 Business Park, Mumbai"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={saveBillingDetails}
-                                        disabled={processing}
-                                        className={`w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r ${accentColor} shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50`}
-                                    >
-                                        {processing ? 'Saving...' : 'Save Details'}
-                                    </button>
-                                </div>
-
-                                {/* Security Badge */}
-                                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-3">
-                                    <FiShield className="w-5 h-5 text-emerald-500" />
-                                    <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Payments secured by Razorpay</p>
-                                </div>
-                            </section>
-
-                            {/* Invoice History */}
-                            <section className="lg:col-span-2 space-y-6">
-                                <h3 className="text-xl font-black text-slate-900 dark:text-white">Invoice History</h3>
-                                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-xl">
-                                    {billingHistory.length === 0 ? (
-                                        <div className="p-12 text-center">
-                                            <FiFileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                                            <p className="text-slate-500 font-medium">No invoices yet</p>
-                                            <p className="text-xs text-slate-400 mt-1">Your payment history will appear here</p>
+                                    <div className="p-6 rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-slate-500">Company Name</label>
+                                            <input
+                                                value={billingDetails.name || ''}
+                                                onChange={e => setBillingDetails({ ...billingDetails, name: e.target.value })}
+                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="Acme Corp"
+                                            />
                                         </div>
-                                    ) : (
-                                        <div className="divide-y divide-slate-100 dark:divide-white/5">
-                                            {billingHistory.map(invoice => (
-                                                <div key={invoice.id} className="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${invoice.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                                            {invoice.status === 'success' ? <FiCheckCircle className="w-5 h-5" /> : <FiClock className="w-5 h-5" />}
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-slate-500">Tax ID / GSTIN</label>
+                                            <input
+                                                value={billingDetails.taxId || ''}
+                                                onChange={e => setBillingDetails({ ...billingDetails, taxId: e.target.value })}
+                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="GSTIN12345"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold uppercase text-slate-500">Billing Address</label>
+                                            <textarea
+                                                value={billingDetails.address || ''}
+                                                onChange={e => setBillingDetails({ ...billingDetails, address: e.target.value })}
+                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 font-medium text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] resize-none"
+                                                placeholder="123 Business Park, Mumbai"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={saveBillingDetails}
+                                            disabled={processing}
+                                            className={`w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r ${accentColor} shadow-lg hover:opacity-90 transition-opacity disabled:opacity-50`}
+                                        >
+                                            {processing ? 'Saving...' : 'Save Details'}
+                                        </button>
+                                    </div>
+
+                                    {/* Security Badge */}
+                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-3">
+                                        <FiShield className="w-5 h-5 text-emerald-500" />
+                                        <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Payments secured by Razorpay</p>
+                                    </div>
+                                </section>
+
+                                {/* Invoice History */}
+                                <section className="lg:col-span-2 space-y-6">
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white">Invoice History</h3>
+                                    <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-white/5 overflow-hidden shadow-xl">
+                                        {billingHistory.length === 0 ? (
+                                            <div className="p-12 text-center">
+                                                <FiFileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                                                <p className="text-slate-500 font-medium">No invoices yet</p>
+                                                <p className="text-xs text-slate-400 mt-1">Your payment history will appear here</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-100 dark:divide-white/5">
+                                                {billingHistory.map(invoice => (
+                                                    <div key={invoice.id} className="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${invoice.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                                {invoice.status === 'success' ? <FiCheckCircle className="w-5 h-5" /> : <FiClock className="w-5 h-5" />}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-slate-900 dark:text-white">
+                                                                    INV-{String(invoice.invoice_number || 1).padStart(6, '0')}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    {new Date(invoice.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                    {invoice.billing_cycle && ` • ${invoice.billing_cycle}`}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="font-bold text-slate-900 dark:text-white">
-                                                                INV-{String(invoice.invoice_number || 1).padStart(6, '0')}
-                                                            </p>
-                                                            <p className="text-xs text-slate-500">
-                                                                {new Date(invoice.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                                {invoice.billing_cycle && ` • ${invoice.billing_cycle}`}
-                                                            </p>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="text-right">
+                                                                <p className="font-bold text-slate-900 dark:text-white">₹{Number(invoice.amount).toFixed(2)}</p>
+                                                                <span className={`text-xs font-bold uppercase ${invoice.status === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                                                                    {invoice.status}
+                                                                </span>
+                                                            </div>
+                                                            {invoice.status === 'success' && (
+                                                                <motion.button
+                                                                    whileHover={{ scale: 1.1 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    onClick={() => downloadInvoice(invoice.id)}
+                                                                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                                                    title="Download Invoice"
+                                                                >
+                                                                    <FiDownload className="w-4 h-4" />
+                                                                </motion.button>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="text-right">
-                                                            <p className="font-bold text-slate-900 dark:text-white">₹{Number(invoice.amount).toFixed(2)}</p>
-                                                            <span className={`text-xs font-bold uppercase ${invoice.status === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                                                {invoice.status}
-                                                            </span>
-                                                        </div>
-                                                        {invoice.status === 'success' && (
-                                                            <motion.button
-                                                                whileHover={{ scale: 1.1 }}
-                                                                whileTap={{ scale: 0.95 }}
-                                                                onClick={() => downloadInvoice(invoice.id)}
-                                                                className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                                                                title="Download Invoice"
-                                                            >
-                                                                <FiDownload className="w-4 h-4" />
-                                                            </motion.button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </section>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* TAB: USAGE MONITORING */}
-                {activeTab === 'usage' && (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        {/* Stats Summary Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            {[
-                                { label: "Team Members", val: usageStats.teamMembers.toString(), icon: <FiUsers />, color: "blue" },
-                                { label: "Reports This Month", val: usageStats.reportsThisMonth.toString(), icon: <FiFileText />, color: "purple" },
-                                { label: "Total Reports", val: usageStats.totalReports.toString(), icon: <FiZap />, color: "emerald" },
-                                { label: "Active Days", val: usageStats.activeDays.toString(), icon: <FiCalendar />, color: "cyan" },
-                            ].map((stat, i) => (
-                                <motion.div
-                                    key={i}
-                                    whileHover={{ y: -5 }}
-                                    className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl relative overflow-hidden"
-                                >
-                                    <div className={`p-2 rounded-xl bg-${stat.color}-500/10 text-${stat.color}-500 w-fit mb-4`}>
-                                        {stat.icon}
-                                    </div>
-                                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
-                                    <div className="flex items-baseline justify-between mt-1">
-                                        <p className="text-2xl font-black text-slate-900 dark:text-white">{stat.val}</p>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-
-                        {/* Usage Chart Container */}
-                        <div className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-2xl">
-                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
-                                <div>
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white">Usage Analytics</h3>
-                                    <p className="text-slate-500 font-medium">Monitoring team growth and platform engagement.</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-900 dark:text-white border border-white/5">Daily</button>
-                                    <button className="px-4 py-2 rounded-xl bg-blue-500 text-xs font-bold text-white shadow-lg shadow-blue-500/20">Monthly</button>
-                                </div>
+                {
+                    activeTab === 'usage' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            {/* Stats Summary Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                {[
+                                    { label: "Team Members", val: usageStats.teamMembers.toString(), icon: <FiUsers />, color: "blue" },
+                                    { label: "Reports This Month", val: usageStats.reportsThisMonth.toString(), icon: <FiFileText />, color: "purple" },
+                                    { label: "Total Reports", val: usageStats.totalReports.toString(), icon: <FiZap />, color: "emerald" },
+                                    { label: "Active Days", val: usageStats.activeDays.toString(), icon: <FiCalendar />, color: "cyan" },
+                                ].map((stat, i) => (
+                                    <motion.div
+                                        key={i}
+                                        whileHover={{ y: -5 }}
+                                        className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-xl relative overflow-hidden"
+                                    >
+                                        <div className={`p-2 rounded-xl bg-${stat.color}-500/10 text-${stat.color}-500 w-fit mb-4`}>
+                                            {stat.icon}
+                                        </div>
+                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{stat.label}</p>
+                                        <div className="flex items-baseline justify-between mt-1">
+                                            <p className="text-2xl font-black text-slate-900 dark:text-white">{stat.val}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </div>
 
-                            <div className="h-[400px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={usageTrend}>
-                                        <defs>
-                                            <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)"} />
-                                        <XAxis
-                                            dataKey="month"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: isDark ? '#64748b' : '#94a3b8', fontSize: 12, fontWeight: 700 }}
-                                            dy={10}
-                                        />
-                                        <YAxis
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: isDark ? '#64748b' : '#94a3b8', fontSize: 12, fontWeight: 700 }}
-                                        />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                                                borderRadius: '16px',
-                                                border: 'none',
-                                                boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-                                                fontWeight: 800
-                                            }}
-                                            itemStyle={{ color: '#3b82f6' }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="activity"
-                                            stroke="#3b82f6"
-                                            strokeWidth={4}
-                                            fillOpacity={1}
-                                            fill="url(#usageGradient)"
-                                            animationDuration={2000}
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
+                            {/* Usage Chart Container */}
+                            <div className="p-8 rounded-[2.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 shadow-2xl">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white">Usage Analytics</h3>
+                                        <p className="text-slate-500 font-medium">Monitoring team growth and platform engagement.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 text-xs font-bold text-slate-900 dark:text-white border border-white/5">Daily</button>
+                                        <button className="px-4 py-2 rounded-xl bg-blue-500 text-xs font-bold text-white shadow-lg shadow-blue-500/20">Monthly</button>
+                                    </div>
+                                </div>
+
+                                <div className="h-[400px] w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={usageTrend}>
+                                            <defs>
+                                                <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)"} />
+                                            <XAxis
+                                                dataKey="month"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: isDark ? '#64748b' : '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                                                dy={10}
+                                            />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: isDark ? '#64748b' : '#94a3b8', fontSize: 12, fontWeight: 700 }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                                    borderRadius: '16px',
+                                                    border: 'none',
+                                                    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                                                    fontWeight: 800
+                                                }}
+                                                itemStyle={{ color: '#3b82f6' }}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="activity"
+                                                stroke="#3b82f6"
+                                                strokeWidth={4}
+                                                fillOpacity={1}
+                                                fill="url(#usageGradient)"
+                                                animationDuration={2000}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </main>
+                    )
+                }
+            </main >
 
             {/* UPGRADE MODAL */}
-            <AnimatePresence>
+            < AnimatePresence >
                 {showUpgradeModal && (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -1019,106 +1379,164 @@ export default function SubscriptionPage({ sidebarMode }) {
                         </motion.div>
                     </motion.div>
                 )}
-            </AnimatePresence>
-        </div>
+            </AnimatePresence >
+        </div >
     );
 }
 
 /**
- * Modern Pricing Tier Card
+ * Compact Pricing Ticket Card - Refined with theme-aware design
+ * Features always visible, consistent backgrounds, flexible width
  */
-function ModernPlanCard({ plan, index, currentPlanId, billingCycle, accentColor, onSelect }) {
+function CompactPlanCard({ plan, currentPlanId, billingCycle, accentColor, onSelect }) {
+    const { themeMode } = useTheme();
     const isCurrent = plan.id === currentPlanId;
     const isPremium = plan.name === 'Pro' || plan.name === 'Super-Pro';
-    const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_monthly * 0.8 * 12);
 
-    const getPlanDesc = (name) => {
-        switch (name) {
-            case 'Free': return "Perfect for individuals and small teams starting out.";
-            case 'Intermediate': return "Advanced features for growing teams needing more power.";
-            case 'Pro': return "Professional scale with high performance and priority support.";
-            case 'Super-Pro': return "Supercharged capabilities for large scale organizations.";
-            case 'Enterprise': return "Maximum scalability and custom infrastructure for the elite.";
-            default: return "A tailored plan for your organization's unique needs.";
+    // price_monthly is the discounted buy price, discount_price is the original price
+    const discountedPrice = billingCycle === 'monthly'
+        ? Number(plan.price_monthly)
+        : Math.round(Number(plan.price_monthly) * 0.8 * 12);
+    const originalPrice = billingCycle === 'monthly'
+        ? Number(plan.discount_price) || Number(plan.price_monthly)
+        : Math.round((Number(plan.discount_price) || Number(plan.price_monthly)) * 12);
+
+    // Calculate savings percentage
+    const savingsPercent = originalPrice > 0 && discountedPrice < originalPrice
+        ? Math.round(100 - (discountedPrice / originalPrice) * 100)
+        : 0;
+
+    // Theme-aware colors
+    const getThemeAccent = () => {
+        switch (themeMode) {
+            case 'ocean': return { bg: 'from-cyan-500/10 to-blue-500/10', border: 'border-cyan-500/20', icon: 'text-cyan-400' };
+            case 'forest': return { bg: 'from-emerald-500/10 to-teal-500/10', border: 'border-emerald-500/20', icon: 'text-emerald-400' };
+            case 'space': return { bg: 'from-indigo-500/10 to-purple-500/10', border: 'border-indigo-500/20', icon: 'text-indigo-400' };
+            default: return { bg: 'from-blue-500/10 to-indigo-500/10', border: 'border-blue-500/20', icon: 'text-blue-400' };
         }
-    }
+    };
+    const themeAccent = getThemeAccent();
+
+    const getPlanIcon = (name) => {
+        switch (name) {
+            case 'Free': return <FiZap className="w-5 h-5" />;
+            case 'Intermediate': return <FiTrendingUp className="w-5 h-5" />;
+            case 'Pro': return <FiStar className="w-5 h-5" />;
+            case 'Super-Pro': return <FiAward className="w-5 h-5" />;
+            case 'Enterprise': return <FiGlobe className="w-5 h-5" />;
+            default: return <FiGrid className="w-5 h-5" />;
+        }
+    };
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 * index, duration: 0.7 }}
-            className={`relative p-8 rounded-[3rem] transition-all duration-500 border ${isPremium
-                ? 'bg-slate-900 border-white/20 shadow-[0_32px_64px_-12px_rgba(59,130,246,0.3)] scale-105 z-10'
-                : 'bg-white dark:bg-slate-900/40 backdrop-blur-xl border-slate-200 dark:border-white/5 shadow-2xl hover:scale-[1.02]'
-                }`}
+            whileHover={{ y: -4, scale: 1.01 }}
+            className={`relative w-full rounded-2xl overflow-hidden transition-all duration-300 
+                bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-xl
+                border ${isCurrent ? 'border-emerald-500/50 ring-2 ring-emerald-500/20' : themeAccent.border}
+                shadow-lg hover:shadow-xl`}
         >
+            {/* Theme-aware gradient overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${themeAccent.bg} opacity-50`} />
+
+            {/* Premium shimmer effect */}
             {isPremium && (
-                <div className={`absolute inset-0 rounded-[3rem] opacity-20 bg-gradient-to-br ${accentColor}`} />
+                <motion.div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                        backgroundSize: '200% 100%'
+                    }}
+                    animate={{ backgroundPosition: ['-100% 0%', '200% 0%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                />
             )}
 
-            {plan.name === 'Super-Pro' && (
-                <div className="absolute top-0 right-12 -translate-y-1/2">
-                    <span className={`px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-600 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
-                        Ultimate Power
-                    </span>
-                </div>
+            {/* Current plan indicator */}
+            {isCurrent && (
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-500" />
             )}
 
-            {plan.name === 'Pro' && (
-                <div className="absolute top-0 right-12 -translate-y-1/2">
-                    <span className={`px-4 py-1.5 rounded-full bg-gradient-to-r ${accentColor} text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg`}>
-                        Best Value
-                    </span>
-                </div>
-            )}
+            {/* Content */}
+            <div className="relative p-4 space-y-3">
+                {/* Header with icon and name */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <div className={`p-2 rounded-xl bg-white/80 dark:bg-white/10 ${themeAccent.icon} shadow-sm`}>
+                            {getPlanIcon(plan.name)}
+                        </div>
+                        <div>
+                            <h4 className="font-black text-base tracking-tight text-slate-900 dark:text-white">
+                                {plan.name}
+                            </h4>
+                            <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                {plan.max_users} users
+                            </p>
+                        </div>
+                    </div>
 
-            <div className="relative space-y-8">
-                <div className="space-y-2">
-                    <h4 className={`text-xl font-black tracking-tight ${isPremium ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{plan.name}</h4>
-                    <p className={`text-sm font-medium ${isPremium ? 'text-slate-400 font-medium' : 'text-slate-500'}`}>{getPlanDesc(plan.name)}</p>
-                </div>
-
-                <div className="flex items-baseline gap-1">
-                    <span className={`text-5xl font-black ${isPremium ? 'text-white' : 'text-slate-900 dark:text-white'} tracking-tighter`}>₹{billingCycle === 'monthly' ? price : Math.round(price / 12)}</span>
-                    <span className="text-slate-500 font-bold">/mo</span>
-                    {billingCycle === 'yearly' && (
-                        <span className="text-xs text-emerald-500 font-bold ml-2">Billed Annually</span>
+                    {/* Savings badge */}
+                    {savingsPercent > 0 && (
+                        <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+                            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">
+                                -{savingsPercent}%
+                            </span>
+                        </div>
                     )}
                 </div>
 
-                <div className="h-px bg-slate-100 dark:bg-white/10" />
-
-                <ul className="space-y-4">
-                    <li className="flex items-start gap-3">
-                        <div className={`mt-1 p-0.5 rounded-full ${isPremium ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500'}`}>
-                            <FiUsers className="w-3.5 h-3.5" />
-                        </div>
-                        <span className={`text-sm font-bold tracking-tight ${isPremium ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
-                            Up to {plan.max_users} Users
+                {/* Price section */}
+                <div className="py-2 border-t border-dashed border-slate-200/50 dark:border-white/10">
+                    <div className="flex items-end gap-1.5">
+                        {originalPrice > discountedPrice && (
+                            <span className="text-xs line-through text-slate-400 dark:text-slate-500">
+                                ₹{billingCycle === 'monthly' ? originalPrice : Math.round(originalPrice / 12)}
+                            </span>
+                        )}
+                        <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white">
+                            ₹{billingCycle === 'monthly' ? discountedPrice : Math.round(discountedPrice / 12)}
                         </span>
-                    </li>
-                    {plan.features?.map((f, i) => (
-                        <li key={i} className="flex items-start gap-3">
-                            <div className={`mt-1 p-0.5 rounded-full ${isPremium ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-100 dark:bg-white/5 text-slate-500'}`}>
-                                <FiCheckCircle className="w-3.5 h-3.5" />
-                            </div>
-                            <span className={`text-sm font-bold tracking-tight ${isPremium ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>{f}</span>
-                        </li>
-                    ))}
-                </ul>
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-0.5">
+                            /mo
+                        </span>
+                    </div>
+                </div>
 
+                {/* Features - Always visible */}
+                <div className="space-y-1.5">
+                    {plan.features?.slice(0, 3).map((f, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                            <FiCheck className={`w-3 h-3 flex-shrink-0 ${themeAccent.icon}`} />
+                            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                                {f}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* CTA Button */}
                 <button
                     disabled={isCurrent}
                     onClick={onSelect}
-                    className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all duration-300 ${isCurrent
-                        ? 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-default'
-                        : isPremium
-                            ? 'bg-white text-slate-900 hover:bg-slate-100 shadow-xl'
-                            : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 shadow-lg'
+                    className={`w-full py-2 rounded-lg font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1.5
+                        ${isCurrent
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default'
+                            : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-md hover:shadow-lg'
                         }`}
                 >
-                    {isCurrent ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                    {isCurrent ? (
+                        <>
+                            <FiCheckCircle className="w-3.5 h-3.5" />
+                            Current Plan
+                        </>
+                    ) : (
+                        <>
+                            Upgrade
+                            <FiArrowRight className="w-3.5 h-3.5" />
+                        </>
+                    )}
                 </button>
             </div>
         </motion.div>

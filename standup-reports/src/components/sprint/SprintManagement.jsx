@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiPlus,
@@ -9,9 +9,14 @@ import {
   FiChevronLeft,
   FiFilter,
   FiGrid,
-  FiList
+  FiList,
+  FiZap,
+  FiTrendingUp,
+  FiActivity,
+  FiLayers
 } from 'react-icons/fi';
 import { getSprintStatus } from '../../utils/sprintUtils';
+import { useTheme } from '../../context/ThemeContext';
 import ProjectListView from './ProjectListView';
 import SprintListView from './SprintListView';
 import ProjectGridView from './ProjectGridView';
@@ -28,13 +33,97 @@ const SprintManagement = ({
   onCompleteSprint,
   selectedSprintId,
   userRole,
-  // New props for project-first flow
   projects = [],
   selectedProjectId = 'all',
   setSelectedProjectId = () => { }
 }) => {
-  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'Planning', 'Active', 'Completed'
-  const [viewMode, setViewMode] = useState('list'); // 'board' or 'list'
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [viewMode, setViewMode] = useState('list');
+  const { themeMode } = useTheme();
+
+  // Premium theme detection
+  const isPremiumTheme = ['space', 'ocean', 'forest', 'diwali'].includes(themeMode);
+  const isDark = themeMode === 'dark' || isPremiumTheme;
+
+  // Theme-aware styles
+  const getThemeStyles = () => {
+    const baseStyles = {
+      light: {
+        bg: 'from-slate-50 via-blue-50/30 to-purple-50/30',
+        orb1: '#3b82f6',
+        orb2: '#8b5cf6',
+        orb3: '#06b6d4',
+        cardBg: 'bg-white/80 border-gray-200/60',
+        cardHover: 'hover:border-purple-300 hover:shadow-purple-100/50',
+        textPrimary: 'text-gray-900',
+        textSecondary: 'text-gray-600',
+        accent: 'from-purple-500 to-pink-500'
+      },
+      dark: {
+        bg: 'from-slate-950 via-slate-900 to-slate-950',
+        orb1: '#6366f1',
+        orb2: '#8b5cf6',
+        orb3: '#06b6d4',
+        cardBg: 'bg-slate-800/60 border-slate-700/60',
+        cardHover: 'hover:border-purple-500/50 hover:shadow-purple-500/10',
+        textPrimary: 'text-white',
+        textSecondary: 'text-slate-400',
+        accent: 'from-purple-400 to-pink-400'
+      },
+      ocean: {
+        bg: 'from-slate-950 via-cyan-950/50 to-blue-950/50',
+        orb1: '#06b6d4',
+        orb2: '#0ea5e9',
+        orb3: '#22d3ee',
+        cardBg: 'bg-cyan-900/20 border-cyan-500/20',
+        cardHover: 'hover:border-cyan-400/40 hover:shadow-cyan-500/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-cyan-300/80',
+        accent: 'from-cyan-400 to-blue-500'
+      },
+      forest: {
+        bg: 'from-slate-950 via-emerald-950/50 to-green-950/50',
+        orb1: '#10b981',
+        orb2: '#22c55e',
+        orb3: '#34d399',
+        cardBg: 'bg-emerald-900/20 border-emerald-500/20',
+        cardHover: 'hover:border-emerald-400/40 hover:shadow-emerald-500/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-emerald-300/80',
+        accent: 'from-emerald-400 to-green-500'
+      },
+      space: {
+        bg: 'from-slate-950 via-purple-950/50 to-indigo-950/50',
+        orb1: '#a855f7',
+        orb2: '#6366f1',
+        orb3: '#ec4899',
+        cardBg: 'bg-purple-900/20 border-purple-500/20',
+        cardHover: 'hover:border-purple-400/40 hover:shadow-purple-500/20',
+        textPrimary: 'text-white',
+        textSecondary: 'text-purple-300/80',
+        accent: 'from-purple-400 to-pink-500'
+      }
+    };
+    return baseStyles[themeMode] || baseStyles.dark;
+  };
+
+  const styles = getThemeStyles();
+
+  // Calculate sprint statistics
+  const sprintStats = useMemo(() => {
+    const projectSprints = selectedProjectId === 'all'
+      ? sprints
+      : sprints.filter(s => s.project_id === selectedProjectId);
+
+    const active = projectSprints.filter(s => getSprintStatus(s) === 'Active').length;
+    const completed = projectSprints.filter(s => getSprintStatus(s) === 'Completed').length;
+    const planning = projectSprints.filter(s => getSprintStatus(s) === 'Planning').length;
+    const totalTasks = projectSprints.reduce((acc, sprint) => {
+      return acc + tasks.filter(t => t.sprint_id === sprint.id).length;
+    }, 0);
+
+    return { total: projectSprints.length, active, completed, planning, totalTasks };
+  }, [sprints, tasks, selectedProjectId]);
 
   // Filter sprints based on status
   const filteredSprints = sprints.filter(sprint => {
@@ -48,86 +137,206 @@ const SprintManagement = ({
     return tasks.filter(task => task.sprint_id === sprintId);
   };
 
+  // Filter status configurations
+  const filterConfigs = [
+    { key: 'all', label: 'All Sprints', icon: FiLayers, gradient: 'from-blue-500 to-cyan-500' },
+    { key: 'Planning', label: 'Planning', icon: FiCalendar, gradient: 'from-amber-500 to-orange-500' },
+    { key: 'Active', label: 'Active', icon: FiPlay, gradient: 'from-emerald-500 to-green-500' },
+    { key: 'Completed', label: 'Completed', icon: FiCheckCircle, gradient: 'from-blue-500 to-indigo-500' }
+  ];
+
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden">
-      {/* Animated Background Orbs */}
+    <div className={`w-full min-h-screen bg-gradient-to-br ${styles.bg} relative overflow-hidden`}>
+      {/* Premium Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full blur-3xl opacity-20 dark:opacity-10"
-            style={{
-              width: `${200 + Math.random() * 300}px`,
-              height: `${200 + Math.random() * 300}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "reverse",
-              delay: Math.random() * 5,
-            }}
-          >
-            <div className={`w-full h-full rounded-full bg-gradient-to-r ${i % 4 === 0 ? 'from-purple-400 to-pink-400' :
-              i % 4 === 1 ? 'from-blue-400 to-cyan-400' :
-                i % 4 === 2 ? 'from-orange-400 to-red-400' :
-                  'from-emerald-400 to-teal-400'
-              }`} />
-          </motion.div>
-        ))}
+        {/* Primary mesh gradient orbs */}
+        <motion.div
+          className="absolute -top-1/4 -right-1/4 w-[800px] h-[800px] rounded-full opacity-30"
+          style={{ background: `radial-gradient(circle, ${styles.orb1} 0%, transparent 70%)` }}
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 60, 0],
+            y: [0, -40, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute -bottom-1/4 -left-1/4 w-[700px] h-[700px] rounded-full opacity-25"
+          style={{ background: `radial-gradient(circle, ${styles.orb2} 0%, transparent 70%)` }}
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, -50, 0],
+            y: [0, 50, 0]
+          }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        />
+        <motion.div
+          className="absolute top-1/2 left-1/2 w-[500px] h-[500px] rounded-full opacity-15"
+          style={{ background: `radial-gradient(circle, ${styles.orb3} 0%, transparent 60%)` }}
+          animate={{
+            scale: [1, 1.1, 1],
+            rotate: [0, 180, 360]
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        />
+
+        {/* Noise texture overlay */}
+        <div
+          className={`absolute inset-0 ${isDark ? 'opacity-[0.015]' : 'opacity-[0.025]'}`}
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")'
+          }}
+        />
+
+        {/* Animated grid lines for premium themes */}
+        {isPremiumTheme && (
+          <div className="absolute inset-0 opacity-[0.03]">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `linear-gradient(${styles.orb1}40 1px, transparent 1px), linear-gradient(90deg, ${styles.orb1}40 1px, transparent 1px)`,
+              backgroundSize: '50px 50px'
+            }} />
+          </div>
+        )}
       </div>
 
-      <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-4 md:space-y-8 relative z-10">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 space-y-5 md:space-y-6 relative z-10">
 
-        {/* Enhanced Project Selection Grid */}
+        {/* Premium Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`relative rounded-2xl sm:rounded-3xl overflow-hidden backdrop-blur-xl border shadow-2xl
+            ${isPremiumTheme
+              ? 'bg-white/[0.05] border-white/10'
+              : isDark
+                ? 'bg-slate-800/50 border-slate-700/50'
+                : 'bg-white/70 border-gray-200/50'}`}
+        >
+          {/* Header glow effect */}
+          <div className={`absolute inset-0 bg-gradient-to-r ${styles.accent} opacity-5`} />
+
+          <div className="relative p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
+              {/* Title Section */}
+              <div className="space-y-1">
+                <motion.h1
+                  className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight
+                    bg-gradient-to-r ${styles.accent} bg-clip-text text-transparent`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Sprint Management
+                </motion.h1>
+                <p className={`text-sm sm:text-base ${styles.textSecondary}`}>
+                  {selectedProjectId === 'all'
+                    ? 'Select a project to manage sprints'
+                    : 'Plan, track, and complete your sprints'}
+                </p>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {[
+                  { label: 'Total', value: sprintStats.total, icon: FiLayers, color: 'blue' },
+                  { label: 'Active', value: sprintStats.active, icon: FiZap, color: 'emerald' },
+                  { label: 'Done', value: sprintStats.completed, icon: FiCheckCircle, color: 'purple' },
+                  { label: 'Tasks', value: sprintStats.totalTasks, icon: FiActivity, color: 'amber' }
+                ].map((stat, idx) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 + idx * 0.1 }}
+                    className={`group relative flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl backdrop-blur-sm border transition-all duration-300
+                      ${isPremiumTheme
+                        ? 'bg-white/[0.08] border-white/10 hover:bg-white/[0.12] hover:border-white/20'
+                        : isDark
+                          ? 'bg-slate-700/50 border-slate-600/50 hover:bg-slate-700/70'
+                          : 'bg-white/60 border-gray-200/50 hover:bg-white/80'}`}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                  >
+                    <div className={`p-1.5 sm:p-2 rounded-lg bg-${stat.color}-500/20`}>
+                      <stat.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-${stat.color}-${isDark ? '400' : '600'}`} />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className={`text-base sm:text-lg font-bold ${styles.textPrimary}`}>
+                        {stat.value}
+                      </span>
+                      <span className={`text-[10px] sm:text-xs font-medium ${styles.textSecondary}`}>
+                        {stat.label}
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Animated accent line */}
+          <motion.div
+            className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${styles.accent}`}
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+          />
+        </motion.div>
+
+        {/* Project Selection Grid */}
         {projects?.length > 0 && selectedProjectId === 'all' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            transition={{ delay: 0.2 }}
+            className="space-y-4 sm:space-y-5"
           >
             {/* Section Header with View Toggle */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
-                Your Projects
-              </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl bg-gradient-to-r ${styles.accent}`}>
+                  <FiTarget className="w-5 h-5 text-white" />
+                </div>
+                <h2 className={`text-xl sm:text-2xl font-bold ${styles.textPrimary}`}>
+                  Your Projects
+                </h2>
+              </div>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-white/60 dark:bg-slate-800/60 rounded-lg sm:rounded-xl p-1 sm:p-1.5 border border-gray-200 dark:border-slate-700 shadow-md">
-                <motion.button
-                  onClick={() => setViewMode('board')}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${viewMode === 'board'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FiGrid className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">Board</span>
-                </motion.button>
-                <motion.button
-                  onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${viewMode === 'list'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <FiList className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline">List</span>
-                </motion.button>
+              {/* Premium View Mode Toggle */}
+              <div className={`flex items-center gap-1 p-1 rounded-xl sm:rounded-2xl backdrop-blur-xl border transition-all
+                ${isPremiumTheme
+                  ? 'bg-white/[0.08] border-white/10'
+                  : isDark
+                    ? 'bg-slate-800/60 border-slate-700/60'
+                    : 'bg-white/70 border-gray-200/50'}`}>
+                {[
+                  { mode: 'board', icon: FiGrid, label: 'Board' },
+                  { mode: 'list', icon: FiList, label: 'List' }
+                ].map(({ mode, icon: Icon, label }) => (
+                  <motion.button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`relative flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300
+                      ${viewMode === mode
+                        ? `text-white shadow-lg`
+                        : `${styles.textSecondary} hover:${styles.textPrimary}`}`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {viewMode === mode && (
+                      <motion.div
+                        layoutId="viewToggle"
+                        className={`absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r ${styles.accent}`}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 relative z-10" />
+                    <span className="relative z-10 hidden xs:inline">{label}</span>
+                  </motion.button>
+                ))}
               </div>
             </div>
 
-            {/* Project View - Board or List */}
+            {/* Project View */}
             {viewMode === 'list' ? (
               <ProjectListView
                 projects={projects}
@@ -151,109 +360,141 @@ const SprintManagement = ({
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+            className="space-y-4 sm:space-y-5"
           >
             {/* Navigation Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <motion.button
                 onClick={() => setSelectedProjectId('all')}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-slate-800/80 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition-all text-xs sm:text-sm"
-                whileHover={{ scale: 1.02 }}
+                className={`group flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl backdrop-blur-xl border transition-all duration-300
+                  ${isPremiumTheme
+                    ? 'bg-white/[0.08] border-white/10 hover:bg-white/[0.15] hover:border-white/20'
+                    : isDark
+                      ? 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-700/80'
+                      : 'bg-white/70 border-gray-200/50 hover:bg-white/90 hover:border-purple-300'}`}
+                whileHover={{ scale: 1.02, x: -4 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <FiChevronLeft className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <span className="font-medium text-gray-700 dark:text-gray-200">Back to Projects</span>
+                <FiChevronLeft className={`w-4 h-4 transition-transform group-hover:-translate-x-1 
+                  ${isPremiumTheme ? 'text-white/70' : isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+                <span className={`text-sm font-medium ${styles.textPrimary}`}>Back to Projects</span>
               </motion.button>
 
               {userRole === 'manager' && onCreateSprint && (
                 <motion.button
                   onClick={onCreateSprint}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all text-sm"
-                  whileHover={{ scale: 1.03 }}
+                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white shadow-lg overflow-hidden
+                    bg-gradient-to-r ${styles.accent}`}
+                  whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  <FiPlus className="w-4 h-4" />
-                  <span>New Sprint</span>
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  />
+                  <FiPlus className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10 text-sm">New Sprint</span>
                 </motion.button>
               )}
             </div>
 
-            {/* Filter Controls with View Toggle */}
-            <div className="bg-white/80 dark:bg-slate-800/80 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-gray-200 dark:border-slate-700">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-                <div className="flex items-center gap-4">
-                  <h3 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">Filter Sprints</h3>
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <FiFilter className="w-4 h-4" />
-                    <span className="font-semibold">{filteredSprints.filter(s => s.project_id === selectedProjectId).length} sprint{filteredSprints.filter(s => s.project_id === selectedProjectId).length !== 1 ? 's' : ''}</span>
+            {/* Premium Filter Controls */}
+            <div className={`rounded-2xl sm:rounded-3xl backdrop-blur-xl border shadow-xl overflow-hidden
+              ${isPremiumTheme
+                ? 'bg-white/[0.05] border-white/10'
+                : isDark
+                  ? 'bg-slate-800/50 border-slate-700/50'
+                  : 'bg-white/70 border-gray-200/50'}`}>
+
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-xl ${isPremiumTheme ? 'bg-white/10' : isDark ? 'bg-slate-700/50' : 'bg-gray-100'}`}>
+                      <FiFilter className={`w-4 h-4 ${isPremiumTheme ? 'text-white/70' : styles.textSecondary}`} />
+                    </div>
+                    <div>
+                      <h3 className={`text-base sm:text-lg font-bold ${styles.textPrimary}`}>Filter Sprints</h3>
+                      <p className={`text-xs sm:text-sm ${styles.textSecondary}`}>
+                        {filteredSprints.filter(s => s.project_id === selectedProjectId).length} sprint{filteredSprints.filter(s => s.project_id === selectedProjectId).length !== 1 ? 's' : ''} found
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* View Mode Toggle */}
+                  <div className={`flex items-center gap-1 p-1 rounded-xl backdrop-blur-sm border
+                    ${isPremiumTheme
+                      ? 'bg-white/[0.05] border-white/10'
+                      : isDark
+                        ? 'bg-slate-900/50 border-slate-700/50'
+                        : 'bg-gray-100/80 border-gray-200/50'}`}>
+                    {[
+                      { mode: 'board', icon: FiGrid },
+                      { mode: 'list', icon: FiList }
+                    ].map(({ mode, icon: Icon }) => (
+                      <motion.button
+                        key={mode}
+                        onClick={() => setViewMode(mode)}
+                        className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all
+                          ${viewMode === mode
+                            ? 'text-white'
+                            : styles.textSecondary}`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {viewMode === mode && (
+                          <motion.div
+                            layoutId="sprintViewToggle"
+                            className={`absolute inset-0 rounded-lg bg-gradient-to-r ${styles.accent}`}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                        <Icon className="w-3.5 h-3.5 relative z-10" />
+                        <span className="relative z-10">{mode === 'board' ? 'Board' : 'List'}</span>
+                      </motion.button>
+                    ))}
                   </div>
                 </div>
 
-                {/* View Mode Toggle */}
-                <div className="flex items-center gap-2 bg-gray-100 dark:bg-slate-900/50 rounded-xl p-1">
-                  <motion.button
-                    onClick={() => setViewMode('board')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'board'
-                      ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FiGrid className="w-3.5 h-3.5" />
-                    <span>Board</span>
-                  </motion.button>
-                  <motion.button
-                    onClick={() => setViewMode('list')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'list'
-                      ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                      }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <FiList className="w-3.5 h-3.5" />
-                    <span>List</span>
-                  </motion.button>
+                {/* Premium Filter Pills */}
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {filterConfigs.map((filter, idx) => (
+                    <motion.button
+                      key={filter.key}
+                      onClick={() => setFilterStatus(filter.key)}
+                      className={`relative px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-300
+                        ${filterStatus === filter.key
+                          ? 'text-white shadow-lg'
+                          : `${isPremiumTheme
+                            ? 'bg-white/[0.05] hover:bg-white/[0.1] text-white/70 hover:text-white border border-white/10'
+                            : isDark
+                              ? 'bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/50'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-gray-900 border border-gray-200/50'}`
+                        }`}
+                      whileHover={{ scale: 1.03, y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      {filterStatus === filter.key && (
+                        <motion.div
+                          layoutId="activeFilter"
+                          className={`absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r ${filter.gradient}`}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                      <span className="relative z-10 flex items-center gap-2">
+                        <filter.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        {filter.label}
+                      </span>
+                    </motion.button>
+                  ))}
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {['all', 'Planning', 'Active', 'Completed'].map((status) => (
-                  <motion.button
-                    key={status}
-                    onClick={() => setFilterStatus(status)}
-                    className={`relative px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${filterStatus === status
-                      ? 'text-white shadow-lg'
-                      : 'bg-gray-100 dark:bg-slate-900/50 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-800'
-                      }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {filterStatus === status && (
-                      <motion.div
-                        layoutId="activeFilter"
-                        className={`absolute inset-0 rounded-xl ${status === 'all' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                          status === 'Active' ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
-                            status === 'Completed' ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                              'bg-gradient-to-r from-amber-500 to-orange-500'
-                          }`}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center gap-2">
-                      {status === 'all' && <FiFilter className="w-4 h-4" />}
-                      {status === 'Active' && <FiPlay className="w-4 h-4" />}
-                      {status === 'Completed' && <FiCheckCircle className="w-4 h-4" />}
-                      {status === 'Planning' && <FiCalendar className="w-4 h-4" />}
-                      {status === 'all' ? 'All Sprints' : status}
-                    </span>
-                  </motion.button>
-                ))}
               </div>
             </div>
 
-            {/* Sprint View - Board or List */}
+            {/* Sprint View */}
             {viewMode === 'list' ? (
               <SprintListView
                 sprints={filteredSprints.filter(s => s.project_id === selectedProjectId)}
@@ -279,41 +520,84 @@ const SprintManagement = ({
               />
             )}
 
-            {/* Enhanced Empty State */}
+            {/* Premium Empty State */}
             {filteredSprints.filter(s => s.project_id === selectedProjectId).length === 0 && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-20 bg-white/60 dark:bg-slate-800/60 rounded-3xl border-2 border-dashed border-purple-300 dark:border-purple-500/50 shadow-xl"
+                className={`relative text-center py-16 sm:py-20 rounded-3xl border-2 border-dashed overflow-hidden
+                  ${isPremiumTheme
+                    ? 'bg-white/[0.03] border-white/20'
+                    : isDark
+                      ? 'bg-slate-800/40 border-slate-600/50'
+                      : 'bg-white/50 border-purple-300/50'}`}
               >
-                <div className="relative w-20 h-20 mx-auto mb-6">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-20 dark:opacity-10 blur-2xl" />
-                  <FiTarget className="w-20 h-20 mx-auto text-purple-400 relative" />
+                {/* Animated background particles */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className={`absolute w-2 h-2 rounded-full ${isPremiumTheme ? 'bg-white/20' : 'bg-purple-400/30'}`}
+                      style={{
+                        left: `${20 + i * 12}%`,
+                        top: `${30 + (i % 3) * 20}%`
+                      }}
+                      animate={{
+                        y: [0, -20, 0],
+                        opacity: [0.3, 0.8, 0.3],
+                        scale: [1, 1.2, 1]
+                      }}
+                      transition={{
+                        duration: 3 + i * 0.5,
+                        repeat: Infinity,
+                        delay: i * 0.3
+                      }}
+                    />
+                  ))}
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+
+                {/* 3D Floating Icon */}
+                <motion.div
+                  className="relative w-24 h-24 mx-auto mb-6"
+                  animate={{ y: [0, -10, 0], rotateY: [0, 10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-r ${styles.accent} rounded-full opacity-30 blur-2xl`} />
+                  <div className={`relative w-full h-full rounded-full flex items-center justify-center
+                    ${isPremiumTheme
+                      ? 'bg-white/[0.08] border border-white/20'
+                      : isDark
+                        ? 'bg-slate-800/80 border border-slate-700/50'
+                        : 'bg-white/80 border border-purple-200/50'}`}>
+                    <FiTarget className={`w-10 h-10 ${isPremiumTheme ? 'text-white/70' : isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                  </div>
+                </motion.div>
+
+                <h3 className={`text-xl sm:text-2xl font-bold mb-3 ${styles.textPrimary}`}>
                   {filterStatus === 'all' ? 'No Sprints Yet' : `No ${filterStatus} Sprints`}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
+                <p className={`text-sm sm:text-base mb-8 max-w-md mx-auto px-4 ${styles.textSecondary}`}>
                   {filterStatus === 'all'
-                    ? 'Create your first sprint to start planning your work'
-                    : `No sprints found with status: ${filterStatus}`
-                  }
+                    ? 'Create your first sprint to start organizing and tracking your work'
+                    : `No sprints found with the "${filterStatus}" status`}
                 </p>
+
                 {userRole === 'manager' && filterStatus === 'all' && onCreateSprint && (
                   <motion.button
                     onClick={onCreateSprint}
-                    className="relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white rounded-xl font-semibold shadow-2xl overflow-hidden"
-                    whileHover={{ scale: 1.05, y: -2 }}
+                    className={`relative inline-flex items-center gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold text-white shadow-2xl overflow-hidden
+                      bg-gradient-to-r ${styles.accent}`}
+                    whileHover={{ scale: 1.05, y: -3 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 rounded-xl opacity-50 blur-md" />
+                    <div className={`absolute inset-0 bg-gradient-to-r ${styles.accent} opacity-50 blur-xl`} />
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
                       animate={{ x: ['-100%', '100%'] }}
                       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                     />
-                    <FiPlus className="w-6 h-6 relative z-10" />
-                    <span className="relative z-10 text-lg">Create Your First Sprint</span>
+                    <FiPlus className="w-5 h-5 sm:w-6 sm:h-6 relative z-10" />
+                    <span className="relative z-10 text-base sm:text-lg">Create Your First Sprint</span>
                   </motion.button>
                 )}
               </motion.div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../../supabaseClient';
 import TaskDetailView from '../tasks/TaskDetailView';
@@ -7,232 +7,169 @@ import { uuidToShortId } from '../../utils/taskIdUtils';
 
 const ReportContentParser = ({ content, mode = 'view' }) => {
     const [parsedContent, setParsedContent] = useState('');
-    const [tasks, setTasks] = useState({});
-    const [users, setUsers] = useState({});
     const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [selectedUserId, setSelectedUserId] = useState(null);
+    const containerRef = useRef(null);
 
-    useEffect(() => {
-        parseContent();
-    }, [content]);
-
-    const parseContent = async () => {
-        if (!content) {
-            setParsedContent('');
-            return;
-        }
-
-        // --- Step 0: Handle potential double-escaping ---
-        // If content comes in as &lt;span... it means it was escaped before reaching here
-        let rawContent = content;
-        if (rawContent.includes('&lt;') || rawContent.includes('&gt;')) {
-            const doc = new DOMParser().parseFromString(rawContent, 'text/html');
-            rawContent = doc.documentElement.textContent || doc.documentElement.innerText;
-        }
-
-        // Extract task IDs: #TASK-123 OR from raw spans if they leaked into the DB
-        const taskRegex = /#TASK-([a-f0-9-]+|\d+)/g;
-        const taskIds = [...rawContent.matchAll(taskRegex)].map(match => match[1]);
-
-        // Also look for data-id in any raw spans
-        const spanTaskIdRegex = /data-id="([a-f0-9-]+|\d+)"/g;
-        const spanTaskIds = [...rawContent.matchAll(spanTaskIdRegex)].map(match => match[1]);
-        const combinedTaskIds = [...new Set([...taskIds, ...spanTaskIds])];
-
-        // Extract user IDs: @uuid OR from raw spans
-        const userRegex = /@([a-f0-9-]{36})/g;
-        const userIds = [...rawContent.matchAll(userRegex)].map(match => match[1]);
-
-        const spanUserIdRegex = /data-user-id="([a-f0-9-]{36})"/g;
-        const spanUserIds = [...rawContent.matchAll(spanUserIdRegex)].map(match => match[1]);
-        const combinedUserIds = [...new Set([...userIds, ...spanUserIds])];
-
-        // Fetch tasks and users data FIRST, then use it for parsing
-        let tasksMap = {};
-        let usersMap = {};
-
-        // Fetch tasks
-        if (combinedTaskIds.length > 0) {
-            const { data: tasksData } = await supabase
-                .from('tasks')
-                .select('id, title')
-                .in('id', combinedTaskIds);
-
-            (tasksData || []).forEach(task => {
-                tasksMap[task.id] = task;
-            });
-            setTasks(tasksMap);
-        }
-
-        // Fetch users
-        if (combinedUserIds.length > 0) {
-            const { data: usersData } = await supabase
-                .from('users')
-                .select('id, name, avatar_url')
-                .in('id', combinedUserIds);
-
-            (usersData || []).forEach(user => {
-                usersMap[user.id] = user;
-            });
-            setUsers(usersMap);
-        }
-
-        // Parse and replace - use tasksMap and usersMap directly (not state which is async)
-        let parsed = rawContent;
-
-        // 1. Replace any raw spans that leaked in with the proper Chip component
-        // This fixes legacy data or "leaked" HTML from the editor
-        parsed = parsed.replace(/<span[^>]*data-id="([a-f0-9-]+|\d+)"[^>]*>.*?<\/span>/g, '#TASK-$1');
-        parsed = parsed.replace(/<span[^>]*data-user-id="([a-f0-9-]{36})"[^>]*>.*?<\/span>/g, '@$1');
-
-        // 2. Replace tasks syntax with interactive chips (inline pill style)
-        parsed = parsed.replace(/#TASK-([a-f0-9-]+|\d+)/g, (match, taskId) => {
-            const task = tasksMap[taskId]; // Use local variable, not state
-            const shortId = taskId.length > 20 ? uuidToShortId(taskId) : taskId;
-            const title = task?.title || '';
-            const truncatedTitle = title.length > 25 ? title.slice(0, 25) + '...' : title;
-
-            if (mode === 'editor') {
-                return `<span class="task-ref inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors text-sm border border-indigo-200/50 dark:border-indigo-500/30" data-task-id="${taskId}">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>#${shortId}</span>
-                </span>`;
-            } else {
-                // For standup reports view - with title
-                return `<span class="task-ref inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors text-xs border border-indigo-200/50 dark:border-indigo-500/30" data-task-id="${taskId}">
-                    <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span>#${shortId}${truncatedTitle ? ': ' + truncatedTitle : ''}</span>
-                </span>`;
-            }
-        });
-
-        // 3. Replace mentions syntax with interactive chips (inline pill style with avatar)
-        parsed = parsed.replace(/@([a-f0-9-]{36})/g, (match, userId) => {
-            const user = usersMap[userId]; // Use local variable, not state
-            const userName = user?.name || 'User';
-            const avatarHtml = user?.avatar_url
-                ? `<img src="${user.avatar_url}" class="w-4 h-4 rounded-full flex-shrink-0" alt="" />`
-                : `<span class="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">${userName[0] || 'U'}</span>`;
-
-            if (mode === 'editor') {
-                return `<span class="mention-ref inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 font-medium bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors text-sm border border-blue-200/50 dark:border-blue-500/30" data-user-id="${userId}">
-                    ${avatarHtml}
-                    <span>@${userName}</span>
-                </span>`;
-            } else {
-                // For standup reports view
-                return `<span class="mention-ref inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 font-medium bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors text-xs border border-blue-200/50 dark:border-blue-500/30" data-user-id="${userId}">
-                    ${avatarHtml}
-                    <span>@${userName}</span>
-                </span>`;
-            }
-        });
-
-        // 4. Convert text patterns to proper HTML lists (numbered and bulleted)
-        // Only if content doesn't already have HTML list tags
-        if (!parsed.includes('<ol') && !parsed.includes('<ul') && !parsed.includes('<li')) {
-            parsed = convertTextToLists(parsed);
-        }
-
-        // 5. Convert remaining newlines to <br/> for non-HTML content
-        // But skip if we already have list or paragraph structure
-        if (!parsed.includes('<p>') && !parsed.includes('<br') && !parsed.includes('<ol') && !parsed.includes('<ul')) {
-            parsed = parsed.replace(/\n/g, '<br/>');
-        }
-
-        setParsedContent(parsed);
-    };
-
-    // Helper function to convert plain text lists to HTML lists
-    const convertTextToLists = (text) => {
-        // First, normalize the text - add newlines before list patterns if they're inline
-        // This handles cases like "1. First 2. Second" or "- one - two"
-        let normalizedText = text
-            // Add newline before numbered patterns like "1.", "2." when preceded by text
-            .replace(/([^\n])\s+(\d+[.)]\s+)/g, '$1\n$2')
-            // Add newline before bullet patterns like "- ", "* " when preceded by text
-            .replace(/([^\n])\s+([-*•→]\s+)/g, '$1\n$2');
-
-        const lines = normalizedText.split(/\n|<br\s*\/?>/);
-        let result = [];
-        let currentList = null;
-        let currentListType = null;
-
-        lines.forEach((line, index) => {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) return;
-
-            // Check for numbered list: "1.", "2.", "1)", "2)", etc.
-            const numberedMatch = trimmedLine.match(/^(\d+)[.)]\s+(.+)$/);
-            // Check for bullet list: "-", "*", "•", "→"
-            const bulletMatch = trimmedLine.match(/^[-*•→]\s+(.+)$/);
-            // Check for checkbox style: "[ ]", "[x]", "[X]"
-            const checkboxMatch = trimmedLine.match(/^\[[ xX]?\]\s+(.+)$/);
-
-            if (numberedMatch) {
-                const content = numberedMatch[2];
-                if (currentListType !== 'ol') {
-                    if (currentList) {
-                        result.push(`</${currentListType}>`);
-                    }
-                    result.push('<ol>');
-                    currentListType = 'ol';
-                    currentList = true;
-                }
-                result.push(`<li>${content}</li>`);
-            } else if (bulletMatch || checkboxMatch) {
-                const content = bulletMatch ? bulletMatch[1] : checkboxMatch[1];
-                if (currentListType !== 'ul') {
-                    if (currentList) {
-                        result.push(`</${currentListType}>`);
-                    }
-                    result.push('<ul>');
-                    currentListType = 'ul';
-                    currentList = true;
-                }
-                result.push(`<li>${content}</li>`);
-            } else {
-                // Close any open list
-                if (currentList) {
-                    result.push(`</${currentListType}>`);
-                    currentList = null;
-                    currentListType = null;
-                }
-                // Add non-list content
-                if (trimmedLine) {
-                    result.push(trimmedLine);
-                    // Add line break after non-list content if not the last line
-                    if (index < lines.length - 1 && lines[index + 1]?.trim()) {
-                        result.push('<br/>');
-                    }
-                }
-            }
-        });
-
-        // Close any remaining open list
-        if (currentList) {
-            result.push(`</${currentListType}>`);
-        }
-
-        return result.join('');
-    };
-
-    const handleClick = (e) => {
+    // Stable click handler
+    const handleClick = useCallback((e) => {
         const target = e.target.closest('[data-task-id], [data-user-id]');
         if (!target) return;
-
+        e.preventDefault();
+        e.stopPropagation();
         if (target.dataset.taskId) {
             setSelectedTaskId(target.dataset.taskId);
         } else if (target.dataset.userId) {
             setSelectedUserId(target.dataset.userId);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!content) {
+            setParsedContent('');
+            return;
+        }
+
+        let cancelled = false;
+
+        const parse = async () => {
+            try {
+                let raw = String(content);
+
+                // ─── Step 0: Unescape double-encoded HTML ───
+                // Some content may arrive as &lt;p&gt;... from the DB
+                if (raw.includes('&lt;') || raw.includes('&gt;') || raw.includes('&amp;lt;')) {
+                    const doc = new DOMParser().parseFromString(raw, 'text/html');
+                    raw = doc.body.innerHTML || raw;
+                }
+
+                // Determine if content is already HTML (from Tiptap editor)
+                const isHtml = /<\s*(p|ul|ol|li|br|strong|em|span|div|a|h[1-6]|blockquote|pre|code)[\s>]/i.test(raw);
+
+                // ─── Step 1: Extract all task IDs and user IDs ───
+                const taskIdSet = new Set();
+                const userIdSet = new Set();
+
+                // From #TASK-xxx tokens
+                const taskTokenRegex = /#TASK-([a-f0-9-]+|\d+)/g;
+                for (const m of raw.matchAll(taskTokenRegex)) taskIdSet.add(m[1]);
+
+                // From data-id attributes (Tiptap spans that leaked)
+                const dataIdRegex = /data-id="([a-f0-9-]+|\d+)"/g;
+                for (const m of raw.matchAll(dataIdRegex)) taskIdSet.add(m[1]);
+
+                // From [TASK:id|title] format
+                const bracketTaskRegex = /\[TASK:([^|\]]+)\|([^\]]+)\]/g;
+                for (const m of raw.matchAll(bracketTaskRegex)) taskIdSet.add(m[1]);
+
+                // User IDs from @uuid
+                const userTokenRegex = /@([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/g;
+                for (const m of raw.matchAll(userTokenRegex)) userIdSet.add(m[1]);
+
+                // User IDs from data-user-id
+                const dataUserRegex = /data-user-id="([a-f0-9-]{36})"/g;
+                for (const m of raw.matchAll(dataUserRegex)) userIdSet.add(m[1]);
+
+                // ─── Step 2: Batch fetch tasks and users ───
+                let tasksMap = {};
+                let usersMap = {};
+
+                const fetches = [];
+
+                if (taskIdSet.size > 0) {
+                    fetches.push(
+                        supabase.from('tasks').select('id, title').in('id', [...taskIdSet])
+                            .then(({ data }) => {
+                                (data || []).forEach(t => { tasksMap[t.id] = t; });
+                            })
+                    );
+                }
+
+                if (userIdSet.size > 0) {
+                    fetches.push(
+                        supabase.from('users').select('id, name, avatar_url').in('id', [...userIdSet])
+                            .then(({ data }) => {
+                                (data || []).forEach(u => { usersMap[u.id] = u; });
+                            })
+                    );
+                }
+
+                await Promise.all(fetches);
+                if (cancelled) return;
+
+                // ─── Step 3: Build replacement helpers ───
+                const makeTaskChip = (taskId) => {
+                    const task = tasksMap[taskId];
+                    const shortId = taskId.length > 20 ? uuidToShortId(taskId) : taskId;
+                    const title = task?.title || '';
+                    const truncated = title.length > 30 ? title.slice(0, 30) + '…' : title;
+                    const label = truncated ? `#${shortId}: ${truncated}` : `#${shortId}`;
+                    return `<span class="task-ref inline-flex items-center gap-1 text-indigo-700 dark:text-indigo-300 font-medium bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition-colors text-xs border border-indigo-200/50 dark:border-indigo-500/30 whitespace-nowrap" data-task-id="${taskId}"><svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>${label}</span></span>`;
+                };
+
+                const makeUserChip = (userId) => {
+                    const user = usersMap[userId];
+                    const name = user?.name || 'User';
+                    const avatar = user?.avatar_url
+                        ? `<img src="${user.avatar_url}" class="w-4 h-4 rounded-full flex-shrink-0 object-cover" alt="" />`
+                        : `<span class="w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">${name[0] || 'U'}</span>`;
+                    return `<span class="mention-ref inline-flex items-center gap-1 text-blue-700 dark:text-blue-300 font-medium bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-colors text-xs border border-blue-200/50 dark:border-blue-500/30 whitespace-nowrap" data-user-id="${userId}">${avatar}<span>@${name}</span></span>`;
+                };
+
+                // ─── Step 4: Replace tokens in content ───
+                let parsed = raw;
+
+                // Replace leaked Tiptap spans for tasks
+                parsed = parsed.replace(/<span[^>]*data-id="([a-f0-9-]+|\d+)"[^>]*>.*?<\/span>/g, (_, id) => makeTaskChip(id));
+
+                // Replace leaked Tiptap spans for users
+                parsed = parsed.replace(/<span[^>]*data-user-id="([a-f0-9-]{36})"[^>]*>.*?<\/span>/g, (_, id) => makeUserChip(id));
+
+                // Replace [TASK:id|title] format
+                parsed = parsed.replace(/\[TASK:([^|\]]+)\|([^\]]+)\]/g, (_, id) => makeTaskChip(id));
+
+                // Replace #TASK-xxx tokens
+                parsed = parsed.replace(/#TASK-([a-f0-9-]+|\d+)/g, (_, id) => makeTaskChip(id));
+
+                // Replace @uuid tokens (but not already-replaced ones inside data-user-id="...")
+                parsed = parsed.replace(/(?<!data-user-id=")@([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/g, (_, id) => makeUserChip(id));
+
+                // ─── Step 5: Handle plain-text content formatting ───
+                if (!isHtml) {
+                    parsed = convertPlainTextToHtml(parsed);
+                } else {
+                    // Even for HTML, ensure empty paragraphs have some height
+                    parsed = parsed.replace(/<p><\/p>/g, '<p><br/></p>');
+                    // Clean up any double <br> tags  
+                    parsed = parsed.replace(/(<br\s*\/?>){3,}/g, '<br/><br/>');
+                }
+
+                if (!cancelled) {
+                    setParsedContent(parsed);
+                }
+            } catch (err) {
+                console.error('ReportContentParser error:', err);
+                // Fallback: show raw content
+                if (!cancelled) {
+                    setParsedContent(String(content));
+                }
+            }
+        };
+
+        parse();
+        return () => { cancelled = true; };
+    }, [content]);
 
     return (
         <>
             <div
+                ref={containerRef}
                 onClick={handleClick}
-                className="report-content"
+                className="report-content prose prose-sm max-w-none dark:prose-invert
+                    prose-p:my-1 prose-li:my-0.5 prose-ul:my-1 prose-ol:my-1
+                    prose-headings:my-2 prose-blockquote:my-2
+                    [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5
+                    [&_li]:text-inherit [&_p]:text-inherit"
                 dangerouslySetInnerHTML={{ __html: parsedContent }}
             />
 
@@ -256,5 +193,53 @@ const ReportContentParser = ({ content, mode = 'view' }) => {
         </>
     );
 };
+
+/**
+ * Convert plain text with lists/newlines into structured HTML.
+ * Handles numbered lists (1. / 1)), bullet lists (- / * / • / →), and checkboxes.
+ */
+function convertPlainTextToHtml(text) {
+    // Normalize inline list patterns → ensure they're on separate lines
+    let normalized = text
+        .replace(/([^\n])\s+(\d+[.)]\s+)/g, '$1\n$2')
+        .replace(/([^\n])\s+([-*•→]\s+)/g, '$1\n$2');
+
+    const lines = normalized.split(/\n|<br\s*\/?>/);
+    const parts = [];
+    let listType = null; // 'ol' or 'ul'
+
+    const closeList = () => {
+        if (listType) {
+            parts.push(`</${listType}>`);
+            listType = null;
+        }
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) {
+            closeList();
+            continue;
+        }
+
+        const numberedMatch = line.match(/^(\d+)[.)]\s+(.+)$/);
+        const bulletMatch = line.match(/^[-*•→]\s+(.+)$/);
+        const checkboxMatch = line.match(/^\[[ xX]?\]\s+(.+)$/);
+
+        if (numberedMatch) {
+            if (listType !== 'ol') { closeList(); parts.push('<ol>'); listType = 'ol'; }
+            parts.push(`<li>${numberedMatch[2]}</li>`);
+        } else if (bulletMatch || checkboxMatch) {
+            if (listType !== 'ul') { closeList(); parts.push('<ul>'); listType = 'ul'; }
+            parts.push(`<li>${(bulletMatch || checkboxMatch)[1]}</li>`);
+        } else {
+            closeList();
+            parts.push(`<p>${line}</p>`);
+        }
+    }
+
+    closeList();
+    return parts.join('');
+}
 
 export default ReportContentParser;

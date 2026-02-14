@@ -33,10 +33,7 @@ import {
   FiLayers,
   FiX,
   FiPlay,
-  FiCircle,
   FiChevronDown,
-  FiChevronsDown,
-  FiChevronsUp,
   FiCheck,
   FiChevronLeft
 } from 'react-icons/fi';
@@ -49,6 +46,7 @@ import CreateTaskModalNew from '../components/tasks/CreateTaskModalNew';
 import TaskDetailView from '../components/tasks/TaskDetailView';
 import TaskBoard from '../components/TaskBoard';
 import TaskList from '../components/TaskList';
+import InlineFilterBar from '../components/tasks/InlineFilterBar';
 import SprintBoard from '../components/SprintBoard';
 import SprintModal from '../components/SprintModal';
 import SprintManagement from '../components/sprint/SprintManagement';
@@ -222,7 +220,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [displayMode, setDisplayMode] = useState('board'); // 'board' or 'list' for TaskBoard
   const [editingTask, setEditingTask] = useState(null);
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const [searchFocused, setSearchFocused] = useState(false);
   const searchInputRef = useRef(null);
   const [updatingTask, setUpdatingTask] = useState(null);
@@ -234,6 +232,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
     assignee: 'all',
     team: 'all',
     dueDate: 'all',
+    priority: 'all',
     search: '',
     sprint: 'all'
   });
@@ -480,6 +479,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
         assignee: 'all',
         team: 'all',
         dueDate: 'all',
+        priority: 'all',
         search: '',
         sprint: 'all'
       });
@@ -550,8 +550,11 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
     if (selectedSprintId !== 'all') count++;
     const assigneeActive = Array.isArray(filters.assignee) ? filters.assignee.length > 0 : (filters.assignee !== 'all' && filters.assignee);
     if (assigneeActive) count++;
+    const priorityActive = Array.isArray(filters.priority) ? filters.priority.length > 0 : (filters.priority && filters.priority !== 'all');
+    if (priorityActive) count++;
+    if (filters.dueDate && filters.dueDate !== 'all') count++;
     return count;
-  }, [selectedProjectId, filters.status, selectedSprintId, filters.assignee]);
+  }, [selectedProjectId, filters.status, selectedSprintId, filters.assignee, filters.priority, filters.dueDate]);
 
   // Fetch current user and role
   useEffect(() => {
@@ -630,7 +633,7 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       let query = supabase
         .from('tasks')
         .select(`
-          id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id, efforts_in_days,
+          id, title, description, status, due_date, created_at, updated_at, project_id, sprint_id, efforts_in_days, priority,
           assignee:users!assignee_id(
             id,
             name,
@@ -707,6 +710,15 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
             console.warn('Invalid team ID in filter:', currentFilters.team);
           }
         }
+
+        // Priority filter (server-side)
+        if (currentFilters.priority && currentFilters.priority !== 'all') {
+          if (Array.isArray(currentFilters.priority) && currentFilters.priority.length > 0) {
+            query = query.in('priority', currentFilters.priority);
+          } else if (typeof currentFilters.priority === 'string' && currentFilters.priority !== 'all') {
+            query = query.eq('priority', currentFilters.priority);
+          }
+        }
       }
 
       // Apply search filter with validation
@@ -742,7 +754,36 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       }
 
       // Validate data before setting
-      const validatedTasks = Array.isArray(data) ? data : [];
+      let validatedTasks = Array.isArray(data) ? data : [];
+
+      // Client-side dueDate filtering (requires date comparison logic)
+      if (currentFilters && currentFilters.dueDate && currentFilters.dueDate !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        validatedTasks = validatedTasks.filter(task => {
+          const dueDate = task.due_date ? new Date(task.due_date) : null;
+          switch (currentFilters.dueDate) {
+            case 'overdue':
+              return dueDate && dueDate < today && task.status !== 'Completed';
+            case 'today':
+              return dueDate && dueDate.toDateString() === today.toDateString();
+            case 'week': {
+              const endOfWeekDate = new Date(today);
+              endOfWeekDate.setDate(today.getDate() + (7 - today.getDay()));
+              return dueDate && dueDate >= today && dueDate <= endOfWeekDate;
+            }
+            case 'month': {
+              const endOfMonthDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+              return dueDate && dueDate >= today && dueDate <= endOfMonthDate;
+            }
+            case 'none':
+              return !dueDate;
+            default:
+              return true;
+          }
+        });
+      }
+
       setTasks(validatedTasks);
 
     } catch (err) {
@@ -1158,22 +1199,6 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
       initial="hidden"
       animate="visible"
     >
-      <SideFilterDrawer
-        isOpen={isFilterDrawerOpen}
-        onClose={() => setIsFilterDrawerOpen(false)}
-        projects={projects}
-        selectedProjectId={selectedProjectId}
-        setSelectedProjectId={setSelectedProjectId}
-        sprints={sprints}
-        selectedSprintId={selectedSprintId}
-        setSelectedSprintId={setSelectedSprintId}
-        filters={filters}
-        setFilters={setFilters}
-        employees={employees}
-        onClearAllFilters={handleClearAllFilters}
-        activeFilterCount={activeFilterCount}
-      />
-
 
       {/* Creative Modern Tasks Header */}
       <AnimatePresence>
@@ -1385,17 +1410,19 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
                   </div>
                 )}
 
-                {/* Advanced Filter Button with Active Badge */}
+                {/* Filter Toggle Button */}
                 <motion.button
-                  onClick={() => setIsFilterDrawerOpen(true)}
+                  onClick={() => setIsFilterBarVisible(prev => !prev)}
                   whileHover={{ scale: 1.05, y: -1 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`relative p-2.5 rounded-xl border border-white/20 dark:border-slate-700/50 transition-all flex items-center justify-center min-w-[42px] min-h-[42px] ${activeFilterCount > 0
+                  className={`relative p-2.5 rounded-xl border border-white/20 dark:border-slate-700/50 transition-all flex items-center justify-center min-w-[42px] min-h-[42px] ${isFilterBarVisible
                     ? 'bg-indigo-600 dark:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 border-indigo-400'
-                    : 'bg-white/10 dark:bg-slate-700/40 text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-slate-600/60'}`}
+                    : activeFilterCount > 0
+                      ? 'bg-amber-500 dark:bg-amber-600 text-white shadow-lg shadow-amber-500/30 border-amber-400'
+                      : 'bg-white/10 dark:bg-slate-700/40 text-gray-600 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-slate-600/60'}`}
                 >
                   <FiFilter className="w-5 h-5" />
-                  {activeFilterCount > 0 && (
+                  {activeFilterCount > 0 && !isFilterBarVisible && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -1487,6 +1514,33 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
               </div>
             ) : (
               <div className="p-0">
+                {view === 'tasks' && (
+                  <AnimatePresence>
+                    {isFilterBarVisible && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        className="overflow-visible relative z-50"
+                      >
+                        <InlineFilterBar
+                          projects={projects}
+                          selectedProjectId={selectedProjectId}
+                          setSelectedProjectId={setSelectedProjectId}
+                          filters={filters}
+                          setFilters={setFilters}
+                          sprints={sprints}
+                          selectedSprintId={selectedSprintId}
+                          setSelectedSprintId={setSelectedSprintId}
+                          employees={employees}
+                          currentUser={currentUser}
+                          onClearAllFilters={handleClearAllFilters}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
                 {view === 'tasks' ? (
                   <TaskBoard
                     tasks={tasks}
@@ -1763,311 +1817,5 @@ export default function TasksPage({ sidebarOpen, sidebarMode }) {
 }
 
 
-// --- ADVANCED SIDE FILTER DRAWER ---
-const SideFilterDrawer = ({
-  isOpen,
-  onClose,
-  projects,
-  selectedProjectId,
-  setSelectedProjectId,
-  sprints,
-  selectedSprintId,
-  setSelectedSprintId,
-  filters,
-  setFilters,
-  employees,
-  onClearAllFilters,
-  activeFilterCount
-}) => {
-  const [expandedSections, setExpandedSections] = useState({
-    project: false,
-    status: false,
-    sprint: false,
-    assignee: false
-  });
 
-  const toggleSection = (section) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
 
-  const allExpanded = Object.values(expandedSections).every(v => v);
-
-  const toggleAllSections = () => {
-    const newState = !allExpanded;
-    setExpandedSections({
-      project: newState,
-      status: newState,
-      sprint: newState,
-      assignee: newState
-    });
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[9999]"
-          />
-
-          {/* Drawer */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full max-w-[400px] bg-white/90 dark:bg-slate-950/90 backdrop-blur-3xl border-l border-white/20 dark:border-slate-800/60 z-[10000] shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col"
-          >
-            {/* Liquid Edge Refraction (Design Detail) */}
-            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500/20 via-pink-500/20 to-purple-500/20" />
-
-            {/* Header */}
-            <div className="p-8 border-b border-gray-100 dark:border-slate-800/60 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Filters</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest">
-                    {activeFilterCount} Active Filters
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={toggleAllSections}
-                  className="p-3 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-indigo-500 hover:text-white transition-colors"
-                  title={allExpanded ? "Collapse All" : "Expand All"}
-                >
-                  {allExpanded ? <FiChevronsUp className="w-5 h-5" /> : <FiChevronsDown className="w-5 h-5" />}
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ rotate: 90, scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={onClose}
-                  className="p-3 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-rose-500 hover:text-white transition-colors"
-                >
-                  <FiX className="w-5 h-5" />
-                </motion.button>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
-              {/* Reset All (Float Top Right) */}
-              {activeFilterCount > 0 && (
-                <div className="flex justify-end">
-                  <motion.button
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    onClick={() => {
-                      onClearAllFilters();
-                      // We don't close the drawer so they can start over
-                    }}
-                    className="flex items-center gap-2 text-xs font-black text-rose-500 uppercase tracking-widest hover:text-rose-600 transition-colors"
-                  >
-                    <FiRefreshCw className="w-3.5 h-3.5" />
-                    Reset All Filters
-                  </motion.button>
-                </div>
-              )}
-
-              {/* Project Selection */}
-              <CollapsibleSection
-                label="Project Context"
-                icon={FiFolder}
-                isOpen={expandedSections.project}
-                onToggle={() => toggleSection('project')}
-              >
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  {projects.map(p => (
-                    <DrawerFilterItem
-                      key={p.id}
-                      label={p.name}
-                      isActive={selectedProjectId === p.id}
-                      onClick={() => setSelectedProjectId(p.id)}
-                    />
-                  ))}
-                </div>
-              </CollapsibleSection>
-
-              {/* Status Selection */}
-              <CollapsibleSection
-                label="Task Status"
-                icon={FiCircle}
-                isOpen={expandedSections.status}
-                onToggle={() => toggleSection('status')}
-              >
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {['all', 'To Do', 'In Progress', 'Review', 'Completed'].map(s => (
-                    <DrawerPillItem
-                      key={s}
-                      label={s === 'all' ? 'All Statuses' : s}
-                      isActive={filters.status === s}
-                      onClick={() => setFilters({ ...filters, status: s })}
-                    />
-                  ))}
-                </div>
-              </CollapsibleSection>
-
-              {/* Sprint Selection */}
-              <CollapsibleSection
-                label="Sprint Cycle"
-                icon={FiTarget}
-                isOpen={expandedSections.sprint}
-                onToggle={() => toggleSection('sprint')}
-              >
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  <DrawerFilterItem
-                    label="All Sprints"
-                    isActive={selectedSprintId === 'all'}
-                    onClick={() => setSelectedSprintId('all')}
-                  />
-                  {sprints.map(s => (
-                    <DrawerFilterItem
-                      key={s.id}
-                      label={s.name}
-                      isActive={selectedSprintId === s.id}
-                      onClick={() => setSelectedSprintId(s.id)}
-                      badge={s.status === 'Active' ? 'Active' : null}
-                    />
-                  ))}
-                </div>
-              </CollapsibleSection>
-
-              {/* Assignee Selection */}
-              <CollapsibleSection
-                label="Assignee"
-                icon={FiUsers}
-                isOpen={expandedSections.assignee}
-                onToggle={() => toggleSection('assignee')}
-              >
-                <div className="grid grid-cols-1 gap-2 mt-4">
-                  <DrawerFilterItem
-                    label="All Team Members"
-                    isActive={filters.assignee === 'all'}
-                    onClick={() => setFilters({ ...filters, assignee: 'all' })}
-                  />
-                  {employees.map(e => (
-                    <DrawerFilterItem
-                      key={e.id}
-                      label={e.name}
-                      isActive={Array.isArray(filters.assignee) ? filters.assignee.includes(e.id) : filters.assignee === e.id}
-                      onClick={() => {
-                        const current = Array.isArray(filters.assignee) ? filters.assignee : (filters.assignee === 'all' ? [] : [filters.assignee]);
-                        const next = current.includes(e.id) ? current.filter(id => id !== e.id) : [...current, e.id];
-                        setFilters({ ...filters, assignee: next.length === 0 ? 'all' : next });
-                      }}
-                      image={e.avatar_url}
-                    />
-                  ))}
-                </div>
-              </CollapsibleSection>
-            </div>
-
-            {/* Footer */}
-            <div className="p-8 bg-gray-50/50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-800/60">
-              <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onClose}
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.25rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-indigo-500/30 transition-all border border-indigo-400/30"
-              >
-                Apply Filters
-              </motion.button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence >
-  );
-};
-
-// --- SUB-COMPONENTS FOR DRAWER ---
-const CollapsibleSection = ({ label, icon: Icon, children, isOpen, onToggle }) => (
-  <div className="bg-white/5 dark:bg-slate-900/40 rounded-3xl border border-white/10 dark:border-slate-800/60 overflow-hidden shadow-sm">
-    <button
-      onClick={onToggle}
-      className={`w-full flex items-center justify-between p-5 transition-all duration-300 ${isOpen ? 'bg-indigo-500/5' : 'hover:bg-white/5'}`}
-    >
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl transition-colors duration-300 ${isOpen ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-gray-100 dark:bg-slate-800 text-gray-500'}`}>
-          <Icon className="w-4 h-4" />
-        </div>
-        <span className={`text-xs font-black uppercase tracking-widest transition-colors duration-300 ${isOpen ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'}`}>{label}</span>
-      </div>
-      <motion.div
-        animate={{ rotate: isOpen ? 180 : 0 }}
-        className={`${isOpen ? 'text-indigo-500' : 'text-gray-400'} transition-colors duration-300`}
-      >
-        <FiChevronDown className="w-5 h-5" />
-      </motion.div>
-    </button>
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-        >
-          <div className="border-t border-white/5 dark:border-slate-800/40 bg-slate-50/30 dark:bg-slate-900/20">
-            <div className="max-h-[280px] overflow-y-auto custom-scrollbar p-5 space-y-1">
-              {children}
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </div>
-);
-
-const FilterSectionLabel = ({ label, icon: Icon }) => (
-  <div className="flex items-center gap-3 border-l-4 border-indigo-500 pl-4 py-1">
-    <Icon className="w-4 h-4 text-indigo-500" />
-    <span className="text-xs font-black text-gray-500 dark:text-slate-500 uppercase tracking-[0.2em]">{label}</span>
-  </div>
-);
-
-const DrawerFilterItem = ({ label, isActive, onClick, image, badge }) => (
-  <motion.button
-    whileHover={{ x: 8 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={onClick}
-    className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-300 border ${isActive
-      ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
-      : 'bg-white dark:bg-slate-900/40 text-gray-700 dark:text-slate-300 border-gray-100 dark:border-slate-800/60 hover:bg-gray-50 dark:hover:bg-slate-800'
-      }`}
-  >
-    <div className="flex items-center gap-3">
-      {image && <img src={image} alt="" className="w-6 h-6 rounded-full ring-2 ring-white/20" />}
-      <span className="text-sm font-bold">{label}</span>
-    </div>
-    <div className="flex items-center gap-2">
-      {badge && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-md border border-green-500/30">{badge}</span>}
-      {isActive && <FiCheck className="w-4 h-4" />}
-    </div>
-  </motion.button>
-);
-
-const DrawerPillItem = ({ label, isActive, onClick }) => (
-  <motion.button
-    whileHover={{ scale: 1.05, y: -2 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={onClick}
-    className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all duration-300 border ${isActive
-      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-white/20 shadow-lg shadow-indigo-500/20'
-      : 'bg-gray-100 dark:bg-slate-800/60 text-gray-600 dark:text-slate-400 border-gray-100 dark:border-slate-800/60 hover:bg-gray-200 dark:hover:bg-slate-700'
-      }`}
-  >
-    {label}
-  </motion.button>
-);

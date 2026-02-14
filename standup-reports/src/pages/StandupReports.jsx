@@ -12,7 +12,6 @@ import MissingReports from '../components/MissingReports';
 import ReportContentParser from '../components/reports/ReportContentParser';
 import UserProfileInfoModal from '../components/UserProfileInfoModal';
 import { useTheme } from '../context/ThemeContext';
-import { uuidToShortId } from '../utils/taskIdUtils';
 
 // Animation variants
 const containerVariants = {
@@ -31,125 +30,6 @@ const itemVariants = {
         transition: { type: 'spring', stiffness: 300, damping: 24 }
     }
 };
-
-// Utility: basic HTML escaping
-const escapeHtml = (str) => String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
-// Convert lightweight markdown and tokens to safe HTML
-function formatReportContent(raw) {
-    if (!raw) return '';
-    const input = String(raw);
-
-    // Detect if content is Tiptap/HTML (basic check)
-    const isHtml = /<\s*(p|ul|ol|li|br|strong|em|span|div|a)[\s>]/i.test(input);
-
-    if (isHtml) {
-        // Minimal sanitize: strip scripts and inline event handlers
-        let html = input
-            .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
-            .replace(/ on\w+\s*=\s*\"[^\"]*\"/gi, '')
-            .replace(/ on\w+\s*=\s*\'[^\']*\'/gi, '');
-
-        // Replace [TASK:{id}|{title}] tokens inside HTML - show truncated task title
-        html = html.replace(/\[TASK:([^|\]]+)\|([^\]]+)\]/g, (m, id, title) => {
-            const safeTitle = escapeHtml(title);
-            return `<span class="task-ref-wrapper inline-block max-w-xs align-baseline"><a href="#" class="task-ref text-indigo-600 hover:text-indigo-800 underline hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors cursor-pointer font-medium truncate block" data-task-id="${id}" title="${safeTitle}">${safeTitle}</a></span>`;
-        });
-
-        // Mentions: @Name{id:uuid} -> link to profile; fallback @word -> query link
-        html = html.replace(/@([^\{\s]+)\{id:([a-f0-9\-]+)\}/gi, (m, name, id) => {
-            const safeName = escapeHtml(name);
-            return `<a href="/profile/${id}" class="mention text-blue-600 hover:underline">@${safeName}</a>`;
-        });
-        html = html.replace(/(^|\s)@([A-Za-z0-9_\.\-]+)/g, (m, pre, name) => {
-            return `${pre}<a href="/profile?name=${name}" class="mention text-blue-600 hover:underline">@${name}</a>`;
-        });
-
-        // Hashtags within HTML text
-        html = html.replace(/(^|\s)#([A-Za-z0-9_\-]+)/g, (m, pre, tag) => {
-            return `${pre}<span class="hashtag text-purple-600">#${tag}</span>`;
-        });
-
-        return html;
-    }
-
-    // Plain text path: escape and transform to simple HTML
-    let text = escapeHtml(input);
-
-    // Inline code `code`
-    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Bold and italic (simple)
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Lists
-    const blocks = text.split(/\n\n+/);
-    const formattedBlocks = blocks.map(block => {
-        const lines = block.split(/\n/);
-        if (lines.every(l => /^\s*-\s+/.test(l))) {
-            const items = lines.map(l => `<li>${l.replace(/^\s*-\s+/, '')}</li>`).join('');
-            return `<ul>${items}</ul>`;
-        }
-        if (lines.every(l => /^\s*\d+\.\s+/.test(l))) {
-            const items = lines.map(l => `<li>${l.replace(/^\s*\d+\.\s+/, '')}</li>`).join('');
-            return `<ol>${items}</ol>`;
-        }
-        return block.replace(/\n/g, '<br/>');
-    });
-    let html = formattedBlocks.join('\n');
-
-    // Tokens and linkify - show truncated task title
-    html = html.replace(/\[TASK:([^|\]]+)\|([^\]]+)\]/g, (m, id, title) => {
-        const safeTitle = escapeHtml(title);
-        return `<span class=\"task-ref-wrapper inline-block max-w-xs align-baseline\"><a href=\"#\" class=\"task-ref text-indigo-600 hover:text-indigo-800 underline hover:bg-indigo-50 rounded px-1 py-0.5 transition-colors cursor-pointer font-medium truncate block\" data-task-id=\"${id}\" title=\"${safeTitle}\">${safeTitle}</a></span>`;
-    });
-    html = html.replace(/@([^\{\s]+)\{id:([a-f0-9\-]+)\}/gi, (m, name, id) => {
-        const safeName = escapeHtml(name);
-        return `<a href=\"/profile/${id}\" class=\"mention text-blue-600 hover:underline\">@${safeName}</a>`;
-    });
-    html = html.replace(/(^|\s)@([A-Za-z0-9_\.\-]+)/g, (m, pre, name) => {
-        return `${pre}<a href=\"/profile?name=${name}\" class=\"mention text-blue-600 hover:underline\">@${name}</a>`;
-    });
-    html = html.replace(/(^|\s)#([A-Za-z0-9_\-]+)/g, (m, pre, tag) => {
-        return `${pre}<span class=\"hashtag text-purple-600\">#${tag}</span>`;
-    });
-    html = html.replace(/(https?:\/\/[^\s<]+)/g, (m, url) => {
-        const safe = escapeHtml(url);
-        return `<a href=\"${safe}\" target=\"_blank\" rel=\"noopener\" class=\"text-indigo-600 underline\">${safe}</a>`;
-    });
-
-    return html;
-}
-
-// Display component that binds click handlers for task refs
-function RichTextDisplay({ content, onTaskClick }) {
-    const containerRef = React.useRef(null);
-    React.useEffect(() => {
-        const el = containerRef.current;
-        if (!el) return;
-        const onClick = (e) => {
-            const target = e.target;
-            if (target && target.classList && target.classList.contains('task-ref')) {
-                e.preventDefault();
-                const taskId = target.getAttribute('data-task-id');
-                if (taskId && onTaskClick) onTaskClick(taskId);
-            }
-        };
-        el.addEventListener('click', onClick);
-        return () => el.removeEventListener('click', onClick);
-    }, [onTaskClick]);
-
-    const html = React.useMemo(() => formatReportContent(content), [content]);
-    return (
-        <div ref={containerRef} className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
-    );
-}
 
 export default function StandupReports({ sidebarMode }) {
     const navigate = useNavigate();
@@ -995,14 +875,14 @@ export default function StandupReports({ sidebarMode }) {
                                                             </div>
                                                         </div>
 
-                                                        {/* Content Sections - Vertical Stack for Better Readability */}
-                                                        <div className="p-6 space-y-4">
+                                                        {/* Content Sections - Horizontal Grid */}
+                                                        <div className={`p-6 grid ${report.blockers ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'} gap-4`}>
                                                             {/* Yesterday Section */}
-                                                            <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                            <div className={`rounded-xl overflow-hidden flex flex-col ${isPremiumTheme
                                                                 ? 'bg-white/5 border border-white/10'
                                                                 : 'bg-slate-50/80 dark:bg-slate-700/30 border border-slate-200/50 dark:border-slate-600/30'
                                                                 }`}>
-                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b flex-shrink-0 ${isPremiumTheme
                                                                     ? 'bg-white/5 border-white/10'
                                                                     : 'bg-white dark:bg-slate-700/50 border-slate-200/50 dark:border-slate-600/30'
                                                                     }`}>
@@ -1011,17 +891,17 @@ export default function StandupReports({ sidebarMode }) {
                                                                         Yesterday
                                                                     </span>
                                                                 </div>
-                                                                <div className={`p-4 max-h-48 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/80' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                <div className={`p-4 flex-1 overflow-y-auto custom-scrollbar text-sm leading-relaxed max-h-64 ${isPremiumTheme ? 'text-white/80' : 'text-gray-700 dark:text-gray-200'}`}>
                                                                     <ReportContentParser content={report.yesterday} mode="view" />
                                                                 </div>
                                                             </div>
 
                                                             {/* Today Section */}
-                                                            <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                            <div className={`rounded-xl overflow-hidden flex flex-col ${isPremiumTheme
                                                                 ? 'bg-indigo-500/10 border border-indigo-400/20'
                                                                 : 'bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-200/50 dark:border-indigo-500/20'
                                                                 }`}>
-                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                <div className={`flex items-center gap-2 px-4 py-2.5 border-b flex-shrink-0 ${isPremiumTheme
                                                                     ? 'bg-indigo-500/10 border-indigo-400/20'
                                                                     : 'bg-indigo-100/50 dark:bg-indigo-900/30 border-indigo-200/50 dark:border-indigo-500/20'
                                                                     }`}>
@@ -1030,18 +910,18 @@ export default function StandupReports({ sidebarMode }) {
                                                                         Today
                                                                     </span>
                                                                 </div>
-                                                                <div className={`p-4 max-h-48 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                <div className={`p-4 flex-1 overflow-y-auto custom-scrollbar text-sm leading-relaxed max-h-64 ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
                                                                     <ReportContentParser content={report.today} mode="view" />
                                                                 </div>
                                                             </div>
 
                                                             {/* Blockers Section */}
                                                             {report.blockers && (
-                                                                <div className={`rounded-xl overflow-hidden ${isPremiumTheme
+                                                                <div className={`rounded-xl overflow-hidden flex flex-col ${isPremiumTheme
                                                                     ? 'bg-rose-500/10 border border-rose-400/20'
                                                                     : 'bg-rose-50/80 dark:bg-rose-900/20 border border-rose-200/50 dark:border-rose-500/20'
                                                                     }`}>
-                                                                    <div className={`flex items-center gap-2 px-4 py-2.5 border-b ${isPremiumTheme
+                                                                    <div className={`flex items-center gap-2 px-4 py-2.5 border-b flex-shrink-0 ${isPremiumTheme
                                                                         ? 'bg-rose-500/10 border-rose-400/20'
                                                                         : 'bg-rose-100/50 dark:bg-rose-900/30 border-rose-200/50 dark:border-rose-500/20'
                                                                         }`}>
@@ -1050,7 +930,7 @@ export default function StandupReports({ sidebarMode }) {
                                                                             Blockers
                                                                         </span>
                                                                     </div>
-                                                                    <div className={`p-4 max-h-36 overflow-y-auto custom-scrollbar text-sm leading-relaxed ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                    <div className={`p-4 flex-1 overflow-y-auto custom-scrollbar text-sm leading-relaxed max-h-64 ${isPremiumTheme ? 'text-white/90' : 'text-gray-700 dark:text-gray-200'}`}>
                                                                         <ReportContentParser content={report.blockers} mode="view" />
                                                                     </div>
                                                                 </div>
